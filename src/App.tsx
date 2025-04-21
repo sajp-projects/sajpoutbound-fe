@@ -4,7 +4,8 @@ import Login from "./pages/auth/login";
 import Dashboard from "./pages/dashboard";
 import AuthLayout from "./layout/AuthLayout";
 import Role from "./pages/role";
-import Pengguna from "./pages/pengguna";
+import Pengguna from "./pages/pengguna/daftarPengguna";
+import TambahPengguna from "./pages/pengguna/tambahPengguna";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/role" element={<Role />} />
           <Route path="/pengguna" element={<Pengguna />} />
+          <Route path="/pengguna/tambah" element={<TambahPengguna />} />
         </Route>
       </Routes>
     </BrowserRouter>

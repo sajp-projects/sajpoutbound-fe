@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router";
-import { Menu, X, User, Settings, LogOut, ChevronDown } from "lucide-react";
+import { Menu, User, Settings, LogOut, ChevronDown } from "lucide-react";
 import { cn } from "../lib/utils";
 
 interface NavbarProps {
@@ -8,8 +8,7 @@ interface NavbarProps {
   isSidebarOpen: boolean;
 }
 
-export default function Navbar({ toggleSidebar, isSidebarOpen }: NavbarProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+export default function Navbar({ toggleSidebar }: NavbarProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
   const profileRef = useRef<HTMLDivElement>(null);
@@ -51,30 +50,6 @@ export default function Navbar({ toggleSidebar, isSidebarOpen }: NavbarProps) {
     }
   };
 
-  // Mendapatkan subtitle berdasarkan subpath jika ada
-  const getPageSubtitle = () => {
-    const parts = location.pathname.split("/");
-
-    if (parts.length <= 2) return null;
-
-    const action = parts[2];
-
-    switch (action) {
-      case "tambah":
-        return "Tambah Baru";
-      case "edit":
-        return "Edit Data";
-      case "detail":
-        return "Detail";
-      case "arsip":
-        return "Data Arsip";
-      case "log":
-        return "Riwayat Log";
-      default:
-        return null;
-    }
-  };
-
   // Event listener untuk menutup dropdown saat klik di luar
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -90,7 +65,6 @@ export default function Navbar({ toggleSidebar, isSidebarOpen }: NavbarProps) {
   }, []);
 
   const pageTitle = getPageTitle();
-  const pageSubtitle = getPageSubtitle();
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
@@ -108,9 +82,8 @@ export default function Navbar({ toggleSidebar, isSidebarOpen }: NavbarProps) {
             </button>
 
             {/* Page Title - showing current active page */}
-            <div className="flex flex-col ml-3">
-              <h1 className="text-lg font-bold text-gray-800 leading-none">{pageTitle}</h1>
-              {pageSubtitle && <span className="text-xs text-gray-500">{pageSubtitle}</span>}
+            <div className="ml-3">
+              <h1 className="text-lg font-bold text-gray-800">{pageTitle}</h1>
             </div>
           </div>
 
@@ -156,32 +129,7 @@ export default function Navbar({ toggleSidebar, isSidebarOpen }: NavbarProps) {
                 </div>
               )}
             </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              type="button"
-              className="inline-flex md:hidden items-center justify-center rounded-md p-2 ml-3 text-gray-500 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              <span className="sr-only">Buka menu mobile</span>
-              {isMobileMenuOpen ? <X className="block h-6 w-6" /> : <Menu className="block h-6 w-6" />}
-            </button>
           </div>
-        </div>
-      </div>
-
-      {/* Mobile menu, show/hide based on menu state */}
-      <div className={cn("md:hidden", isMobileMenuOpen ? "block" : "hidden")}>
-        <div className="space-y-1 px-2 pb-3 pt-2">
-          <Link to="/dashboard" className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-            Dashboard
-          </Link>
-          <Link to="/pengguna" className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-            Pengguna
-          </Link>
-          <Link to="/peran" className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-            Peran
-          </Link>
         </div>
       </div>
     </header>

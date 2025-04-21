@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
-import { ChevronDown, Users, ShieldCheck, Lock, Package, UserCheck, Warehouse, FileText, Truck, PackageCheck, BarChart3, LogOut, Home } from "lucide-react";
+import { ChevronDown, Users, ShieldCheck, Lock, Package, UserCheck, Warehouse, FileText, Truck, PackageCheck, BarChart3, LogOut, Home, X } from "lucide-react";
 import { cn } from "../lib/utils";
 
 interface SubMenuItem {
@@ -17,9 +17,10 @@ interface MenuItem {
 
 interface SideBarProps {
   isOpen: boolean;
+  toggleSidebar?: () => void;
 }
 
-export default function SideBar({ isOpen }: SideBarProps) {
+export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
 
@@ -139,8 +140,20 @@ export default function SideBar({ isOpen }: SideBarProps) {
   return (
     <aside className={cn("h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-300 shadow-sm", isOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0")}>
       <div className="h-full flex flex-col overflow-hidden">
-        {/* Header with Logo */}
-        <div className="px-4 py-5 flex flex-col items-center justify-center border-b border-gray-200">
+        {/* Header with Logo and Close Button */}
+        <div className="px-4 py-5 flex flex-col items-center justify-center border-b border-gray-200 relative">
+          {/* Close button for mobile */}
+          {toggleSidebar && (
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className="absolute right-2 top-2 p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 lg:hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              aria-label="Close sidebar"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+
           <span className="text-xl font-bold text-blue-600">OUTMANAGE</span>
           <div className="mt-1 text-xs text-gray-500 font-medium">Sistem Manajemen DO</div>
           <div className="w-16 h-1 bg-blue-500 rounded-full mt-3"></div>

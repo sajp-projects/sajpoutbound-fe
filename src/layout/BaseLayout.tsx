@@ -32,7 +32,7 @@ export default function BaseLayout() {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar - Full Height */}
-      <SideBar isOpen={isSidebarOpen} />
+      <SideBar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
       {/* Main Content */}
       <div className={`flex flex-col flex-1 min-h-screen transition-all duration-300 ${isSidebarOpen ? "lg:ml-64" : ""}`}>
