@@ -9,6 +9,7 @@ import { CreateUserInput } from "@/types/user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Swal from "sweetalert2";
 
 // Type untuk form tambah user
 interface UserFormData {
@@ -29,39 +30,30 @@ export default function TambahPengguna() {
     roleId: "",
   });
 
-  // State untuk alert/notifikasi
-  const [notification, setNotification] = useState<{
-    show: boolean;
-    type: "success" | "error";
-    message: string;
-  }>({
-    show: false,
-    type: "success",
-    message: "",
-  });
-
   // Query untuk mendapatkan daftar role
   const { data: roles = [], isLoading: isLoadingRoles, isError: isErrorRoles } = useRoles();
 
   // Mutation untuk membuat user baru
   const createUserMutation = useCreateUser({
     onSuccess: () => {
-      setNotification({
-        show: true,
-        type: "success",
-        message: "Pengguna baru berhasil ditambahkan",
-      });
-
-      // Redirect setelah 1.5 detik
-      setTimeout(() => {
+      // Tampilkan SweetAlert untuk sukses
+      Swal.fire({
+        title: "Berhasil!",
+        text: "Pengguna baru berhasil ditambahkan",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      }).then(() => {
         navigate("/pengguna");
-      }, 1500);
+      });
     },
     onError: (error) => {
-      setNotification({
-        show: true,
-        type: "error",
-        message: `Gagal menambahkan pengguna: ${error.message}`,
+      // Tampilkan SweetAlert untuk error
+      Swal.fire({
+        title: "Gagal!",
+        text: `Gagal menambahkan pengguna: ${error.message}`,
+        icon: "error",
+        confirmButtonText: "Tutup",
       });
     },
   });
@@ -81,10 +73,11 @@ export default function TambahPengguna() {
 
     // Validasi data
     if (!formData.name || !formData.email || !formData.password || !formData.roleId) {
-      setNotification({
-        show: true,
-        type: "error",
-        message: "Semua field harus diisi",
+      Swal.fire({
+        title: "Validasi Gagal",
+        text: "Semua field harus diisi",
+        icon: "warning",
+        confirmButtonText: "Tutup",
       });
       return;
     }
@@ -118,8 +111,6 @@ export default function TambahPengguna() {
           <h1 className="text-2xl font-bold text-gray-900">Tambah Pengguna</h1>
         </div>
       </div>
-
-      {notification.show && <div className={`p-4 rounded-md ${notification.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>{notification.message}</div>}
 
       <Card className="border border-gray-200 rounded-lg shadow-sm">
         <CardHeader>

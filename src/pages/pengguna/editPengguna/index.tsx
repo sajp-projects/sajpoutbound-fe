@@ -5,6 +5,7 @@ import { useParams, Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import { Role } from "@/types/role";
 import { useQueryClient } from "@tanstack/react-query";
+import Swal from "sweetalert2";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,17 +30,6 @@ export default function EditPengguna() {
     roleId: "",
   });
 
-  // State untuk alert/notifikasi
-  const [notification, setNotification] = useState<{
-    show: boolean;
-    type: "success" | "error";
-    message: string;
-  }>({
-    show: false,
-    type: "success",
-    message: "",
-  });
-
   // Query untuk mendapatkan data user
   const {
     data: user,
@@ -58,22 +48,24 @@ export default function EditPengguna() {
       // Gunakan utility function untuk memperbarui cache
       updateUserCache(queryClient, updatedUser);
 
-      setNotification({
-        show: true,
-        type: "success",
-        message: "Data pengguna berhasil diperbarui",
-      });
-
-      // Redirect setelah 1.5 detik
-      setTimeout(() => {
+      // Tampilkan SweetAlert untuk sukses
+      Swal.fire({
+        title: "Berhasil!",
+        text: "Data pengguna berhasil diperbarui",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      }).then(() => {
         navigate(`/pengguna/${id}`);
-      }, 1500);
+      });
     },
     onError: (error) => {
-      setNotification({
-        show: true,
-        type: "error",
-        message: `Gagal memperbarui data pengguna: ${error.message}`,
+      // Tampilkan SweetAlert untuk error
+      Swal.fire({
+        title: "Gagal!",
+        text: `Gagal memperbarui data pengguna: ${error.message}`,
+        icon: "error",
+        confirmButtonText: "Tutup",
       });
     },
   });
@@ -101,6 +93,18 @@ export default function EditPengguna() {
   // Handler submit form
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Validasi data
+    if (!formData.name || !formData.email || !formData.roleId) {
+      Swal.fire({
+        title: "Validasi Gagal",
+        text: "Semua field harus diisi",
+        icon: "warning",
+        confirmButtonText: "Tutup",
+      });
+      return;
+    }
+
     updateUserMutation.mutate({
       id: parseInt(id || "0"),
       name: formData.name,
@@ -126,8 +130,6 @@ export default function EditPengguna() {
           <h1 className="text-2xl font-bold text-gray-900">Edit Pengguna</h1>
         </div>
       </div>
-
-      {notification.show && <div className={`p-4 rounded-md ${notification.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>{notification.message}</div>}
 
       <Card className="border border-gray-200 rounded-lg shadow-sm">
         <CardHeader>

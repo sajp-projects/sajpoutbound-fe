@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utils/date";
 import { getRoleBadgeColor, getRoleBadgeVariant } from "@/utils/roles";
 import { cn } from "@/lib/utils";
+import Swal from "sweetalert2";
 
 export default function DetailPengguna() {
   const { id } = useParams<{ id: string }>();
@@ -14,18 +15,41 @@ export default function DetailPengguna() {
 
   const deleteUser = useDeleteUser({
     onSuccess: () => {
-      alert("Pengguna berhasil diarsipkan");
-      navigate("/pengguna");
+      Swal.fire({
+        title: "Berhasil!",
+        text: "Pengguna berhasil diarsipkan",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      }).then(() => {
+        navigate("/pengguna");
+      });
     },
     onError: (error) => {
-      alert("Gagal mengarsipkan pengguna: " + (error.message || "Terjadi kesalahan saat mengarsipkan pengguna."));
+      Swal.fire({
+        title: "Gagal!",
+        text: `Gagal mengarsipkan pengguna: ${error.message || "Terjadi kesalahan saat mengarsipkan pengguna."}`,
+        icon: "error",
+        confirmButtonText: "Tutup",
+      });
     },
   });
 
   const handleArsipkan = () => {
-    if (window.confirm("Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.")) {
-      deleteUser.mutate({ id: parseInt(id || "0") });
-    }
+    Swal.fire({
+      title: "Konfirmasi Arsip",
+      text: "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Ya, Arsipkan!",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteUser.mutate({ id: parseInt(id || "0") });
+      }
+    });
   };
 
   return (

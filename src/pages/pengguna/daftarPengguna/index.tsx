@@ -2,6 +2,7 @@ import { useUsers, useDeleteUser } from "@/hooks/user";
 import { Archive, ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Download, Eye, FileText, Filter, Pencil, Plus, RefreshCcw, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import Swal from "sweetalert2";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,18 +27,40 @@ export default function Pengguna() {
 
   const deleteUser = useDeleteUser({
     onSuccess: () => {
-      alert("Pengguna berhasil diarsipkan");
+      Swal.fire({
+        title: "Berhasil!",
+        text: "Pengguna berhasil diarsipkan",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
       refetch();
     },
     onError: (error) => {
-      alert("Gagal mengarsipkan pengguna: " + (error.message || "Terjadi kesalahan saat mengarsipkan pengguna."));
+      Swal.fire({
+        title: "Gagal!",
+        text: `Gagal mengarsipkan pengguna: ${error.message || "Terjadi kesalahan saat mengarsipkan pengguna."}`,
+        icon: "error",
+        confirmButtonText: "Tutup",
+      });
     },
   });
 
   const handleArsipkan = (id: number) => {
-    if (window.confirm("Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.")) {
-      deleteUser.mutate({ id });
-    }
+    Swal.fire({
+      title: "Konfirmasi Arsip",
+      text: "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Ya, Arsipkan!",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteUser.mutate({ id });
+      }
+    });
   };
 
   // Fungsi untuk mengubah sorting
