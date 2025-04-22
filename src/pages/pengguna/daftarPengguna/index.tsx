@@ -1,4 +1,4 @@
-import { useUsers } from "@/hooks/user";
+import { useUsers, useDeleteUser } from "@/hooks/user";
 import { Archive, ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Download, Eye, FileText, Filter, Pencil, Plus, RefreshCcw, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
@@ -23,6 +23,22 @@ export default function Pengguna() {
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const itemsPerPage = 5; // Jumlah item per halaman
+
+  const deleteUser = useDeleteUser({
+    onSuccess: () => {
+      alert("Pengguna berhasil diarsipkan");
+      refetch();
+    },
+    onError: (error) => {
+      alert("Gagal mengarsipkan pengguna: " + (error.message || "Terjadi kesalahan saat mengarsipkan pengguna."));
+    },
+  });
+
+  const handleArsipkan = (id: number) => {
+    if (window.confirm("Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.")) {
+      deleteUser.mutate({ id });
+    }
+  };
 
   // Fungsi untuk mengubah sorting
   const handleSort = (field: SortField) => {
@@ -231,8 +247,15 @@ export default function Pengguna() {
                                   <FileText className="h-4 w-4" />
                                 </Button>
                               </Link>
-                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" title="Arsipkan">
-                                <Archive className="h-4 w-4" />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                title="Arsipkan"
+                                onClick={() => handleArsipkan(user.id)}
+                                disabled={deleteUser.isPending && deleteUser.variables?.id === user.id}
+                              >
+                                {deleteUser.isPending && deleteUser.variables?.id === user.id ? <div className="h-4 w-4 rounded-full border-2 border-red-200 border-t-red-600 animate-spin"></div> : <Archive className="h-4 w-4" />}
                               </Button>
                             </div>
                           </TableCell>
@@ -291,8 +314,15 @@ export default function Pengguna() {
                             <FileText className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" title="Arsipkan">
-                          <Archive className="h-4 w-4" />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          title="Arsipkan"
+                          onClick={() => handleArsipkan(user.id)}
+                          disabled={deleteUser.isPending && deleteUser.variables?.id === user.id}
+                        >
+                          {deleteUser.isPending && deleteUser.variables?.id === user.id ? <div className="h-4 w-4 rounded-full border-2 border-red-200 border-t-red-600 animate-spin"></div> : <Archive className="h-4 w-4" />}
                         </Button>
                       </div>
                     </div>

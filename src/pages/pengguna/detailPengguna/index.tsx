@@ -1,6 +1,6 @@
-import { useUser } from "@/hooks/user";
+import { useUser, useDeleteUser } from "@/hooks/user";
 import { ArrowLeft, RefreshCcw, Pencil, FileText, Archive } from "lucide-react";
-import { useParams, Link } from "react-router";
+import { useParams, Link, useNavigate } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utils/date";
@@ -9,7 +9,24 @@ import { cn } from "@/lib/utils";
 
 export default function DetailPengguna() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: user, isLoading, isError, refetch } = useUser({ id: parseInt(id || "0") });
+
+  const deleteUser = useDeleteUser({
+    onSuccess: () => {
+      alert("Pengguna berhasil diarsipkan");
+      navigate("/pengguna");
+    },
+    onError: (error) => {
+      alert("Gagal mengarsipkan pengguna: " + (error.message || "Terjadi kesalahan saat mengarsipkan pengguna."));
+    },
+  });
+
+  const handleArsipkan = () => {
+    if (window.confirm("Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.")) {
+      deleteUser.mutate({ id: parseInt(id || "0") });
+    }
+  };
 
   return (
     <div className="space-y-6 px-4 sm:px-0">
@@ -30,9 +47,9 @@ export default function DetailPengguna() {
               Edit Pengguna
             </Button>
           </Link>
-          <Button className="flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 rounded-md shadow-sm text-sm font-medium text-white">
+          <Button className="flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 rounded-md shadow-sm text-sm font-medium text-white" onClick={handleArsipkan} disabled={deleteUser.isPending}>
             <Archive className="h-4 w-4 mr-2" />
-            Arsipkan
+            {deleteUser.isPending ? "Mengarsipkan..." : "Arsipkan"}
           </Button>
         </div>
       </div>
@@ -140,9 +157,9 @@ export default function DetailPengguna() {
                         Edit Pengguna
                       </Button>
                     </Link>
-                    <Button variant="outline" className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700">
+                    <Button variant="outline" className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700" onClick={handleArsipkan} disabled={deleteUser.isPending}>
                       <Archive className="h-4 w-4 mr-2" />
-                      Arsipkan Pengguna
+                      {deleteUser.isPending ? "Mengarsipkan..." : "Arsipkan Pengguna"}
                     </Button>
                   </div>
                 </div>
