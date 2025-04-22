@@ -13,10 +13,12 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Rute autentikasi */}
         <Route element={<AuthLayout />}>
-          <Route index element={<Login />} />
           <Route path="/login" element={<Login />} />
         </Route>
+
+        {/* Rute utama yang dilindungi oleh autentikasi */}
         <Route element={<BaseLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
