@@ -43,16 +43,6 @@ export default function EditPengguna() {
     }
   );
 
-  // const {
-  //   data: users = [],
-  //   isLoading: loading,
-  //   isError,
-  //   refetch,
-  // } = useUsers({
-  //   staleTime: 5000,
-  //   refetchOnMount: 'always',
-  // });
-
   // Query untuk mendapatkan daftar role
   const { data: roles = [], isLoading: isLoadingRoles, isError: isErrorRoles } = useRoles();
 
