@@ -7,6 +7,7 @@ import Role from "./pages/role";
 import Pengguna from "./pages/pengguna/daftarPengguna";
 import TambahPengguna from "./pages/pengguna/tambahPengguna";
 import DetailPengguna from "./pages/pengguna/detailPengguna";
+import EditPengguna from "./pages/pengguna/editPengguna";
 
 export default function App() {
   return (
@@ -21,8 +22,9 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/role" element={<Role />} />
           <Route path="/pengguna" element={<Pengguna />} />
-          <Route path="/pengguna/:id" element={<DetailPengguna />} />
           <Route path="/pengguna/tambah" element={<TambahPengguna />} />
+          <Route path="/pengguna/:id/edit" element={<EditPengguna />} />
+          <Route path="/pengguna/:id" element={<DetailPengguna />} />
         </Route>
       </Routes>
     </BrowserRouter>
