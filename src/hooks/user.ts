@@ -1,6 +1,6 @@
 import { ApiResponse, CustomError, JoiValidationError } from "@/types/api";
 import { Role } from "@/types/role";
-import { User, UserSchema } from "@/types/user";
+import { User } from "@/types/user";
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
 
 export type UserWithRole = User & {
@@ -89,11 +89,11 @@ export function useUsers(options?: Omit<UseQueryOptions<UserWithRole[], Error, U
 }
 
 // Create a new user
-export function useCreateUser(options?: UseMutationOptions<UserSchema, Error, Omit<UserSchema, "id">>) {
+export function useCreateUser(options?: UseMutationOptions<UserWithRole, Error, import("@/types/user").CreateUserInput>) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userData: Omit<UserSchema, "id">) => {
+    mutationFn: async (userData: import("@/types/user").CreateUserInput) => {
       const response = await fetch(`${API_BASE_URL}/users`, {
         method: "POST",
         headers: {
@@ -105,7 +105,7 @@ export function useCreateUser(options?: UseMutationOptions<UserSchema, Error, Om
         throw new Error(`Error creating user: ${response.statusText}`);
       }
 
-      const result: ApiResponse<UserSchema> = await response.json();
+      const result: ApiResponse<UserWithRole> = await response.json();
 
       if (!result.success) {
         const errorData = result.data as unknown as ErrorData;
@@ -119,8 +119,8 @@ export function useCreateUser(options?: UseMutationOptions<UserSchema, Error, Om
       return result.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      queryClient.setQueryData(userKeys.detail(data.id), data);
+      // Use the utility function to update cache
+      updateUserCache(queryClient, data);
     },
     ...options,
   });
