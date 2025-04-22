@@ -28,15 +28,6 @@ export const userKeys = {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
-// Utility function to update cache after mutations
-export const updateUserCache = (queryClient: ReturnType<typeof useQueryClient>, updatedUser: UserWithRole) => {
-  // Update the specific user detail in cache
-  queryClient.setQueryData(userKeys.detail(updatedUser.id), updatedUser);
-
-  // Invalidate the user list to reflect changes
-  queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-};
-
 export function useUser({ id }: { id: number }, options?: Omit<UseQueryOptions<UserWithRole, Error, UserWithRole, ReturnType<typeof userKeys.detail>>, "queryKey" | "queryFn">) {
   return useQuery({
     queryKey: userKeys.detail(id),
@@ -120,8 +111,9 @@ export function useCreateUser(options?: UseMutationOptions<UserWithRole, Error, 
       return result.data;
     },
     onSuccess: (data) => {
+      queryClient.setQueryData(userKeys.detail(data.id), data);
       // Use the utility function to update cache
-      updateUserCache(queryClient, data);
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },
     ...options,
   });
@@ -165,8 +157,9 @@ export function useUpdateUser(options?: UseMutationOptions<UserWithRole, Error, 
       return result.data;
     },
     onSuccess: (data) => {
+      queryClient.setQueryData(userKeys.detail(data.id), data);
       // Use the utility function to update cache
-      updateUserCache(queryClient, data);
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },
     ...options,
   });

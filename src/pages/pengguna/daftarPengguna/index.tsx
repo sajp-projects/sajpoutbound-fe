@@ -17,7 +17,15 @@ type SortField = "name" | "email" | "role" | "createdAt" | "updatedAt";
 type SortDirection = "asc" | "desc";
 
 export default function Pengguna() {
-  const { data: users = [], isLoading: loading, isError, refetch } = useUsers();
+  const {
+    data: users = [],
+    isLoading: loading,
+    isError,
+    refetch,
+  } = useUsers({
+    staleTime: 5000,
+    refetchOnMount: "always",
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [currentPage, setCurrentPage] = useState(1);

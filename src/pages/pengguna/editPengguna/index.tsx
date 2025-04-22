@@ -1,10 +1,9 @@
-import { useUser, useUpdateUser, updateUserCache } from "@/hooks/user";
+import { useUser, useUpdateUser } from "@/hooks/user";
 import { useRoles } from "@/hooks/role";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useParams, Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import { Role } from "@/types/role";
-import { useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,6 @@ interface UserFormData {
 export default function EditPengguna() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   // State untuk form
   const [formData, setFormData] = useState<UserFormData>({
@@ -35,19 +33,32 @@ export default function EditPengguna() {
     data: user,
     isLoading: isLoadingUser,
     isError: isErrorUser,
-  } = useUser({
-    id: parseInt(id || "0"),
-  });
+  } = useUser(
+    {
+      id: parseInt(id || "0"),
+    },
+    {
+      staleTime: 5000,
+      refetchOnMount: "always",
+    }
+  );
+
+  // const {
+  //   data: users = [],
+  //   isLoading: loading,
+  //   isError,
+  //   refetch,
+  // } = useUsers({
+  //   staleTime: 5000,
+  //   refetchOnMount: 'always',
+  // });
 
   // Query untuk mendapatkan daftar role
   const { data: roles = [], isLoading: isLoadingRoles, isError: isErrorRoles } = useRoles();
 
   // Mutation untuk update user
   const updateUserMutation = useUpdateUser({
-    onSuccess: (updatedUser) => {
-      // Gunakan utility function untuk memperbarui cache
-      updateUserCache(queryClient, updatedUser);
-
+    onSuccess: () => {
       // Tampilkan SweetAlert untuk sukses
       Swal.fire({
         title: "Berhasil!",

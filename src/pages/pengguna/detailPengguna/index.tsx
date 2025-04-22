@@ -11,7 +11,7 @@ import Swal from "sweetalert2";
 export default function DetailPengguna() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: user, isLoading, isError, refetch } = useUser({ id: parseInt(id || "0") });
+  const { data: user, isLoading, isError, refetch } = useUser({ id: parseInt(id || "0") }, { staleTime: 5000, refetchOnMount: "always" });
 
   const deleteUser = useDeleteUser({
     onSuccess: () => {
