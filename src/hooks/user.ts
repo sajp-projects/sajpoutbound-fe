@@ -23,6 +23,7 @@ export const userKeys = {
   list: (filters: Record<number, unknown>) => [...userKeys.lists(), { filters }] as const,
   details: () => [...userKeys.all, "detail"] as const,
   detail: (id: number) => [...userKeys.details(), id] as const,
+  archived: () => [...userKeys.all, "archived"] as const,
 };
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
@@ -195,6 +196,61 @@ export function useDeleteUser(options?: UseMutationOptions<void, Error, { id: nu
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.removeQueries({ queryKey: userKeys.detail(variables.id) });
+    },
+    ...options,
+  });
+}
+
+export function useArchivedUsers(options?: Omit<UseQueryOptions<UserWithRole[], Error, UserWithRole[], ReturnType<typeof userKeys.archived>>, "queryKey" | "queryFn">) {
+  return useQuery({
+    queryKey: userKeys.archived(),
+    queryFn: async () => {
+      const response = await fetch(`${API_BASE_URL}/users/archived`);
+      if (!response.ok) {
+        throw new Error(`Error fetching archived users: ${response.statusText}`);
+      }
+
+      const result: ApiResponse<UserWithRole[]> = await response.json();
+
+      if (!result.success) {
+        const errorData = result.data as unknown as ErrorData;
+        throw new Error(errorData.message || "An error occurred");
+      }
+
+      if (!result.data) {
+        throw new Error("Archived users data is missing");
+      }
+
+      return result.data;
+    },
+    ...options,
+  });
+}
+
+// Restore an archived user
+export function useRestoreUser(options?: UseMutationOptions<void, Error, { id: number }>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id }: { id: number }) => {
+      const response = await fetch(`${API_BASE_URL}/users/${id}/unarchived`, {
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(`Error restoring user: ${response.statusText}`);
+      }
+
+      const result: ApiResponse<void> = await response.json();
+
+      // For restore operations, we just need to check success
+      if (!result.success) {
+        const errorData = result.data as unknown as ErrorData;
+        throw new Error(errorData.message || "Failed to restore user");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.archived() });
     },
     ...options,
   });
