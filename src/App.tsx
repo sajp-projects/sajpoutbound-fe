@@ -6,6 +6,7 @@ import AuthLayout from "./layout/AuthLayout";
 import Role from "./pages/role";
 import Pengguna from "./pages/pengguna/daftarPengguna";
 import TambahPengguna from "./pages/pengguna/tambahPengguna";
+import DetailPengguna from "./pages/pengguna/detailPengguna";
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/role" element={<Role />} />
           <Route path="/pengguna" element={<Pengguna />} />
+          <Route path="/pengguna/:id" element={<DetailPengguna />} />
           <Route path="/pengguna/tambah" element={<TambahPengguna />} />
         </Route>
       </Routes>
