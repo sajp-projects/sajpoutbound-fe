@@ -17,7 +17,7 @@ type SortField = "name" | "email" | "role" | "createdAt" | "updatedAt" | "delete
 type SortDirection = "asc" | "desc";
 
 export default function ArsipPengguna() {
-  const { data: users = [], isLoading: loading, isError, refetch } = useArchivedUsers();
+  const { data: users = [], isLoading: loading, isError, refetch } = useArchivedUsers({ staleTime: 5000, refetchOnMount: "always" });
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [currentPage, setCurrentPage] = useState(1);
