@@ -3,9 +3,11 @@ import Navbar from "../components/Navbar";
 import SideBar from "../components/SideBar";
 import Footer from "../components/Footer";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/auth";
 
 export default function BaseLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { isAuthenticated, isLoading, checkAuthRedirect } = useAuth();
 
   useEffect(() => {
     const handleResize = () => {
@@ -28,6 +30,16 @@ export default function BaseLayout() {
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+
+  // Cek apakah sudah login, jika belum redirect ke halaman login
+  useEffect(() => {
+    checkAuthRedirect(true, "/login");
+  }, [checkAuthRedirect]);
+
+  // Jika masih loading atau belum login, jangan tampilkan apapun
+  if (isLoading || !isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">

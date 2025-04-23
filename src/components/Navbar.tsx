@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router";
 import { Menu, User, Settings, LogOut, ChevronDown } from "lucide-react";
 import { cn } from "../lib/utils";
+import { useAuth } from "@/hooks/auth";
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -12,6 +13,7 @@ export default function Navbar({ toggleSidebar }: NavbarProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
   const profileRef = useRef<HTMLDivElement>(null);
+  const { user, logout } = useAuth();
 
   // Fungsi untuk mendapatkan judul halaman berdasarkan path
   const getPageTitle = () => {
@@ -66,6 +68,10 @@ export default function Navbar({ toggleSidebar }: NavbarProps) {
 
   const pageTitle = getPageTitle();
 
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
       <div className="px-4 sm:px-6 lg:px-8">
@@ -100,8 +106,8 @@ export default function Navbar({ toggleSidebar }: NavbarProps) {
                   <User className="h-5 w-5" />
                 </div>
                 <div className="hidden md:flex flex-col items-start">
-                  <span className="font-medium text-gray-900">Admin User</span>
-                  <span className="text-xs text-gray-500">Administrator</span>
+                  <span className="font-medium text-gray-900">{user?.name || "Pengguna"}</span>
+                  <span className="text-xs text-gray-500">{user?.email || "email@contoh.com"}</span>
                 </div>
                 <ChevronDown className={cn("h-4 w-4 text-gray-500 transition-transform", isProfileOpen && "transform rotate-180")} />
               </button>
@@ -111,7 +117,7 @@ export default function Navbar({ toggleSidebar }: NavbarProps) {
                 <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div className="px-4 py-3 border-b border-gray-100">
                     <p className="text-sm">Selamat datang,</p>
-                    <p className="text-sm font-medium text-gray-900 truncate">admin@outmanage.com</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{user?.email || "email@contoh.com"}</p>
                   </div>
                   <Link to="/profile" className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">
                     <User className="mr-3 h-5 w-5 text-gray-400 group-hover:text-blue-500" />
@@ -122,10 +128,10 @@ export default function Navbar({ toggleSidebar }: NavbarProps) {
                     Pengaturan Akun
                   </Link>
                   <div className="border-t border-gray-100"></div>
-                  <Link to="/login" className="group flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                  <button onClick={handleLogout} className="group flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left">
                     <LogOut className="mr-3 h-5 w-5 text-red-400 group-hover:text-red-500" />
                     Logout
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>

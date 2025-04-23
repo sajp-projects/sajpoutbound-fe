@@ -1,62 +1,96 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router";
-import { Save, Loader2, ArrowLeft } from "lucide-react";
+import { useUser, useUpdateUser } from "@/hooks/user";
 import { useRoles } from "@/hooks/role";
-import { useCreateUser } from "@/hooks/user";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { useParams, Link, useNavigate } from "react-router";
+import { useState, useEffect } from "react";
 import { Role } from "@/types/role";
-import { CreateUserInput } from "@/types/user";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Swal from "sweetalert2";
 
-// Type untuk form tambah user
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+
+// Type untuk form edit user
 interface UserFormData {
   name: string;
   email: string;
-  password: string;
   roleId: string;
 }
 
-export default function TambahPengguna() {
+export default function EditPengguna() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   // State untuk form
   const [formData, setFormData] = useState<UserFormData>({
     name: "",
     email: "",
-    password: "",
     roleId: "",
   });
+
+  // Query untuk mendapatkan data user
+  const {
+    data: user,
+    isLoading: isLoadingUser,
+    isError: isErrorUser,
+  } = useUser(
+    {
+      id: parseInt(id || "0"),
+    },
+    {
+      staleTime: 5000,
+      refetchOnMount: "always",
+    }
+  );
+
+  // const {
+  //   data: users = [],
+  //   isLoading: loading,
+  //   isError,
+  //   refetch,
+  // } = useUsers({
+  //   staleTime: 5000,
+  //   refetchOnMount: 'always',
+  // });
 
   // Query untuk mendapatkan daftar role
   const { data: roles = [], isLoading: isLoadingRoles, isError: isErrorRoles } = useRoles();
 
-  // Mutation untuk membuat user baru
-  const createUserMutation = useCreateUser({
+  // Mutation untuk update user
+  const updateUserMutation = useUpdateUser({
     onSuccess: () => {
       // Tampilkan SweetAlert untuk sukses
       Swal.fire({
         title: "Berhasil!",
-        text: "Pengguna baru berhasil ditambahkan",
+        text: "Data pengguna berhasil diperbarui",
         icon: "success",
         timer: 1500,
         showConfirmButton: false,
       }).then(() => {
-        navigate("/pengguna");
+        navigate(`/pengguna/${id}`);
       });
     },
     onError: (error) => {
       // Tampilkan SweetAlert untuk error
       Swal.fire({
         title: "Gagal!",
-        text: `Gagal menambahkan pengguna: ${error.message}`,
+        text: `Gagal memperbarui data pengguna: ${error.message}`,
         icon: "error",
         confirmButtonText: "Tutup",
       });
     },
   });
+
+  // Isi form dengan data user ketika data sudah tersedia
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name,
+        email: user.email,
+        roleId: user.role.id.toString(),
+      });
+    }
+  }, [user]);
 
   // Handler for input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -72,7 +106,7 @@ export default function TambahPengguna() {
     e.preventDefault();
 
     // Validasi data
-    if (!formData.name || !formData.email || !formData.password || !formData.roleId) {
+    if (!formData.name || !formData.email || !formData.roleId) {
       Swal.fire({
         title: "Validasi Gagal",
         text: "Semua field harus diisi",
@@ -82,47 +116,43 @@ export default function TambahPengguna() {
       return;
     }
 
-    // Persiapkan data untuk API
-    const userData: CreateUserInput = {
+    updateUserMutation.mutate({
+      id: parseInt(id || "0"),
       name: formData.name,
       email: formData.email,
-      password: formData.password,
       roleId: parseInt(formData.roleId),
-    };
-
-    // Kirim data ke API
-    createUserMutation.mutate(userData);
+    });
   };
 
-  const isLoading = isLoadingRoles;
-  const isError = isErrorRoles;
-  const isSubmitting = createUserMutation.isPending;
+  const isLoading = isLoadingUser || isLoadingRoles;
+  const isError = isErrorUser || isErrorRoles;
+  const isSubmitting = updateUserMutation.isPending;
 
   return (
     <div className="space-y-6 px-4 sm:px-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
         <div className="flex items-center">
-          <Link to="/pengguna">
+          <Link to={`/pengguna/${id}`}>
             <Button variant="ghost" size="sm" className="mr-2">
               <ArrowLeft className="h-4 w-4 mr-1" />
               Kembali
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Tambah Pengguna</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Edit Pengguna</h1>
         </div>
       </div>
 
       <Card className="border border-gray-200 rounded-lg shadow-sm">
         <CardHeader>
-          <CardTitle>Form Pengguna Baru</CardTitle>
-          <CardDescription>Isi data pengguna yang akan ditambahkan ke sistem</CardDescription>
+          <CardTitle>Form Edit Pengguna</CardTitle>
+          <CardDescription>Perbarui informasi pengguna sistem</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="flex justify-center items-center h-60">
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
-                <p className="mt-4 text-blue-600 font-medium">Memuat data...</p>
+                <p className="mt-4 text-blue-600 font-medium">Memuat data pengguna...</p>
               </div>
             </div>
           ) : isError ? (
@@ -158,16 +188,6 @@ export default function TambahPengguna() {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <div className="mt-1">
-                  <Input id="password" name="password" type="password" value={formData.password} onChange={handleInputChange} placeholder="Masukkan password" className="w-full" />
-                </div>
-                <p className="mt-1 text-sm text-gray-500">Password minimal 8 karakter</p>
-              </div>
-
-              <div>
                 <label htmlFor="roleId" className="block text-sm font-medium text-gray-700">
                   Peran
                 </label>
@@ -179,7 +199,6 @@ export default function TambahPengguna() {
                     onChange={handleInputChange}
                     className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   >
-                    <option value="">Pilih peran pengguna</option>
                     {roles.map((role: Role) => (
                       <option key={role.id} value={role.id.toString()}>
                         {role.name}
@@ -191,7 +210,7 @@ export default function TambahPengguna() {
               </div>
 
               <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => navigate(`/pengguna`)} disabled={isSubmitting} type="button">
+                <Button variant="outline" onClick={() => navigate(`/pengguna/${id}`)} disabled={isSubmitting} type="button">
                   Batal
                 </Button>
                 <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">

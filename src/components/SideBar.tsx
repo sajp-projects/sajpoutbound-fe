@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { ChevronDown, Users, ShieldCheck, Lock, Package, UserCheck, Warehouse, FileText, Truck, PackageCheck, BarChart3, LogOut, Home, X } from "lucide-react";
 import { cn } from "../lib/utils";
+import { useAuth } from "@/hooks/auth";
 
 interface SubMenuItem {
   name: string;
@@ -23,6 +24,7 @@ interface SideBarProps {
 export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
+  const { logout } = useAuth();
 
   const menuItems: MenuItem[] = [
     {
@@ -137,6 +139,10 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     return location.pathname === path;
   };
 
+  function handleLogout() {
+    logout();
+  }
+
   return (
     <aside className={cn("h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-300 shadow-sm", isOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0")}>
       <div className="h-full flex flex-col overflow-hidden">
@@ -220,10 +226,10 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
             <div className="flex-grow h-px bg-gray-200"></div>
           </div>
           <div className="px-3 pb-5 pt-1">
-            <Link to="/login" className="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors group">
+            <button onClick={handleLogout} className="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors group w-full text-left">
               <LogOut className="w-5 h-5 text-gray-500 group-hover:text-red-500" />
               <span className="ml-3">Logout</span>
-            </Link>
+            </button>
           </div>
         </div>
       </div>
