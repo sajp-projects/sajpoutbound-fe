@@ -221,27 +221,37 @@ export function useArchivedUsers(options?: Omit<UseQueryOptions<UserWithRole[], 
 }
 
 // Restore an archived user
-export function useRestoreUser(options?: UseMutationOptions<void, Error, { id: number }>) {
+export function useRestoreUser(options?: UseMutationOptions<UserWithRole, Error, { id: number }>) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id }: { id: number }) => {
       const response = await fetch(`${API_BASE_URL}/users/${id}/unarchived`, {
-        method: "POST",
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
+
       if (!response.ok) {
         throw new Error(`Error restoring user: ${response.statusText}`);
       }
 
-      const result: ApiResponse<void> = await response.json();
+      const result: ApiResponse<UserWithRole> = await response.json();
 
-      // For restore operations, we just need to check success
       if (!result.success) {
         const errorData = result.data as unknown as ErrorData;
         throw new Error(errorData.message || "Failed to restore user");
       }
+
+      if (!result.data) {
+        throw new Error("Restored user data is missing");
+      }
+
+      return result.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(userKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userKeys.archived() });
     },

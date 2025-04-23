@@ -5,4 +5,7 @@ export interface Role {
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
+  users?: UserSchema[];
 }
+
+import { UserSchema } from "./user";
