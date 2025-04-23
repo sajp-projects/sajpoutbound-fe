@@ -1,17 +1,14 @@
 import { ApiResponse, CustomError, JoiValidationError } from "@/types/api";
-import { Role } from "@/types/role";
-import { User } from "@/types/user";
+import { CreateUserInput, UserWithRole, UsersResponse } from "@/types/user";
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
-
-export type UserWithRole = User & {
-  role: Role;
-};
+import { fetchWithAuth } from "@/utils/fetch";
+import { useSearchParams } from "react-router";
 
 // Type for user update input based on backend Joi schema
 export interface UserUpdateInput {
   name?: string;
   email?: string;
-  roleId?: number;
+  roleId?: string;
 }
 
 type ErrorData = JoiValidationError | CustomError;
@@ -20,19 +17,19 @@ type ErrorData = JoiValidationError | CustomError;
 export const userKeys = {
   all: ["users"] as const,
   lists: () => [...userKeys.all, "list"] as const,
-  list: (filters: Record<number, unknown>) => [...userKeys.lists(), { filters }] as const,
+  list: (filters: Record<string, unknown>) => [...userKeys.lists(), { filters }] as const,
   details: () => [...userKeys.all, "detail"] as const,
-  detail: (id: number) => [...userKeys.details(), id] as const,
+  detail: (id: string) => [...userKeys.details(), id] as const,
   archived: () => [...userKeys.all, "archived"] as const,
 };
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
-export function useUser({ id }: { id: number }, options?: Omit<UseQueryOptions<UserWithRole, Error, UserWithRole, ReturnType<typeof userKeys.detail>>, "queryKey" | "queryFn">) {
+export function useUser({ id }: { id: string }, options?: Omit<UseQueryOptions<UserWithRole, Error, UserWithRole, ReturnType<typeof userKeys.detail>>, "queryKey" | "queryFn">) {
   return useQuery({
     queryKey: userKeys.detail(id),
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/users/${id}`);
+      const response = await fetchWithAuth(`${API_BASE_URL}/users/${id}`);
       if (!response.ok) {
         throw new Error(`Error fetching user: ${response.statusText}`);
       }
@@ -54,16 +51,56 @@ export function useUser({ id }: { id: number }, options?: Omit<UseQueryOptions<U
   });
 }
 
-export function useUsers(options?: Omit<UseQueryOptions<UserWithRole[], Error, UserWithRole[], ReturnType<typeof userKeys.lists>>, "queryKey" | "queryFn">) {
+// Hook untuk mendapatkan daftar pengguna dengan pagination dari server
+export function useUsers(options?: Omit<UseQueryOptions<UsersResponse, Error, UsersResponse, ReturnType<typeof userKeys.list>>, "queryKey" | "queryFn">) {
+  const [searchParams] = useSearchParams();
+  const page = searchParams.get("page") || "1";
+  const limit = searchParams.get("limit") || "10";
+  const search = searchParams.get("search") || "";
+  const sort = searchParams.get("sort") || "name";
+  const sortDirection = searchParams.get("sortDirection") || "asc";
+
+  // Buat objek filters dengan semua parameter URL untuk digunakan sebagai bagian dari queryKey
+  const filters = {
+    page,
+    limit,
+    search,
+    sort,
+    sortDirection,
+  };
+
   return useQuery({
-    queryKey: userKeys.lists(),
+    // Gunakan queryKey yang mencakup semua filter agar React Query dapat memantau perubahan
+    queryKey: userKeys.list(filters),
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/users`);
+      // Build URL with search params
+      const url = new URL(`${API_BASE_URL}/users`);
+      url.searchParams.append("page", page);
+      url.searchParams.append("limit", limit);
+
+      if (search) {
+        url.searchParams.append("search", search);
+      }
+
+      // Tambahkan parameter sorting jika tersedia
+      if (sort) {
+        url.searchParams.append("sort", sort);
+      }
+
+      if (sortDirection) {
+        url.searchParams.append("sortDirection", sortDirection);
+      }
+
+      // Debug log untuk troubleshooting
+      console.log(`Fetching users with URL: ${url.toString()}`);
+      console.log(`Query key: ${JSON.stringify(userKeys.list(filters))}`);
+
+      const response = await fetchWithAuth(url.toString());
       if (!response.ok) {
         throw new Error(`Error fetching users: ${response.statusText}`);
       }
 
-      const result: ApiResponse<UserWithRole[]> = await response.json();
+      const result: ApiResponse<UsersResponse> = await response.json();
 
       if (!result.success) {
         const errorData = result.data as unknown as ErrorData;
@@ -74,23 +111,24 @@ export function useUsers(options?: Omit<UseQueryOptions<UserWithRole[], Error, U
         throw new Error("Users data is missing");
       }
 
+      // Log untuk memastikan data diterima dengan benar
+      console.log(`Received ${result.data.users.length} users on page ${result.data.pagination.page}`);
+
       return result.data;
     },
+    refetchOnWindowFocus: true,
     ...options,
   });
 }
 
 // Create a new user
-export function useCreateUser(options?: UseMutationOptions<UserWithRole, Error, import("@/types/user").CreateUserInput>) {
+export function useCreateUser(options?: UseMutationOptions<UserWithRole, Error, CreateUserInput>) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userData: import("@/types/user").CreateUserInput) => {
-      const response = await fetch(`${API_BASE_URL}/users`, {
+    mutationFn: async (userData: CreateUserInput) => {
+      const response = await fetchWithAuth(`${API_BASE_URL}/users`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(userData),
       });
       if (!response.ok) {
@@ -112,7 +150,7 @@ export function useCreateUser(options?: UseMutationOptions<UserWithRole, Error, 
     },
     onSuccess: (data) => {
       queryClient.setQueryData(userKeys.detail(data.id), data);
-      // Use the utility function to update cache
+      // Invalidate all user lists regardless of filters
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },
     ...options,
@@ -120,11 +158,11 @@ export function useCreateUser(options?: UseMutationOptions<UserWithRole, Error, 
 }
 
 // Update an existing user
-export function useUpdateUser(options?: UseMutationOptions<UserWithRole, Error, { id: number } & UserUpdateInput>) {
+export function useUpdateUser(options?: UseMutationOptions<UserWithRole, Error, { id: string } & UserUpdateInput>) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: { id: number } & UserUpdateInput) => {
+    mutationFn: async (payload: { id: string } & UserUpdateInput) => {
       const { id, ...updateData } = payload;
 
       // Validate that at least one field is provided
@@ -132,11 +170,8 @@ export function useUpdateUser(options?: UseMutationOptions<UserWithRole, Error, 
         throw new Error("At least one field must be provided for update");
       }
 
-      const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/users/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(updateData),
       });
       if (!response.ok) {
@@ -158,7 +193,7 @@ export function useUpdateUser(options?: UseMutationOptions<UserWithRole, Error, 
     },
     onSuccess: (data) => {
       queryClient.setQueryData(userKeys.detail(data.id), data);
-      // Use the utility function to update cache
+      // Invalidate all user lists regardless of filters
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },
     ...options,
@@ -166,12 +201,12 @@ export function useUpdateUser(options?: UseMutationOptions<UserWithRole, Error, 
 }
 
 // Delete a user
-export function useDeleteUser(options?: UseMutationOptions<void, Error, { id: number }>) {
+export function useDeleteUser(options?: UseMutationOptions<void, Error, { id: string }>) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id }: { id: number }) => {
-      const response = await fetch(`${API_BASE_URL}/users/${id}`, {
+    mutationFn: async ({ id }: { id: string }) => {
+      const response = await fetchWithAuth(`${API_BASE_URL}/users/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) {
@@ -187,6 +222,7 @@ export function useDeleteUser(options?: UseMutationOptions<void, Error, { id: nu
       }
     },
     onSuccess: (_data, variables) => {
+      // Invalidate all user lists regardless of filters
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.removeQueries({ queryKey: userKeys.detail(variables.id) });
     },
@@ -198,7 +234,10 @@ export function useArchivedUsers(options?: Omit<UseQueryOptions<UserWithRole[], 
   return useQuery({
     queryKey: userKeys.archived(),
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/users/archived`);
+      // Buat URL untuk API arsip
+      const url = new URL(`${API_BASE_URL}/users/archived`);
+
+      const response = await fetchWithAuth(url.toString());
       if (!response.ok) {
         throw new Error(`Error fetching archived users: ${response.statusText}`);
       }
@@ -221,16 +260,13 @@ export function useArchivedUsers(options?: Omit<UseQueryOptions<UserWithRole[], 
 }
 
 // Restore an archived user
-export function useRestoreUser(options?: UseMutationOptions<UserWithRole, Error, { id: number }>) {
+export function useRestoreUser(options?: UseMutationOptions<UserWithRole, Error, { id: string }>) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id }: { id: number }) => {
-      const response = await fetch(`${API_BASE_URL}/users/${id}/unarchived`, {
+    mutationFn: async ({ id }: { id: string }) => {
+      const response = await fetchWithAuth(`${API_BASE_URL}/users/${id}/unarchived`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
       });
 
       if (!response.ok) {
@@ -252,7 +288,9 @@ export function useRestoreUser(options?: UseMutationOptions<UserWithRole, Error,
     },
     onSuccess: (data) => {
       queryClient.setQueryData(userKeys.detail(data.id), data);
+      // Invalidate all user lists
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      // Invalidate archived users list
       queryClient.invalidateQueries({ queryKey: userKeys.archived() });
     },
     ...options,

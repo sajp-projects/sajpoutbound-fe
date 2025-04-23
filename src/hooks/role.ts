@@ -1,6 +1,21 @@
 import { ApiResponse, CustomError, JoiValidationError } from "@/types/api";
 import { Role } from "@/types/role";
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
+import { fetchWithAuth } from "@/utils/fetch";
+import { useSearchParams } from "react-router";
+
+// Interface untuk respons API roles dengan pagination
+export interface RolesResponse {
+  roles: Role[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
 
 // Query keys for caching
 export const roleKeys = {
@@ -8,7 +23,7 @@ export const roleKeys = {
   lists: () => [...roleKeys.all, "list"] as const,
   list: (filters: Record<string, unknown>) => [...roleKeys.lists(), { filters }] as const,
   details: () => [...roleKeys.all, "detail"] as const,
-  detail: (id: number) => [...roleKeys.details(), id] as const,
+  detail: (id: string) => [...roleKeys.details(), id] as const,
 };
 
 // Type for role update input based on backend Joi schema
@@ -22,11 +37,11 @@ type ErrorData = JoiValidationError | CustomError;
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
 // Hook for fetching a single role
-export function useRole({ id }: { id: number }, options?: Omit<UseQueryOptions<Role, Error, Role, ReturnType<typeof roleKeys.detail>>, "queryKey" | "queryFn">) {
+export function useRole({ id }: { id: string }, options?: Omit<UseQueryOptions<Role, Error, Role, ReturnType<typeof roleKeys.detail>>, "queryKey" | "queryFn">) {
   return useQuery({
-    queryKey: roleKeys.detail(id),
+    queryKey: roleKeys.detail(id.toString()),
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/roles/${id}`);
+      const response = await fetchWithAuth(`${API_BASE_URL}/roles/${id}`);
 
       const result: ApiResponse<Role> = await response.json();
 
@@ -49,24 +64,58 @@ export function useRole({ id }: { id: number }, options?: Omit<UseQueryOptions<R
   });
 }
 
-// Hook for fetching all roles
-export function useRoles(options?: Omit<UseQueryOptions<Role[], Error, Role[], ReturnType<typeof roleKeys.lists>>, "queryKey" | "queryFn">) {
+// Hook for fetching roles with pagination
+export function useRoles(options?: Omit<UseQueryOptions<RolesResponse, Error, RolesResponse, ReturnType<typeof roleKeys.list>>, "queryKey" | "queryFn">) {
+  const [searchParams] = useSearchParams();
+  const page = searchParams.get("page") || "1";
+  const limit = searchParams.get("limit") || "10";
+  const search = searchParams.get("search") || "";
+  const sort = searchParams.get("sort") || "name";
+  const sortDirection = searchParams.get("sortDirection") || "asc";
+
+  // Buat objek filters dengan semua parameter URL untuk digunakan sebagai bagian dari queryKey
+  const filters = {
+    page,
+    limit,
+    search,
+    sort,
+    sortDirection,
+  };
+
   return useQuery({
-    queryKey: roleKeys.lists(),
+    queryKey: roleKeys.list(filters),
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/roles`);
+      // Build URL with search params
+      const url = new URL(`${API_BASE_URL}/roles`);
+      url.searchParams.append("page", page);
+      url.searchParams.append("limit", limit);
+
+      if (search) {
+        url.searchParams.append("search", search);
+      }
+
+      // Tambahkan parameter sorting jika tersedia
+      if (sort) {
+        url.searchParams.append("sort", sort);
+      }
+
+      if (sortDirection) {
+        url.searchParams.append("sortDirection", sortDirection);
+      }
+
+      const response = await fetchWithAuth(url.toString());
       if (!response.ok) {
         throw new Error(`Error fetching roles: ${response.statusText}`);
       }
 
-      const result: ApiResponse<Role[]> = await response.json();
+      const result: ApiResponse<RolesResponse> = await response.json();
 
       if (!result.success) {
         const errorData = result.data as unknown as ErrorData;
         throw new Error(errorData.message || "An error occurred");
       }
 
-      if (!result.data) {
+      if (!result.data || !result.data.roles) {
         throw new Error("Roles data is missing");
       }
 
@@ -88,11 +137,8 @@ export function useCreateRole(options?: UseMutationOptions<Role, Error, CreateRo
 
   return useMutation({
     mutationFn: async (roleData: CreateRoleInput) => {
-      const response = await fetch(`${API_BASE_URL}/roles`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/roles`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(roleData),
       });
       if (!response.ok) {
@@ -121,11 +167,11 @@ export function useCreateRole(options?: UseMutationOptions<Role, Error, CreateRo
 }
 
 // Update a role
-export function useUpdateRole(options?: UseMutationOptions<Role, Error, { id: number } & RoleUpdateInput>) {
+export function useUpdateRole(options?: UseMutationOptions<Role, Error, { id: string } & RoleUpdateInput>) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: { id: number } & RoleUpdateInput) => {
+    mutationFn: async (payload: { id: string } & RoleUpdateInput) => {
       const { id, ...updateData } = payload;
 
       // Validate that at least one field is provided
@@ -133,11 +179,8 @@ export function useUpdateRole(options?: UseMutationOptions<Role, Error, { id: nu
         throw new Error("At least one field must be provided for update");
       }
 
-      const response = await fetch(`${API_BASE_URL}/roles/${id}`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/roles/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(updateData),
       });
       if (!response.ok) {
@@ -166,12 +209,12 @@ export function useUpdateRole(options?: UseMutationOptions<Role, Error, { id: nu
 }
 
 // Delete a role
-export function useDeleteRole(options?: UseMutationOptions<Role, Error, { id: number }>) {
+export function useDeleteRole(options?: UseMutationOptions<Role, Error, { id: string }>) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id }: { id: number }) => {
-      const response = await fetch(`${API_BASE_URL}/roles/${id}`, {
+    mutationFn: async ({ id }: { id: string }) => {
+      const response = await fetchWithAuth(`${API_BASE_URL}/roles/${id}`, {
         method: "DELETE",
       });
 

@@ -11,7 +11,7 @@ import Swal from "sweetalert2";
 export default function DetailPengguna() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: user, isLoading, isError, refetch } = useUser({ id: parseInt(id || "0") }, { staleTime: 5000, refetchOnMount: "always" });
+  const { data: user, isLoading, isError, refetch } = useUser({ id: id || "" }, { staleTime: 5000, refetchOnMount: "always" });
 
   const deleteUser = useDeleteUser({
     onSuccess: () => {
@@ -47,7 +47,7 @@ export default function DetailPengguna() {
       cancelButtonText: "Batal",
     }).then((result) => {
       if (result.isConfirmed) {
-        deleteUser.mutate({ id: parseInt(id || "0") });
+        deleteUser.mutate({ id: id || "" });
       }
     });
   };

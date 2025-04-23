@@ -1,7 +1,7 @@
 import { useUsers, useDeleteUser } from "@/hooks/user";
 import { Archive, ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Download, Eye, FileText, Filter, Pencil, Plus, RefreshCcw, Search } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useState, useCallback } from "react";
+import { Link, useSearchParams } from "react-router";
 import Swal from "sweetalert2";
 
 import { Badge } from "@/components/ui/badge";
@@ -17,21 +17,111 @@ type SortField = "name" | "email" | "role" | "createdAt" | "updatedAt";
 type SortDirection = "asc" | "desc";
 
 export default function Pengguna() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Mengambil parameter langsung dari URL - ini adalah sumber kebenaran utama
+  const currentPage = parseInt(searchParams.get("page") || "1");
+  const itemsPerPage = parseInt(searchParams.get("limit") || "10");
+  const searchQuery = searchParams.get("search") || "";
+  const sortFieldParam = (searchParams.get("sort") as SortField) || "name";
+  const sortDirectionParam = (searchParams.get("sortDirection") as SortDirection) || "asc";
+
+  // State untuk input pencarian, tidak terhubung langsung ke URL
+  const [searchInputValue, setSearchInputValue] = useState(searchQuery);
+
+  // Fungsi untuk mengubah halaman dengan aman
+  const handlePageChange = useCallback(
+    (page: number) => {
+      // Penting: Kita kloning semua parameter yang ada untuk menghindari kehilangan data
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set("page", page.toString());
+
+      console.log(`Setting page to ${page}`);
+      // Gunakan { replace: false } untuk memastikan halaman ditambahkan ke history
+      setSearchParams(newParams, { replace: false });
+    },
+    [searchParams, setSearchParams]
+  );
+
+  // Fungsi untuk mengubah sorting
+  const handleSort = useCallback(
+    (field: SortField) => {
+      const currentSort = (searchParams.get("sort") as SortField) || "name";
+      const currentDirection = (searchParams.get("sortDirection") as SortDirection) || "asc";
+
+      // Ubah arah sorting jika field yang sama diklik
+      const newDirection = field === currentSort && currentDirection === "asc" ? "desc" : "asc";
+
+      // Penting: Kita kloning semua parameter yang ada
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set("sort", field);
+      newParams.set("sortDirection", newDirection);
+      newParams.set("page", "1"); // Reset ke halaman pertama saat sorting berubah
+
+      console.log(`Setting sort to ${field}, direction: ${newDirection}`);
+      setSearchParams(newParams, { replace: false });
+    },
+    [searchParams, setSearchParams]
+  );
+
+  // Handle search (debounced)
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      if (searchInputValue === searchQuery) return; // Hindari pembaruan tidak perlu
+
+      // Update search params
+      const newParams = new URLSearchParams(searchParams);
+      if (searchInputValue) {
+        newParams.set("search", searchInputValue);
+      } else {
+        newParams.delete("search");
+      }
+      // Reset ke halaman 1 saat pencarian
+      newParams.set("page", "1");
+
+      console.log(`Setting search to "${searchInputValue}"`);
+      setSearchParams(newParams, { replace: false });
+    }, 300);
+
+    return () => clearTimeout(delay);
+  }, [searchInputValue, searchParams, setSearchParams, searchQuery]);
+
+  // Fetch users dari API
   const {
-    data: users = [],
+    data,
     isLoading: loading,
     isError,
     refetch,
   } = useUsers({
-    staleTime: 5000,
-    refetchOnMount: "always",
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState<SortField>("name");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const itemsPerPage = 5; // Jumlah item per halaman
+
+  const users = data?.users || [];
+  const pagination = data?.pagination || {
+    total: 0,
+    page: currentPage,
+    limit: itemsPerPage,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  };
+
+  // Sinkronkan pagination.page dengan URL jika ada perbedaan
+  useEffect(() => {
+    if (data && pagination.page !== currentPage) {
+      console.log(`Page mismatch: URL says ${currentPage}, API says ${pagination.page}`);
+    }
+  }, [data, pagination.page, currentPage]);
+
+  // Komponen untuk ikon sort
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortFieldParam !== field) {
+      return <ChevronUp className="h-4 w-4 opacity-30" />;
+    }
+    return sortDirectionParam === "asc" ? <ChevronUp className="h-4 w-4 text-blue-600" /> : <ChevronDown className="h-4 w-4 text-blue-600" />;
+  };
 
   const deleteUser = useDeleteUser({
     onSuccess: () => {
@@ -54,7 +144,7 @@ export default function Pengguna() {
     },
   });
 
-  const handleArsipkan = (id: number) => {
+  const handleArsipkan = (id: string) => {
     Swal.fire({
       title: "Konfirmasi Arsip",
       text: "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.",
@@ -70,71 +160,6 @@ export default function Pengguna() {
       }
     });
   };
-
-  // Fungsi untuk mengubah sorting
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
-  // Filter users berdasarkan search term
-  const filteredUsers = (() => {
-    if (!debouncedSearchTerm) return users;
-
-    const term = debouncedSearchTerm.toLowerCase();
-    return users.filter((user) => user.name.toLowerCase().includes(term) || user.email.toLowerCase().includes(term) || user.role.name.toLowerCase().includes(term));
-  })();
-
-  // Mengurutkan data
-  const sortedUsers = (() => {
-    return [...filteredUsers].sort((a, b) => {
-      let valueA, valueB;
-
-      if (sortField === "role") {
-        valueA = a.role.name;
-        valueB = b.role.name;
-      } else if (sortField === "name" || sortField === "email") {
-        valueA = a[sortField];
-        valueB = b[sortField];
-      } else {
-        valueA = new Date(a[sortField]).getTime();
-        valueB = new Date(b[sortField]).getTime();
-      }
-
-      if (valueA < valueB) {
-        return sortDirection === "asc" ? -1 : 1;
-      }
-      if (valueA > valueB) {
-        return sortDirection === "asc" ? 1 : -1;
-      }
-      return 0;
-    });
-  })();
-
-  // Pagination
-  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedUsers = sortedUsers.slice(startIndex, startIndex + itemsPerPage);
-
-  // Komponen untuk ikon sort
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) {
-      return <ChevronUp className="h-4 w-4 opacity-30" />;
-    }
-    return sortDirection === "asc" ? <ChevronUp className="h-4 w-4 text-blue-600" /> : <ChevronDown className="h-4 w-4 text-blue-600" />;
-  };
-
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300);
-
-    return () => clearTimeout(delay);
-  }, [searchTerm]);
 
   return (
     <div className="space-y-6 px-4 sm:px-0">
@@ -163,7 +188,7 @@ export default function Pengguna() {
               <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               Export
             </Button>
-            <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm" onClick={() => (refetch as () => Promise<unknown>)()}>
+            <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm" onClick={() => refetch()}>
               <RefreshCcw className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </div>
@@ -172,7 +197,13 @@ export default function Pengguna() {
         <div className="mb-6">
           <div className="relative max-w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input type="search" placeholder="Cari pengguna..." className="w-full pl-10 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Input
+              type="search"
+              placeholder="Cari pengguna..."
+              className="w-full pl-10 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md"
+              value={searchInputValue}
+              onChange={(e) => setSearchInputValue(e.target.value)}
+            />
           </div>
         </div>
 
@@ -189,7 +220,7 @@ export default function Pengguna() {
               <div className="w-12 h-12 rounded-full border-4 border-red-200 border-t-red-600 animate-spin"></div>
               <p className="mt-4 text-red-600 font-medium">Gagal memuat data pengguna</p>
               <p className="text-sm text-gray-400">Terjadi kesalahan pada server</p>
-              <Button variant="outline" size="sm" onClick={() => (refetch as () => Promise<unknown>)()} className="mt-4">
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
                 <RefreshCcw className="h-4 w-4 mr-2" />
                 Coba lagi
               </Button>
@@ -238,7 +269,7 @@ export default function Pengguna() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedUsers.length === 0 ? (
+                    {users.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center">
                           <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
@@ -249,9 +280,9 @@ export default function Pengguna() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      paginatedUsers.map((user, idx) => (
+                      users.map((user, idx) => (
                         <TableRow key={user.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50")}>
-                          <TableCell className="font-medium text-center">{startIndex + idx + 1}</TableCell>
+                          <TableCell className="font-medium text-center">{idx + 1 + (pagination.page - 1) * pagination.limit}</TableCell>
                           <TableCell className="font-medium text-blue-600">{user.name}</TableCell>
                           <TableCell className="truncate max-w-[150px] sm:max-w-none">{user.email}</TableCell>
                           <TableCell>
@@ -300,14 +331,14 @@ export default function Pengguna() {
 
             {/* Card untuk tampilan mobile */}
             <div className="sm:hidden space-y-4">
-              {paginatedUsers.length === 0 ? (
+              {users.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
                   <Search className="h-10 w-10 mb-2 text-gray-300" />
                   <p className="text-gray-500">Tidak ada data pengguna yang ditemukan.</p>
                   <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
                 </div>
               ) : (
-                paginatedUsers.map((user) => (
+                users.map((user) => (
                   <div key={user.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
                     <div className="p-4">
                       <div className="flex justify-between items-start mb-3">
@@ -364,17 +395,17 @@ export default function Pengguna() {
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border-t border-gray-200 mt-4 gap-4">
               <div className="text-sm text-gray-500 text-center sm:text-left">
-                Menampilkan <strong className="text-gray-700">{paginatedUsers.length}</strong> dari <strong className="text-gray-700">{filteredUsers.length}</strong> pengguna
+                Menampilkan <strong className="text-gray-700">{users.length}</strong> dari <strong className="text-gray-700">{pagination.total}</strong> pengguna
               </div>
 
               <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
-                <Button variant="outline" size="sm" onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="border-gray-300 text-gray-700 hover:bg-gray-50 h-8 px-2 sm:px-3">
+                <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.page - 1)} disabled={!pagination.hasPrev} className="border-gray-300 text-gray-700 hover:bg-gray-50 h-8 px-2 sm:px-3">
                   <ArrowLeft className="h-4 w-4 sm:mr-1" />
                   <span className="hidden sm:inline">Sebelumnya</span>
                 </Button>
 
                 <div className="flex items-center gap-1 overflow-x-auto py-1 px-1 max-w-[200px] sm:max-w-none">
-                  {getPageRange(currentPage, totalPages).map((page, idx) =>
+                  {getPageRange(pagination.page, pagination.totalPages).map((page, idx) =>
                     page === "..." ? (
                       <span key={`ellipsis-${idx}`} className="px-2">
                         ...
@@ -382,10 +413,10 @@ export default function Pengguna() {
                     ) : (
                       <Button
                         key={`page-${page}`}
-                        variant={currentPage === page ? "default" : "outline"}
+                        variant={pagination.page === page ? "default" : "outline"}
                         size="sm"
-                        onClick={() => typeof page === "number" && setCurrentPage(page)}
-                        className={cn("h-8 w-8 p-0 sm:h-8 sm:w-8", currentPage === page ? "bg-blue-600 text-white hover:bg-blue-700" : "border-gray-300 text-gray-700 hover:bg-gray-50")}
+                        onClick={() => typeof page === "number" && handlePageChange(page)}
+                        className={cn("h-8 w-8 p-0 sm:h-8 sm:w-8", pagination.page === page ? "bg-blue-600 text-white hover:bg-blue-700" : "border-gray-300 text-gray-700 hover:bg-gray-50")}
                       >
                         {page}
                       </Button>
@@ -393,7 +424,7 @@ export default function Pengguna() {
                   )}
                 </div>
 
-                <Button variant="outline" size="sm" onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="border-gray-300 text-gray-700 hover:bg-gray-50 h-8 px-2 sm:px-3">
+                <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.page + 1)} disabled={!pagination.hasNext} className="border-gray-300 text-gray-700 hover:bg-gray-50 h-8 px-2 sm:px-3">
                   <span className="hidden sm:inline">Selanjutnya</span>
                   <ArrowRight className="h-4 w-4 sm:ml-1" />
                 </Button>

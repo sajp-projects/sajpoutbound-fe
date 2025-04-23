@@ -49,7 +49,7 @@ export default function EditPeran() {
     isError: isErrorRole,
   } = useRole(
     {
-      id: parseInt(id || "0"),
+      id: id || "",
     },
     {
       staleTime: 5000,
@@ -193,7 +193,7 @@ export default function EditPeran() {
       }
 
       updateRoleMutation.mutate({
-        id: parseInt(id || "0"),
+        id: id || "",
         name: formData.name,
         description: formData.description,
       });
