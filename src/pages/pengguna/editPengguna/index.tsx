@@ -35,7 +35,7 @@ export default function EditPengguna() {
     isError: isErrorUser,
   } = useUser(
     {
-      id: parseInt(id || "0"),
+      id: id || "",
     },
     {
       staleTime: 5000,
@@ -44,7 +44,10 @@ export default function EditPengguna() {
   );
 
   // Query untuk mendapatkan daftar role
-  const { data: roles = [], isLoading: isLoadingRoles, isError: isErrorRoles } = useRoles();
+  const { data: rolesData = [], isLoading: isLoadingRoles, isError: isErrorRoles } = useRoles();
+
+  // Pastikan roles selalu array
+  const roles = Array.isArray(rolesData) ? rolesData : [];
 
   // Mutation untuk update user
   const updateUserMutation = useUpdateUser({
@@ -77,7 +80,7 @@ export default function EditPengguna() {
       setFormData({
         name: user.name,
         email: user.email,
-        roleId: user.role.id.toString(),
+        roleId: user.role.id,
       });
     }
   }, [user]);
@@ -107,10 +110,10 @@ export default function EditPengguna() {
     }
 
     updateUserMutation.mutate({
-      id: parseInt(id || "0"),
+      id: id || "",
       name: formData.name,
       email: formData.email,
-      roleId: parseInt(formData.roleId),
+      roleId: formData.roleId,
     });
   };
 
@@ -189,11 +192,15 @@ export default function EditPengguna() {
                     onChange={handleInputChange}
                     className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   >
-                    {roles.map((role: Role) => (
-                      <option key={role.id} value={role.id.toString()}>
-                        {role.name}
-                      </option>
-                    ))}
+                    {roles && roles.length > 0 ? (
+                      roles.map((role: Role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">Tidak ada peran tersedia</option>
+                    )}
                   </select>
                 </div>
                 <p className="mt-1 text-sm text-gray-500">Peran menentukan akses dan hak istimewa pengguna di sistem</p>

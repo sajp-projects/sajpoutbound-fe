@@ -1,6 +1,6 @@
 import { useArchivedUsers, useRestoreUser } from "@/hooks/user";
-import { RefreshCcw, ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Download, Filter, Search, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { RefreshCcw, ArrowLeft, ChevronDown, ChevronUp, Download, Filter, Search, RefreshCw } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router";
 import Swal from "sweetalert2";
 
@@ -10,20 +10,27 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
-import { getPageRange } from "@/utils/pagination";
 import { getRoleBadgeColor, getRoleBadgeVariant } from "@/utils/roles";
+import { UserWithRole } from "@/types/user";
 
 type SortField = "name" | "email" | "role" | "createdAt" | "updatedAt" | "deletedAt";
 type SortDirection = "asc" | "desc";
 
 export default function ArsipPengguna() {
-  const { data: users = [], isLoading: loading, isError, refetch } = useArchivedUsers({ staleTime: 5000, refetchOnMount: "always" });
+  // Local states untuk sorting dan searching (client-side)
+  const [sortField, setSortField] = useState<SortField>("deletedAt");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState<SortField>("name");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const itemsPerPage = 5; // Jumlah item per halaman
+
+  const {
+    data: archivedUsers = [],
+    isLoading: loading,
+    isError,
+    refetch,
+  } = useArchivedUsers({
+    staleTime: 5000,
+    refetchOnMount: "always",
+  });
 
   const restoreUser = useRestoreUser({
     onSuccess: () => {
@@ -46,7 +53,7 @@ export default function ArsipPengguna() {
     },
   });
 
-  const handleRestore = (id: number) => {
+  const handleRestore = (id: string) => {
     Swal.fire({
       title: "Konfirmasi Pemulihan",
       text: "Apakah Anda yakin ingin memulihkan pengguna ini?",
@@ -73,17 +80,14 @@ export default function ArsipPengguna() {
     }
   };
 
-  // Filter users berdasarkan search term
-  const filteredUsers = (() => {
-    if (!debouncedSearchTerm) return users;
-
-    const term = debouncedSearchTerm.toLowerCase();
-    return users.filter((user) => user.name.toLowerCase().includes(term) || user.email.toLowerCase().includes(term) || user.role.name.toLowerCase().includes(term));
-  })();
+  // Filter berdasarkan search term
+  const filteredUsers = archivedUsers.filter(
+    (user: UserWithRole) => user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase()) || user.role.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Mengurutkan data
   const sortedUsers = (() => {
-    return [...filteredUsers].sort((a, b) => {
+    return [...filteredUsers].sort((a: UserWithRole, b: UserWithRole) => {
       let valueA, valueB;
 
       if (sortField === "role") {
@@ -107,11 +111,6 @@ export default function ArsipPengguna() {
     });
   })();
 
-  // Pagination
-  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedUsers = sortedUsers.slice(startIndex, startIndex + itemsPerPage);
-
   // Komponen untuk ikon sort
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) {
@@ -119,14 +118,6 @@ export default function ArsipPengguna() {
     }
     return sortDirection === "asc" ? <ChevronUp className="h-4 w-4 text-blue-600" /> : <ChevronDown className="h-4 w-4 text-blue-600" />;
   };
-
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300);
-
-    return () => clearTimeout(delay);
-  }, [searchTerm]);
 
   return (
     <div className="space-y-6 px-4 sm:px-0">
@@ -155,7 +146,7 @@ export default function ArsipPengguna() {
               <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               Export
             </Button>
-            <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm" onClick={() => (refetch as () => Promise<unknown>)()}>
+            <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm" onClick={() => refetch()}>
               <RefreshCcw className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </div>
@@ -187,7 +178,7 @@ export default function ArsipPengguna() {
               <div className="w-12 h-12 rounded-full border-4 border-red-200 border-t-red-600 animate-spin"></div>
               <p className="mt-4 text-red-600 font-medium">Gagal memuat data pengguna terarsip</p>
               <p className="text-sm text-gray-400">Terjadi kesalahan pada server</p>
-              <Button variant="outline" size="sm" onClick={() => (refetch as () => Promise<unknown>)()} className="mt-4">
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
                 <RefreshCcw className="h-4 w-4 mr-2" />
                 Coba lagi
               </Button>
@@ -236,7 +227,7 @@ export default function ArsipPengguna() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedUsers.length === 0 ? (
+                    {sortedUsers.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center">
                           <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
@@ -247,9 +238,9 @@ export default function ArsipPengguna() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      paginatedUsers.map((user, idx) => (
+                      sortedUsers.map((user, idx) => (
                         <TableRow key={user.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50")}>
-                          <TableCell className="font-medium text-center">{startIndex + idx + 1}</TableCell>
+                          <TableCell className="font-medium text-center">{idx + 1}</TableCell>
                           <TableCell className="font-medium text-blue-600">{user.name}</TableCell>
                           <TableCell className="truncate max-w-[150px] sm:max-w-none">{user.email}</TableCell>
                           <TableCell>
@@ -283,14 +274,14 @@ export default function ArsipPengguna() {
 
             {/* Card untuk tampilan mobile */}
             <div className="sm:hidden space-y-4">
-              {paginatedUsers.length === 0 ? (
+              {sortedUsers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
                   <Search className="h-10 w-10 mb-2 text-gray-300" />
                   <p className="text-gray-500">Tidak ada data pengguna terarsip yang ditemukan.</p>
                   <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
                 </div>
               ) : (
-                paginatedUsers.map((user) => (
+                sortedUsers.map((user) => (
                   <div key={user.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
                     <div className="p-4">
                       <div className="flex justify-between items-start mb-3">
@@ -332,39 +323,7 @@ export default function ArsipPengguna() {
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border-t border-gray-200 mt-4 gap-4">
               <div className="text-sm text-gray-500 text-center sm:text-left">
-                Menampilkan <strong className="text-gray-700">{paginatedUsers.length}</strong> dari <strong className="text-gray-700">{filteredUsers.length}</strong> pengguna terarsip
-              </div>
-
-              <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
-                <Button variant="outline" size="sm" onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="border-gray-300 text-gray-700 hover:bg-gray-50 h-8 px-2 sm:px-3">
-                  <ArrowLeft className="h-4 w-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Sebelumnya</span>
-                </Button>
-
-                <div className="flex items-center gap-1 overflow-x-auto py-1 px-1 max-w-[200px] sm:max-w-none">
-                  {getPageRange(currentPage, totalPages).map((page, idx) =>
-                    page === "..." ? (
-                      <span key={`ellipsis-${idx}`} className="px-2">
-                        ...
-                      </span>
-                    ) : (
-                      <Button
-                        key={`page-${page}`}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => typeof page === "number" && setCurrentPage(page)}
-                        className={cn("h-8 w-8 p-0 sm:h-8 sm:w-8", currentPage === page ? "bg-blue-600 text-white hover:bg-blue-700" : "border-gray-300 text-gray-700 hover:bg-gray-50")}
-                      >
-                        {page}
-                      </Button>
-                    )
-                  )}
-                </div>
-
-                <Button variant="outline" size="sm" onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="border-gray-300 text-gray-700 hover:bg-gray-50 h-8 px-2 sm:px-3">
-                  <span className="hidden sm:inline">Selanjutnya</span>
-                  <ArrowRight className="h-4 w-4 sm:ml-1" />
-                </Button>
+                Menampilkan <strong className="text-gray-700">{sortedUsers.length}</strong> dari <strong className="text-gray-700">{archivedUsers.length}</strong> pengguna terarsip
               </div>
             </div>
           </div>

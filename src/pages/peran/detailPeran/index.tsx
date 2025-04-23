@@ -21,7 +21,7 @@ export default function DetailPeran() {
     error,
     refetch,
   } = useRole(
-    { id: parseInt(id || "0") },
+    { id: id || "" },
     {
       staleTime: 5000,
       refetchOnMount: "always",

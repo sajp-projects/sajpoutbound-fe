@@ -31,7 +31,10 @@ export default function TambahPengguna() {
   });
 
   // Query untuk mendapatkan daftar role
-  const { data: roles = [], isLoading: isLoadingRoles, isError: isErrorRoles } = useRoles();
+  const { data: rolesData = [], isLoading: isLoadingRoles, isError: isErrorRoles } = useRoles();
+
+  // Pastikan roles selalu array
+  const roles = Array.isArray(rolesData) ? rolesData : [];
 
   // Mutation untuk membuat user baru
   const createUserMutation = useCreateUser({
@@ -87,7 +90,7 @@ export default function TambahPengguna() {
       name: formData.name,
       email: formData.email,
       password: formData.password,
-      roleId: parseInt(formData.roleId),
+      roleId: formData.roleId,
     };
 
     // Kirim data ke API
@@ -180,11 +183,15 @@ export default function TambahPengguna() {
                     className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   >
                     <option value="">Pilih peran pengguna</option>
-                    {roles.map((role: Role) => (
-                      <option key={role.id} value={role.id.toString()}>
-                        {role.name}
-                      </option>
-                    ))}
+                    {roles && roles.length > 0 ? (
+                      roles.map((role: Role) => (
+                        <option key={role.id} value={role.id.toString()}>
+                          {role.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="">Tidak ada peran tersedia</option>
+                    )}
                   </select>
                 </div>
                 <p className="mt-1 text-sm text-gray-500">Peran menentukan akses dan hak istimewa pengguna di sistem</p>
