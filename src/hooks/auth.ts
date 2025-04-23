@@ -57,20 +57,7 @@ export function useAuth() {
       const data = await response.json();
 
       if (!data.success) {
-        // Tampilkan pesan error
-        let errorMessage = data.data.message;
-
-        // Jika ada detail error (Joi validation)
-        if (data.data.details && data.data.details.length > 0) {
-          errorMessage = data.data.details.map((detail: { message: string }) => detail.message).join("\n");
-        }
-
-        Swal.fire({
-          icon: "error",
-          title: "Login Gagal",
-          text: errorMessage,
-        });
-
+        // Kita tidak tampilkan alert error disini karena sudah ditangani di form
         setIsLoading(false);
         return false;
       }
@@ -100,13 +87,7 @@ export function useAuth() {
       return true;
     } catch (error) {
       console.error("Login error:", error);
-
-      Swal.fire({
-        icon: "error",
-        title: "Login Gagal",
-        text: "Terjadi kesalahan saat menghubungi server",
-      });
-
+      // Kita tidak tampilkan alert error disini karena sudah ditangani di form
       setIsLoading(false);
       return false;
     }

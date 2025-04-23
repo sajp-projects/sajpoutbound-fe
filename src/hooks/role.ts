@@ -141,19 +141,21 @@ export function useCreateRole(options?: UseMutationOptions<Role, Error, CreateRo
         method: "POST",
         body: JSON.stringify(roleData),
       });
-      if (!response.ok) {
-        throw new Error(`Error creating role: ${response.statusText}`);
-      }
 
-      const result: ApiResponse<Role> = await response.json();
+      const result = await response.json();
 
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "An error occurred");
+        // Throw error dengan informasi lengkap dari backend
+        const errorResponse = {
+          message: result.message || "Gagal membuat peran",
+          errorType: result.errorType,
+          details: result.details,
+        };
+        throw new Error(JSON.stringify(errorResponse));
       }
 
       if (!result.data) {
-        throw new Error("Created role data is missing");
+        throw new Error(JSON.stringify({ message: "Data peran tidak ditemukan" }));
       }
 
       return result.data;
@@ -176,26 +178,28 @@ export function useUpdateRole(options?: UseMutationOptions<Role, Error, { id: st
 
       // Validate that at least one field is provided
       if (Object.keys(updateData).length === 0) {
-        throw new Error("At least one field must be provided for update");
+        throw new Error(JSON.stringify({ message: "At least one field must be provided for update" }));
       }
 
       const response = await fetchWithAuth(`${API_BASE_URL}/roles/${id}`, {
         method: "PUT",
         body: JSON.stringify(updateData),
       });
-      if (!response.ok) {
-        throw new Error(`Error updating role: ${response.statusText}`);
-      }
 
-      const result: ApiResponse<Role> = await response.json();
+      const result = await response.json();
 
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "An error occurred");
+        // Throw error dengan informasi lengkap dari backend
+        const errorResponse = {
+          message: result.message || "Gagal memperbarui peran",
+          errorType: result.errorType,
+          details: result.details,
+        };
+        throw new Error(JSON.stringify(errorResponse));
       }
 
       if (!result.data) {
-        throw new Error("Updated role data is missing");
+        throw new Error(JSON.stringify({ message: "Data peran yang diperbarui tidak ditemukan" }));
       }
 
       return result.data;

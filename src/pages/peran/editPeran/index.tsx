@@ -23,13 +23,6 @@ interface FormErrors {
   general?: string;
 }
 
-// Interface untuk detail validasi error dari server
-interface ValidationErrorDetail {
-  message: string;
-  path: string[];
-  type: string;
-}
-
 export default function EditPeran() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -39,8 +32,9 @@ export default function EditPeran() {
     name: "",
     description: "",
   });
+
+  // State untuk error validasi
   const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   // Query untuk mendapatkan data peran
   const {
@@ -72,45 +66,35 @@ export default function EditPeran() {
       });
     },
     onError: (error: Error) => {
-      // Coba parsing error untuk mendapatkan detail validasi
       try {
+        // Parse error yang sudah di-stringify di hook
         const errorObj = JSON.parse(error.message);
-        if (errorObj.details) {
-          // Format error Joi validation
+
+        if (errorObj.errorType === "joiValidationError" && errorObj.details && errorObj.details.length > 0) {
+          // Petakan error validasi ke field yang sesuai
           const newErrors: FormErrors = {};
-          errorObj.details.forEach((detail: ValidationErrorDetail) => {
-            if (detail.path && detail.path.length > 0) {
-              const field = detail.path[0] as keyof FormErrors;
-              newErrors[field] = detail.message;
-            } else if (detail.type === "object.min") {
-              newErrors.general = "Setidaknya satu field harus diubah";
+
+          errorObj.details.forEach((detail: { message: string; path: string[] }) => {
+            if (detail.path.includes("name")) {
+              newErrors.name = detail.message;
+            } else if (detail.path.includes("description")) {
+              newErrors.description = detail.message;
+            } else {
+              newErrors.general = detail.message;
             }
           });
+
           setErrors(newErrors);
         } else if (errorObj.errorType === "ROLE_NAME_DUPLICATE") {
-          // Error nama duplikat
-          setErrors({ name: "Nama peran sudah digunakan" });
+          // Error khusus untuk nama peran duplikat
+          setErrors({ name: errorObj.message });
         } else {
-          // Error umum
-          setErrors({ general: errorObj.message || error.message });
+          // Error umum non-validasi
+          setErrors({ general: errorObj.message });
         }
-
-        Swal.fire({
-          title: "Gagal!",
-          text: `Gagal memperbarui peran: ${errorObj.message || error.message}`,
-          icon: "error",
-          confirmButtonText: "Tutup",
-        });
-      } catch {
-        // Fallback untuk error yang tidak bisa di-parse
-        setErrors({ general: error.message });
-
-        Swal.fire({
-          title: "Gagal!",
-          text: `Gagal memperbarui peran: ${error.message}`,
-          icon: "error",
-          confirmButtonText: "Tutup",
-        });
+      } catch (e) {
+        console.error("Error parsing error message:", e);
+        setErrors({ general: "Terjadi kesalahan saat memperbarui peran" });
       }
     },
   });
@@ -125,35 +109,6 @@ export default function EditPeran() {
     }
   }, [role]);
 
-  // Validasi field
-  const validateField = (fieldName: string, value: string) => {
-    const fieldErrors: FormErrors = { ...errors };
-
-    switch (fieldName) {
-      case "name":
-        if (!value.trim()) {
-          fieldErrors.name = "Nama peran harus diisi";
-        } else if (value.length < 2) {
-          fieldErrors.name = "Nama peran minimal 2 karakter";
-        } else {
-          delete fieldErrors.name;
-        }
-        break;
-      case "description":
-        if (!value.trim()) {
-          fieldErrors.description = "Deskripsi peran harus diisi";
-        } else {
-          delete fieldErrors.description;
-        }
-        break;
-      default:
-        break;
-    }
-
-    setErrors(fieldErrors);
-    return Object.keys(fieldErrors).length === 0;
-  };
-
   // Handler untuk perubahan input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -162,42 +117,28 @@ export default function EditPeran() {
       [name]: value,
     }));
 
-    // Validasi field saat diubah
-    validateField(name, value);
-
-    // Tandai field sebagai tersentuh
-    if (!touched[name]) {
-      setTouched((prev) => ({ ...prev, [name]: true }));
+    // Hapus error untuk field yang diubah
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
   // Handler submit form
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setErrors({});
 
-    // Pastikan semua field tersentuh untuk validasi
-    setTouched({
-      name: true,
-      description: true,
-    });
-
-    // Validasi semua field
-    const nameValid = validateField("name", formData.name);
-    const descriptionValid = validateField("description", formData.description);
-
-    if (nameValid && descriptionValid) {
-      // Cek apakah ada perubahan data
-      if (role && role.name === formData.name && role.description === formData.description) {
-        setErrors({ general: "Tidak ada perubahan data" });
-        return;
-      }
-
-      updateRoleMutation.mutate({
-        id: id || "",
-        name: formData.name,
-        description: formData.description,
-      });
+    // Cek apakah ada perubahan data
+    if (role && role.name === formData.name && role.description === formData.description) {
+      setErrors({ general: "Tidak ada perubahan data" });
+      return;
     }
+
+    updateRoleMutation.mutate({
+      id: id || "",
+      name: formData.name,
+      description: formData.description,
+    });
   };
 
   const isLoading = isLoadingRole;
@@ -243,44 +184,39 @@ export default function EditPeran() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              {errors.general && <div className="p-4 border border-red-200 bg-red-50 rounded-md text-red-600 mb-4">{errors.general}</div>}
+              {errors.general && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">{errors.general}</div>}
 
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-700">
-                  Nama Peran <span className="text-red-500">*</span>
+              <div>
+                <Label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                  Nama Peran
                 </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="Masukkan nama peran"
-                  className={cn("w-full", errors.name && touched.name ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "")}
-                />
-                {errors.name && touched.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
-                <p className="text-sm text-gray-500">Nama peran yang akan ditampilkan di sistem</p>
+                <div className="mt-1">
+                  <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Masukkan nama peran" className={cn("w-full", errors.name && "border-red-300 focus:border-red-500 focus:ring-red-500")} />
+                </div>
+                {errors.name ? <p className="mt-1 text-sm text-red-500">{errors.name}</p> : <p className="mt-1 text-sm text-gray-500">Nama peran yang akan ditampilkan di sistem</p>}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description" className="text-gray-700">
-                  Deskripsi <span className="text-red-500">*</span>
+              <div>
+                <Label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  Deskripsi
                 </Label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Masukkan deskripsi peran"
-                  className={cn(
-                    "flex min-h-[120px] w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-                    errors.description && touched.description ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-input bg-background ring-offset-background focus-visible:ring-ring"
-                  )}
-                />
-                {errors.description && touched.description && <p className="text-sm text-red-500 mt-1">{errors.description}</p>}
-                <p className="text-sm text-gray-500">Deskripsi mengenai hak akses dan fungsi peran dalam sistem</p>
+                <div className="mt-1">
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan deskripsi peran"
+                    className={cn(
+                      "flex min-h-[120px] w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-blue-500 focus:border-blue-500",
+                      errors.description && "border-red-300 focus:border-red-500 focus:ring-red-500"
+                    )}
+                  />
+                </div>
+                {errors.description ? <p className="mt-1 text-sm text-red-500">{errors.description}</p> : <p className="mt-1 text-sm text-gray-500">Deskripsi mengenai hak akses dan fungsi peran dalam sistem</p>}
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => navigate(`/peran/${id}`)} disabled={isSubmitting} type="button">
                   Batal
                 </Button>
