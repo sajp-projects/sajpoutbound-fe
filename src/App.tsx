@@ -12,6 +12,7 @@ import TambahPengguna from "./pages/pengguna/tambahPengguna";
 import DetailPengguna from "./pages/pengguna/detailPengguna";
 import EditPengguna from "./pages/pengguna/editPengguna";
 import ArsipPengguna from "./pages/pengguna/arsipPengguna";
+import LogPengguna from "./pages/pengguna/logPengguna";
 
 export default function App() {
   return (
@@ -27,18 +28,19 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
 
+          {/* Rute Pengguna */}
+          <Route path="/pengguna" element={<Pengguna />} />
+          <Route path="/pengguna/tambah" element={<TambahPengguna />} />
+          <Route path="/pengguna/arsip" element={<ArsipPengguna />} />
+          <Route path="/pengguna/:id/log" element={<LogPengguna />} />
+          <Route path="/pengguna/:id/edit" element={<EditPengguna />} />
+          <Route path="/pengguna/:id" element={<DetailPengguna />} />
+
           {/* Rute Peran */}
           <Route path="/peran" element={<Role />} />
           <Route path="/peran/tambah" element={<TambahPeran />} />
           <Route path="/peran/:id" element={<DetailPeran />} />
           <Route path="/peran/:id/edit" element={<EditPeran />} />
-
-          {/* Rute Pengguna */}
-          <Route path="/pengguna" element={<Pengguna />} />
-          <Route path="/pengguna/tambah" element={<TambahPengguna />} />
-          <Route path="/pengguna/arsip" element={<ArsipPengguna />} />
-          <Route path="/pengguna/:id/edit" element={<EditPengguna />} />
-          <Route path="/pengguna/:id" element={<DetailPengguna />} />
         </Route>
       </Routes>
     </BrowserRouter>
