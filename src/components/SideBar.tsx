@@ -39,7 +39,6 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
         { name: "Daftar Pengguna", path: "/pengguna" },
         { name: "Tambah Pengguna", path: "/pengguna/tambah" },
         { name: "Arsip Pengguna", path: "/pengguna/arsip" },
-        { name: "Log Pengguna", path: "/pengguna/log" },
       ],
     },
     {

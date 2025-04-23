@@ -44,10 +44,10 @@ export default function EditPengguna() {
   );
 
   // Query untuk mendapatkan daftar role
-  const { data: rolesData = [], isLoading: isLoadingRoles, isError: isErrorRoles } = useRoles();
+  const { data: rolesData, isLoading: isLoadingRoles, isError: isErrorRoles } = useRoles();
 
-  // Pastikan roles selalu array
-  const roles = Array.isArray(rolesData) ? rolesData : [];
+  // Pastikan roles selalu array dengan mengakses rolesData.roles jika ada
+  const roles = rolesData?.roles || [];
 
   // Mutation untuk update user
   const updateUserMutation = useUpdateUser({
