@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router";
-import { Save, Loader2, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router";
+import { Save, Loader2 } from "lucide-react";
 import { useRoles } from "@/hooks/role";
 import { useCreateUser } from "@/hooks/user";
 import { Role } from "@/types/role";
@@ -129,12 +129,6 @@ export default function TambahPengguna() {
     <div className="space-y-6 px-4 sm:px-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
         <div className="flex items-center">
-          <Link to="/pengguna">
-            <Button variant="ghost" size="sm" className="mr-2">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Kembali
-            </Button>
-          </Link>
           <h1 className="text-2xl font-bold text-gray-900">Tambah Pengguna</h1>
         </div>
       </div>

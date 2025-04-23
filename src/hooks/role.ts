@@ -225,8 +225,7 @@ export function useDeleteRole(options?: UseMutationOptions<Role, Error, { id: st
       const result: ApiResponse<Role> = await response.json();
 
       if (!response.ok || !result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "Gagal menghapus peran");
+        throw new Error(result.message || "Gagal menghapus peran");
       }
 
       if (!result.data) {

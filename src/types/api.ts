@@ -2,12 +2,14 @@
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
+  message?: string;
+  errorType?: string;
 }
 
 // Error response structures
 export interface JoiValidationError {
   message: string;
-  errorType: 'joiValidationError';
+  errorType: "joiValidationError";
   details: Array<{
     message: string;
     path: string[];
