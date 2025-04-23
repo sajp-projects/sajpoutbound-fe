@@ -163,3 +163,34 @@ export function useUpdateRole(options?: UseMutationOptions<Role, Error, { id: nu
     ...options,
   });
 }
+
+// Delete a role
+export function useDeleteRole(options?: UseMutationOptions<Role, Error, { id: number }>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id }: { id: number }) => {
+      const response = await fetch(`${API_BASE_URL}/roles/${id}`, {
+        method: "DELETE",
+      });
+
+      const result: ApiResponse<Role> = await response.json();
+
+      if (!response.ok || !result.success) {
+        const errorData = result.data as unknown as ErrorData;
+        throw new Error(errorData.message || "Gagal menghapus peran");
+      }
+
+      if (!result.data) {
+        throw new Error("Data peran yang dihapus tidak ditemukan");
+      }
+
+      return result.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: roleKeys.lists() });
+      queryClient.removeQueries({ queryKey: roleKeys.detail(data.id) });
+    },
+    ...options,
+  });
+}

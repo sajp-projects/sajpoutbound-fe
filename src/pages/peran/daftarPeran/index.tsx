@@ -1,7 +1,8 @@
-import { useRoles } from "@/hooks/role";
-import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Download, Eye, Filter, Pencil, Plus, RefreshCcw, Search } from "lucide-react";
+import { useDeleteRole, useRoles } from "@/hooks/role";
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Download, Eye, Filter, Pencil, Plus, RefreshCcw, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import Swal from "sweetalert2";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,46 @@ export default function Role() {
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const itemsPerPage = 5; // Jumlah item per halaman
+
+  const deleteRole = useDeleteRole({
+    onError: (error) => {
+      Swal.fire({
+        icon: "error",
+        title: "Gagal Menghapus Peran",
+        text: error.message || "Terjadi kesalahan saat menghapus peran",
+        confirmButtonText: "Tutup",
+      });
+    },
+    onSuccess: (data) => {
+      Swal.fire({
+        icon: "success",
+        title: "Peran Berhasil Dihapus",
+        text: `Peran "${data.name}" telah berhasil dihapus`,
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      // Refresh data peran setelah berhasil menghapus
+      refetch();
+    },
+  });
+
+  const handleDeleteRole = (id: number, name: string) => {
+    Swal.fire({
+      title: "Konfirmasi Hapus Peran",
+      text: `Apakah Anda yakin ingin menghapus peran "${name}"?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Ya, Hapus",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteRole.mutate({ id });
+      }
+    });
+  };
 
   // Fungsi untuk mengubah sorting
   const handleSort = (field: SortField) => {
@@ -218,6 +259,9 @@ export default function Role() {
                                   <Pencil className="h-4 w-4" />
                                 </Button>
                               </Link>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" title="Hapus" onClick={() => handleDeleteRole(role.id, role.name)} disabled={deleteRole.isPending}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -266,6 +310,9 @@ export default function Role() {
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </Link>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" title="Hapus" onClick={() => handleDeleteRole(role.id, role.name)} disabled={deleteRole.isPending}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </div>
