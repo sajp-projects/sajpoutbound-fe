@@ -27,14 +27,15 @@ export function useRole({ id }: { id: number }, options?: Omit<UseQueryOptions<R
     queryKey: roleKeys.detail(id),
     queryFn: async () => {
       const response = await fetch(`${API_BASE_URL}/roles/${id}`);
-      if (!response.ok) {
-        throw new Error(`Error fetching role: ${response.statusText}`);
-      }
 
       const result: ApiResponse<Role> = await response.json();
 
       if (!result.success) {
         const errorData = result.data as unknown as ErrorData;
+        // Jika tipe error adalah ROLE_NOT_FOUND, berikan pesan yang lebih spesifik
+        if (errorData.errorType === "ROLE_NOT_FOUND") {
+          throw new Error("Role not found");
+        }
         throw new Error(errorData.message || "An error occurred");
       }
 
