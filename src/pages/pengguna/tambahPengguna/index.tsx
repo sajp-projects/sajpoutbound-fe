@@ -31,10 +31,10 @@ export default function TambahPengguna() {
   });
 
   // Query untuk mendapatkan daftar role
-  const { data: rolesData = [], isLoading: isLoadingRoles, isError: isErrorRoles } = useRoles();
+  const { data: rolesData, isLoading: isLoadingRoles, isError: isErrorRoles } = useRoles();
 
-  // Pastikan roles selalu array
-  const roles = Array.isArray(rolesData) ? rolesData : [];
+  // Pastikan roles selalu array dengan mengakses rolesData.roles jika ada
+  const roles = rolesData?.roles || [];
 
   // Mutation untuk membuat user baru
   const createUserMutation = useCreateUser({
@@ -185,7 +185,7 @@ export default function TambahPengguna() {
                     <option value="">Pilih peran pengguna</option>
                     {roles && roles.length > 0 ? (
                       roles.map((role: Role) => (
-                        <option key={role.id} value={role.id.toString()}>
+                        <option key={role.id} value={role.id}>
                           {role.name}
                         </option>
                       ))
