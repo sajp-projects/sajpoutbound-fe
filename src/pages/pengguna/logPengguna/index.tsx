@@ -1,6 +1,5 @@
-import { useCallback } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, ArrowRight, Download, Eye, Filter, RefreshCcw, Search } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 
 import { useUserLogs } from "@/hooks/userLog";
 import { useUser } from "@/hooks/user";
@@ -10,11 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
-import { getPageRange } from "@/utils/pagination";
+import { Pagination } from "@/components/Pagination";
 
 export default function LogPengguna() {
   const { id } = useParams<{ id: string }>();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   // Mengambil parameter dari URL
   const currentPage = parseInt(searchParams.get("page") || "1");
@@ -57,20 +56,6 @@ export default function LogPengguna() {
     hasNext: false,
     hasPrev: false,
   };
-
-  // Fungsi untuk mengubah halaman dengan aman
-  const handlePageChange = useCallback(
-    (page: number) => {
-      // Kita kloning semua parameter yang ada untuk menghindari kehilangan data
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set("page", page.toString());
-
-      console.log(`Setting page to ${page}`);
-      // Gunakan { replace: false } untuk memastikan halaman ditambahkan ke history
-      setSearchParams(newParams, { replace: false });
-    },
-    [searchParams, setSearchParams]
-  );
 
   // Helper untuk mendapatkan label yang sesuai untuk jenis aksi
   const getActionLabel = (action: string) => {
@@ -145,13 +130,15 @@ export default function LogPengguna() {
   return (
     <div className="space-y-6 px-4 sm:px-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-        <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas Pengguna</h1>
-        <Link to="/pengguna">
-          <Button className="flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm text-sm font-medium text-white w-full sm:w-auto">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Kembali ke Daftar Pengguna
-          </Button>
-        </Link>
+        <div className="flex items-center">
+          <Link to={`/pengguna/${id}`}>
+            <Button variant="ghost" size="sm" className="mr-2">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Kembali
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas Pengguna</h1>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
@@ -168,19 +155,6 @@ export default function LogPengguna() {
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Log Aktivitas: {userData.name}</h2>
               <p className="text-sm text-gray-500">{userData.email}</p>
-            </div>
-            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-              <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm">
-                <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                Filter
-              </Button>
-              <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm">
-                <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                Export
-              </Button>
-              <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm" onClick={() => refetch()}>
-                <RefreshCcw className="h-3 w-3 sm:h-4 sm:w-4" />
-              </Button>
             </div>
           </div>
         ) : (
@@ -203,7 +177,6 @@ export default function LogPengguna() {
               <p className="mt-4 text-red-600 font-medium">Gagal memuat data log</p>
               <p className="text-sm text-gray-400">Terjadi kesalahan pada server</p>
               <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
-                <RefreshCcw className="h-4 w-4 mr-2" />
                 Coba lagi
               </Button>
             </div>
@@ -221,13 +194,12 @@ export default function LogPengguna() {
                       <TableHead className="font-semibold text-gray-700 py-4">Aksi</TableHead>
                       <TableHead className="font-semibold text-gray-700 py-4">Dilakukan Oleh</TableHead>
                       <TableHead className="font-semibold text-gray-700 py-4">Deskripsi</TableHead>
-                      <TableHead className="w-[80px] font-semibold text-gray-700 py-4 text-center">Detail</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {logs.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
+                        <TableCell colSpan={5} className="h-24 text-center">
                           <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
                             <Search className="h-10 w-10 mb-2 text-gray-300" />
                             <p className="text-gray-500">Tidak ada data log yang ditemukan.</p>
@@ -253,11 +225,6 @@ export default function LogPengguna() {
                           </TableCell>
                           <TableCell className="max-w-xs">
                             <p className="text-sm text-gray-700 line-clamp-2">{log.description}</p>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail" onClick={() => alert(`Detail log: ${log.id}`)}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
                           </TableCell>
                         </TableRow>
                       ))
@@ -294,55 +261,14 @@ export default function LogPengguna() {
                       </div>
 
                       {renderDataChanges(log.oldData, log.newData)}
-
-                      <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail" onClick={() => alert(`Detail log: ${log.id}`)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </div>
                     </div>
                   </div>
                 ))
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border-t border-gray-200 mt-4 gap-4">
-              <div className="text-sm text-gray-500 text-center sm:text-left">
-                Menampilkan <strong className="text-gray-700">{logs.length}</strong> dari <strong className="text-gray-700">{pagination.total}</strong> log aktivitas
-              </div>
-
-              <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
-                <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.page - 1)} disabled={!pagination.hasPrev} className="border-gray-300 text-gray-700 hover:bg-gray-50 h-8 px-2 sm:px-3">
-                  <ArrowLeft className="h-4 w-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Sebelumnya</span>
-                </Button>
-
-                <div className="flex items-center gap-1 overflow-x-auto py-1 px-1 max-w-[200px] sm:max-w-none">
-                  {getPageRange(pagination.page, pagination.totalPages).map((page, index) =>
-                    page === "..." ? (
-                      <span key={`ellipsis-${index}`} className="px-2">
-                        ...
-                      </span>
-                    ) : (
-                      <Button
-                        key={`page-${page}`}
-                        variant={pagination.page === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => typeof page === "number" && handlePageChange(page)}
-                        className={cn("h-8 w-8 p-0 sm:h-8 sm:w-8", pagination.page === page ? "bg-blue-600 text-white hover:bg-blue-700" : "border-gray-300 text-gray-700 hover:bg-gray-50")}
-                      >
-                        {page}
-                      </Button>
-                    )
-                  )}
-                </div>
-
-                <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.page + 1)} disabled={!pagination.hasNext} className="border-gray-300 text-gray-700 hover:bg-gray-50 h-8 px-2 sm:px-3">
-                  <span className="hidden sm:inline">Selanjutnya</span>
-                  <ArrowRight className="h-4 w-4 sm:ml-1" />
-                </Button>
-              </div>
-            </div>
+            {/* Gunakan komponen Pagination */}
+            <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />
           </div>
         )}
       </div>

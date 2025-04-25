@@ -117,8 +117,22 @@ export default function TambahPengguna() {
       roleId: formData.roleId,
     };
 
-    // Kirim data menggunakan mutation dari tanstack
-    createUserMutation.mutate(userData);
+    // Tampilkan konfirmasi sebelum menambahkan pengguna
+    Swal.fire({
+      title: "Konfirmasi",
+      text: "Apakah Anda yakin ingin menambahkan pengguna baru ini?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, Tambahkan!",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Kirim data menggunakan mutation dari tanstack
+        createUserMutation.mutate(userData);
+      }
+    });
   };
 
   const isLoading = isLoadingRoles;

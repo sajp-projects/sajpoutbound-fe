@@ -133,11 +133,25 @@ export default function EditPengguna() {
     e.preventDefault();
     setErrors({});
 
-    updateUserMutation.mutate({
-      id: id || "",
-      name: formData.name,
-      email: formData.email,
-      roleId: formData.roleId,
+    // Tampilkan konfirmasi sebelum mengubah pengguna
+    Swal.fire({
+      title: "Konfirmasi",
+      text: "Apakah Anda yakin ingin menyimpan perubahan data pengguna ini?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, Simpan!",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        updateUserMutation.mutate({
+          id: id || "",
+          name: formData.name,
+          email: formData.email,
+          roleId: formData.roleId,
+        });
+      }
     });
   };
 

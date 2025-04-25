@@ -84,10 +84,6 @@ export default function DetailPengguna() {
             <h2 className="text-xl font-semibold text-gray-900">Informasi Pengguna</h2>
             <p className="text-sm text-gray-500">Detail informasi pengguna sistem</p>
           </div>
-          <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm" onClick={() => refetch()}>
-            <RefreshCcw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            Segarkan
-          </Button>
         </div>
 
         {isLoading ? (
