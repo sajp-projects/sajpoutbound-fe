@@ -1,5 +1,5 @@
 import { useCreateRole } from "@/hooks/role";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Swal from "sweetalert2";
 import { cn } from "@/lib/utils";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface FormData {
   name: string;
@@ -19,12 +20,6 @@ interface FormErrors {
   general?: string;
 }
 
-interface ValidationErrorDetail {
-  message: string;
-  path: string[];
-  type: string;
-}
-
 export default function TambahPeran() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
@@ -32,9 +27,8 @@ export default function TambahPeran() {
     description: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  const createRole = useCreateRole({
+  const createRoleMutation = useCreateRole({
     onSuccess: (data) => {
       Swal.fire({
         title: "Berhasil!",
@@ -47,36 +41,35 @@ export default function TambahPeran() {
       });
     },
     onError: (error: Error) => {
-      // Coba parsing error untuk mendapatkan detail validasi
       try {
+        // Parse error yang sudah di-stringify di hook
         const errorObj = JSON.parse(error.message);
-        if (errorObj.details) {
-          // Format error Joi validation
+
+        if (errorObj.errorType === "joiValidationError" && errorObj.details && errorObj.details.length > 0) {
+          // Petakan error validasi ke field yang sesuai
           const newErrors: FormErrors = {};
-          errorObj.details.forEach((detail: ValidationErrorDetail) => {
-            if (detail.path && detail.path.length > 0) {
-              const field = detail.path[0] as keyof FormErrors;
-              newErrors[field] = detail.message;
+
+          errorObj.details.forEach((detail: { message: string; path: string[] }) => {
+            if (detail.path.includes("name")) {
+              newErrors.name = detail.message;
+            } else if (detail.path.includes("description")) {
+              newErrors.description = detail.message;
+            } else {
+              newErrors.general = detail.message;
             }
           });
+
           setErrors(newErrors);
         } else if (errorObj.errorType === "ROLE_NAME_DUPLICATE") {
-          // Error nama duplikat
-          setErrors({ name: "Nama peran sudah digunakan" });
+          // Error khusus untuk nama peran duplikat
+          setErrors({ name: errorObj.message });
         } else {
-          // Error umum
-          setErrors({ general: errorObj.message || error.message });
+          // Error umum non-validasi
+          setErrors({ general: errorObj.message });
         }
-      } catch {
-        // Fallback untuk error yang tidak bisa di-parse
-        setErrors({ general: error.message });
-
-        Swal.fire({
-          title: "Gagal!",
-          text: `Gagal menambahkan peran: ${error.message}`,
-          icon: "error",
-          confirmButtonText: "Tutup",
-        });
+      } catch (e) {
+        console.error("Error parsing error message:", e);
+        setErrors({ general: "Terjadi kesalahan saat menambahkan peran" });
       }
     },
   });
@@ -85,63 +78,19 @@ export default function TambahPeran() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Real-time validation
-    validateField(name, value);
-
-    // Mark field as touched
-    if (!touched[name]) {
-      setTouched((prev) => ({ ...prev, [name]: true }));
+    // Hapus error untuk field yang diubah
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
-  };
-
-  const validateField = (fieldName: string, value: string) => {
-    const fieldErrors: FormErrors = { ...errors };
-
-    switch (fieldName) {
-      case "name":
-        if (!value.trim()) {
-          fieldErrors.name = "Nama peran harus diisi";
-        } else if (value.length < 2) {
-          fieldErrors.name = "Nama peran minimal 2 karakter";
-        } else {
-          delete fieldErrors.name;
-        }
-        break;
-      case "description":
-        if (!value.trim()) {
-          fieldErrors.description = "Deskripsi peran harus diisi";
-        } else {
-          delete fieldErrors.description;
-        }
-        break;
-      default:
-        break;
-    }
-
-    setErrors(fieldErrors);
-    return Object.keys(fieldErrors).length === 0;
-  };
-
-  const validateForm = () => {
-    const nameValid = validateField("name", formData.name);
-    const descriptionValid = validateField("description", formData.description);
-
-    // Mark all fields as touched
-    setTouched({
-      name: true,
-      description: true,
-    });
-
-    return nameValid && descriptionValid;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (validateForm()) {
-      createRole.mutate(formData);
-    }
+    setErrors({});
+    createRoleMutation.mutate(formData);
   };
+
+  const isSubmitting = createRoleMutation.isPending;
 
   return (
     <div className="space-y-6 px-4 sm:px-0">
@@ -157,70 +106,66 @@ export default function TambahPeran() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Informasi Peran</h2>
-          <p className="text-sm text-gray-500">Masukkan informasi untuk peran baru</p>
-        </div>
+      <Card className="border border-gray-200 rounded-lg shadow-sm">
+        <CardHeader>
+          <CardTitle>Form Peran Baru</CardTitle>
+          <CardDescription>Isi data peran yang akan ditambahkan ke sistem</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {errors.general && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">{errors.general}</div>}
 
-        {errors.general && <div className="mb-6 p-4 border border-red-200 bg-red-50 rounded-md text-red-600">{errors.general}</div>}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-gray-700">
-                Nama Peran <span className="text-red-500">*</span>
+            <div>
+              <Label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                Nama Peran
               </Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Masukkan nama peran"
-                value={formData.name}
-                onChange={handleChange}
-                className={`w-full ${errors.name && touched.name ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
-              />
-              {errors.name && touched.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
+              <div className="mt-1">
+                <Input id="name" name="name" value={formData.name} onChange={handleChange} placeholder="Masukkan nama peran" className={cn("w-full", errors.name && "border-red-300 focus:border-red-500 focus:ring-red-500")} />
+              </div>
+              {errors.name ? <p className="mt-1 text-sm text-red-500">{errors.name}</p> : <p className="mt-1 text-sm text-gray-500">Nama peran yang akan ditampilkan di sistem</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-gray-700">
-                Deskripsi <span className="text-red-500">*</span>
+            <div>
+              <Label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                Deskripsi
               </Label>
-              <textarea
-                id="description"
-                name="description"
-                placeholder="Masukkan deskripsi peran"
-                value={formData.description}
-                onChange={handleChange}
-                className={cn(
-                  "flex min-h-[120px] w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-                  errors.description && touched.description ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-input bg-background ring-offset-background focus-visible:ring-ring"
-                )}
-              />
-              {errors.description && touched.description && <p className="text-sm text-red-500 mt-1">{errors.description}</p>}
+              <div className="mt-1">
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Masukkan deskripsi peran"
+                  className={cn(
+                    "flex min-h-[120px] w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-blue-500 focus:border-blue-500",
+                    errors.description && "border-red-300 focus:border-red-500 focus:ring-red-500"
+                  )}
+                />
+              </div>
+              {errors.description ? <p className="mt-1 text-sm text-red-500">{errors.description}</p> : <p className="mt-1 text-sm text-gray-500">Deskripsi menjelaskan fungsi dan hak akses peran</p>}
             </div>
-          </div>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-            <Link to="/peran">
-              <Button variant="outline" type="button" className="px-4">
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => navigate("/peran")} disabled={isSubmitting} type="button">
                 Batal
               </Button>
-            </Link>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4" disabled={createRole.isPending}>
-              {createRole.isPending ? (
-                <>
-                  <div className="h-4 w-4 mr-2 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-                  Menyimpan...
-                </>
-              ) : (
-                "Simpan Peran"
-              )}
-            </Button>
-          </div>
-        </form>
-      </div>
+              <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Simpan
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

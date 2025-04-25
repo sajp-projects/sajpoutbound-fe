@@ -131,19 +131,21 @@ export function useCreateUser(options?: UseMutationOptions<UserWithRole, Error, 
         method: "POST",
         body: JSON.stringify(userData),
       });
-      if (!response.ok) {
-        throw new Error(`Error creating user: ${response.statusText}`);
-      }
 
-      const result: ApiResponse<UserWithRole> = await response.json();
+      const result = await response.json();
 
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "An error occurred");
+        // Throw error dengan informasi lengkap dari backend
+        const errorResponse = {
+          message: result.message || "Gagal membuat pengguna",
+          errorType: result.errorType,
+          details: result.details,
+        };
+        throw new Error(JSON.stringify(errorResponse));
       }
 
       if (!result.data) {
-        throw new Error("Created user data is missing");
+        throw new Error(JSON.stringify({ message: "Data pengguna tidak ditemukan" }));
       }
 
       return result.data;
@@ -167,26 +169,28 @@ export function useUpdateUser(options?: UseMutationOptions<UserWithRole, Error, 
 
       // Validate that at least one field is provided
       if (Object.keys(updateData).length === 0) {
-        throw new Error("At least one field must be provided for update");
+        throw new Error(JSON.stringify({ message: "At least one field must be provided for update" }));
       }
 
       const response = await fetchWithAuth(`${API_BASE_URL}/users/${id}`, {
         method: "PUT",
         body: JSON.stringify(updateData),
       });
-      if (!response.ok) {
-        throw new Error(`Error updating user: ${response.statusText}`);
-      }
 
-      const result: ApiResponse<UserWithRole> = await response.json();
+      const result = await response.json();
 
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "An error occurred");
+        // Throw error dengan informasi lengkap dari backend
+        const errorResponse = {
+          message: result.message || "Gagal memperbarui pengguna",
+          errorType: result.errorType,
+          details: result.details,
+        };
+        throw new Error(JSON.stringify(errorResponse));
       }
 
       if (!result.data) {
-        throw new Error("Updated user data is missing");
+        throw new Error(JSON.stringify({ message: "Data pengguna yang diperbarui tidak ditemukan" }));
       }
 
       return result.data;
