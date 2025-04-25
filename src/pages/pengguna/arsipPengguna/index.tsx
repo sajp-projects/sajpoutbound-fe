@@ -1,5 +1,5 @@
 import { useArchivedUsers, useRestoreUser } from "@/hooks/user";
-import { ArrowLeft, Search, RefreshCw, Eye } from "lucide-react";
+import { Search, RefreshCw, Eye } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import Swal from "sweetalert2";
@@ -71,20 +71,14 @@ export default function ArsipPengguna() {
   );
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
+    <div className="space-y-6 px-4 sm:px-0 w-full overflow-x-hidden">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-        <div className="flex items-center">
-          <Link to="/pengguna">
-            <Button variant="ghost" size="sm" className="mr-2">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Kembali
-            </Button>
-          </Link>
+        <div>
           <h1 className="text-2xl font-bold text-gray-900">Arsip Pengguna</h1>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden w-full">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Pengguna Terarsip</h2>
@@ -124,7 +118,7 @@ export default function ArsipPengguna() {
             </div>
           </div>
         ) : (
-          <div>
+          <div className="w-full">
             {/* Table untuk tampilan desktop & tablet */}
             <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
@@ -192,20 +186,20 @@ export default function ArsipPengguna() {
             </div>
 
             {/* Card untuk tampilan mobile */}
-            <div className="sm:hidden space-y-4">
+            <div className="sm:hidden space-y-4 w-full">
               {filteredUsers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
+                <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white w-full">
                   <Search className="h-10 w-10 mb-2 text-gray-300" />
                   <p className="text-gray-500">Tidak ada data pengguna terarsip yang ditemukan.</p>
                   <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
                 </div>
               ) : (
                 filteredUsers.map((user) => (
-                  <div key={user.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
+                  <div key={user.id} className="border border-gray-200 rounded-lg bg-white shadow-sm w-full">
                     <div className="p-4">
                       <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-medium text-blue-600">{user.name}</h3>
+                        <div className="max-w-[60%]">
+                          <h3 className="font-medium text-blue-600 truncate">{user.name}</h3>
                           <p className="text-sm text-gray-600 truncate">{user.email}</p>
                         </div>
                         <Badge variant={getRoleBadgeVariant(user.role.name)} className={cn("px-2 py-0.5 rounded-md font-medium", getRoleBadgeColor(user.role.name))}>
