@@ -1,5 +1,5 @@
 import { useArchivedUsers, useRestoreUser } from "@/hooks/user";
-import { RefreshCcw, ArrowLeft, ChevronDown, ChevronUp, Download, Filter, Search, RefreshCw } from "lucide-react";
+import { ArrowLeft, Search, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import Swal from "sweetalert2";
@@ -13,13 +13,8 @@ import { formatDate, formatDateShort } from "@/utils/date";
 import { getRoleBadgeColor, getRoleBadgeVariant } from "@/utils/roles";
 import { UserWithRole } from "@/types/user";
 
-type SortField = "name" | "email" | "role" | "createdAt" | "updatedAt" | "deletedAt";
-type SortDirection = "asc" | "desc";
-
 export default function ArsipPengguna() {
-  // Local states untuk sorting dan searching (client-side)
-  const [sortField, setSortField] = useState<SortField>("deletedAt");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  // Local states untuk searching (client-side)
   const [searchTerm, setSearchTerm] = useState("");
 
   const {
@@ -70,65 +65,23 @@ export default function ArsipPengguna() {
     });
   };
 
-  // Fungsi untuk mengubah sorting
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
-
   // Filter berdasarkan search term
   const filteredUsers = archivedUsers.filter(
     (user: UserWithRole) => user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase()) || user.role.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Mengurutkan data
-  const sortedUsers = (() => {
-    return [...filteredUsers].sort((a: UserWithRole, b: UserWithRole) => {
-      let valueA, valueB;
-
-      if (sortField === "role") {
-        valueA = a.role.name;
-        valueB = b.role.name;
-      } else if (sortField === "name" || sortField === "email") {
-        valueA = a[sortField];
-        valueB = b[sortField];
-      } else {
-        valueA = new Date(a[sortField] || "").getTime();
-        valueB = new Date(b[sortField] || "").getTime();
-      }
-
-      if (valueA < valueB) {
-        return sortDirection === "asc" ? -1 : 1;
-      }
-      if (valueA > valueB) {
-        return sortDirection === "asc" ? 1 : -1;
-      }
-      return 0;
-    });
-  })();
-
-  // Komponen untuk ikon sort
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) {
-      return <ChevronUp className="h-4 w-4 opacity-30" />;
-    }
-    return sortDirection === "asc" ? <ChevronUp className="h-4 w-4 text-blue-600" /> : <ChevronDown className="h-4 w-4 text-blue-600" />;
-  };
-
   return (
     <div className="space-y-6 px-4 sm:px-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-        <h1 className="text-2xl font-bold text-gray-900">Arsip Pengguna</h1>
-        <Link to="/pengguna">
-          <Button className="flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm text-sm font-medium text-white w-full sm:w-auto">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Kembali ke Daftar Pengguna
-          </Button>
-        </Link>
+        <div className="flex items-center">
+          <Link to="/pengguna">
+            <Button variant="ghost" size="sm" className="mr-2">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Kembali
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900">Arsip Pengguna</h1>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
@@ -136,19 +89,6 @@ export default function ArsipPengguna() {
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Pengguna Terarsip</h2>
             <p className="text-sm text-gray-500">Daftar pengguna yang telah diarsipkan dari sistem</p>
-          </div>
-          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-            <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm">
-              <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              Filter
-            </Button>
-            <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm">
-              <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              Export
-            </Button>
-            <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm" onClick={() => refetch()}>
-              <RefreshCcw className="h-3 w-3 sm:h-4 sm:w-4" />
-            </Button>
           </div>
         </div>
 
@@ -179,7 +119,6 @@ export default function ArsipPengguna() {
               <p className="mt-4 text-red-600 font-medium">Gagal memuat data pengguna terarsip</p>
               <p className="text-sm text-gray-400">Terjadi kesalahan pada server</p>
               <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
-                <RefreshCcw className="h-4 w-4 mr-2" />
                 Coba lagi
               </Button>
             </div>
@@ -193,41 +132,16 @@ export default function ArsipPengguna() {
                   <TableHeader>
                     <TableRow className="bg-gray-50 border-b border-gray-200">
                       <TableHead className="w-[50px] font-semibold text-gray-700 py-4">ID</TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("name")}>
-                        <div className="flex items-center">
-                          Nama
-                          <SortIcon field="name" />
-                        </div>
-                      </TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("email")}>
-                        <div className="flex items-center">
-                          Email
-                          <SortIcon field="email" />
-                        </div>
-                      </TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("role")}>
-                        <div className="flex items-center">
-                          Peran
-                          <SortIcon field="role" />
-                        </div>
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("createdAt")}>
-                        <div className="flex items-center">
-                          Tgl. Dibuat
-                          <SortIcon field="createdAt" />
-                        </div>
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("deletedAt")}>
-                        <div className="flex items-center">
-                          Tgl. Diarsipkan
-                          <SortIcon field="deletedAt" />
-                        </div>
-                      </TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Nama</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Email</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Peran</TableHead>
+                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">Tgl. Dibuat</TableHead>
+                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">Tgl. Diarsipkan</TableHead>
                       <TableHead className="font-semibold text-gray-700 py-4 text-center">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sortedUsers.length === 0 ? (
+                    {filteredUsers.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="h-24 text-center">
                           <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
@@ -238,7 +152,7 @@ export default function ArsipPengguna() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      sortedUsers.map((user, idx) => (
+                      filteredUsers.map((user, idx) => (
                         <TableRow key={user.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50")}>
                           <TableCell className="font-medium text-center">{idx + 1}</TableCell>
                           <TableCell className="font-medium text-blue-600">{user.name}</TableCell>
@@ -274,14 +188,14 @@ export default function ArsipPengguna() {
 
             {/* Card untuk tampilan mobile */}
             <div className="sm:hidden space-y-4">
-              {sortedUsers.length === 0 ? (
+              {filteredUsers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
                   <Search className="h-10 w-10 mb-2 text-gray-300" />
                   <p className="text-gray-500">Tidak ada data pengguna terarsip yang ditemukan.</p>
                   <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
                 </div>
               ) : (
-                sortedUsers.map((user) => (
+                filteredUsers.map((user) => (
                   <div key={user.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
                     <div className="p-4">
                       <div className="flex justify-between items-start mb-3">
@@ -323,7 +237,7 @@ export default function ArsipPengguna() {
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border-t border-gray-200 mt-4 gap-4">
               <div className="text-sm text-gray-500 text-center sm:text-left">
-                Menampilkan <strong className="text-gray-700">{sortedUsers.length}</strong> dari <strong className="text-gray-700">{archivedUsers.length}</strong> pengguna terarsip
+                Menampilkan <strong className="text-gray-700">{filteredUsers.length}</strong> dari <strong className="text-gray-700">{archivedUsers.length}</strong> pengguna terarsip
               </div>
             </div>
           </div>
