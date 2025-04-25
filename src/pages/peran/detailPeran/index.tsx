@@ -1,5 +1,5 @@
 import { useRole } from "@/hooks/role";
-import { ArrowLeft, RefreshCcw, Pencil, Users, Info, Mail, Calendar, User, Eye } from "lucide-react";
+import { ArrowLeft, Pencil, Users, Info, Mail, Calendar, User, Eye } from "lucide-react";
 import { useParams, Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utils/date";
@@ -19,7 +19,6 @@ export default function DetailPeran() {
     isLoading,
     isError,
     error,
-    refetch,
   } = useRole(
     { id: id || "" },
     {
@@ -108,10 +107,6 @@ export default function DetailPeran() {
             <h2 className="text-xl font-semibold text-gray-900">Informasi Peran</h2>
             <p className="text-sm text-gray-500">Detail peran dalam sistem</p>
           </div>
-          <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm" onClick={() => refetch()}>
-            <RefreshCcw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            Segarkan
-          </Button>
         </div>
 
         <div className="space-y-6">
@@ -242,13 +237,11 @@ export default function DetailPeran() {
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex items-center justify-center gap-1">
-                                    {!user.deletedAt && (
-                                      <Link to={`/pengguna/${user.id}`}>
-                                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
-                                          <Eye className="h-4 w-4" />
-                                        </Button>
-                                      </Link>
-                                    )}
+                                    <Link to={`/pengguna/${user.id}`}>
+                                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+                                    </Link>
                                   </div>
                                 </TableCell>
                               </TableRow>
@@ -284,13 +277,11 @@ export default function DetailPeran() {
                             </div>
 
                             <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
-                              {!user.deletedAt && (
-                                <Link to={`/pengguna/${user.id}`}>
-                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </Link>
-                              )}
+                              <Link to={`/pengguna/${user.id}`}>
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </Link>
                             </div>
                           </div>
                         </div>

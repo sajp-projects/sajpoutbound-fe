@@ -1,5 +1,5 @@
 import { useArchivedUsers, useRestoreUser } from "@/hooks/user";
-import { ArrowLeft, Search, RefreshCw } from "lucide-react";
+import { ArrowLeft, Search, RefreshCw, Eye } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import Swal from "sweetalert2";
@@ -166,6 +166,11 @@ export default function ArsipPengguna() {
                           <TableCell className="hidden md:table-cell text-gray-500">{user.deletedAt ? formatDate(user.deletedAt) : "-"}</TableCell>
                           <TableCell>
                             <div className="flex items-center justify-center gap-1">
+                              <Link to={`/pengguna/${user.id}`}>
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </Link>
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -218,6 +223,11 @@ export default function ArsipPengguna() {
                       </div>
 
                       <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
+                        <Link to={`/pengguna/${user.id}`}>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
                         <Button
                           size="sm"
                           variant="ghost"

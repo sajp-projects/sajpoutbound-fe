@@ -134,10 +134,24 @@ export default function EditPeran() {
       return;
     }
 
-    updateRoleMutation.mutate({
-      id: id || "",
-      name: formData.name,
-      description: formData.description,
+    // Tampilkan konfirmasi sebelum menyimpan
+    Swal.fire({
+      title: "Konfirmasi",
+      text: `Apakah Anda yakin ingin memperbarui peran "${formData.name}"?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Perbarui",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        updateRoleMutation.mutate({
+          id: id || "",
+          name: formData.name,
+          description: formData.description,
+        });
+      }
     });
   };
 

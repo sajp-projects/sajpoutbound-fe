@@ -87,7 +87,22 @@ export default function TambahPeran() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    createRoleMutation.mutate(formData);
+
+    // Tampilkan konfirmasi sebelum menyimpan
+    Swal.fire({
+      title: "Konfirmasi",
+      text: `Apakah Anda yakin ingin menambahkan peran "${formData.name}"?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Tambahkan",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        createRoleMutation.mutate(formData);
+      }
+    });
   };
 
   const isSubmitting = createRoleMutation.isPending;

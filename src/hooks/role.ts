@@ -1,8 +1,8 @@
 import { ApiResponse, CustomError, JoiValidationError } from "@/types/api";
 import { Role } from "@/types/role";
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
-import { useSearchParams } from "react-router";
 import { fetchApi } from "@/utils/api";
+import { useSearchParams } from "react-router";
 
 // Interface untuk respons API roles dengan pagination
 export interface RolesResponse {
@@ -63,14 +63,23 @@ export function useRole({ id }: { id: string }, options?: Omit<UseQueryOptions<R
 }
 
 // Hook for fetching roles with pagination
-export function useRoles(options?: Omit<UseQueryOptions<RolesResponse, Error, RolesResponse, ReturnType<typeof roleKeys.lists>>, "queryKey" | "queryFn">) {
-  // Tidak perlu menggunakan pagination untuk daftar role karena biasanya jumlahnya sedikit
+export function useRoles(options?: Omit<UseQueryOptions<RolesResponse, Error, RolesResponse, ReturnType<typeof roleKeys.list>>, "queryKey" | "queryFn">) {
+  const [searchParams] = useSearchParams();
+  const page = searchParams.get("page") || "1";
+  const limit = searchParams.get("limit") || "10";
+
+  // Buat objek filters untuk query key
+  const filters = {
+    page,
+    limit,
+  };
+
   return useQuery({
-    queryKey: roleKeys.lists(),
+    queryKey: roleKeys.list(filters),
     queryFn: async () => {
-      // Gunakan limit 100 untuk memastikan semua role diambil
       const response = await fetchApi("/roles", {
-        limit: 100,
+        page,
+        limit,
       });
 
       if (!response.ok) {
@@ -90,8 +99,6 @@ export function useRoles(options?: Omit<UseQueryOptions<RolesResponse, Error, Ro
 
       return result.data;
     },
-    // Cache data selama 10 menit karena daftar role jarang berubah
-    staleTime: 10 * 60 * 1000,
     ...options,
   });
 }
