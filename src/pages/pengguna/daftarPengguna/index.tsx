@@ -1,90 +1,25 @@
 import { useUsers, useDeleteUser } from "@/hooks/user";
-import { Archive, ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Download, Eye, FileText, Filter, Pencil, Plus, RefreshCcw, Search } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import { Archive, Download, Eye, FileText, Pencil, Plus, Search } from "lucide-react";
+import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
 import Swal from "sweetalert2";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
-import { getPageRange } from "@/utils/pagination";
 import { getRoleBadgeColor, getRoleBadgeVariant } from "@/utils/roles";
-
-type SortField = "name" | "email" | "role" | "createdAt" | "updatedAt";
-type SortDirection = "asc" | "desc";
+import { SearchInput } from "@/components/SearchInput";
+import { Pagination } from "@/components/Pagination";
+import { RoleFilter } from "@/components/RoleFilter";
 
 export default function Pengguna() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   // Mengambil parameter langsung dari URL - ini adalah sumber kebenaran utama
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
-  const searchQuery = searchParams.get("search") || "";
-  const sortFieldParam = (searchParams.get("sort") as SortField) || "name";
-  const sortDirectionParam = (searchParams.get("sortDirection") as SortDirection) || "asc";
-
-  // State untuk input pencarian, tidak terhubung langsung ke URL
-  const [searchInputValue, setSearchInputValue] = useState(searchQuery);
-
-  // Fungsi untuk mengubah halaman dengan aman
-  const handlePageChange = useCallback(
-    (page: number) => {
-      // Penting: Kita kloning semua parameter yang ada untuk menghindari kehilangan data
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set("page", page.toString());
-
-      console.log(`Setting page to ${page}`);
-      // Gunakan { replace: false } untuk memastikan halaman ditambahkan ke history
-      setSearchParams(newParams, { replace: false });
-    },
-    [searchParams, setSearchParams]
-  );
-
-  // Fungsi untuk mengubah sorting
-  const handleSort = useCallback(
-    (field: SortField) => {
-      const currentSort = (searchParams.get("sort") as SortField) || "name";
-      const currentDirection = (searchParams.get("sortDirection") as SortDirection) || "asc";
-
-      // Ubah arah sorting jika field yang sama diklik
-      const newDirection = field === currentSort && currentDirection === "asc" ? "desc" : "asc";
-
-      // Penting: Kita kloning semua parameter yang ada
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set("sort", field);
-      newParams.set("sortDirection", newDirection);
-      newParams.set("page", "1"); // Reset ke halaman pertama saat sorting berubah
-
-      console.log(`Setting sort to ${field}, direction: ${newDirection}`);
-      setSearchParams(newParams, { replace: false });
-    },
-    [searchParams, setSearchParams]
-  );
-
-  // Handle search (debounced)
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      if (searchInputValue === searchQuery) return; // Hindari pembaruan tidak perlu
-
-      // Update search params
-      const newParams = new URLSearchParams(searchParams);
-      if (searchInputValue) {
-        newParams.set("search", searchInputValue);
-      } else {
-        newParams.delete("search");
-      }
-      // Reset ke halaman 1 saat pencarian
-      newParams.set("page", "1");
-
-      console.log(`Setting search to "${searchInputValue}"`);
-      setSearchParams(newParams, { replace: false });
-    }, 300);
-
-    return () => clearTimeout(delay);
-  }, [searchInputValue, searchParams, setSearchParams, searchQuery]);
 
   // Fetch users dari API
   const {
@@ -114,14 +49,6 @@ export default function Pengguna() {
       console.log(`Page mismatch: URL says ${currentPage}, API says ${pagination.page}`);
     }
   }, [data, pagination.page, currentPage]);
-
-  // Komponen untuk ikon sort
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortFieldParam !== field) {
-      return <ChevronUp className="h-4 w-4 opacity-30" />;
-    }
-    return sortDirectionParam === "asc" ? <ChevronUp className="h-4 w-4 text-blue-600" /> : <ChevronDown className="h-4 w-4 text-blue-600" />;
-  };
 
   const deleteUser = useDeleteUser({
     onSuccess: () => {
@@ -179,32 +106,17 @@ export default function Pengguna() {
             <h2 className="text-xl font-semibold text-gray-900">Pengguna</h2>
             <p className="text-sm text-gray-500">Manajemen data pengguna sistem</p>
           </div>
-          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-            <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm">
-              <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              Filter
-            </Button>
-            <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm">
+          <div className="flex flex-wrap gap-3 w-full sm:w-auto items-center">
+            <RoleFilter />
+            <Button variant="outline" size="sm" className="h-9 min-w-[100px] bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm flex items-center px-3">
               <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               Export
-            </Button>
-            <Button variant="outline" size="sm" className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm" onClick={() => refetch()}>
-              <RefreshCcw className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </div>
         </div>
 
         <div className="mb-6">
-          <div className="relative max-w-full sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Cari pengguna..."
-              className="w-full pl-10 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md"
-              value={searchInputValue}
-              onChange={(e) => setSearchInputValue(e.target.value)}
-            />
-          </div>
+          <SearchInput placeholder="Cari pengguna..." className="max-w-full sm:max-w-md" />
         </div>
 
         {loading ? (
@@ -221,7 +133,6 @@ export default function Pengguna() {
               <p className="mt-4 text-red-600 font-medium">Gagal memuat data pengguna</p>
               <p className="text-sm text-gray-400">Terjadi kesalahan pada server</p>
               <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
-                <RefreshCcw className="h-4 w-4 mr-2" />
                 Coba lagi
               </Button>
             </div>
@@ -235,36 +146,11 @@ export default function Pengguna() {
                   <TableHeader>
                     <TableRow className="bg-gray-50 border-b border-gray-200">
                       <TableHead className="w-[50px] font-semibold text-gray-700 py-4">ID</TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("name")}>
-                        <div className="flex items-center">
-                          Nama
-                          <SortIcon field="name" />
-                        </div>
-                      </TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("email")}>
-                        <div className="flex items-center">
-                          Email
-                          <SortIcon field="email" />
-                        </div>
-                      </TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("role")}>
-                        <div className="flex items-center">
-                          Peran
-                          <SortIcon field="role" />
-                        </div>
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("createdAt")}>
-                        <div className="flex items-center">
-                          Tgl. Dibuat
-                          <SortIcon field="createdAt" />
-                        </div>
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4 cursor-pointer hover:bg-gray-100" onClick={() => handleSort("updatedAt")}>
-                        <div className="flex items-center">
-                          Tgl. Diperbarui
-                          <SortIcon field="updatedAt" />
-                        </div>
-                      </TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Nama</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Email</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Peran</TableHead>
+                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">Tgl. Dibuat</TableHead>
+                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">Tgl. Diperbarui</TableHead>
                       <TableHead className="font-semibold text-gray-700 py-4 text-center">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -393,43 +279,8 @@ export default function Pengguna() {
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border-t border-gray-200 mt-4 gap-4">
-              <div className="text-sm text-gray-500 text-center sm:text-left">
-                Menampilkan <strong className="text-gray-700">{users.length}</strong> dari <strong className="text-gray-700">{pagination.total}</strong> pengguna
-              </div>
-
-              <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
-                <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.page - 1)} disabled={!pagination.hasPrev} className="border-gray-300 text-gray-700 hover:bg-gray-50 h-8 px-2 sm:px-3">
-                  <ArrowLeft className="h-4 w-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Sebelumnya</span>
-                </Button>
-
-                <div className="flex items-center gap-1 overflow-x-auto py-1 px-1 max-w-[200px] sm:max-w-none">
-                  {getPageRange(pagination.page, pagination.totalPages).map((page, idx) =>
-                    page === "..." ? (
-                      <span key={`ellipsis-${idx}`} className="px-2">
-                        ...
-                      </span>
-                    ) : (
-                      <Button
-                        key={`page-${page}`}
-                        variant={pagination.page === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => typeof page === "number" && handlePageChange(page)}
-                        className={cn("h-8 w-8 p-0 sm:h-8 sm:w-8", pagination.page === page ? "bg-blue-600 text-white hover:bg-blue-700" : "border-gray-300 text-gray-700 hover:bg-gray-50")}
-                      >
-                        {page}
-                      </Button>
-                    )
-                  )}
-                </div>
-
-                <Button variant="outline" size="sm" onClick={() => handlePageChange(pagination.page + 1)} disabled={!pagination.hasNext} className="border-gray-300 text-gray-700 hover:bg-gray-50 h-8 px-2 sm:px-3">
-                  <span className="hidden sm:inline">Selanjutnya</span>
-                  <ArrowRight className="h-4 w-4 sm:ml-1" />
-                </Button>
-              </div>
-            </div>
+            {/* Pagination */}
+            <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />
           </div>
         )}
       </div>

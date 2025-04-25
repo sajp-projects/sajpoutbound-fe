@@ -1,8 +1,8 @@
 import { ApiResponse, CustomError, JoiValidationError } from "@/types/api";
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
-import { fetchWithAuth } from "@/utils/fetch";
 import { useSearchParams } from "react-router";
 import { UserLogsResponse } from "@/types/userLog";
+import { fetchApi } from "@/utils/api";
 
 // Query keys untuk caching
 export const userLogKeys = {
@@ -12,8 +12,6 @@ export const userLogKeys = {
 };
 
 type ErrorData = JoiValidationError | CustomError;
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
 // Hook untuk mengambil log pengguna dengan pagination
 export function useUserLogs(userId: string, options?: Omit<UseQueryOptions<UserLogsResponse, Error, UserLogsResponse, ReturnType<typeof userLogKeys.list>>, "queryKey" | "queryFn">) {
@@ -30,12 +28,12 @@ export function useUserLogs(userId: string, options?: Omit<UseQueryOptions<UserL
   return useQuery({
     queryKey: userLogKeys.list(userId, filters),
     queryFn: async () => {
-      // Build URL with search params
-      const url = new URL(`${API_BASE_URL}/logs/user/${userId}`);
-      url.searchParams.append("page", page);
-      url.searchParams.append("limit", limit);
+      // Gunakan API helper untuk URL yang lebih simpel
+      const response = await fetchApi(`/logs/user/${userId}`, {
+        page,
+        limit,
+      });
 
-      const response = await fetchWithAuth(url.toString());
       if (!response.ok) {
         throw new Error(`Error fetching user logs: ${response.statusText}`);
       }

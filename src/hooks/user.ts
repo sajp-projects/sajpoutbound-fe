@@ -3,6 +3,7 @@ import { CreateUserInput, UserWithRole, UsersResponse } from "@/types/user";
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/utils/fetch";
 import { useSearchParams } from "react-router";
+import { fetchApi } from "@/utils/api";
 
 // Type for user update input based on backend Joi schema
 export interface UserUpdateInput {
@@ -29,7 +30,7 @@ export function useUser({ id }: { id: string }, options?: Omit<UseQueryOptions<U
   return useQuery({
     queryKey: userKeys.detail(id),
     queryFn: async () => {
-      const response = await fetchWithAuth(`${API_BASE_URL}/users/${id}`);
+      const response = await fetchApi(`/users/${id}`);
       if (!response.ok) {
         throw new Error(`Error fetching user: ${response.statusText}`);
       }
@@ -57,45 +58,28 @@ export function useUsers(options?: Omit<UseQueryOptions<UsersResponse, Error, Us
   const page = searchParams.get("page") || "1";
   const limit = searchParams.get("limit") || "10";
   const search = searchParams.get("search") || "";
-  const sort = searchParams.get("sort") || "name";
-  const sortDirection = searchParams.get("sortDirection") || "asc";
+  const roleId = searchParams.get("roleId") || "";
 
   // Buat objek filters dengan semua parameter URL untuk digunakan sebagai bagian dari queryKey
   const filters = {
     page,
     limit,
     search,
-    sort,
-    sortDirection,
+    roleId,
   };
 
   return useQuery({
     // Gunakan queryKey yang mencakup semua filter agar React Query dapat memantau perubahan
     queryKey: userKeys.list(filters),
     queryFn: async () => {
-      // Build URL with search params
-      const url = new URL(`${API_BASE_URL}/users`);
-      url.searchParams.append("page", page);
-      url.searchParams.append("limit", limit);
+      // Gunakan API helper untuk membuat URL yang lebih simpel
+      const response = await fetchApi("/users", {
+        page,
+        limit,
+        search,
+        roleId,
+      });
 
-      if (search) {
-        url.searchParams.append("search", search);
-      }
-
-      // Tambahkan parameter sorting jika tersedia
-      if (sort) {
-        url.searchParams.append("sort", sort);
-      }
-
-      if (sortDirection) {
-        url.searchParams.append("sortDirection", sortDirection);
-      }
-
-      // Debug log untuk troubleshooting
-      console.log(`Fetching users with URL: ${url.toString()}`);
-      console.log(`Query key: ${JSON.stringify(userKeys.list(filters))}`);
-
-      const response = await fetchWithAuth(url.toString());
       if (!response.ok) {
         throw new Error(`Error fetching users: ${response.statusText}`);
       }
@@ -110,9 +94,6 @@ export function useUsers(options?: Omit<UseQueryOptions<UsersResponse, Error, Us
       if (!result.data) {
         throw new Error("Users data is missing");
       }
-
-      // Log untuk memastikan data diterima dengan benar
-      console.log(`Received ${result.data.users.length} users on page ${result.data.pagination.page}`);
 
       return result.data;
     },
@@ -172,10 +153,14 @@ export function useUpdateUser(options?: UseMutationOptions<UserWithRole, Error, 
         throw new Error(JSON.stringify({ message: "At least one field must be provided for update" }));
       }
 
-      const response = await fetchWithAuth(`${API_BASE_URL}/users/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(updateData),
-      });
+      const response = await fetchApi(
+        `/users/${id}`,
+        {},
+        {
+          method: "PUT",
+          body: JSON.stringify(updateData),
+        }
+      );
 
       const result = await response.json();
 
@@ -210,9 +195,14 @@ export function useDeleteUser(options?: UseMutationOptions<void, Error, { id: st
 
   return useMutation({
     mutationFn: async ({ id }: { id: string }) => {
-      const response = await fetchWithAuth(`${API_BASE_URL}/users/${id}`, {
-        method: "DELETE",
-      });
+      const response = await fetchApi(
+        `/users/${id}`,
+        {},
+        {
+          method: "DELETE",
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`Error deleting user: ${response.statusText}`);
       }
@@ -238,10 +228,8 @@ export function useArchivedUsers(options?: Omit<UseQueryOptions<UserWithRole[], 
   return useQuery({
     queryKey: userKeys.archived(),
     queryFn: async () => {
-      // Buat URL untuk API arsip
-      const url = new URL(`${API_BASE_URL}/users/archived`);
+      const response = await fetchApi("/users/archived");
 
-      const response = await fetchWithAuth(url.toString());
       if (!response.ok) {
         throw new Error(`Error fetching archived users: ${response.statusText}`);
       }
@@ -269,9 +257,13 @@ export function useRestoreUser(options?: UseMutationOptions<UserWithRole, Error,
 
   return useMutation({
     mutationFn: async ({ id }: { id: string }) => {
-      const response = await fetchWithAuth(`${API_BASE_URL}/users/${id}/unarchived`, {
-        method: "PATCH",
-      });
+      const response = await fetchApi(
+        `/users/${id}/unarchived`,
+        {},
+        {
+          method: "PATCH",
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Error restoring user: ${response.statusText}`);
