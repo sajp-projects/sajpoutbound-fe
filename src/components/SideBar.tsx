@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
-import { ChevronDown, Users, ShieldCheck, Lock, Package, UserCheck, Warehouse, FileText, Truck, PackageCheck, BarChart3, LogOut, Home, X } from "lucide-react";
+import { ChevronDown, Users, ShieldCheck, Package, UserCheck, Warehouse, FileText, Truck, PackageCheck, BarChart3, LogOut, Home, X } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useAuth } from "@/hooks/auth";
 
@@ -47,14 +47,6 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
       subItems: [
         { name: "Daftar Peran", path: "/peran" },
         { name: "Tambah Peran", path: "/peran/tambah" },
-      ],
-    },
-    {
-      name: "Izin",
-      icon: <Lock className="w-5 h-5" />,
-      subItems: [
-        { name: "Daftar Izin", path: "/izin" },
-        { name: "Tambah Izin", path: "/izin/tambah" },
       ],
     },
     {

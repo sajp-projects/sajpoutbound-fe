@@ -1,5 +1,5 @@
 import { useRole } from "@/hooks/role";
-import { ArrowLeft, Pencil, Users, Info, Mail, Calendar, User, Eye } from "lucide-react";
+import { ArrowLeft, Pencil, Users, Info, Mail, Calendar, User, Eye, Lock } from "lucide-react";
 import { useParams, Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utils/date";
@@ -98,6 +98,12 @@ export default function DetailPeran() {
               Edit Peran
             </Button>
           </Link>
+          <Link to={`/peran/${id}/izin`}>
+            <Button className="flex items-center px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-md shadow-sm text-sm font-medium text-white">
+              <Lock className="h-4 w-4 mr-2" />
+              Kelola Izin
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -177,6 +183,12 @@ export default function DetailPeran() {
                       <Button variant="outline" className="w-full justify-start text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700">
                         <Pencil className="h-4 w-4 mr-2" />
                         Edit Peran
+                      </Button>
+                    </Link>
+                    <Link to={`/peran/${id}/izin`} className="w-full">
+                      <Button variant="outline" className="w-full justify-start text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700">
+                        <Lock className="h-4 w-4 mr-2" />
+                        Kelola Izin Peran
                       </Button>
                     </Link>
                     <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab("users")}>

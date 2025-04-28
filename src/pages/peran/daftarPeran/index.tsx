@@ -1,5 +1,5 @@
 import { useDeleteRole, useRoles } from "@/hooks/role";
-import { Search, Plus, Eye, Pencil, Trash2 } from "lucide-react";
+import { Search, Plus, Eye, Pencil, Trash2, Lock } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import Swal from "sweetalert2";
@@ -166,6 +166,11 @@ export default function Role() {
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </Link>
+                              <Link to={`/peran/${role.id}/izin`}>
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50" title="Kelola Izin Peran">
+                                  <Lock className="h-4 w-4" />
+                                </Button>
+                              </Link>
                               <Link to={`/peran/${role.id}/edit`}>
                                 <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title="Edit">
                                   <Pencil className="h-4 w-4" />
@@ -215,6 +220,11 @@ export default function Role() {
                         <Link to={`/peran/${role.id}`}>
                           <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
                             <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Link to={`/peran/${role.id}/izin`}>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50" title="Kelola Izin Peran">
+                            <Lock className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Link to={`/peran/${role.id}/edit`}>

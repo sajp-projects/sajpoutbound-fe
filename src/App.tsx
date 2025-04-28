@@ -7,6 +7,7 @@ import Role from "./pages/peran/daftarPeran";
 import TambahPeran from "./pages/peran/tambahPeran";
 import DetailPeran from "./pages/peran/detailPeran";
 import EditPeran from "./pages/peran/editPeran";
+import IzinPeran from "./pages/peran/izinPeran";
 import Pengguna from "./pages/pengguna/daftarPengguna";
 import TambahPengguna from "./pages/pengguna/tambahPengguna";
 import DetailPengguna from "./pages/pengguna/detailPengguna";
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/peran/tambah" element={<TambahPeran />} />
           <Route path="/peran/:id" element={<DetailPeran />} />
           <Route path="/peran/:id/edit" element={<EditPeran />} />
+          <Route path="/peran/:id/izin" element={<IzinPeran />} />
         </Route>
       </Routes>
     </BrowserRouter>
