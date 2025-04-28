@@ -133,7 +133,7 @@ export function useUpdateRolePermissions(options?: UseMutationOptions<RolePermis
   return useMutation({
     mutationFn: async ({ roleId, permissionIds }: { roleId: string; permissionIds: string[] }) => {
       const response = await fetchApi(
-        `/role-permissions/${roleId}`,
+        `/api/role-permissions/${roleId}/update-all`,
         {},
         {
           method: "PUT",

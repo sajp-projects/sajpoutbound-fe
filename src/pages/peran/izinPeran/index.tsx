@@ -1,7 +1,7 @@
 import { usePermissions, useRolePermissions, useUpdateRolePermissions } from "@/hooks/izin";
 import { useRole } from "@/hooks/role";
 import { Info, Search, ShieldCheck, Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import Swal from "sweetalert2";
 
@@ -12,6 +12,146 @@ import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
 import { Pagination } from "@/components/Pagination";
 import { Permission } from "@/types/izin";
+
+// Helper untuk menentukan warna badge berdasarkan action
+function getActionBadgeClass(action: string): string {
+  switch (action.toUpperCase()) {
+    case "CREATE":
+      return "bg-green-100 text-green-800";
+    case "READ":
+      return "bg-blue-100 text-blue-800";
+    case "UPDATE":
+      return "bg-amber-100 text-amber-800";
+    case "DELETE":
+      return "bg-red-100 text-red-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+}
+
+// Komponen untuk tampilan loading
+const LoadingState = () => (
+  <div className="flex justify-center items-center h-60">
+    <div className="flex flex-col items-center">
+      <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
+      <p className="mt-4 text-blue-600 font-medium">Memuat data izin...</p>
+    </div>
+  </div>
+);
+
+// Komponen untuk tampilan error
+const ErrorState = ({ onRetry }: { onRetry: () => void }) => (
+  <div className="flex justify-center items-center h-60">
+    <div className="flex flex-col items-center">
+      <div className="w-12 h-12 rounded-full border-4 border-red-200 border-t-red-600 animate-spin"></div>
+      <p className="mt-4 text-red-600 font-medium">Gagal memuat data izin</p>
+      <p className="text-sm text-gray-400">Terjadi kesalahan pada server</p>
+      <Button variant="outline" size="sm" onClick={onRetry} className="mt-4">
+        Coba lagi
+      </Button>
+    </div>
+  </div>
+);
+
+// Komponen untuk tampilan kosong
+const EmptyState = () => (
+  <div className="bg-white border border-gray-200 rounded-lg py-8">
+    <div className="flex flex-col items-center justify-center text-muted-foreground">
+      <Search className="h-10 w-10 mb-2 text-gray-300" />
+      <p className="text-gray-500">Tidak ada data izin yang ditemukan.</p>
+      <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
+    </div>
+  </div>
+);
+
+// Komponen untuk kartu izin (tampilan mobile)
+const PermissionCard = ({ permission, isSelected, onToggle }: { permission: Permission; isSelected: boolean; onToggle: (id: string) => void }) => (
+  <div className="border-b border-gray-100 last:border-0 p-4">
+    <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center space-x-3">
+        <input type="checkbox" className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked={isSelected} onChange={() => onToggle(permission.id)} id={`mobile-permission-${permission.id}`} />
+        <span className={cn("px-2 py-1 text-xs font-medium rounded-full", getActionBadgeClass(permission.action))}>{permission.action}</span>
+      </div>
+
+      {isSelected && (
+        <span className="text-green-600 bg-green-50 p-1 rounded-full">
+          <Check className="h-4 w-4" />
+        </span>
+      )}
+    </div>
+
+    <h4 className="font-medium text-blue-600 mb-1">{permission.name}</h4>
+    <p className="text-sm text-gray-600 mb-2">{permission.description}</p>
+
+    <div className="text-xs text-gray-500">
+      Dibuat: <span className="font-medium">{formatDateShort(permission.createdAt)}</span>
+    </div>
+  </div>
+);
+
+// Komponen untuk tabel izin (desktop)
+const PermissionsTable = ({ permissions, isPermissionSelected, togglePermission }: { permissions: Permission[]; isPermissionSelected: (id: string) => boolean; togglePermission: (id: string) => void }) => (
+  <div className="overflow-x-auto">
+    <Table>
+      <TableHeader>
+        <TableRow className="bg-gray-50 border-b border-gray-200">
+          <TableHead className="w-[50px] font-semibold text-gray-700 py-3">Pilih</TableHead>
+          <TableHead className="font-semibold text-gray-700 py-3">Aksi</TableHead>
+          <TableHead className="font-semibold text-gray-700 py-3">Nama Izin</TableHead>
+          <TableHead className="font-semibold text-gray-700 py-3">Deskripsi</TableHead>
+          <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-3">Dibuat</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {permissions.map((permission, idx) => (
+          <TableRow key={permission.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50")}>
+            <TableCell className="text-center">
+              <div className="flex items-center justify-center">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  checked={isPermissionSelected(permission.id)}
+                  onChange={() => togglePermission(permission.id)}
+                  id={`permission-${permission.id}`}
+                />
+              </div>
+            </TableCell>
+            <TableCell className="font-medium">
+              <span className={cn("px-2 py-1 text-xs font-medium rounded-full", getActionBadgeClass(permission.action))}>{permission.action}</span>
+            </TableCell>
+            <TableCell className="font-medium text-blue-600">{permission.name}</TableCell>
+            <TableCell className="text-gray-600">{permission.description}</TableCell>
+            <TableCell className="hidden md:table-cell text-gray-500">{formatDate(permission.createdAt)}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+);
+
+// Komponen untuk grup izin berdasarkan resource
+const ResourceGroup = ({ resource, permissions, isPermissionSelected, togglePermission }: { resource: string; permissions: Permission[]; isPermissionSelected: (id: string) => boolean; togglePermission: (id: string) => void }) => (
+  <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+      <h3 className="font-medium text-gray-700 flex items-center">
+        <ShieldCheck className="h-5 w-5 mr-2 text-blue-600" />
+        <span className="capitalize">{resource}</span>
+      </h3>
+    </div>
+
+    {/* Table untuk tampilan desktop & tablet */}
+    <div className="hidden sm:block">
+      <PermissionsTable permissions={permissions} isPermissionSelected={isPermissionSelected} togglePermission={togglePermission} />
+    </div>
+
+    {/* Card untuk tampilan mobile */}
+    <div className="sm:hidden space-y-4">
+      {permissions.map((permission) => (
+        <PermissionCard key={permission.id} permission={permission} isSelected={isPermissionSelected(permission.id)} onToggle={togglePermission} />
+      ))}
+    </div>
+  </div>
+);
 
 export default function IzinPeran() {
   const { id } = useParams<{ id: string }>();
@@ -71,52 +211,59 @@ export default function IzinPeran() {
   const permissions = permissionsData?.permissions || [];
   const totalItems = permissionsData?.total || 0;
 
-  // Siapkan nilai untuk pagination
-  // Jika ada pencarian lokal, gunakan hasil filter lokal untuk pagination
+  // Siapkan nilai untuk pagination berdasarkan pencarian
   const useClientSidePagination = searchTerm.length > 0;
 
-  let filteredPermissions = permissions;
-  let currentPageItems = permissions;
-  let paginationData = {
-    total: totalItems,
-    page: page,
-    limit: 10,
-    totalPages: Math.ceil(totalItems / 10),
-    hasNext: page < Math.ceil(totalItems / 10),
-    hasPrev: page > 1,
-  };
-
-  // Jika ada pencarian lokal, filter data dan gunakan pagination client-side
-  if (useClientSidePagination) {
-    filteredPermissions = permissions.filter((permission) => {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        permission.name.toLowerCase().includes(searchLower) || permission.description.toLowerCase().includes(searchLower) || permission.resource.toLowerCase().includes(searchLower) || permission.action.toLowerCase().includes(searchLower)
-      );
-    });
-
-    const itemsPerPage = 10;
-    const totalFilteredPages = Math.ceil(filteredPermissions.length / itemsPerPage);
-    const startIndex = (page - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-
-    // Perbarui data pagination berdasarkan hasil filter
-    paginationData = {
-      total: filteredPermissions.length,
+  // Persiapkan data untuk tampilan dengan useMemo untuk optimasi performa
+  const { currentPageItems, paginationData } = useMemo(() => {
+    let filteredPermissions = permissions;
+    let currentPageItems = permissions;
+    let paginationData = {
+      total: totalItems,
       page: page,
-      limit: itemsPerPage,
-      totalPages: totalFilteredPages,
-      hasNext: page < totalFilteredPages,
+      limit: 10,
+      totalPages: Math.ceil(totalItems / 10),
+      hasNext: page < Math.ceil(totalItems / 10),
       hasPrev: page > 1,
     };
 
-    // Ambil data untuk halaman saat ini
-    currentPageItems = filteredPermissions.slice(startIndex, endIndex);
-  }
+    // Jika ada pencarian lokal, filter data dan gunakan pagination client-side
+    if (useClientSidePagination) {
+      filteredPermissions = permissions.filter((permission) => {
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          permission.name.toLowerCase().includes(searchLower) || permission.description.toLowerCase().includes(searchLower) || permission.resource.toLowerCase().includes(searchLower) || permission.action.toLowerCase().includes(searchLower)
+        );
+      });
+
+      const itemsPerPage = 10;
+      const totalFilteredPages = Math.ceil(filteredPermissions.length / itemsPerPage);
+      const startIndex = (page - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+
+      // Perbarui data pagination berdasarkan hasil filter
+      paginationData = {
+        total: filteredPermissions.length,
+        page: page,
+        limit: itemsPerPage,
+        totalPages: totalFilteredPages,
+        hasNext: page < totalFilteredPages,
+        hasPrev: page > 1,
+      };
+
+      // Ambil data untuk halaman saat ini
+      currentPageItems = filteredPermissions.slice(startIndex, endIndex);
+    }
+
+    return {
+      currentPageItems,
+      paginationData,
+    };
+  }, [permissions, totalItems, page, searchTerm, useClientSidePagination]);
 
   // Group permissions by resource
-  const groupPermissionsByResource = (permissions: Permission[]) => {
-    return permissions.reduce((acc, permission) => {
+  const groupedPermissions = useMemo(() => {
+    return currentPageItems.reduce((acc, permission) => {
       const resource = permission.resource;
       if (!acc[resource]) {
         acc[resource] = [];
@@ -124,7 +271,7 @@ export default function IzinPeran() {
       acc[resource].push(permission);
       return acc;
     }, {} as Record<string, Permission[]>);
-  };
+  }, [currentPageItems]);
 
   // Handle toggle permission
   const togglePermission = (permissionId: string) => {
@@ -165,8 +312,6 @@ export default function IzinPeran() {
   const isPermissionSelected = (permissionId: string) => {
     return selectedPermissions.includes(permissionId);
   };
-
-  const groupedPermissions = groupPermissionsByResource(currentPageItems);
 
   // Loading state
   const isLoading = roleLoading || permissionsLoading || rolePermissionsLoading;
@@ -227,117 +372,17 @@ export default function IzinPeran() {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
-              <p className="mt-4 text-blue-600 font-medium">Memuat data izin...</p>
-            </div>
-          </div>
+          <LoadingState />
         ) : isError ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border-4 border-red-200 border-t-red-600 animate-spin"></div>
-              <p className="mt-4 text-red-600 font-medium">Gagal memuat data izin</p>
-              <p className="text-sm text-gray-400">Terjadi kesalahan pada server</p>
-              <Button variant="outline" size="sm" onClick={() => refetchPermissions()} className="mt-4">
-                Coba lagi
-              </Button>
-            </div>
-          </div>
+          <ErrorState onRetry={refetchPermissions} />
         ) : (
           <div>
             {Object.keys(groupedPermissions).length === 0 ? (
-              <div className="bg-white border border-gray-200 rounded-lg py-8">
-                <div className="flex flex-col items-center justify-center text-muted-foreground">
-                  <Search className="h-10 w-10 mb-2 text-gray-300" />
-                  <p className="text-gray-500">Tidak ada data izin yang ditemukan.</p>
-                  <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
-                </div>
-              </div>
+              <EmptyState />
             ) : (
               <div className="space-y-6">
                 {Object.entries(groupedPermissions).map(([resource, permissions]) => (
-                  <div key={resource} className="border border-gray-200 rounded-lg overflow-hidden">
-                    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                      <h3 className="font-medium text-gray-700 flex items-center">
-                        <ShieldCheck className="h-5 w-5 mr-2 text-blue-600" />
-                        <span className="capitalize">{resource}</span>
-                      </h3>
-                    </div>
-
-                    {/* Table untuk tampilan desktop & tablet */}
-                    <div className="hidden sm:block">
-                      <div className="overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="bg-gray-50 border-b border-gray-200">
-                              <TableHead className="w-[50px] font-semibold text-gray-700 py-3">Pilih</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-3">Aksi</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-3">Nama Izin</TableHead>
-                              <TableHead className="font-semibold text-gray-700 py-3">Deskripsi</TableHead>
-                              <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-3">Dibuat</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {permissions.map((permission, idx) => (
-                              <TableRow key={permission.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50")}>
-                                <TableCell className="text-center">
-                                  <div className="flex items-center justify-center">
-                                    <input
-                                      type="checkbox"
-                                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                      checked={isPermissionSelected(permission.id)}
-                                      onChange={() => togglePermission(permission.id)}
-                                      id={`permission-${permission.id}`}
-                                    />
-                                  </div>
-                                </TableCell>
-                                <TableCell className="font-medium">
-                                  <span className={cn("px-2 py-1 text-xs font-medium rounded-full", getActionBadgeClass(permission.action))}>{permission.action}</span>
-                                </TableCell>
-                                <TableCell className="font-medium text-blue-600">{permission.name}</TableCell>
-                                <TableCell className="text-gray-600">{permission.description}</TableCell>
-                                <TableCell className="hidden md:table-cell text-gray-500">{formatDate(permission.createdAt)}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </div>
-
-                    {/* Card untuk tampilan mobile */}
-                    <div className="sm:hidden space-y-4">
-                      {permissions.map((permission) => (
-                        <div key={permission.id} className="border-b border-gray-100 last:border-0 p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center space-x-3">
-                              <input
-                                type="checkbox"
-                                className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                checked={isPermissionSelected(permission.id)}
-                                onChange={() => togglePermission(permission.id)}
-                                id={`mobile-permission-${permission.id}`}
-                              />
-                              <span className={cn("px-2 py-1 text-xs font-medium rounded-full", getActionBadgeClass(permission.action))}>{permission.action}</span>
-                            </div>
-
-                            {isPermissionSelected(permission.id) && (
-                              <span className="text-green-600 bg-green-50 p-1 rounded-full">
-                                <Check className="h-4 w-4" />
-                              </span>
-                            )}
-                          </div>
-
-                          <h4 className="font-medium text-blue-600 mb-1">{permission.name}</h4>
-                          <p className="text-sm text-gray-600 mb-2">{permission.description}</p>
-
-                          <div className="text-xs text-gray-500">
-                            Dibuat: <span className="font-medium">{formatDateShort(permission.createdAt)}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <ResourceGroup key={resource} resource={resource} permissions={permissions} isPermissionSelected={isPermissionSelected} togglePermission={togglePermission} />
                 ))}
               </div>
             )}
@@ -351,20 +396,4 @@ export default function IzinPeran() {
       </div>
     </div>
   );
-}
-
-// Helper untuk menentukan warna badge berdasarkan action
-function getActionBadgeClass(action: string): string {
-  switch (action.toUpperCase()) {
-    case "CREATE":
-      return "bg-green-100 text-green-800";
-    case "READ":
-      return "bg-blue-100 text-blue-800";
-    case "UPDATE":
-      return "bg-amber-100 text-amber-800";
-    case "DELETE":
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
 }
