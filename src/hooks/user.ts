@@ -1,7 +1,6 @@
 import { ApiResponse, CustomError, JoiValidationError } from "@/types/api";
 import { CreateUserInput, UserWithRole, UsersResponse } from "@/types/user";
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
-import { fetchWithAuth } from "@/utils/fetch";
 import { useSearchParams } from "react-router";
 import { fetchApi } from "@/utils/api";
 
@@ -108,10 +107,14 @@ export function useCreateUser(options?: UseMutationOptions<UserWithRole, Error, 
 
   return useMutation({
     mutationFn: async (userData: CreateUserInput) => {
-      const response = await fetchWithAuth(`${API_BASE_URL}/users`, {
-        method: "POST",
-        body: JSON.stringify(userData),
-      });
+      const response = await fetchApi(
+        `${API_BASE_URL}/users`,
+        {},
+        {
+          method: "POST",
+          body: JSON.stringify(userData),
+        }
+      );
 
       const result = await response.json();
 

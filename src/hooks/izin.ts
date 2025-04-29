@@ -1,28 +1,19 @@
 // Izin Hook
 
-import { ApiResponse, CustomError, JoiValidationError } from '@/types/api';
-import { Permission, PermissionsResponse, RolePermission } from '@/types/izin';
-import { fetchWithAuth } from '@/utils/fetch';
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type UseMutationOptions,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
-import { useSearchParams } from 'react-router';
+import { ApiResponse, CustomError, JoiValidationError } from "@/types/api";
+import { Permission, PermissionsResponse, RolePermission } from "@/types/izin";
+import { fetchApi } from "@/utils/api";
+import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
+import { useSearchParams } from "react-router";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
 // Query keys for caching
 export const permissionKeys = {
-  all: ['permissions'] as const,
-  lists: () => [...permissionKeys.all, 'list'] as const,
-  list: (filters: Record<string, unknown>) =>
-    [...permissionKeys.lists(), { filters }] as const,
-  rolePermissions: (roleId: string) =>
-    [...permissionKeys.all, 'role', roleId] as const,
+  all: ["permissions"] as const,
+  lists: () => [...permissionKeys.all, "list"] as const,
+  list: (filters: Record<string, unknown>) => [...permissionKeys.lists(), { filters }] as const,
+  rolePermissions: (roleId: string) => [...permissionKeys.all, "role", roleId] as const,
 };
 
 type ErrorData = JoiValidationError | CustomError;
@@ -33,21 +24,11 @@ type ApiErrorResponse = {
 };
 
 // Hook untuk mengambil semua izin dengan pagination
-export function usePermissions(
-  options?: Omit<
-    UseQueryOptions<
-      PermissionsResponse,
-      Error,
-      PermissionsResponse,
-      ReturnType<typeof permissionKeys.list>
-    >,
-    'queryKey' | 'queryFn'
-  >
-) {
+export function usePermissions(options?: Omit<UseQueryOptions<PermissionsResponse, Error, PermissionsResponse, ReturnType<typeof permissionKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
-  const page = searchParams.get('page') || '1';
-  const limit = searchParams.get('limit') || '10';
-  const search = searchParams.get('search') || '';
+  const page = searchParams.get("page") || "1";
+  const limit = searchParams.get("limit") || "10";
+  const search = searchParams.get("search") || "";
 
   // Buat objek filters untuk query key
   const filters = {
@@ -61,7 +42,7 @@ export function usePermissions(
     queryFn: async () => {
       const url = `${API_BASE_URL}/permissions?page=${page}&limit=${limit}`;
 
-      const response = await fetchWithAuth(url);
+      const response = await fetchApi(url);
 
       if (!response.ok) {
         throw new Error(`Error fetching permissions: ${response.statusText}`);
@@ -71,11 +52,11 @@ export function usePermissions(
 
       if (!result.success) {
         const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || 'An error occurred');
+        throw new Error(errorData.message || "An error occurred");
       }
 
       if (!result.data || !result.data.permissions) {
-        throw new Error('Permissions data is missing');
+        throw new Error("Permissions data is missing");
       }
 
       return result.data;
@@ -85,38 +66,23 @@ export function usePermissions(
 }
 
 // Hook untuk mengambil izin yang dimiliki oleh peran tertentu
-export function useRolePermissions(
-  roleId: string,
-  options?: Omit<
-    UseQueryOptions<
-      Permission[],
-      Error,
-      Permission[],
-      ReturnType<typeof permissionKeys.rolePermissions>
-    >,
-    'queryKey' | 'queryFn'
-  >
-) {
+export function useRolePermissions(roleId: string, options?: Omit<UseQueryOptions<Permission[], Error, Permission[], ReturnType<typeof permissionKeys.rolePermissions>>, "queryKey" | "queryFn">) {
   return useQuery({
     queryKey: permissionKeys.rolePermissions(roleId),
     queryFn: async () => {
       if (!roleId) return [];
 
-      const response = await fetchWithAuth(
-        `${API_BASE_URL}/role-permissions/${roleId}`
-      );
+      const response = await fetchApi(`${API_BASE_URL}/role-permissions/${roleId}`);
 
       if (!response.ok) {
-        throw new Error(
-          `Error fetching role permissions: ${response.statusText}`
-        );
+        throw new Error(`Error fetching role permissions: ${response.statusText}`);
       }
 
       const result: ApiResponse<Permission[]> = await response.json();
 
       if (!result.success) {
         const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || 'An error occurred');
+        throw new Error(errorData.message || "An error occurred");
       }
 
       return result.data || [];
@@ -140,17 +106,12 @@ export function useUpdateRolePermissions(
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      roleId,
-      permissionIds,
-    }: {
-      roleId: string;
-      permissionIds: string[];
-    }) => {
-      const response = await fetchWithAuth(
+    mutationFn: async ({ roleId, permissionIds }: { roleId: string; permissionIds: string[] }) => {
+      const response = await fetchApi(
         `${API_BASE_URL}/role-permissions/${roleId}/update-all`,
+        {},
         {
-          method: 'PUT',
+          method: "PUT",
           body: JSON.stringify({ permissionIds }),
         }
       );
@@ -159,7 +120,7 @@ export function useUpdateRolePermissions(
 
       if (!result.success) {
         const errorResponse: ApiErrorResponse = {
-          message: result.message || 'Gagal memperbarui izin peran',
+          message: result.message || "Gagal memperbarui izin peran",
           errorType: result.errorType,
           details: result.details,
         };
