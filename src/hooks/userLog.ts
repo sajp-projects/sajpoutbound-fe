@@ -13,26 +13,23 @@ export const userLogKeys = {
 
 type ErrorData = JoiValidationError | CustomError;
 
+const handleApiError = (result: ApiResponse<unknown>, defaultMessage: string): never => {
+  const errorData = result.data as unknown as ErrorData;
+  throw new Error(errorData.message || defaultMessage);
+};
+
 // Hook untuk mengambil log pengguna dengan pagination
 export function useUserLogs(userId: string, options?: Omit<UseQueryOptions<UserLogsResponse, Error, UserLogsResponse, ReturnType<typeof userLogKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
-  const page = searchParams.get("page") || "1";
-  const limit = searchParams.get("limit") || "10";
-
-  // Buat objek filters dengan semua parameter URL untuk query key
   const filters = {
-    page,
-    limit,
+    page: searchParams.get("page") || "1",
+    limit: searchParams.get("limit") || "10",
   };
 
   return useQuery({
     queryKey: userLogKeys.list(userId, filters),
     queryFn: async () => {
-      // Gunakan API helper untuk URL yang lebih simpel
-      const response = await fetchApi(`/logs/user/${userId}`, {
-        page,
-        limit,
-      });
+      const response = await fetchApi(`/logs/user/${userId}`, filters);
 
       if (!response.ok) {
         throw new Error(`Error fetching user logs: ${response.statusText}`);
@@ -41,11 +38,10 @@ export function useUserLogs(userId: string, options?: Omit<UseQueryOptions<UserL
       const result: ApiResponse<UserLogsResponse> = await response.json();
 
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "Terjadi kesalahan");
+        handleApiError(result, "Terjadi kesalahan");
       }
 
-      if (!result.data || !result.data.logs) {
+      if (!result.data?.logs) {
         throw new Error("Data log pengguna tidak ditemukan");
       }
 

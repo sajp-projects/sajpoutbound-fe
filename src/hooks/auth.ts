@@ -16,139 +16,120 @@ export interface Tokens {
 }
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [authState, setAuthState] = useState({
+    user: null as User | null,
+    isAuthenticated: false,
+    isLoading: true,
+  });
   const navigate = useNavigate();
 
-  // Cek token dan status autentikasi saat komponen mounting
   useEffect(() => {
     const accessToken = localStorage.getItem("accessToken");
     const userData = localStorage.getItem("user");
 
     if (accessToken && userData) {
       try {
-        setUser(JSON.parse(userData));
-        setIsAuthenticated(true);
+        setAuthState({
+          user: JSON.parse(userData),
+          isAuthenticated: true,
+          isLoading: false,
+        });
       } catch (error) {
         console.error("Error parsing user data:", error);
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
+        clearAuthData();
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
       }
+    } else {
+      setAuthState((prev) => ({ ...prev, isLoading: false }));
     }
-
-    setIsLoading(false);
   }, []);
 
-  // Function untuk login
+  const clearAuthData = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+  };
+
+  const saveAuthData = (user: User, tokens: Tokens) => {
+    localStorage.setItem("accessToken", tokens.accessToken);
+    localStorage.setItem("refreshToken", tokens.refreshToken);
+    localStorage.setItem("user", JSON.stringify(user));
+  };
+
+  const showAlert = (icon: "success" | "warning" | "error", title: string, text: string) => {
+    Swal.fire({
+      icon,
+      title,
+      text,
+      timer: 1500,
+      showConfirmButton: false,
+    });
+  };
+
   const login = async (email: string, password: string) => {
-    setIsLoading(true);
+    setAuthState((prev) => ({ ...prev, isLoading: true }));
 
     try {
       const response = await fetch("http://localhost:3000/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (!data.success) {
-        // Kita tidak tampilkan alert error disini karena sudah ditangani di form
-        setIsLoading(false);
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
         return false;
       }
 
-      // Login berhasil
       const { user, tokens } = data.data;
+      saveAuthData(user, tokens);
 
-      // Simpan token dan data user di localStorage
-      localStorage.setItem("accessToken", tokens.accessToken);
-      localStorage.setItem("refreshToken", tokens.refreshToken);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      // Update state
-      setUser(user);
-      setIsAuthenticated(true);
-
-      // Tampilkan alert sukses
-      Swal.fire({
-        icon: "success",
-        title: "Login Berhasil",
-        text: `Selamat datang, ${user.name}!`,
-        timer: 1500,
-        showConfirmButton: false,
+      setAuthState({
+        user,
+        isAuthenticated: true,
+        isLoading: false,
       });
 
-      setIsLoading(false);
+      showAlert("success", "Login Berhasil", `Selamat datang, ${user.name}!`);
       return true;
     } catch (error) {
       console.error("Login error:", error);
-      // Kita tidak tampilkan alert error disini karena sudah ditangani di form
-      setIsLoading(false);
+      setAuthState((prev) => ({ ...prev, isLoading: false }));
       return false;
     }
   };
 
-  // Function untuk logout
   const logout = () => {
-    // Hapus data dari localStorage
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-
-    // Update state
-    setUser(null);
-    setIsAuthenticated(false);
-
-    // Tampilkan alert sukses
-    Swal.fire({
-      icon: "success",
-      title: "Logout Berhasil",
-      text: "Anda telah berhasil keluar dari sistem",
-      timer: 1500,
-      showConfirmButton: false,
+    clearAuthData();
+    setAuthState({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
     });
 
-    // Redirect ke halaman login
+    showAlert("success", "Logout Berhasil", "Anda telah berhasil keluar dari sistem");
     navigate("/login");
   };
 
-  // Fungsi untuk cek apakah halaman ini memerlukan autentikasi
-  const checkAuthRedirect = (requireAuth: boolean = true, redirectTo: string = "/login") => {
-    // Jika masih loading, tidak melakukan apa-apa
-    if (isLoading) {
-      return;
-    }
+  const checkAuthRedirect = (requireAuth = true, redirectTo = "/login") => {
+    const { isLoading, isAuthenticated } = authState;
 
-    // Jika halaman memerlukan autentikasi tetapi user belum login
+    if (isLoading) return;
+
     if (requireAuth && !isAuthenticated) {
-      Swal.fire({
-        title: "Akses Dibatasi",
-        text: "Silakan login terlebih dahulu",
-        icon: "warning",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-
+      showAlert("warning", "Akses Dibatasi", "Silakan login terlebih dahulu");
       navigate(redirectTo);
-      return;
-    }
-
-    // Jika halaman khusus untuk user yang belum login (seperti halaman login) tetapi user sudah login
-    if (!requireAuth && isAuthenticated) {
+    } else if (!requireAuth && isAuthenticated) {
       navigate("/");
-      return;
     }
   };
 
   return {
-    user,
-    isAuthenticated,
-    isLoading,
+    user: authState.user,
+    isAuthenticated: authState.isAuthenticated,
+    isLoading: authState.isLoading,
     login,
     logout,
     checkAuthRedirect,

@@ -23,7 +23,25 @@ export const userKeys = {
   archived: () => [...userKeys.all, "archived"] as const,
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+// Helper functions
+interface ApiErrorResult {
+  success: boolean;
+  message?: string;
+  errorType?: string;
+  details?: Record<string, unknown>;
+  data?: UserWithRole | null;
+}
+
+const handleApiError = (result: ApiResponse<unknown>, defaultMessage: string): never => {
+  const errorData = result.data as unknown as ErrorData;
+  throw new Error(errorData.message || defaultMessage);
+};
+
+const createErrorResponse = (result: ApiErrorResult, defaultMessage: string) => ({
+  message: result.message || defaultMessage,
+  errorType: result.errorType,
+  details: result.details,
+});
 
 export function useUser({ id }: { id: string }, options?: Omit<UseQueryOptions<UserWithRole, Error, UserWithRole, ReturnType<typeof userKeys.detail>>, "queryKey" | "queryFn">) {
   return useQuery({
@@ -37,8 +55,7 @@ export function useUser({ id }: { id: string }, options?: Omit<UseQueryOptions<U
       const result: ApiResponse<UserWithRole> = await response.json();
 
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "An error occurred");
+        handleApiError(result, "An error occurred");
       }
 
       if (!result.data) {
@@ -54,30 +71,17 @@ export function useUser({ id }: { id: string }, options?: Omit<UseQueryOptions<U
 // Hook untuk mendapatkan daftar pengguna dengan pagination dari server
 export function useUsers(options?: Omit<UseQueryOptions<UsersResponse, Error, UsersResponse, ReturnType<typeof userKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
-  const page = searchParams.get("page") || "1";
-  const limit = searchParams.get("limit") || "10";
-  const search = searchParams.get("search") || "";
-  const roleId = searchParams.get("roleId") || "";
-
-  // Buat objek filters dengan semua parameter URL untuk digunakan sebagai bagian dari queryKey
   const filters = {
-    page,
-    limit,
-    search,
-    roleId,
+    page: searchParams.get("page") || "1",
+    limit: searchParams.get("limit") || "10",
+    search: searchParams.get("search") || "",
+    roleId: searchParams.get("roleId") || "",
   };
 
   return useQuery({
-    // Gunakan queryKey yang mencakup semua filter agar React Query dapat memantau perubahan
     queryKey: userKeys.list(filters),
     queryFn: async () => {
-      // Gunakan API helper untuk membuat URL yang lebih simpel
-      const response = await fetchApi("/users", {
-        page,
-        limit,
-        search,
-        roleId,
-      });
+      const response = await fetchApi("/users", filters);
 
       if (!response.ok) {
         throw new Error(`Error fetching users: ${response.statusText}`);
@@ -86,8 +90,7 @@ export function useUsers(options?: Omit<UseQueryOptions<UsersResponse, Error, Us
       const result: ApiResponse<UsersResponse> = await response.json();
 
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "An error occurred");
+        handleApiError(result, "An error occurred");
       }
 
       if (!result.data) {
@@ -106,9 +109,9 @@ export function useCreateUser(options?: UseMutationOptions<UserWithRole, Error, 
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userData: CreateUserInput) => {
+    mutationFn: async (userData) => {
       const response = await fetchApi(
-        `${API_BASE_URL}/users`,
+        "/users",
         {},
         {
           method: "POST",
@@ -116,27 +119,20 @@ export function useCreateUser(options?: UseMutationOptions<UserWithRole, Error, 
         }
       );
 
-      const result = await response.json();
+      const result = (await response.json()) as ApiErrorResult;
 
       if (!result.success) {
-        // Throw error dengan informasi lengkap dari backend
-        const errorResponse = {
-          message: result.message || "Gagal membuat pengguna",
-          errorType: result.errorType,
-          details: result.details,
-        };
-        throw new Error(JSON.stringify(errorResponse));
+        throw new Error(JSON.stringify(createErrorResponse(result, "Gagal membuat pengguna")));
       }
 
       if (!result.data) {
         throw new Error(JSON.stringify({ message: "Data pengguna tidak ditemukan" }));
       }
 
-      return result.data;
+      return result.data as UserWithRole;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(userKeys.detail(data.id), data);
-      // Invalidate all user lists regardless of filters
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },
     ...options,
@@ -148,10 +144,7 @@ export function useUpdateUser(options?: UseMutationOptions<UserWithRole, Error, 
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: { id: string } & UserUpdateInput) => {
-      const { id, ...updateData } = payload;
-
-      // Validate that at least one field is provided
+    mutationFn: async ({ id, ...updateData }) => {
       if (Object.keys(updateData).length === 0) {
         throw new Error(JSON.stringify({ message: "At least one field must be provided for update" }));
       }
@@ -165,27 +158,20 @@ export function useUpdateUser(options?: UseMutationOptions<UserWithRole, Error, 
         }
       );
 
-      const result = await response.json();
+      const result = (await response.json()) as ApiErrorResult;
 
       if (!result.success) {
-        // Throw error dengan informasi lengkap dari backend
-        const errorResponse = {
-          message: result.message || "Gagal memperbarui pengguna",
-          errorType: result.errorType,
-          details: result.details,
-        };
-        throw new Error(JSON.stringify(errorResponse));
+        throw new Error(JSON.stringify(createErrorResponse(result, "Gagal memperbarui pengguna")));
       }
 
       if (!result.data) {
         throw new Error(JSON.stringify({ message: "Data pengguna yang diperbarui tidak ditemukan" }));
       }
 
-      return result.data;
+      return result.data as UserWithRole;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(userKeys.detail(data.id), data);
-      // Invalidate all user lists regardless of filters
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },
     ...options,
@@ -197,14 +183,8 @@ export function useDeleteUser(options?: UseMutationOptions<void, Error, { id: st
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id }: { id: string }) => {
-      const response = await fetchApi(
-        `/users/${id}`,
-        {},
-        {
-          method: "DELETE",
-        }
-      );
+    mutationFn: async ({ id }) => {
+      const response = await fetchApi(`/users/${id}`, {}, { method: "DELETE" });
 
       if (!response.ok) {
         throw new Error(`Error deleting user: ${response.statusText}`);
@@ -212,16 +192,13 @@ export function useDeleteUser(options?: UseMutationOptions<void, Error, { id: st
 
       const result: ApiResponse<void> = await response.json();
 
-      // For delete operations, we just need to check success
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "Failed to delete user");
+        handleApiError(result, "Failed to delete user");
       }
     },
-    onSuccess: (_data, variables) => {
-      // Invalidate all user lists regardless of filters
+    onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      queryClient.removeQueries({ queryKey: userKeys.detail(variables.id) });
+      queryClient.removeQueries({ queryKey: userKeys.detail(id) });
     },
     ...options,
   });
@@ -240,8 +217,7 @@ export function useArchivedUsers(options?: Omit<UseQueryOptions<UserWithRole[], 
       const result: ApiResponse<UserWithRole[]> = await response.json();
 
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "An error occurred");
+        handleApiError(result, "An error occurred");
       }
 
       if (!result.data) {
@@ -259,14 +235,8 @@ export function useRestoreUser(options?: UseMutationOptions<UserWithRole, Error,
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id }: { id: string }) => {
-      const response = await fetchApi(
-        `/users/${id}/unarchived`,
-        {},
-        {
-          method: "PATCH",
-        }
-      );
+    mutationFn: async ({ id }) => {
+      const response = await fetchApi(`/users/${id}/unarchived`, {}, { method: "PATCH" });
 
       if (!response.ok) {
         throw new Error(`Error restoring user: ${response.statusText}`);
@@ -275,8 +245,7 @@ export function useRestoreUser(options?: UseMutationOptions<UserWithRole, Error,
       const result: ApiResponse<UserWithRole> = await response.json();
 
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "Failed to restore user");
+        handleApiError(result, "Failed to restore user");
       }
 
       if (!result.data) {
@@ -287,9 +256,7 @@ export function useRestoreUser(options?: UseMutationOptions<UserWithRole, Error,
     },
     onSuccess: (data) => {
       queryClient.setQueryData(userKeys.detail(data.id), data);
-      // Invalidate all user lists
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      // Invalidate archived users list
       queryClient.invalidateQueries({ queryKey: userKeys.archived() });
     },
     ...options,

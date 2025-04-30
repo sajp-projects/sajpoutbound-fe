@@ -1,5 +1,3 @@
-// Izin Hook
-
 import { ApiResponse, CustomError, JoiValidationError } from "@/types/api";
 import { Permission, PermissionsResponse, RolePermission } from "@/types/izin";
 import { fetchApi } from "@/utils/api";
@@ -23,25 +21,25 @@ type ApiErrorResponse = {
   details?: Record<string, unknown>;
 };
 
+// Helper untuk proses error umum
+const handleApiError = (result: ApiResponse<unknown>, defaultMessage: string): never => {
+  const errorData = result.data as unknown as ErrorData;
+  throw new Error(errorData?.message || defaultMessage);
+};
+
 // Hook untuk mengambil semua izin dengan pagination
 export function usePermissions(options?: Omit<UseQueryOptions<PermissionsResponse, Error, PermissionsResponse, ReturnType<typeof permissionKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
-  const page = searchParams.get("page") || "1";
-  const limit = searchParams.get("limit") || "10";
-  const search = searchParams.get("search") || "";
-
-  // Buat objek filters untuk query key
   const filters = {
-    page,
-    limit,
-    search,
+    page: searchParams.get("page") || "1",
+    limit: searchParams.get("limit") || "10",
+    search: searchParams.get("search") || "",
   };
 
   return useQuery({
     queryKey: permissionKeys.list(filters),
     queryFn: async () => {
-      const url = `${API_BASE_URL}/permissions?page=${page}&limit=${limit}`;
-
+      const url = `${API_BASE_URL}/permissions?page=${filters.page}&limit=${filters.limit}`;
       const response = await fetchApi(url);
 
       if (!response.ok) {
@@ -51,11 +49,10 @@ export function usePermissions(options?: Omit<UseQueryOptions<PermissionsRespons
       const result: ApiResponse<PermissionsResponse> = await response.json();
 
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "An error occurred");
+        handleApiError(result, "An error occurred");
       }
 
-      if (!result.data || !result.data.permissions) {
+      if (!result.data?.permissions) {
         throw new Error("Permissions data is missing");
       }
 
@@ -81,8 +78,7 @@ export function useRolePermissions(roleId: string, options?: Omit<UseQueryOption
       const result: ApiResponse<Permission[]> = await response.json();
 
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "An error occurred");
+        handleApiError(result, "An error occurred");
       }
 
       return result.data || [];
@@ -93,20 +89,11 @@ export function useRolePermissions(roleId: string, options?: Omit<UseQueryOption
 }
 
 // Hook untuk memperbarui izin peran secara massal
-export function useUpdateRolePermissions(
-  options?: UseMutationOptions<
-    RolePermission[],
-    Error,
-    {
-      roleId: string;
-      permissionIds: string[];
-    }
-  >
-) {
+export function useUpdateRolePermissions(options?: UseMutationOptions<RolePermission[], Error, { roleId: string; permissionIds: string[] }>) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ roleId, permissionIds }: { roleId: string; permissionIds: string[] }) => {
+    mutationFn: async ({ roleId, permissionIds }) => {
       const response = await fetchApi(
         `${API_BASE_URL}/role-permissions/${roleId}/update-all`,
         {},
@@ -129,9 +116,9 @@ export function useUpdateRolePermissions(
 
       return (result.data as RolePermission[]) || [];
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (_, { roleId }) => {
       queryClient.invalidateQueries({
-        queryKey: permissionKeys.rolePermissions(variables.roleId),
+        queryKey: permissionKeys.rolePermissions(roleId),
       });
     },
     ...options,

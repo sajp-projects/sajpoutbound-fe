@@ -32,7 +32,37 @@ export interface RoleUpdateInput {
   description?: string;
 }
 
+export interface CreateRoleInput {
+  name: string;
+  description: string;
+}
+
 type ErrorData = JoiValidationError | CustomError;
+type ApiErrorResponse = { message: string; errorType?: string; details?: Record<string, unknown> };
+
+// Interface untuk respons API dengan errorType dan details
+interface ApiErrorResult {
+  success: boolean;
+  message?: string;
+  errorType?: string;
+  details?: Record<string, unknown>;
+  data?: Role | null;
+}
+
+// Helper functions
+const handleApiError = (result: ApiResponse<unknown>, defaultMessage: string, specificErrors?: Record<string, string>): never => {
+  const errorData = result.data as unknown as ErrorData;
+  if (errorData.errorType && specificErrors?.[errorData.errorType]) {
+    throw new Error(specificErrors[errorData.errorType]);
+  }
+  throw new Error(errorData.message || defaultMessage);
+};
+
+const createErrorResponse = (result: ApiErrorResult, defaultMessage: string): ApiErrorResponse => ({
+  message: result.message || defaultMessage,
+  errorType: result.errorType,
+  details: result.details,
+});
 
 // Hook for fetching a single role
 export function useRole({ id }: { id: string }, options?: Omit<UseQueryOptions<Role, Error, Role, ReturnType<typeof roleKeys.detail>>, "queryKey" | "queryFn">) {
@@ -40,16 +70,10 @@ export function useRole({ id }: { id: string }, options?: Omit<UseQueryOptions<R
     queryKey: roleKeys.detail(id.toString()),
     queryFn: async () => {
       const response = await fetchApi(`/roles/${id}`);
-
       const result: ApiResponse<Role> = await response.json();
 
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        // Jika tipe error adalah ROLE_NOT_FOUND, berikan pesan yang lebih spesifik
-        if (errorData.errorType === "ROLE_NOT_FOUND") {
-          throw new Error("Role not found");
-        }
-        throw new Error(errorData.message || "An error occurred");
+        handleApiError(result, "An error occurred", { ROLE_NOT_FOUND: "Role not found" });
       }
 
       if (!result.data) {
@@ -65,22 +89,15 @@ export function useRole({ id }: { id: string }, options?: Omit<UseQueryOptions<R
 // Hook for fetching roles with pagination
 export function useRoles(options?: Omit<UseQueryOptions<RolesResponse, Error, RolesResponse, ReturnType<typeof roleKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
-  const page = searchParams.get("page") || "1";
-  const limit = searchParams.get("limit") || "10";
-
-  // Buat objek filters untuk query key
   const filters = {
-    page,
-    limit,
+    page: searchParams.get("page") || "1",
+    limit: searchParams.get("limit") || "10",
   };
 
   return useQuery({
     queryKey: roleKeys.list(filters),
     queryFn: async () => {
-      const response = await fetchApi("/roles", {
-        page,
-        limit,
-      });
+      const response = await fetchApi("/roles", filters);
 
       if (!response.ok) {
         throw new Error(`Error fetching roles: ${response.statusText}`);
@@ -89,11 +106,10 @@ export function useRoles(options?: Omit<UseQueryOptions<RolesResponse, Error, Ro
       const result: ApiResponse<RolesResponse> = await response.json();
 
       if (!result.success) {
-        const errorData = result.data as unknown as ErrorData;
-        throw new Error(errorData.message || "An error occurred");
+        handleApiError(result, "An error occurred");
       }
 
-      if (!result.data || !result.data.roles) {
+      if (!result.data?.roles) {
         throw new Error("Roles data is missing");
       }
 
@@ -103,18 +119,12 @@ export function useRoles(options?: Omit<UseQueryOptions<RolesResponse, Error, Ro
   });
 }
 
-// Hook for creating a new role
-export interface CreateRoleInput {
-  name: string;
-  description: string;
-}
-
 // Create a new role
 export function useCreateRole(options?: UseMutationOptions<Role, Error, CreateRoleInput>) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (roleData: CreateRoleInput) => {
+    mutationFn: async (roleData) => {
       const response = await fetchApi(
         "/roles",
         {},
@@ -124,23 +134,17 @@ export function useCreateRole(options?: UseMutationOptions<Role, Error, CreateRo
         }
       );
 
-      const result = await response.json();
+      const result = (await response.json()) as ApiErrorResult;
 
       if (!result.success) {
-        // Throw error dengan informasi lengkap dari backend
-        const errorResponse = {
-          message: result.message || "Gagal membuat peran",
-          errorType: result.errorType,
-          details: result.details,
-        };
-        throw new Error(JSON.stringify(errorResponse));
+        throw new Error(JSON.stringify(createErrorResponse(result, "Gagal membuat peran")));
       }
 
       if (!result.data) {
         throw new Error(JSON.stringify({ message: "Data peran tidak ditemukan" }));
       }
 
-      return result.data;
+      return result.data as Role;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(roleKeys.detail(data.id), data);
@@ -155,10 +159,7 @@ export function useUpdateRole(options?: UseMutationOptions<Role, Error, { id: st
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: { id: string } & RoleUpdateInput) => {
-      const { id, ...updateData } = payload;
-
-      // Validate that at least one field is provided
+    mutationFn: async ({ id, ...updateData }) => {
       if (Object.keys(updateData).length === 0) {
         throw new Error(JSON.stringify({ message: "At least one field must be provided for update" }));
       }
@@ -172,23 +173,17 @@ export function useUpdateRole(options?: UseMutationOptions<Role, Error, { id: st
         }
       );
 
-      const result = await response.json();
+      const result = (await response.json()) as ApiErrorResult;
 
       if (!result.success) {
-        // Throw error dengan informasi lengkap dari backend
-        const errorResponse = {
-          message: result.message || "Gagal memperbarui peran",
-          errorType: result.errorType,
-          details: result.details,
-        };
-        throw new Error(JSON.stringify(errorResponse));
+        throw new Error(JSON.stringify(createErrorResponse(result, "Gagal memperbarui peran")));
       }
 
       if (!result.data) {
         throw new Error(JSON.stringify({ message: "Data peran yang diperbarui tidak ditemukan" }));
       }
 
-      return result.data;
+      return result.data as Role;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(roleKeys.detail(data.id), data);
@@ -203,15 +198,8 @@ export function useDeleteRole(options?: UseMutationOptions<Role, Error, { id: st
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id }: { id: string }) => {
-      const response = await fetchApi(
-        `/roles/${id}`,
-        {},
-        {
-          method: "DELETE",
-        }
-      );
-
+    mutationFn: async ({ id }) => {
+      const response = await fetchApi(`/roles/${id}`, {}, { method: "DELETE" });
       const result: ApiResponse<Role> = await response.json();
 
       if (!response.ok || !result.success) {
