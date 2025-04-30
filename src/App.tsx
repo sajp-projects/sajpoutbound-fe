@@ -32,30 +32,7 @@ export default function App() {
         {/* Protected routes */}
         <Route element={<BaseLayout />}>
           {/* Dashboard - requires basic authentication */}
-          <Route
-            index
-            element={
-              <RBACLayout
-                resource={PERMISSION.RESOURCES.DASHBOARD}
-                action={PERMISSION.ACTIONS.READ}
-                redirectTo="/login"
-              >
-                <Dashboard />
-              </RBACLayout>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <RBACLayout
-                resource={PERMISSION.RESOURCES.DASHBOARD}
-                action={PERMISSION.ACTIONS.READ}
-                redirectTo="/login"
-              >
-                <Dashboard />
-              </RBACLayout>
-            }
-          />
+          <Route index element={<Dashboard />} />
 
           {/* User routes */}
           <Route path="/pengguna">
@@ -132,7 +109,6 @@ export default function App() {
               }
             />
           </Route>
-
           {/* Role routes */}
           <Route path="/peran">
             <Route

@@ -52,7 +52,10 @@ export default function IzinPeran() {
     isLoading: rolePermissionsLoading,
     isError: rolePermissionsError,
     refetch: refetchRolePermissions,
-  } = useRolePermissions(id || '');
+  } = useRolePermissions(id || '', {
+    enabled: !!id,
+    refetchOnMount: true,
+  });
 
   // ===== STATE MANAGEMENT =====
 
@@ -69,12 +72,14 @@ export default function IzinPeran() {
 
   // Initialize selected permissions when role permissions are loaded
   useEffect(() => {
-    if (rolePermissions && !rolePermissionsLoading) {
-      const permissionIds = rolePermissions.map((permission) => permission.id);
+    if (!rolePermissionsLoading) {
+      // Even if rolePermissions is empty array, we should still update the state
+      const permissionIds =
+        rolePermissions?.map((permission) => permission.id) || [];
       setSelectedPermissions(permissionIds);
       setInitialPermissions(permissionIds);
     }
-  }, [rolePermissions, rolePermissionsLoading]);
+  }, [rolePermissions, rolePermissionsLoading, id]);
 
   // Group permissions by resource
   const groupedPermissions = useMemo(() => {

@@ -311,30 +311,12 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
         hasPermission(item.resource!, subItem.action || PERMISSION.ACTIONS.READ)
       );
 
-      console.log('Menu item permission check:', {
-        menuName: item.name,
-        resource: item.resource,
-        hasAccess: hasAnyAccess,
-        subItems: item.subItems.map((si) => ({
-          name: si.name,
-          action: si.action,
-          hasAccess: hasPermission(
-            item.resource!,
-            si.action || PERMISSION.ACTIONS.READ
-          ),
-        })),
-      });
-
       return hasAnyAccess;
     }
 
     // For single items, check the READ permission by default
     const hasAccess = hasPermission(item.resource, PERMISSION.ACTIONS.READ);
-    console.log('Single item permission check:', {
-      menuName: item.name,
-      resource: item.resource,
-      hasAccess,
-    });
+
     return hasAccess;
   };
 
@@ -349,13 +331,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
       item.resource,
       subItem.action || PERMISSION.ACTIONS.READ
     );
-    console.log('Submenu item permission check:', {
-      menuName: item.name,
-      subItemName: subItem.name,
-      resource: item.resource,
-      action: subItem.action,
-      hasAccess,
-    });
+
     return hasAccess;
   };
 
