@@ -1,6 +1,7 @@
-import { ApiResponse, CustomError, JoiValidationError } from "@/types/api";
+import { ApiResponse, ApiErrorResponse } from "@/types/api";
 import { Permission, PermissionsResponse, RolePermission } from "@/types/izin";
 import { fetchApi } from "@/utils/api";
+import { handleApiError } from "@/utils/errorHandler";
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 
@@ -12,19 +13,6 @@ export const permissionKeys = {
   lists: () => [...permissionKeys.all, "list"] as const,
   list: (filters: Record<string, unknown>) => [...permissionKeys.lists(), { filters }] as const,
   rolePermissions: (roleId: string) => [...permissionKeys.all, "role", roleId] as const,
-};
-
-type ErrorData = JoiValidationError | CustomError;
-type ApiErrorResponse = {
-  message: string;
-  errorType?: string;
-  details?: Record<string, unknown>;
-};
-
-// Helper untuk proses error umum
-const handleApiError = (result: ApiResponse<unknown>, defaultMessage: string): never => {
-  const errorData = result.data as unknown as ErrorData;
-  throw new Error(errorData?.message || defaultMessage);
 };
 
 // Hook untuk mengambil semua izin dengan pagination

@@ -1,23 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import Swal from "sweetalert2";
-
-// Definisi tipe untuk data pengguna
-export interface User {
-  id: number;
-  email: string;
-  name: string;
-}
-
-// Tipe untuk respons token
-export interface Tokens {
-  accessToken: string;
-  refreshToken: string;
-}
+import { User, Tokens, AuthState } from "@/types/auth";
 
 export function useAuth() {
-  const [authState, setAuthState] = useState({
-    user: null as User | null,
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
     isAuthenticated: false,
     isLoading: true,
   });

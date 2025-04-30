@@ -1,8 +1,9 @@
-import { ApiResponse, CustomError, JoiValidationError } from "@/types/api";
+import { ApiResponse, ApiErrorResult } from "@/types/api";
 import { CreateUserInput, UserWithRole, UsersResponse } from "@/types/user";
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 import { fetchApi } from "@/utils/api";
+import { handleApiError, createErrorResponse } from "@/utils/errorHandler";
 
 // Type for user update input based on backend Joi schema
 export interface UserUpdateInput {
@@ -10,8 +11,6 @@ export interface UserUpdateInput {
   email?: string;
   roleId?: string;
 }
-
-type ErrorData = JoiValidationError | CustomError;
 
 // Query keys for caching
 export const userKeys = {
@@ -22,26 +21,6 @@ export const userKeys = {
   detail: (id: string) => [...userKeys.details(), id] as const,
   archived: () => [...userKeys.all, "archived"] as const,
 };
-
-// Helper functions
-interface ApiErrorResult {
-  success: boolean;
-  message?: string;
-  errorType?: string;
-  details?: Record<string, unknown>;
-  data?: UserWithRole | null;
-}
-
-const handleApiError = (result: ApiResponse<unknown>, defaultMessage: string): never => {
-  const errorData = result.data as unknown as ErrorData;
-  throw new Error(errorData.message || defaultMessage);
-};
-
-const createErrorResponse = (result: ApiErrorResult, defaultMessage: string) => ({
-  message: result.message || defaultMessage,
-  errorType: result.errorType,
-  details: result.details,
-});
 
 export function useUser({ id }: { id: string }, options?: Omit<UseQueryOptions<UserWithRole, Error, UserWithRole, ReturnType<typeof userKeys.detail>>, "queryKey" | "queryFn">) {
   return useQuery({

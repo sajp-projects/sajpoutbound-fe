@@ -1,8 +1,9 @@
-import { ApiResponse, CustomError, JoiValidationError } from "@/types/api";
+import { ApiResponse, ApiErrorResult } from "@/types/api";
 import { Role } from "@/types/role";
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
 import { fetchApi } from "@/utils/api";
 import { useSearchParams } from "react-router";
+import { handleApiError, createErrorResponse } from "@/utils/errorHandler";
 
 // Interface untuk respons API roles dengan pagination
 export interface RolesResponse {
@@ -36,33 +37,6 @@ export interface CreateRoleInput {
   name: string;
   description: string;
 }
-
-type ErrorData = JoiValidationError | CustomError;
-type ApiErrorResponse = { message: string; errorType?: string; details?: Record<string, unknown> };
-
-// Interface untuk respons API dengan errorType dan details
-interface ApiErrorResult {
-  success: boolean;
-  message?: string;
-  errorType?: string;
-  details?: Record<string, unknown>;
-  data?: Role | null;
-}
-
-// Helper functions
-const handleApiError = (result: ApiResponse<unknown>, defaultMessage: string, specificErrors?: Record<string, string>): never => {
-  const errorData = result.data as unknown as ErrorData;
-  if (errorData.errorType && specificErrors?.[errorData.errorType]) {
-    throw new Error(specificErrors[errorData.errorType]);
-  }
-  throw new Error(errorData.message || defaultMessage);
-};
-
-const createErrorResponse = (result: ApiErrorResult, defaultMessage: string): ApiErrorResponse => ({
-  message: result.message || defaultMessage,
-  errorType: result.errorType,
-  details: result.details,
-});
 
 // Hook for fetching a single role
 export function useRole({ id }: { id: string }, options?: Omit<UseQueryOptions<Role, Error, Role, ReturnType<typeof roleKeys.detail>>, "queryKey" | "queryFn">) {

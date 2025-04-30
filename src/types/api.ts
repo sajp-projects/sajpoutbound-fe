@@ -21,3 +21,19 @@ export interface CustomError {
   message: string;
   errorType: string;
 }
+
+// Interface untuk respons API dengan errorType dan details
+export interface ApiErrorResult {
+  success: boolean;
+  message?: string;
+  errorType?: string;
+  details?: Record<string, unknown>;
+  data?: unknown;
+}
+
+// Error response for type-safe handling
+export interface ApiErrorResponse {
+  message: string;
+  errorType?: string;
+  details?: Record<string, unknown>;
+}

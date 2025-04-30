@@ -1,21 +1,15 @@
-import { ApiResponse, CustomError, JoiValidationError } from "@/types/api";
+import { ApiResponse } from "@/types/api";
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 import { UserLogsResponse } from "@/types/userLog";
 import { fetchApi } from "@/utils/api";
+import { handleApiError } from "@/utils/errorHandler";
 
 // Query keys untuk caching
 export const userLogKeys = {
   all: ["userLogs"] as const,
   lists: () => [...userLogKeys.all, "list"] as const,
   list: (userId: string, filters: Record<string, unknown>) => [...userLogKeys.lists(), userId, { filters }] as const,
-};
-
-type ErrorData = JoiValidationError | CustomError;
-
-const handleApiError = (result: ApiResponse<unknown>, defaultMessage: string): never => {
-  const errorData = result.data as unknown as ErrorData;
-  throw new Error(errorData.message || defaultMessage);
 };
 
 // Hook untuk mengambil log pengguna dengan pagination
