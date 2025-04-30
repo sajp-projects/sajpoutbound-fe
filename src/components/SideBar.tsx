@@ -65,7 +65,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     {
       name: 'Dashboard',
       icon: <Home className="w-5 h-5" />,
-      path: '/dashboard',
+      path: '/',
     },
     {
       name: 'Pengguna',
