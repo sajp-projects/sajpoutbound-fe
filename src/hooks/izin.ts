@@ -4,8 +4,7 @@ import { fetchApi } from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+import { BASE_URL } from "@/constant/baseUrl";
 
 // Query keys for caching
 export const permissionKeys = {
@@ -27,8 +26,7 @@ export function usePermissions(options?: Omit<UseQueryOptions<PermissionsRespons
   return useQuery({
     queryKey: permissionKeys.list(filters),
     queryFn: async () => {
-      const url = `${API_BASE_URL}/permissions?page=${filters.page}&limit=${filters.limit}`;
-      const response = await fetchApi(url);
+      const response = await fetchApi(`${BASE_URL}/permissions`, filters);
 
       if (!response.ok) {
         throw new Error(`Error fetching permissions: ${response.statusText}`);
@@ -57,7 +55,7 @@ export function useRolePermissions(roleId: string, options?: Omit<UseQueryOption
     queryFn: async () => {
       if (!roleId) return [];
 
-      const response = await fetchApi(`${API_BASE_URL}/role-permissions/${roleId}`);
+      const response = await fetchApi(`${BASE_URL}/role-permissions/${roleId}`);
 
       if (!response.ok) {
         throw new Error(`Error fetching role permissions: ${response.statusText}`);
@@ -83,7 +81,7 @@ export function useUpdateRolePermissions(options?: UseMutationOptions<RolePermis
   return useMutation({
     mutationFn: async ({ roleId, permissionIds }) => {
       const response = await fetchApi(
-        `${API_BASE_URL}/role-permissions/${roleId}/update-all`,
+        `${BASE_URL}/role-permissions/${roleId}/update-all`,
         {},
         {
           method: "PUT",

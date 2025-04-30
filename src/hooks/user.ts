@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type Us
 import { useSearchParams } from "react-router";
 import { fetchApi } from "@/utils/api";
 import { handleApiError, createErrorResponse } from "@/utils/errorHandler";
+import { BASE_URL } from "@/constant/baseUrl";
 
 // Type for user update input based on backend Joi schema
 export interface UserUpdateInput {
@@ -26,7 +27,7 @@ export function useUser({ id }: { id: string }, options?: Omit<UseQueryOptions<U
   return useQuery({
     queryKey: userKeys.detail(id),
     queryFn: async () => {
-      const response = await fetchApi(`/users/${id}`);
+      const response = await fetchApi(`${BASE_URL}/users/${id}`);
       if (!response.ok) {
         throw new Error(`Error fetching user: ${response.statusText}`);
       }
@@ -60,7 +61,7 @@ export function useUsers(options?: Omit<UseQueryOptions<UsersResponse, Error, Us
   return useQuery({
     queryKey: userKeys.list(filters),
     queryFn: async () => {
-      const response = await fetchApi("/users", filters);
+      const response = await fetchApi(`${BASE_URL}/users`, filters);
 
       if (!response.ok) {
         throw new Error(`Error fetching users: ${response.statusText}`);
@@ -90,7 +91,7 @@ export function useCreateUser(options?: UseMutationOptions<UserWithRole, Error, 
   return useMutation({
     mutationFn: async (userData) => {
       const response = await fetchApi(
-        "/users",
+        `${BASE_URL}/users`,
         {},
         {
           method: "POST",
@@ -129,7 +130,7 @@ export function useUpdateUser(options?: UseMutationOptions<UserWithRole, Error, 
       }
 
       const response = await fetchApi(
-        `/users/${id}`,
+        `${BASE_URL}/users/${id}`,
         {},
         {
           method: "PUT",
@@ -163,7 +164,7 @@ export function useDeleteUser(options?: UseMutationOptions<void, Error, { id: st
 
   return useMutation({
     mutationFn: async ({ id }) => {
-      const response = await fetchApi(`/users/${id}`, {}, { method: "DELETE" });
+      const response = await fetchApi(`${BASE_URL}/users/${id}`, {}, { method: "DELETE" });
 
       if (!response.ok) {
         throw new Error(`Error deleting user: ${response.statusText}`);
@@ -187,7 +188,7 @@ export function useArchivedUsers(options?: Omit<UseQueryOptions<UserWithRole[], 
   return useQuery({
     queryKey: userKeys.archived(),
     queryFn: async () => {
-      const response = await fetchApi("/users/archived");
+      const response = await fetchApi(`${BASE_URL}/users/archived`);
 
       if (!response.ok) {
         throw new Error(`Error fetching archived users: ${response.statusText}`);
@@ -215,7 +216,7 @@ export function useRestoreUser(options?: UseMutationOptions<UserWithRole, Error,
 
   return useMutation({
     mutationFn: async ({ id }) => {
-      const response = await fetchApi(`/users/${id}/unarchived`, {}, { method: "PATCH" });
+      const response = await fetchApi(`${BASE_URL}/users/${id}/unarchived`, {}, { method: "PATCH" });
 
       if (!response.ok) {
         throw new Error(`Error restoring user: ${response.statusText}`);

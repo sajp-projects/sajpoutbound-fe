@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router";
 import { UserLogsResponse } from "@/types/userLog";
 import { fetchApi } from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
+import { BASE_URL } from "@/constant/baseUrl";
 
 // Query keys untuk caching
 export const userLogKeys = {
@@ -23,7 +24,7 @@ export function useUserLogs(userId: string, options?: Omit<UseQueryOptions<UserL
   return useQuery({
     queryKey: userLogKeys.list(userId, filters),
     queryFn: async () => {
-      const response = await fetchApi(`/logs/user/${userId}`, filters);
+      const response = await fetchApi(`${BASE_URL}/logs/user/${userId}`, filters);
 
       if (!response.ok) {
         throw new Error(`Error fetching user logs: ${response.statusText}`);

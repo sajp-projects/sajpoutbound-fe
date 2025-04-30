@@ -17,3 +17,22 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
 }
+
+// Tipe untuk data form login
+export interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+// Tipe untuk props komponen InputField
+export interface InputFieldProps {
+  id: string;
+  label: string;
+  type: string;
+  icon: React.ReactNode;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  rightElement?: React.ReactNode;
+}

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type Us
 import { fetchApi } from "@/utils/api";
 import { useSearchParams } from "react-router";
 import { handleApiError, createErrorResponse } from "@/utils/errorHandler";
+import { BASE_URL } from "@/constant/baseUrl";
 
 // Interface untuk respons API roles dengan pagination
 export interface RolesResponse {
@@ -43,7 +44,7 @@ export function useRole({ id }: { id: string }, options?: Omit<UseQueryOptions<R
   return useQuery({
     queryKey: roleKeys.detail(id.toString()),
     queryFn: async () => {
-      const response = await fetchApi(`/roles/${id}`);
+      const response = await fetchApi(`${BASE_URL}/roles/${id}`);
       const result: ApiResponse<Role> = await response.json();
 
       if (!result.success) {
@@ -71,7 +72,7 @@ export function useRoles(options?: Omit<UseQueryOptions<RolesResponse, Error, Ro
   return useQuery({
     queryKey: roleKeys.list(filters),
     queryFn: async () => {
-      const response = await fetchApi("/roles", filters);
+      const response = await fetchApi(`${BASE_URL}/roles`, filters);
 
       if (!response.ok) {
         throw new Error(`Error fetching roles: ${response.statusText}`);
@@ -100,7 +101,7 @@ export function useCreateRole(options?: UseMutationOptions<Role, Error, CreateRo
   return useMutation({
     mutationFn: async (roleData) => {
       const response = await fetchApi(
-        "/roles",
+        `${BASE_URL}/roles`,
         {},
         {
           method: "POST",
@@ -139,7 +140,7 @@ export function useUpdateRole(options?: UseMutationOptions<Role, Error, { id: st
       }
 
       const response = await fetchApi(
-        `/roles/${id}`,
+        `${BASE_URL}/roles/${id}`,
         {},
         {
           method: "PUT",
@@ -173,7 +174,7 @@ export function useDeleteRole(options?: UseMutationOptions<Role, Error, { id: st
 
   return useMutation({
     mutationFn: async ({ id }) => {
-      const response = await fetchApi(`/roles/${id}`, {}, { method: "DELETE" });
+      const response = await fetchApi(`${BASE_URL}/roles/${id}`, {}, { method: "DELETE" });
       const result: ApiResponse<Role> = await response.json();
 
       if (!response.ok || !result.success) {

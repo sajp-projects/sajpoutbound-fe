@@ -1,11 +1,10 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+import { BASE_URL } from "@/constant/baseUrl";
 
 /**
  * Helper untuk menambahkan header autentikasi
  */
 export const getAuthHeaders = (): HeadersInit => {
   const token = localStorage.getItem("accessToken");
-
   return {
     "Content-Type": "application/json",
     "x-outmanage-token": token || "",
@@ -14,47 +13,53 @@ export const getAuthHeaders = (): HeadersInit => {
 
 /**
  * Membangun URL API lengkap dengan parameter query
- * @param path Path API tanpa baseUrl
+ * @param path Path API (relatif atau dengan BASE_URL)
  * @param params Parameter query untuk URL
  * @returns URL lengkap dengan parameter
  */
 export const buildApiUrl = (path: string, params: Record<string, string | number | null | undefined> = {}): string => {
-  // Hapus parameter yang undefined atau null
-  const validParams = Object.entries(params)
-    .filter(([, value]) => value !== undefined && value !== null && value !== "")
-    .reduce((acc, [key, value]) => {
-      acc[key] = String(value);
-      return acc;
-    }, {} as Record<string, string>);
+  // Ekstrak path yang benar
+  let fullPath = path;
+  if (path.startsWith(BASE_URL)) {
+    fullPath = path;
+  } else if (path.startsWith("/")) {
+    fullPath = `${BASE_URL}${path}`;
+  } else {
+    fullPath = `${BASE_URL}/${path}`;
+  }
 
-  // Buat query string
-  const queryString = new URLSearchParams(validParams).toString();
+  // Filter dan konversi parameter valid
+  const validParams = Object.fromEntries(
+    Object.entries(params)
+      .filter(([, value]) => value !== undefined && value !== null && value !== "")
+      .map(([key, value]) => [key, String(value)])
+  );
 
-  // Buat URL lengkap
-  return `${API_BASE_URL}${path}${queryString ? `?${queryString}` : ""}`;
+  // Tambahkan parameter ke URL
+  if (Object.keys(validParams).length === 0) {
+    return fullPath;
+  }
+
+  const separator = fullPath.includes("?") ? "&" : "?";
+  return `${fullPath}${separator}${new URLSearchParams(validParams)}`;
 };
 
 /**
  * Helper function untuk melakukan request API dengan autentikasi
- * @param path Path API tanpa baseUrl atau URL lengkap
- * @param params Parameter query untuk URL (jika path bukan URL lengkap)
+ * @param path Path API relatif atau lengkap
+ * @param params Parameter query untuk URL
  * @param options Opsi fetch request
  * @returns Response dari API
  */
 export const fetchApi = async (path: string, params: Record<string, string | number | null | undefined> = {}, options: RequestInit = {}): Promise<Response> => {
-  // Cek apakah path sudah berupa URL lengkap
-  const isFullUrl = path.startsWith("http://") || path.startsWith("https://");
-  const url = isFullUrl ? path : buildApiUrl(path, params);
-
-  const authHeaders = getAuthHeaders();
-
-  const headers = {
-    ...authHeaders,
-    ...(options.headers || {}),
-  };
+  const isExternalUrl = path.startsWith("http://") || path.startsWith("https://");
+  const url = isExternalUrl && !path.startsWith(BASE_URL) ? path : buildApiUrl(path, params);
 
   return fetch(url, {
     ...options,
-    headers,
+    headers: {
+      ...getAuthHeaders(),
+      ...(options.headers || {}),
+    },
   });
 };
