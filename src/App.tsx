@@ -1,48 +1,201 @@
-import { BrowserRouter, Route, Routes } from "react-router";
-import BaseLayout from "./layout/BaseLayout";
-import Login from "./pages/auth/login";
-import Dashboard from "./pages/dashboard";
-import AuthLayout from "./layout/AuthLayout";
-import Role from "./pages/peran/daftarPeran";
-import TambahPeran from "./pages/peran/tambahPeran";
-import DetailPeran from "./pages/peran/detailPeran";
-import EditPeran from "./pages/peran/editPeran";
-import IzinPeran from "./pages/peran/izinPeran";
-import Pengguna from "./pages/pengguna/daftarPengguna";
-import TambahPengguna from "./pages/pengguna/tambahPengguna";
-import DetailPengguna from "./pages/pengguna/detailPengguna";
-import EditPengguna from "./pages/pengguna/editPengguna";
-import ArsipPengguna from "./pages/pengguna/arsipPengguna";
-import LogPengguna from "./pages/pengguna/logPengguna";
+import { BrowserRouter, Route, Routes } from 'react-router';
+import { PERMISSION } from './const/PERMISSION';
+import AuthLayout from './layout/AuthLayout';
+import BaseLayout from './layout/BaseLayout';
+import {
+  default as ActionLayout,
+  default as RBACLayout,
+} from './layout/RBACLayout';
+import Login from './pages/auth/login';
+import Dashboard from './pages/dashboard';
+import ArsipPengguna from './pages/pengguna/arsipPengguna';
+import Pengguna from './pages/pengguna/daftarPengguna';
+import DetailPengguna from './pages/pengguna/detailPengguna';
+import EditPengguna from './pages/pengguna/editPengguna';
+import LogPengguna from './pages/pengguna/logPengguna';
+import TambahPengguna from './pages/pengguna/tambahPengguna';
+import Role from './pages/peran/daftarPeran';
+import DetailPeran from './pages/peran/detailPeran';
+import EditPeran from './pages/peran/editPeran';
+import IzinPeran from './pages/peran/izinPeran';
+import TambahPeran from './pages/peran/tambahPeran';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rute autentikasi */}
+        {/* Authentication routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
         </Route>
 
-        {/* Rute utama yang dilindungi oleh autentikasi */}
+        {/* Protected routes */}
         <Route element={<BaseLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          {/* Dashboard - requires basic authentication */}
+          <Route
+            index
+            element={
+              <RBACLayout
+                resource={PERMISSION.RESOURCES.DASHBOARD}
+                action={PERMISSION.ACTIONS.READ}
+                redirectTo="/login"
+              >
+                <Dashboard />
+              </RBACLayout>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <RBACLayout
+                resource={PERMISSION.RESOURCES.DASHBOARD}
+                action={PERMISSION.ACTIONS.READ}
+                redirectTo="/login"
+              >
+                <Dashboard />
+              </RBACLayout>
+            }
+          />
 
-          {/* Rute Pengguna */}
-          <Route path="/pengguna" element={<Pengguna />} />
-          <Route path="/pengguna/tambah" element={<TambahPengguna />} />
-          <Route path="/pengguna/arsip" element={<ArsipPengguna />} />
-          <Route path="/pengguna/:id/log" element={<LogPengguna />} />
-          <Route path="/pengguna/:id/edit" element={<EditPengguna />} />
-          <Route path="/pengguna/:id" element={<DetailPengguna />} />
+          {/* User routes */}
+          <Route path="/pengguna">
+            <Route
+              index
+              element={
+                <RBACLayout
+                  resource={PERMISSION.RESOURCES.USER}
+                  action={PERMISSION.ACTIONS.READ}
+                  redirectTo="/"
+                >
+                  <Pengguna />
+                </RBACLayout>
+              }
+            />
+            <Route
+              path="tambah"
+              element={
+                <RBACLayout
+                  resource={PERMISSION.RESOURCES.USER}
+                  action={PERMISSION.ACTIONS.CREATE}
+                  redirectTo="/pengguna"
+                >
+                  <TambahPengguna />
+                </RBACLayout>
+              }
+            />
+            <Route
+              path="arsip"
+              element={
+                <RBACLayout
+                  resource={PERMISSION.RESOURCES.USER}
+                  action={PERMISSION.ACTIONS.READ}
+                  redirectTo="/pengguna"
+                >
+                  <ArsipPengguna />
+                </RBACLayout>
+              }
+            />
+            <Route
+              path=":id/log"
+              element={
+                <RBACLayout
+                  resource={PERMISSION.RESOURCES.USER}
+                  action={PERMISSION.ACTIONS.READ}
+                  redirectTo="/pengguna"
+                >
+                  <LogPengguna />
+                </RBACLayout>
+              }
+            />
+            <Route
+              path=":id/edit"
+              element={
+                <RBACLayout
+                  resource={PERMISSION.RESOURCES.USER}
+                  action={PERMISSION.ACTIONS.UPDATE}
+                  redirectTo="/pengguna"
+                >
+                  <EditPengguna />
+                </RBACLayout>
+              }
+            />
+            <Route
+              path=":id"
+              element={
+                <RBACLayout
+                  resource={PERMISSION.RESOURCES.USER}
+                  action={PERMISSION.ACTIONS.READ}
+                  redirectTo="/pengguna"
+                >
+                  <DetailPengguna />
+                </RBACLayout>
+              }
+            />
+          </Route>
 
-          {/* Rute Peran */}
-          <Route path="/peran" element={<Role />} />
-          <Route path="/peran/tambah" element={<TambahPeran />} />
-          <Route path="/peran/:id" element={<DetailPeran />} />
-          <Route path="/peran/:id/edit" element={<EditPeran />} />
-          <Route path="/peran/:id/izin" element={<IzinPeran />} />
+          {/* Role routes */}
+          <Route path="/peran">
+            <Route
+              index
+              element={
+                <ActionLayout
+                  resource={PERMISSION.RESOURCES.ROLE}
+                  action={PERMISSION.ACTIONS.READ}
+                  redirectTo="/"
+                >
+                  <Role />
+                </ActionLayout>
+              }
+            />
+            <Route
+              path="tambah"
+              element={
+                <RBACLayout
+                  resource={PERMISSION.RESOURCES.ROLE}
+                  action={PERMISSION.ACTIONS.CREATE}
+                  redirectTo="/peran"
+                >
+                  <TambahPeran />
+                </RBACLayout>
+              }
+            />
+            <Route
+              path=":id"
+              element={
+                <RBACLayout
+                  resource={PERMISSION.RESOURCES.ROLE}
+                  action={PERMISSION.ACTIONS.READ}
+                  redirectTo="/peran"
+                >
+                  <DetailPeran />
+                </RBACLayout>
+              }
+            />
+            <Route
+              path=":id/edit"
+              element={
+                <RBACLayout
+                  resource={PERMISSION.RESOURCES.ROLE}
+                  action={PERMISSION.ACTIONS.UPDATE}
+                  redirectTo="/peran"
+                >
+                  <EditPeran />
+                </RBACLayout>
+              }
+            />
+            <Route
+              path=":id/izin"
+              element={
+                <RBACLayout
+                  resource={PERMISSION.RESOURCES.ROLE}
+                  action={PERMISSION.ACTIONS.UPDATE}
+                  redirectTo="/peran"
+                >
+                  <IzinPeran />
+                </RBACLayout>
+              }
+            />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

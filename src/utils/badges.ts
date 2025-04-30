@@ -31,3 +31,21 @@ export function getRoleBadgeColor(roleName: string): string {
       return 'bg-purple-100 text-purple-700 border-purple-200';
   }
 }
+
+/**
+ * Get badge class based on permission action
+ */
+export function getActionBadgeClass(action: string): string {
+  switch (action.toUpperCase()) {
+    case 'CREATE':
+      return 'bg-green-100 text-green-800';
+    case 'READ':
+      return 'bg-blue-100 text-blue-800';
+    case 'UPDATE':
+      return 'bg-amber-100 text-amber-800';
+    case 'DELETE':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}

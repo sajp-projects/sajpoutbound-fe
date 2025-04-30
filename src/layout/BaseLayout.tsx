@@ -1,9 +1,9 @@
-import { Outlet } from "react-router";
-import Navbar from "../components/Navbar";
-import SideBar from "../components/SideBar";
-import Footer from "../components/Footer";
-import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/auth";
+import { useAuth } from '@/hooks/auth';
+import { useEffect, useState } from 'react';
+import { Outlet } from 'react-router';
+import Footer from '../components/Footer';
+import Navbar from '../components/Navbar';
+import SideBar from '../components/SideBar';
 
 export default function BaseLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -20,10 +20,10 @@ export default function BaseLayout() {
     };
 
     handleResize(); // Set initial value
-    window.addEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
@@ -33,7 +33,7 @@ export default function BaseLayout() {
 
   // Cek apakah sudah login, jika belum redirect ke halaman login
   useEffect(() => {
-    checkAuthRedirect(true, "/login");
+    checkAuthRedirect(true, '/login');
   }, [checkAuthRedirect]);
 
   // Jika masih loading atau belum login, jangan tampilkan apapun
@@ -47,7 +47,11 @@ export default function BaseLayout() {
       <SideBar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
       {/* Main Content */}
-      <div className={`flex flex-col flex-1 min-h-screen transition-all duration-300 ${isSidebarOpen ? "lg:ml-64" : ""}`}>
+      <div
+        className={`flex flex-col flex-1 min-h-screen transition-all duration-300 ${
+          isSidebarOpen ? 'lg:ml-64' : ''
+        }`}
+      >
         <Navbar toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
         <main className="flex-grow p-6">
