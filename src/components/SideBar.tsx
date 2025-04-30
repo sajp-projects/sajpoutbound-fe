@@ -339,50 +339,6 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     logout();
   }
 
-  // If not authenticated, only show dashboard
-  if (!isAuthenticated) {
-    return (
-      <aside
-        className={cn(
-          'h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-300 shadow-sm',
-          isOpen
-            ? 'w-64 translate-x-0'
-            : 'w-0 -translate-x-full lg:translate-x-0 lg:w-0'
-        )}
-      >
-        <div className="h-full flex flex-col overflow-hidden">
-          {/* Header */}
-          <div className="px-4 py-5 flex flex-col items-center justify-center border-b border-gray-200 relative">
-            <span className="text-xl font-bold text-blue-600">OUTMANAGE</span>
-            <div className="mt-1 text-xs text-gray-500 font-medium">
-              Sistem Manajemen DO
-            </div>
-            <div className="w-16 h-1 bg-blue-500 rounded-full mt-3"></div>
-          </div>
-
-          {/* Basic Navigation */}
-          <nav className="flex-1 px-3 overflow-y-auto py-2">
-            <ul className="space-y-1">
-              <li>
-                <Link
-                  to="/dashboard"
-                  className={cn(
-                    'flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors',
-                    location.pathname === '/dashboard' &&
-                      'bg-blue-50 text-blue-600 font-medium'
-                  )}
-                >
-                  <Home className="w-5 h-5" />
-                  <span className="ml-3">Dashboard</span>
-                </Link>
-              </li>
-            </ul>
-          </nav>
-        </div>
-      </aside>
-    );
-  }
-
   // If loading permissions, show loading state
   if (isLoading) {
     return (

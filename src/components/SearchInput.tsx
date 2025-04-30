@@ -12,33 +12,31 @@ interface SearchInputProps {
 export function SearchInput({ placeholder = "Cari...", className = "", debounceMs = 300 }: SearchInputProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
-  const [searchInputValue, setSearchInputValue] = useState(searchQuery);
+  const [value, setValue] = useState(searchQuery);
 
-  // Handle search (debounced)
   useEffect(() => {
+    if (value === searchQuery) return;
+
     const delay = setTimeout(() => {
-      if (searchInputValue === searchQuery) return;
+      const params = Object.fromEntries(searchParams.entries());
 
-      // Update search params
-      const newParams = new URLSearchParams(searchParams);
-      if (searchInputValue) {
-        newParams.set("search", searchInputValue);
+      if (value) {
+        params.search = value;
       } else {
-        newParams.delete("search");
+        delete params.search;
       }
-      // Reset ke halaman 1 saat pencarian
-      newParams.set("page", "1");
+      params.page = "1";
 
-      setSearchParams(newParams, { replace: false });
+      setSearchParams(params);
     }, debounceMs);
 
     return () => clearTimeout(delay);
-  }, [searchInputValue, searchParams, setSearchParams, searchQuery, debounceMs]);
+  }, [value, searchQuery, searchParams, setSearchParams, debounceMs]);
 
   return (
     <div className={`relative ${className}`}>
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-      <Input type="search" placeholder={placeholder} className="w-full pl-10 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md" value={searchInputValue} onChange={(e) => setSearchInputValue(e.target.value)} />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <Input type="search" placeholder={placeholder} className="w-full pl-10 py-2 rounded-md" value={value} onChange={(e) => setValue(e.target.value)} />
     </div>
   );
 }
