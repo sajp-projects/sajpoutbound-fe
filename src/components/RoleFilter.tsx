@@ -1,6 +1,5 @@
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Filter } from "lucide-react";
-import { useCallback } from "react";
 import { useSearchParams } from "react-router";
 import { cn } from "@/lib/utils";
 import { useRoles } from "@/hooks/role";
@@ -19,23 +18,23 @@ export function RoleFilter() {
   const activeRole = roles.find((role) => role.id === roleId);
   const activeRoleName = activeRole ? activeRole.name : "Semua Peran";
 
-  const handleSelectRole = useCallback(
-    (id: string) => {
-      const newParams = new URLSearchParams(searchParams);
+  function handleSelectRole(id: string) {
+    // Menyalin semua parameter yang ada
+    const params = Object.fromEntries(searchParams.entries());
 
-      if (id && id !== "all") {
-        newParams.set("roleId", id);
-      } else {
-        newParams.delete("roleId");
-      }
+    // Menangani perubahan roleId
+    if (id && id !== "all") {
+      params.roleId = id;
+    } else {
+      delete params.roleId;
+    }
 
-      // Reset ke halaman pertama saat filter berubah
-      newParams.set("page", "1");
+    // Reset halaman ke 1
+    params.page = "1";
 
-      setSearchParams(newParams, { replace: false });
-    },
-    [searchParams, setSearchParams]
-  );
+    // Update parameter URL
+    setSearchParams(params);
+  }
 
   return (
     <div className="w-[160px] sm:w-[190px]">
@@ -46,7 +45,7 @@ export function RoleFilter() {
             <span className="truncate">{activeRoleName}</span>
           </div>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="max-h-[300px] overflow-auto">
           <SelectItem value="all" className={cn(!roleId && "font-medium text-blue-600")}>
             Semua Peran
           </SelectItem>
