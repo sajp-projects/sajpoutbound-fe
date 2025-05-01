@@ -1,24 +1,21 @@
-import { BrowserRouter, Route, Routes } from 'react-router';
-import { PERMISSION } from './const/PERMISSION';
-import AuthLayout from './layout/AuthLayout';
-import BaseLayout from './layout/BaseLayout';
-import {
-  default as ActionLayout,
-  default as RBACLayout,
-} from './layout/RBACLayout';
-import Login from './pages/auth/login';
-import Dashboard from './pages/dashboard';
-import ArsipPengguna from './pages/pengguna/arsipPengguna';
-import Pengguna from './pages/pengguna/daftarPengguna';
-import DetailPengguna from './pages/pengguna/detailPengguna';
-import EditPengguna from './pages/pengguna/editPengguna';
-import LogPengguna from './pages/pengguna/logPengguna';
-import TambahPengguna from './pages/pengguna/tambahPengguna';
-import Role from './pages/peran/daftarPeran';
-import DetailPeran from './pages/peran/detailPeran';
-import EditPeran from './pages/peran/editPeran';
-import IzinPeran from './pages/peran/izinPeran';
-import TambahPeran from './pages/peran/tambahPeran';
+import { BrowserRouter, Route, Routes } from "react-router";
+import { PERMISSION } from "./constant/PERMISSION";
+import AuthLayout from "./layout/AuthLayout";
+import BaseLayout from "./layout/BaseLayout";
+import { default as ActionLayout, default as RBACLayout } from "./layout/RBACLayout";
+import Login from "./pages/auth/login";
+import Dashboard from "./pages/dashboard";
+import ArsipPengguna from "./pages/pengguna/arsipPengguna";
+import Pengguna from "./pages/pengguna/daftarPengguna";
+import DetailPengguna from "./pages/pengguna/detailPengguna";
+import EditPengguna from "./pages/pengguna/editPengguna";
+import LogPengguna from "./pages/pengguna/logPengguna";
+import TambahPengguna from "./pages/pengguna/tambahPengguna";
+import Role from "./pages/peran/daftarPeran";
+import DetailPeran from "./pages/peran/detailPeran";
+import EditPeran from "./pages/peran/editPeran";
+import IzinPeran from "./pages/peran/izinPeran";
+import TambahPeran from "./pages/peran/tambahPeran";
 
 export default function App() {
   return (
@@ -39,11 +36,7 @@ export default function App() {
             <Route
               index
               element={
-                <RBACLayout
-                  resource={PERMISSION.RESOURCES.USER}
-                  action={PERMISSION.ACTIONS.READ}
-                  redirectTo="/"
-                >
+                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.READ} redirectTo="/">
                   <Pengguna />
                 </RBACLayout>
               }
@@ -51,11 +44,7 @@ export default function App() {
             <Route
               path="tambah"
               element={
-                <RBACLayout
-                  resource={PERMISSION.RESOURCES.USER}
-                  action={PERMISSION.ACTIONS.CREATE}
-                  redirectTo="/pengguna"
-                >
+                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.CREATE} redirectTo="/pengguna">
                   <TambahPengguna />
                 </RBACLayout>
               }
@@ -63,11 +52,7 @@ export default function App() {
             <Route
               path="arsip"
               element={
-                <RBACLayout
-                  resource={PERMISSION.RESOURCES.USER}
-                  action={PERMISSION.ACTIONS.READ}
-                  redirectTo="/pengguna"
-                >
+                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.READ} redirectTo="/pengguna">
                   <ArsipPengguna />
                 </RBACLayout>
               }
@@ -75,11 +60,7 @@ export default function App() {
             <Route
               path=":id/log"
               element={
-                <RBACLayout
-                  resource={PERMISSION.RESOURCES.USER}
-                  action={PERMISSION.ACTIONS.READ}
-                  redirectTo="/pengguna"
-                >
+                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.READ} redirectTo="/pengguna">
                   <LogPengguna />
                 </RBACLayout>
               }
@@ -87,11 +68,7 @@ export default function App() {
             <Route
               path=":id/edit"
               element={
-                <RBACLayout
-                  resource={PERMISSION.RESOURCES.USER}
-                  action={PERMISSION.ACTIONS.UPDATE}
-                  redirectTo="/pengguna"
-                >
+                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.UPDATE} redirectTo="/pengguna">
                   <EditPengguna />
                 </RBACLayout>
               }
@@ -99,11 +76,7 @@ export default function App() {
             <Route
               path=":id"
               element={
-                <RBACLayout
-                  resource={PERMISSION.RESOURCES.USER}
-                  action={PERMISSION.ACTIONS.READ}
-                  redirectTo="/pengguna"
-                >
+                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.READ} redirectTo="/pengguna">
                   <DetailPengguna />
                 </RBACLayout>
               }
@@ -114,11 +87,7 @@ export default function App() {
             <Route
               index
               element={
-                <ActionLayout
-                  resource={PERMISSION.RESOURCES.ROLE}
-                  action={PERMISSION.ACTIONS.READ}
-                  redirectTo="/"
-                >
+                <ActionLayout resource={PERMISSION.RESOURCES.ROLE} action={PERMISSION.ACTIONS.READ} redirectTo="/">
                   <Role />
                 </ActionLayout>
               }
@@ -126,11 +95,7 @@ export default function App() {
             <Route
               path="tambah"
               element={
-                <RBACLayout
-                  resource={PERMISSION.RESOURCES.ROLE}
-                  action={PERMISSION.ACTIONS.CREATE}
-                  redirectTo="/peran"
-                >
+                <RBACLayout resource={PERMISSION.RESOURCES.ROLE} action={PERMISSION.ACTIONS.CREATE} redirectTo="/peran">
                   <TambahPeran />
                 </RBACLayout>
               }
@@ -138,11 +103,7 @@ export default function App() {
             <Route
               path=":id"
               element={
-                <RBACLayout
-                  resource={PERMISSION.RESOURCES.ROLE}
-                  action={PERMISSION.ACTIONS.READ}
-                  redirectTo="/peran"
-                >
+                <RBACLayout resource={PERMISSION.RESOURCES.ROLE} action={PERMISSION.ACTIONS.READ} redirectTo="/peran">
                   <DetailPeran />
                 </RBACLayout>
               }
@@ -150,11 +111,7 @@ export default function App() {
             <Route
               path=":id/edit"
               element={
-                <RBACLayout
-                  resource={PERMISSION.RESOURCES.ROLE}
-                  action={PERMISSION.ACTIONS.UPDATE}
-                  redirectTo="/peran"
-                >
+                <RBACLayout resource={PERMISSION.RESOURCES.ROLE} action={PERMISSION.ACTIONS.UPDATE} redirectTo="/peran">
                   <EditPeran />
                 </RBACLayout>
               }
@@ -162,11 +119,7 @@ export default function App() {
             <Route
               path=":id/izin"
               element={
-                <RBACLayout
-                  resource={PERMISSION.RESOURCES.ROLE}
-                  action={PERMISSION.ACTIONS.UPDATE}
-                  redirectTo="/peran"
-                >
+                <RBACLayout resource={PERMISSION.RESOURCES.ROLE} action={PERMISSION.ACTIONS.UPDATE} redirectTo="/peran">
                   <IzinPeran />
                 </RBACLayout>
               }

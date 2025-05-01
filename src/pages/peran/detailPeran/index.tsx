@@ -7,11 +7,30 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Swal from "sweetalert2";
+import { useRolePermissions } from "@/hooks/izin";
+import { useAuth } from "@/hooks/auth";
+import { PERMISSION } from "@/constant/PERMISSION";
 
 export default function DetailPeran() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"info" | "users">("info");
+  const { isAuthenticated } = useAuth();
+
+  // Get roleId dari localStorage
+  const userData = localStorage.getItem("user");
+  const roleId = userData ? JSON.parse(userData)?.roleId : null;
+
+  // Fetch permissions untuk memeriksa apakah user memiliki akses ke permission:READ
+  const { data: permissions } = useRolePermissions(roleId, {
+    enabled: isAuthenticated && !!roleId && roleId !== "",
+  });
+
+  // Fungsi untuk memeriksa apakah user memiliki izin permission:READ
+  const hasPermissionAccess = (): boolean => {
+    if (!isAuthenticated || !permissions) return false;
+    return permissions.some((permission) => permission.resource === PERMISSION.RESOURCES.PERMISSION && permission.action === PERMISSION.ACTIONS.READ);
+  };
 
   // Konfigurasi untuk useRole hook
   const {
@@ -98,12 +117,14 @@ export default function DetailPeran() {
               Edit Peran
             </Button>
           </Link>
-          <Link to={`/peran/${id}/izin`}>
-            <Button className="flex items-center px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-md shadow-sm text-sm font-medium text-white">
-              <Lock className="h-4 w-4 mr-2" />
-              Kelola Izin
-            </Button>
-          </Link>
+          {hasPermissionAccess() && (
+            <Link to={`/peran/${id}/izin`}>
+              <Button className="flex items-center px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-md shadow-sm text-sm font-medium text-white">
+                <Lock className="h-4 w-4 mr-2" />
+                Kelola Izin
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -185,12 +206,14 @@ export default function DetailPeran() {
                         Edit Peran
                       </Button>
                     </Link>
-                    <Link to={`/peran/${id}/izin`} className="w-full">
-                      <Button variant="outline" className="w-full justify-start text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700">
-                        <Lock className="h-4 w-4 mr-2" />
-                        Kelola Izin Peran
-                      </Button>
-                    </Link>
+                    {hasPermissionAccess() && (
+                      <Link to={`/peran/${id}/izin`} className="w-full">
+                        <Button variant="outline" className="w-full justify-start text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700">
+                          <Lock className="h-4 w-4 mr-2" />
+                          Kelola Izin Peran
+                        </Button>
+                      </Link>
+                    )}
                     <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab("users")}>
                       <Users className="h-4 w-4 mr-2" />
                       Lihat Pengguna Terkait

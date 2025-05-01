@@ -10,10 +10,29 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
 import { Pagination } from "@/components/Pagination";
+import { useRolePermissions } from "@/hooks/izin";
+import { useAuth } from "@/hooks/auth";
+import { PERMISSION } from "@/constant/PERMISSION";
 
 export default function Role() {
   // State untuk input pencarian client-side
   const [searchTerm, setSearchTerm] = useState("");
+  const { isAuthenticated } = useAuth();
+
+  // Get roleId dari localStorage
+  const userData = localStorage.getItem("user");
+  const roleId = userData ? JSON.parse(userData)?.roleId : null;
+
+  // Fetch permissions untuk memeriksa apakah user memiliki akses ke permission:READ
+  const { data: permissions } = useRolePermissions(roleId, {
+    enabled: isAuthenticated && !!roleId && roleId !== "",
+  });
+
+  // Fungsi untuk memeriksa apakah user memiliki izin permission:READ
+  const hasPermissionAccess = (): boolean => {
+    if (!isAuthenticated || !permissions) return false;
+    return permissions.some((permission) => permission.resource === PERMISSION.RESOURCES.PERMISSION && permission.action === PERMISSION.ACTIONS.READ);
+  };
 
   // Fetch peran dari API
   const {
@@ -166,11 +185,13 @@ export default function Role() {
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </Link>
-                              <Link to={`/peran/${role.id}/izin`}>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50" title="Kelola Izin Peran">
-                                  <Lock className="h-4 w-4" />
-                                </Button>
-                              </Link>
+                              {hasPermissionAccess() && (
+                                <Link to={`/peran/${role.id}/izin`}>
+                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50" title="Kelola Izin Peran">
+                                    <Lock className="h-4 w-4" />
+                                  </Button>
+                                </Link>
+                              )}
                               <Link to={`/peran/${role.id}/edit`}>
                                 <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title="Edit">
                                   <Pencil className="h-4 w-4" />
@@ -222,11 +243,13 @@ export default function Role() {
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <Link to={`/peran/${role.id}/izin`}>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50" title="Kelola Izin Peran">
-                            <Lock className="h-4 w-4" />
-                          </Button>
-                        </Link>
+                        {hasPermissionAccess() && (
+                          <Link to={`/peran/${role.id}/izin`}>
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50" title="Kelola Izin Peran">
+                              <Lock className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        )}
                         <Link to={`/peran/${role.id}/edit`}>
                           <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title="Edit">
                             <Pencil className="h-4 w-4" />
