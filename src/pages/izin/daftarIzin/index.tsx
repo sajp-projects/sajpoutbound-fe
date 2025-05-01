@@ -112,12 +112,24 @@ export default function IzinPeran() {
     },
     onError: (error) => {
       setIsSubmitting(false);
-      Swal.fire({
-        icon: "error",
-        title: "Gagal Memperbarui Izin Peran",
-        text: error.message || "Terjadi kesalahan saat memperbarui izin peran",
-        confirmButtonText: "Tutup",
-      });
+
+      // Cek jika pesan error adalah Forbidden
+      if (error.message && error.message.includes("Forbidden")) {
+        Swal.fire({
+          title: "Akses Ditolak",
+          text: "Anda tidak memiliki akses untuk mengubah izin peran ini.",
+          icon: "error",
+          confirmButtonText: "Tutup",
+        });
+      } else {
+        // Untuk error lainnya, tampilkan pesan error normal
+        Swal.fire({
+          icon: "error",
+          title: "Gagal Memperbarui Izin Peran",
+          text: error.message || "Terjadi kesalahan saat memperbarui izin peran",
+          confirmButtonText: "Tutup",
+        });
+      }
     },
   });
 

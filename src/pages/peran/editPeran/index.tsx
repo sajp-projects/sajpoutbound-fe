@@ -66,6 +66,17 @@ export default function EditPeran() {
       });
     },
     onError: (error: Error) => {
+      // Cek jika pesan error adalah Forbidden
+      if (error.message && error.message.includes("Forbidden")) {
+        Swal.fire({
+          title: "Akses Ditolak",
+          text: "Anda tidak memiliki akses untuk mengubah peran ini.",
+          icon: "error",
+          confirmButtonText: "Tutup",
+        });
+        return;
+      }
+
       try {
         // Parse error yang sudah di-stringify di hook
         const errorObj = JSON.parse(error.message);

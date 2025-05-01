@@ -60,12 +60,23 @@ export default function Role() {
 
   const deleteRole = useDeleteRole({
     onError: (error) => {
-      Swal.fire({
-        icon: "error",
-        title: "Gagal Menghapus Peran",
-        text: error.message || "Terjadi kesalahan saat menghapus peran",
-        confirmButtonText: "Tutup",
-      });
+      // Cek jika pesan error adalah Forbidden
+      if (error.message && error.message.includes("Forbidden")) {
+        Swal.fire({
+          title: "Akses Ditolak",
+          text: "Anda tidak memiliki akses untuk menghapus peran ini.",
+          icon: "error",
+          confirmButtonText: "Tutup",
+        });
+      } else {
+        // Untuk error lainnya, tampilkan pesan error normal
+        Swal.fire({
+          icon: "error",
+          title: "Gagal Menghapus Peran",
+          text: error.message || "Terjadi kesalahan saat menghapus peran",
+          confirmButtonText: "Tutup",
+        });
+      }
     },
     onSuccess: (data) => {
       Swal.fire({

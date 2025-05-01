@@ -119,7 +119,7 @@ export default function App() {
             <Route
               path=":id/izin"
               element={
-                <RBACLayout resource={PERMISSION.RESOURCES.ROLE} action={PERMISSION.ACTIONS.UPDATE} redirectTo="/peran">
+                <RBACLayout resource={PERMISSION.RESOURCES.PERMISSION} action={PERMISSION.ACTIONS.READ} redirectTo="/peran">
                   <IzinPeran />
                 </RBACLayout>
               }

@@ -81,12 +81,23 @@ export default function Pengguna() {
       refetch();
     },
     onError: (error) => {
-      Swal.fire({
-        title: "Gagal!",
-        text: `Gagal mengarsipkan pengguna: ${error.message || "Terjadi kesalahan saat mengarsipkan pengguna."}`,
-        icon: "error",
-        confirmButtonText: "Tutup",
-      });
+      // Cek jika pesan error adalah Forbidden
+      if (error.message.includes("Forbidden")) {
+        Swal.fire({
+          title: "Akses Ditolak",
+          text: "Anda tidak memiliki akses untuk mengarsipkan pengguna ini.",
+          icon: "error",
+          confirmButtonText: "Tutup",
+        });
+      } else {
+        // Untuk error lainnya, tampilkan pesan error normal
+        Swal.fire({
+          title: "Gagal!",
+          text: `Gagal mengarsipkan pengguna: ${error.message || "Terjadi kesalahan saat mengarsipkan pengguna."}`,
+          icon: "error",
+          confirmButtonText: "Tutup",
+        });
+      }
     },
   });
 
