@@ -1,5 +1,5 @@
 import { useUser, useUpdateUser } from "@/hooks/user";
-import { useRoles } from "@/hooks/role";
+import { useAllRoles } from "@/hooks/role";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useParams, Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
@@ -47,8 +47,8 @@ export default function EditPengguna() {
     }
   );
 
-  // Query untuk mendapatkan daftar role
-  const { data: rolesData, isLoading: isLoadingRoles, isError: isErrorRoles } = useRoles();
+  // Query untuk mendapatkan daftar role - menggunakan useAllRoles untuk mendapatkan semua data
+  const { data: rolesData, isLoading: isLoadingRoles, isError: isErrorRoles } = useAllRoles();
 
   // Pastikan roles selalu array dengan mengakses rolesData.roles jika ada
   const roles = rolesData?.roles || [];

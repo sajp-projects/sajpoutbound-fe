@@ -1,4 +1,4 @@
-import { useRoles } from "@/hooks/role";
+import { useAllRoles } from "@/hooks/role";
 import { useCreateUser } from "@/hooks/user";
 import { cn } from "@/lib/utils";
 import { Role } from "@/types/role";
@@ -59,12 +59,12 @@ export default function TambahPengguna() {
     general?: string;
   }>({});
 
-  // Query untuk mendapatkan daftar role
+  // Query untuk mendapatkan daftar role - menggunakan useAllRoles untuk mendapatkan semua data
   const {
     data: rolesData,
     isLoading: isLoadingRoles,
     isError: isErrorRoles,
-  } = useRoles({
+  } = useAllRoles({
     enabled: hasRoleReadPermission(), // Hanya fetch jika memiliki izin
   });
 

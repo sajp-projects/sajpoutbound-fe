@@ -24,6 +24,7 @@ export const roleKeys = {
   all: ["roles"] as const,
   lists: () => [...roleKeys.all, "list"] as const,
   list: (filters: Record<string, unknown>) => [...roleKeys.lists(), { filters }] as const,
+  allRoles: () => [...roleKeys.all, "allRoles"] as const,
   details: () => [...roleKeys.all, "detail"] as const,
   detail: (id: string) => [...roleKeys.details(), id] as const,
 };
@@ -61,9 +62,44 @@ export function useRole({ id }: { id: string }, options?: Omit<UseQueryOptions<R
   });
 }
 
+// Type untuk respons role tanpa pagination
+export interface AllRolesResponse {
+  roles: Role[];
+}
+
+// Hook untuk mengambil semua peran tanpa paginasi
+export function useAllRoles(options?: Omit<UseQueryOptions<AllRolesResponse, Error, AllRolesResponse, ReturnType<typeof roleKeys.allRoles>>, "queryKey" | "queryFn">) {
+  return useQuery({
+    queryKey: roleKeys.allRoles(),
+    queryFn: async () => {
+      // Fetch tanpa menggunakan filter/paginasi
+      const response = await fetchApi(`${BASE_URL}/roles`, {});
+
+      if (!response.ok) {
+        throw new Error(`Error fetching all roles: ${response.statusText}`);
+      }
+
+      const result: ApiResponse<RolesResponse> = await response.json();
+
+      if (!result.success) {
+        handleApiError(result, "An error occurred");
+      }
+
+      if (!result.data?.roles) {
+        throw new Error("Roles data is missing");
+      }
+
+      // Kembalikan hanya data roles tanpa pagination
+      return { roles: result.data.roles };
+    },
+    ...options,
+  });
+}
+
 // Hook for fetching roles with pagination
 export function useRoles(options?: Omit<UseQueryOptions<RolesResponse, Error, RolesResponse, ReturnType<typeof roleKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
+
   const filters = {
     page: searchParams.get("page") || "1",
     limit: searchParams.get("limit") || "10",

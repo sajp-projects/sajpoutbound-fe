@@ -2,13 +2,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { Filter } from "lucide-react";
 import { useSearchParams } from "react-router";
 import { cn } from "@/lib/utils";
-import { useRoles } from "@/hooks/role";
+import { useAllRoles } from "@/hooks/role";
 
 export function RoleFilter() {
   const [searchParams, setSearchParams] = useSearchParams();
   const roleId = searchParams.get("roleId") || "";
 
-  const { data, isLoading } = useRoles({
+  const { data, isLoading } = useAllRoles({
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
