@@ -17,7 +17,7 @@ export default function Dashboard() {
 
   const stats: StatCardProps[] = [
     {
-      title: "Users",
+      title: "Pengguna",
       value: "26K",
       change: {
         value: "12.4%",
@@ -27,7 +27,7 @@ export default function Dashboard() {
       icon: <PieChart className="h-5 w-5" />,
     },
     {
-      title: "Income",
+      title: "Pendapatan",
       value: "$6,200",
       change: {
         value: "40.9%",
@@ -37,7 +37,7 @@ export default function Dashboard() {
       icon: <BarChart className="h-5 w-5" />,
     },
     {
-      title: "Conversion Rate",
+      title: "Tingkat Konversi",
       value: "2.49%",
       change: {
         value: "84.7%",
@@ -47,7 +47,7 @@ export default function Dashboard() {
       icon: <Activity className="h-5 w-5" />,
     },
     {
-      title: "Sessions",
+      title: "Sesi",
       value: "44K",
       change: {
         value: "23.6%",
@@ -59,11 +59,11 @@ export default function Dashboard() {
   ];
 
   const trafficStats = [
-    { name: "Visits", value: "29,703", percentage: "40%", color: "green" },
-    { name: "Unique", value: "24,093", percentage: "20%", color: "blue" },
-    { name: "Pageviews", value: "78,706", percentage: "60%", color: "yellow" },
-    { name: "New Users", value: "22,123", percentage: "80%", color: "red" },
-    { name: "Bounce Rate", value: "Average Rate (40.15%)", percentage: "40.15%", color: "purple" },
+    { name: "Kunjungan", value: "29,703", percentage: "40%", color: "green" },
+    { name: "Unik", value: "24,093", percentage: "20%", color: "blue" },
+    { name: "Tampilan Halaman", value: "78,706", percentage: "60%", color: "yellow" },
+    { name: "Pengguna Baru", value: "22,123", percentage: "80%", color: "red" },
+    { name: "Tingkat Pentalan", value: "Rata-rata (40.15%)", percentage: "40.15%", color: "purple" },
   ];
 
   const getColorClasses = (color: StatCardProps["color"]) => {
@@ -116,10 +116,10 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Dasbor</h1>
         <button className="flex items-center px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
           <Download className="h-4 w-4 mr-2" />
-          Export
+          Ekspor
         </button>
       </div>
 
@@ -165,18 +165,18 @@ export default function Dashboard() {
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Traffic</h2>
-            <p className="text-sm text-gray-500">January - July 2023</p>
+            <h2 className="text-xl font-semibold text-gray-900">Lalu Lintas</h2>
+            <p className="text-sm text-gray-500">Januari - Juli 2023</p>
           </div>
           <div className="flex space-x-2">
             <button onClick={() => setSelectedPeriod("day")} className={`px-3 py-1 text-sm rounded-md ${selectedPeriod === "day" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"}`}>
-              Day
+              Hari
             </button>
             <button onClick={() => setSelectedPeriod("month")} className={`px-3 py-1 text-sm rounded-md ${selectedPeriod === "month" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"}`}>
-              Month
+              Bulan
             </button>
             <button onClick={() => setSelectedPeriod("year")} className={`px-3 py-1 text-sm rounded-md ${selectedPeriod === "year" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"}`}>
-              Year
+              Tahun
             </button>
           </div>
         </div>
@@ -184,7 +184,7 @@ export default function Dashboard() {
         <div className="h-60 mb-8 bg-gray-50 rounded-md p-4">
           {/* Placeholder for chart */}
           <div className="h-full flex items-center justify-center">
-            <p className="text-gray-400">Traffic data visualization will appear here</p>
+            <p className="text-gray-400">Visualisasi data lalu lintas akan muncul di sini</p>
           </div>
         </div>
 
@@ -210,7 +210,7 @@ export default function Dashboard() {
           { name: "Facebook", color: "bg-blue-600" },
           { name: "Twitter", color: "bg-sky-400" },
           { name: "LinkedIn", color: "bg-blue-800" },
-          { name: "Calendar", color: "bg-yellow-500" },
+          { name: "Kalender", color: "bg-yellow-500" },
         ].map((social) => (
           <div key={social.name} className={`${social.color} rounded-lg shadow-md p-6 text-white h-32 flex items-center justify-center`}>
             <h3 className="text-xl font-bold">{social.name}</h3>

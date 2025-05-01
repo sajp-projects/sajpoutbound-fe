@@ -431,7 +431,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
           <div className="px-3 pb-5 pt-1">
             <button onClick={handleLogout} className="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors group w-full text-left">
               <LogOut className="w-5 h-5 text-gray-500 group-hover:text-red-500" />
-              <span className="ml-3">Logout</span>
+              <span className="ml-3">Keluar</span>
             </button>
           </div>
         </div>

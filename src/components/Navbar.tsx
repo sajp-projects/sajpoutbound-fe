@@ -60,7 +60,7 @@ export default function Navbar({ toggleSidebar }: NavbarProps) {
                 <div className="border-t border-gray-100"></div>
                 <button onClick={logout} className="group flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left">
                   <LogOut className="mr-3 h-5 w-5 text-red-400 group-hover:text-red-500" />
-                  Logout
+                  Keluar
                 </button>
               </div>
             )}
