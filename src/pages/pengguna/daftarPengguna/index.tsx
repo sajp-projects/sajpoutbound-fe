@@ -1,5 +1,5 @@
 import { useDeleteUser, useUsers } from "@/hooks/user";
-import { Archive, Download, Eye, FileText, Pencil, Plus, Search } from "lucide-react";
+import { Archive, Download, Eye, Edit, Plus, Search, History } from "lucide-react";
 import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
 import Swal from "sweetalert2";
@@ -217,12 +217,12 @@ export default function Pengguna() {
                               </Link>
                               <Link to={`/pengguna/${user.id}/edit`}>
                                 <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title="Edit">
-                                  <Pencil className="h-4 w-4" />
+                                  <Edit className="h-4 w-4" />
                                 </Button>
                               </Link>
                               <Link to={`/pengguna/${user.id}/log`}>
                                 <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50" title="Log Aktivitas">
-                                  <FileText className="h-4 w-4" />
+                                  <History className="h-4 w-4" />
                                 </Button>
                               </Link>
                               <Button
@@ -284,12 +284,12 @@ export default function Pengguna() {
                         </Link>
                         <Link to={`/pengguna/${user.id}/edit`}>
                           <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title="Edit">
-                            <Pencil className="h-4 w-4" />
+                            <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Link to={`/pengguna/${user.id}/log`}>
                           <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50" title="Log Aktivitas">
-                            <FileText className="h-4 w-4" />
+                            <History className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Button

@@ -425,7 +425,6 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
         <div className="mt-auto">
           <div className="px-4 py-3 text-xs text-gray-500 font-medium uppercase flex items-center">
             <div className="flex-grow h-px bg-gray-200"></div>
-            <span className="px-2">User</span>
             <div className="flex-grow h-px bg-gray-200"></div>
           </div>
           <div className="px-3 pb-5 pt-1">

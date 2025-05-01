@@ -1,5 +1,5 @@
 import { useDeleteRole, useRoles } from "@/hooks/role";
-import { Search, Plus, Eye, Pencil, Trash2, Lock } from "lucide-react";
+import { Search, Plus, Eye, Edit, Trash2, Lock } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import Swal from "sweetalert2";
@@ -205,7 +205,7 @@ export default function Role() {
                               )}
                               <Link to={`/peran/${role.id}/edit`}>
                                 <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title="Edit">
-                                  <Pencil className="h-4 w-4" />
+                                  <Edit className="h-4 w-4" />
                                 </Button>
                               </Link>
                               <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" title="Hapus" onClick={() => handleDeleteRole(role.id, role.name)} disabled={deleteRole.isPending}>
@@ -263,7 +263,7 @@ export default function Role() {
                         )}
                         <Link to={`/peran/${role.id}/edit`}>
                           <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title="Edit">
-                            <Pencil className="h-4 w-4" />
+                            <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" title="Hapus" onClick={() => handleDeleteRole(role.id, role.name)} disabled={deleteRole.isPending}>

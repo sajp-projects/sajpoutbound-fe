@@ -24,7 +24,7 @@ export function useUserLogs(userId: string, options?: Omit<UseQueryOptions<UserL
   return useQuery({
     queryKey: userLogKeys.list(userId, filters),
     queryFn: async () => {
-      const response = await fetchApi(`${BASE_URL}/logs/user/${userId}`, filters);
+      const response = await fetchApi(`${BASE_URL}/users/logs/${userId}`, filters);
 
       if (!response.ok) {
         throw new Error(`Error fetching user logs: ${response.statusText}`);
