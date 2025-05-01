@@ -1,27 +1,12 @@
-import { Pagination } from '@/components/Pagination';
-import {
-  usePermissions,
-  useRolePermissions,
-  useUpdateRolePermissions,
-} from '@/hooks/izin';
-import { useRole } from '@/hooks/role';
-import { Permission } from '@/types/izin';
-import {
-  getChangedPermissions,
-  groupPermissionsByResource,
-  hasPermissionChanges,
-} from '@/utils/permission';
-import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router';
-import Swal from 'sweetalert2';
-import {
-  EmptyState,
-  ErrorState,
-  InfoBanner,
-  LoadingState,
-  PageHeader,
-  ResourceGroup,
-} from './_components';
+import { Pagination } from "@/components/Pagination";
+import { usePermissions, useRolePermissions, useUpdateRolePermissions } from "@/hooks/izin";
+import { useRole } from "@/hooks/role";
+import { Permission } from "@/types/izin";
+import { getChangedPermissions, groupPermissionsByResource, hasPermissionChanges } from "@/utils/permission";
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router";
+import Swal from "sweetalert2";
+import { EmptyState, ErrorState, InfoBanner, LoadingState, PageHeader, ResourceGroup } from "./_components";
 
 export default function IzinPeran() {
   // URL parameters
@@ -35,16 +20,11 @@ export default function IzinPeran() {
     isLoading: roleLoading,
     isError: roleError,
   } = useRole({
-    id: id || '',
+    id: id || "",
   });
 
   // Fetch data izin dari API
-  const {
-    data: permissionsData,
-    isLoading: permissionsLoading,
-    isError: permissionsError,
-    refetch: refetchPermissions,
-  } = usePermissions();
+  const { data: permissionsData, isLoading: permissionsLoading, isError: permissionsError, refetch: refetchPermissions } = usePermissions();
 
   // Fetch izin yang dimiliki oleh peran ini
   const {
@@ -52,7 +32,7 @@ export default function IzinPeran() {
     isLoading: rolePermissionsLoading,
     isError: rolePermissionsError,
     refetch: refetchRolePermissions,
-  } = useRolePermissions(id || '', {
+  } = useRolePermissions(id || "", {
     enabled: !!id,
     refetchOnMount: true,
   });
@@ -74,8 +54,7 @@ export default function IzinPeran() {
   useEffect(() => {
     if (!rolePermissionsLoading) {
       // Even if rolePermissions is empty array, we should still update the state
-      const permissionIds =
-        rolePermissions?.map((permission) => permission.id) || [];
+      const permissionIds = rolePermissions?.map((permission) => permission.id) || [];
       setSelectedPermissions(permissionIds);
       setInitialPermissions(permissionIds);
     }
@@ -83,9 +62,7 @@ export default function IzinPeran() {
 
   // Group permissions by resource
   const groupedPermissions = useMemo(() => {
-    return groupPermissionsByResource<Permission>(
-      permissionsData?.permissions || []
-    );
+    return groupPermissionsByResource<Permission>(permissionsData?.permissions || []);
   }, [permissionsData?.permissions]);
 
   // Check if permission is selected
@@ -123,9 +100,9 @@ export default function IzinPeran() {
     onSuccess: () => {
       refetchRolePermissions();
       Swal.fire({
-        icon: 'success',
-        title: 'Izin Peran Berhasil Diperbarui',
-        text: 'Perubahan izin peran berhasil disimpan',
+        icon: "success",
+        title: "Izin Peran Berhasil Diperbarui",
+        text: "Perubahan izin peran berhasil disimpan",
         timer: 1500,
         showConfirmButton: false,
       });
@@ -136,10 +113,10 @@ export default function IzinPeran() {
     onError: (error) => {
       setIsSubmitting(false);
       Swal.fire({
-        icon: 'error',
-        title: 'Gagal Memperbarui Izin Peran',
-        text: error.message || 'Terjadi kesalahan saat memperbarui izin peran',
-        confirmButtonText: 'Tutup',
+        icon: "error",
+        title: "Gagal Memperbarui Izin Peran",
+        text: error.message || "Terjadi kesalahan saat memperbarui izin peran",
+        confirmButtonText: "Tutup",
       });
     },
   });
@@ -149,23 +126,20 @@ export default function IzinPeran() {
     if (!id || !hasChanges) return;
 
     Swal.fire({
-      title: 'Konfirmasi Simpan Izin',
-      text: 'Apakah Anda yakin ingin menyimpan perubahan izin peran ini?',
-      icon: 'question',
+      title: "Konfirmasi Simpan Izin",
+      text: "Apakah Anda yakin ingin menyimpan perubahan izin peran ini?",
+      icon: "question",
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Ya, Simpan',
-      cancelButtonText: 'Batal',
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, Simpan",
+      cancelButtonText: "Batal",
     }).then((result) => {
       if (result.isConfirmed) {
         setIsSubmitting(true);
 
         // Get all permissions that have changed (both newly checked and newly unchecked)
-        const { added, removed } = getChangedPermissions(
-          initialPermissions,
-          selectedPermissions
-        );
+        const { added, removed } = getChangedPermissions(initialPermissions, selectedPermissions);
 
         updateRolePermissions.mutate({
           roleId: id,
@@ -178,36 +152,21 @@ export default function IzinPeran() {
   // ===== RENDER =====
   return (
     <div className="space-y-6 px-4 sm:px-0">
-      <PageHeader
-        roleName={roleData?.name || ''}
-        roleId={id || ''}
-        onSave={handleSavePermissions}
-        isSubmitting={isSubmitting}
-        hasChanges={hasChanges}
-      />
+      <PageHeader roleName={roleData?.name || ""} roleId={id || ""} onSave={handleSavePermissions} isSubmitting={isSubmitting} hasChanges={hasChanges} />
 
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Daftar Izin</h2>
-            <p className="text-sm text-gray-500">
-              Pilih izin yang akan diberikan pada peran ini
-            </p>
+            <p className="text-sm text-gray-500">Pilih izin yang akan diberikan pada peran ini</p>
           </div>
           <div className="text-sm text-gray-500">
-            Total:{' '}
-            <span className="font-medium text-gray-700">
-              {permissionsData?.pagination?.total || 0}
-            </span>{' '}
-            izin
+            Total: <span className="font-medium text-gray-700">{permissionsData?.pagination?.total || 0}</span> izin
           </div>
         </div>
 
         {/* Alert banner untuk petunjuk penggunaan */}
-        <InfoBanner
-          title="Petunjuk Penggunaan"
-          message="Centang kotak di sebelah kiri untuk memberikan izin kepada peran ini. Perubahan tidak akan disimpan hingga Anda menekan tombol 'Simpan Perubahan'."
-        />
+        <InfoBanner title="Petunjuk Penggunaan" message="Centang kotak di sebelah kiri untuk memberikan izin kepada peran ini. Perubahan tidak akan disimpan hingga Anda menekan tombol 'Simpan Perubahan'." />
 
         {isLoading ? (
           <LoadingState />
@@ -219,18 +178,9 @@ export default function IzinPeran() {
               <EmptyState />
             ) : (
               <div className="space-y-6">
-                {Object.entries(groupedPermissions).map(
-                  ([resource, resourcePermissions]) => (
-                    <ResourceGroup
-                      key={resource}
-                      resource={resource}
-                      permissions={resourcePermissions}
-                      isPermissionSelected={isPermissionSelected}
-                      togglePermission={togglePermission}
-                      isPermissionChanged={isPermissionChanged}
-                    />
-                  )
-                )}
+                {Object.entries(groupedPermissions).map(([resource, resourcePermissions]) => (
+                  <ResourceGroup key={resource} resource={resource} permissions={resourcePermissions} isPermissionSelected={isPermissionSelected} togglePermission={togglePermission} isPermissionChanged={isPermissionChanged} />
+                ))}
               </div>
             )}
           </div>

@@ -1,7 +1,7 @@
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
-import { BarChart3, ChevronDown, FileText, Home, LogOut, Package, PackageCheck, ShieldCheck, Truck, UserCheck, Users, Warehouse, X } from "lucide-react";
+import { BarChart3, ChevronDown, FileText, Home, LogOut, Package, PackageCheck, ShieldCheck, Truck, UserCheck, Users, Warehouse, X, Lock } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { cn } from "../lib/utils";
@@ -38,6 +38,11 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
   const { data: permissions, isLoading } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
   });
+
+  // Mendapatkan path untuk izin berdasarkan roleId
+  const getIzinPath = () => {
+    return roleId ? `/peran/${roleId}/izin` : "/";
+  };
 
   const hasPermission = (resource: string, action: string): boolean => {
     if (!isAuthenticated || !permissions) return false;
@@ -86,6 +91,18 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
           name: "Tambah Peran",
           path: "/peran/tambah",
           action: PERMISSION.ACTIONS.CREATE,
+        },
+      ],
+    },
+    {
+      name: "Izin",
+      icon: <Lock className="w-5 h-5" />,
+      resource: PERMISSION.RESOURCES.PERMISSION,
+      subItems: [
+        {
+          name: "Daftar Izin",
+          path: getIzinPath(),
+          action: PERMISSION.ACTIONS.READ,
         },
       ],
     },

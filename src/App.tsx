@@ -14,7 +14,7 @@ import TambahPengguna from "./pages/pengguna/tambahPengguna";
 import Role from "./pages/peran/daftarPeran";
 import DetailPeran from "./pages/peran/detailPeran";
 import EditPeran from "./pages/peran/editPeran";
-import IzinPeran from "./pages/peran/izinPeran";
+import IzinPeran from "./pages/izin/daftarIzin";
 import TambahPeran from "./pages/peran/tambahPeran";
 
 export default function App() {
