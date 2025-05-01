@@ -153,7 +153,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     {
       name: "Gudang",
       icon: <Warehouse className="w-5 h-5" />,
-      resource: PERMISSION.RESOURCES.GUDANG,
+      resource: PERMISSION.RESOURCES.WAREHOUSE,
       subItems: [
         {
           name: "Daftar Gudang",
