@@ -1,7 +1,7 @@
-import { useAuth } from '@/hooks/auth';
-import { useRolePermissions } from '@/hooks/izin';
-import { Navigate, Outlet } from 'react-router';
-import Swal from 'sweetalert2';
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/izin";
+import { Navigate, Outlet } from "react-router";
+import Swal from "sweetalert2";
 
 interface RBACLayoutProps {
   resource: string;
@@ -10,21 +10,16 @@ interface RBACLayoutProps {
   children?: React.ReactNode;
 }
 
-export default function RBACLayout({
-  resource,
-  action,
-  redirectTo = '/',
-  children,
-}: RBACLayoutProps) {
+export default function RBACLayout({ resource, action, redirectTo = "/", children }: RBACLayoutProps) {
   const { isAuthenticated } = useAuth();
 
   // Get roleId from localStorage
-  const userData = localStorage.getItem('user');
+  const userData = localStorage.getItem("user");
   const roleId = userData ? JSON.parse(userData)?.roleId : null;
 
   // Fetch permissions directly in the layout
   const { data: permissions, isLoading } = useRolePermissions(roleId, {
-    enabled: !!roleId && roleId !== '',
+    enabled: !!roleId && roleId !== "",
   });
 
   // If still loading, show nothing (or a loading spinner)
@@ -35,9 +30,9 @@ export default function RBACLayout({
   // If we're not authenticated, redirect to login
   if (!isAuthenticated) {
     Swal.fire({
-      title: 'Akses Ditolak',
-      text: 'Anda harus login terlebih dahulu',
-      icon: 'error',
+      title: "Akses Ditolak",
+      text: "Anda harus login terlebih dahulu",
+      icon: "error",
       timer: 2000,
       showConfirmButton: false,
     });
@@ -46,11 +41,11 @@ export default function RBACLayout({
 
   // If roleId is not available but we're authenticated, there's a configuration issue
   if (isAuthenticated && !roleId) {
-    console.error('User is authenticated but has no roleId assigned');
+    console.error("User is authenticated but has no roleId assigned");
     Swal.fire({
-      title: 'Kesalahan Konfigurasi',
-      text: 'Akun Anda tidak memiliki peran. Silakan hubungi administrator.',
-      icon: 'error',
+      title: "Kesalahan Konfigurasi",
+      text: "Akun Anda tidak memiliki peran. Silakan hubungi administrator.",
+      icon: "error",
       timer: 3000,
       showConfirmButton: true,
     });
@@ -58,17 +53,14 @@ export default function RBACLayout({
   }
 
   // Check if user has the required permission
-  const hasAccess = permissions?.some(
-    (permission) =>
-      permission.resource === resource && permission.action === action
-  );
+  const hasAccess = permissions?.some((permission) => permission.resource === resource && permission.action === action);
 
   // If access is denied, show message and redirect
   if (!hasAccess) {
     Swal.fire({
-      title: 'Akses Ditolak',
-      text: 'Anda tidak memiliki izin untuk mengakses halaman ini',
-      icon: 'error',
+      title: "Akses Ditolak",
+      text: "Anda tidak memiliki izin untuk mengakses halaman ini",
+      icon: "error",
       timer: 2000,
       showConfirmButton: false,
     });

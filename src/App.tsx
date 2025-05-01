@@ -16,6 +16,11 @@ import DetailPeran from "./pages/peran/detailPeran";
 import EditPeran from "./pages/peran/editPeran";
 import IzinPeran from "./pages/izin/daftarIzin";
 import TambahPeran from "./pages/peran/tambahPeran";
+import DaftarGudang from "./pages/gudang/daftarGudang";
+import DetailGudang from "./pages/gudang/detailGudang";
+import EditGudang from "./pages/gudang/editGudang";
+import TambahGudang from "./pages/gudang/tambahGudang";
+import LogGudang from "./pages/gudang/logGudang";
 
 export default function App() {
   return (
@@ -121,6 +126,50 @@ export default function App() {
               element={
                 <RBACLayout resource={PERMISSION.RESOURCES.PERMISSION} action={PERMISSION.ACTIONS.READ} redirectTo="/peran">
                   <IzinPeran />
+                </RBACLayout>
+              }
+            />
+          </Route>
+
+          {/* Gudang routes */}
+          <Route path="/gudang">
+            <Route
+              index
+              element={
+                <RBACLayout resource={PERMISSION.RESOURCES.WAREHOUSE} action={PERMISSION.ACTIONS.READ} redirectTo="/">
+                  <DaftarGudang />
+                </RBACLayout>
+              }
+            />
+            <Route
+              path="tambah"
+              element={
+                <RBACLayout resource={PERMISSION.RESOURCES.WAREHOUSE} action={PERMISSION.ACTIONS.CREATE} redirectTo="/gudang">
+                  <TambahGudang />
+                </RBACLayout>
+              }
+            />
+            <Route
+              path=":id/log"
+              element={
+                <RBACLayout resource={PERMISSION.RESOURCES.WAREHOUSE} action={PERMISSION.ACTIONS.READ} redirectTo="/gudang">
+                  <LogGudang />
+                </RBACLayout>
+              }
+            />
+            <Route
+              path=":id/edit"
+              element={
+                <RBACLayout resource={PERMISSION.RESOURCES.WAREHOUSE} action={PERMISSION.ACTIONS.UPDATE} redirectTo="/gudang">
+                  <EditGudang />
+                </RBACLayout>
+              }
+            />
+            <Route
+              path=":id"
+              element={
+                <RBACLayout resource={PERMISSION.RESOURCES.WAREHOUSE} action={PERMISSION.ACTIONS.READ} redirectTo="/gudang">
+                  <DetailGudang />
                 </RBACLayout>
               }
             />
