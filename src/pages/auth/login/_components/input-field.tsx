@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { InputFieldProps } from "@/types/auth";
 
-export const InputField = ({ id, label, type, icon, placeholder, value, onChange, error, rightElement }: InputFieldProps) => (
+export const InputField = ({ id, name, label, type, icon, placeholder, value, onChange, error, rightElement }: InputFieldProps) => (
   <div className="grid gap-2">
     {label && (
       <Label htmlFor={id} className="text-gray-700">
@@ -16,6 +16,7 @@ export const InputField = ({ id, label, type, icon, placeholder, value, onChange
 
       <Input
         id={id}
+        name={name}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}

@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
-import { PERMISSION } from "@/constant/permission";
+import { PERMISSION } from "@/constant/PERMISSION";
 import { showErrorAlert } from "@/utils/sweetAlert";
 
 export default function DetailPeran() {

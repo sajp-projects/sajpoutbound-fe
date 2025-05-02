@@ -11,7 +11,7 @@ import { formatDate, formatDateShort } from "@/utils/date";
 import { Pagination } from "@/components/Pagination";
 import { useRolePermissions } from "@/hooks/izin";
 import { useAuth } from "@/hooks/auth";
-import { PERMISSION } from "@/constant/permission";
+import { PERMISSION } from "@/constant/PERMISSION";
 import { showSuccessAlert, showErrorAlert, showForbiddenAlert, showDeleteConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 
 export default function Role() {

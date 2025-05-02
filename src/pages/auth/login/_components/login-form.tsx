@@ -1,11 +1,11 @@
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Mail } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/hooks/auth";
-import { FormErrors } from "@/utils/errorHandler";
 import { LoginFormData } from "@/types/auth";
+import { FormErrors } from "@/utils/errorHandler";
 import { InputField } from "./input-field";
 import { LoginHeader } from "./login-header";
 import { LoginFooter } from "./login-footer";
@@ -23,10 +23,32 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
   const updateFormData = (field: keyof LoginFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear error for this field
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors<LoginFormData> = {};
+
+    if (!formData.email) {
+      newErrors.email = "Email harus diisi";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password harus diisi";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
+
     setIsLoading(true);
     setErrors({});
 
@@ -64,6 +86,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
             <div className="flex flex-col gap-4">
               <InputField
                 id="email"
+                name="email"
                 label="Username atau Email"
                 type="text"
                 icon={<Mail className="h-4 w-4" />}
@@ -73,7 +96,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                 error={errors.email}
               />
 
-              <PasswordField value={formData.password} onChange={(value) => updateFormData("password", value)} error={errors.password} />
+              <PasswordField value={formData.password} name="password" onChange={(value) => updateFormData("password", value)} error={errors.password} />
 
               <LoginButton isLoading={isLoading} />
             </div>

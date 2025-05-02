@@ -1,4 +1,4 @@
-import { PERMISSION } from "@/constant/permission";
+import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
 import { BarChart3, ChevronDown, FileText, Home, LogOut, Package, PackageCheck, ShieldCheck, Truck, UserCheck, Users, Warehouse, X, Lock } from "lucide-react";
@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { cn } from "../lib/utils";
 import { getRoleId } from "@/utils/storage";
+import { hasPermission } from "@/utils/permission";
 
 interface SubMenuItem {
   name: string;
@@ -37,9 +38,20 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     enabled: isAuthenticated && roleId !== "",
   });
 
-  const hasPermission = (resource: string, action: string): boolean => {
-    if (!isAuthenticated || !permissions) return false;
-    return permissions.some((p) => p.resource === resource && p.action === action);
+  const toggleMenu = (menuName: string) => {
+    setOpenMenus((prev) => (prev.includes(menuName) ? prev.filter((item) => item !== menuName) : [...prev, menuName]));
+  };
+
+  const shouldShowMenuItem = (item: MenuItem): boolean => {
+    if (!item.resource) return true;
+    if (item.subItems) {
+      return item.subItems.some((subItem) => hasPermission(permissions, item.resource!, subItem.action || PERMISSION.ACTIONS.READ));
+    }
+    return hasPermission(permissions, item.resource, PERMISSION.ACTIONS.READ);
+  };
+
+  const shouldShowSubMenuItem = (item: MenuItem, subItem: SubMenuItem): boolean => {
+    return !item.resource || hasPermission(permissions, item.resource, subItem.action || PERMISSION.ACTIONS.READ);
   };
 
   const menuItems: MenuItem[] = [
@@ -279,22 +291,6 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
       ],
     },
   ];
-
-  const toggleMenu = (menuName: string) => {
-    setOpenMenus((prev) => (prev.includes(menuName) ? prev.filter((item) => item !== menuName) : [...prev, menuName]));
-  };
-
-  const shouldShowMenuItem = (item: MenuItem): boolean => {
-    if (!item.resource) return true;
-    if (item.subItems) {
-      return item.subItems.some((subItem) => hasPermission(item.resource!, subItem.action || PERMISSION.ACTIONS.READ));
-    }
-    return hasPermission(item.resource, PERMISSION.ACTIONS.READ);
-  };
-
-  const shouldShowSubMenuItem = (item: MenuItem, subItem: SubMenuItem): boolean => {
-    return !item.resource || hasPermission(item.resource, subItem.action || PERMISSION.ACTIONS.READ);
-  };
 
   const isMenuActive = (menuName: string) => {
     return menuItems.find((item) => item.name === menuName)?.subItems?.some((subItem) => location.pathname === subItem.path);

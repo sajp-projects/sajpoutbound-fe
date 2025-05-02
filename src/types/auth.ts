@@ -23,6 +23,7 @@ export interface AuthState {
 export interface LoginFormData {
   email: string;
   password: string;
+  general?: string; // Untuk error umum
 }
 
 // Tipe untuk respons data login API
@@ -34,6 +35,7 @@ export interface LoginResponseData {
 // Tipe untuk props komponen InputField
 export interface InputFieldProps {
   id: string;
+  name?: string;
   label: string;
   type: string;
   icon: React.ReactNode;
@@ -42,4 +44,12 @@ export interface InputFieldProps {
   onChange: (value: string) => void;
   error?: string;
   rightElement?: React.ReactNode;
+}
+
+// Tipe untuk props komponen PasswordField
+export interface PasswordFieldProps {
+  value: string;
+  name?: string;
+  onChange: (value: string) => void;
+  error?: string;
 }

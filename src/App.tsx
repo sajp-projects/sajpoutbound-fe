@@ -1,8 +1,8 @@
 import { BrowserRouter, Route, Routes } from "react-router";
-import { PERMISSION } from "./constant/permission";
+import { PERMISSION } from "@/constant/PERMISSION";
 import AuthLayout from "./layout/AuthLayout";
 import BaseLayout from "./layout/BaseLayout";
-import { default as ActionLayout, default as RBACLayout } from "./layout/RBACLayout";
+import RBACLayout from "./layout/RBACLayout";
 import Login from "./pages/auth/login";
 import Dashboard from "./pages/dashboard";
 import ArsipPengguna from "./pages/pengguna/arsipPengguna";
@@ -24,7 +24,166 @@ import LogGudang from "./pages/gudang/logGudang";
 import LogSemuaGudang from "./pages/gudang/logSemuaGudang";
 import LogSemuaPengguna from "./pages/pengguna/logSemuaPengguna";
 
+// Type untuk resource route yang dilindungi
+interface ProtectedRouteConfig {
+  path: string;
+  element: React.ReactNode;
+  resource: string;
+  action: string;
+  redirectTo?: string;
+}
+
 export default function App() {
+  // Helper untuk membuat protected route dengan RBAC
+  const createProtectedRoute = ({ path, element, resource, action, redirectTo }: ProtectedRouteConfig) => (
+    <Route
+      path={path}
+      element={
+        <RBACLayout resource={resource} action={action} redirectTo={redirectTo}>
+          {element}
+        </RBACLayout>
+      }
+    />
+  );
+
+  // Konfigurasi rute pengguna
+  const userRoutes: ProtectedRouteConfig[] = [
+    {
+      path: "",
+      element: <Pengguna />,
+      resource: PERMISSION.RESOURCES.USER,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/",
+    },
+    {
+      path: "tambah",
+      element: <TambahPengguna />,
+      resource: PERMISSION.RESOURCES.USER,
+      action: PERMISSION.ACTIONS.CREATE,
+      redirectTo: "/pengguna",
+    },
+    {
+      path: "arsip",
+      element: <ArsipPengguna />,
+      resource: PERMISSION.RESOURCES.USER,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pengguna",
+    },
+    {
+      path: ":id/log",
+      element: <LogPengguna />,
+      resource: PERMISSION.RESOURCES.USER,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pengguna",
+    },
+    {
+      path: "log",
+      element: <LogSemuaPengguna />,
+      resource: PERMISSION.RESOURCES.USER,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pengguna",
+    },
+    {
+      path: ":id/edit",
+      element: <EditPengguna />,
+      resource: PERMISSION.RESOURCES.USER,
+      action: PERMISSION.ACTIONS.UPDATE,
+      redirectTo: "/pengguna",
+    },
+    {
+      path: ":id",
+      element: <DetailPengguna />,
+      resource: PERMISSION.RESOURCES.USER,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pengguna",
+    },
+  ];
+
+  // Konfigurasi rute peran
+  const roleRoutes: ProtectedRouteConfig[] = [
+    {
+      path: "",
+      element: <Role />,
+      resource: PERMISSION.RESOURCES.ROLE,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/",
+    },
+    {
+      path: "tambah",
+      element: <TambahPeran />,
+      resource: PERMISSION.RESOURCES.ROLE,
+      action: PERMISSION.ACTIONS.CREATE,
+      redirectTo: "/peran",
+    },
+    {
+      path: ":id",
+      element: <DetailPeran />,
+      resource: PERMISSION.RESOURCES.ROLE,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/peran",
+    },
+    {
+      path: ":id/edit",
+      element: <EditPeran />,
+      resource: PERMISSION.RESOURCES.ROLE,
+      action: PERMISSION.ACTIONS.UPDATE,
+      redirectTo: "/peran",
+    },
+    {
+      path: ":id/izin",
+      element: <IzinPeran />,
+      resource: PERMISSION.RESOURCES.PERMISSION,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/peran",
+    },
+  ];
+
+  // Konfigurasi rute gudang
+  const gudangRoutes: ProtectedRouteConfig[] = [
+    {
+      path: "",
+      element: <DaftarGudang />,
+      resource: PERMISSION.RESOURCES.WAREHOUSE,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/",
+    },
+    {
+      path: "tambah",
+      element: <TambahGudang />,
+      resource: PERMISSION.RESOURCES.WAREHOUSE,
+      action: PERMISSION.ACTIONS.CREATE,
+      redirectTo: "/gudang",
+    },
+    {
+      path: ":id/log",
+      element: <LogGudang />,
+      resource: PERMISSION.RESOURCES.WAREHOUSE,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/gudang",
+    },
+    {
+      path: "log",
+      element: <LogSemuaGudang />,
+      resource: PERMISSION.RESOURCES.WAREHOUSE,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/gudang",
+    },
+    {
+      path: ":id/edit",
+      element: <EditGudang />,
+      resource: PERMISSION.RESOURCES.WAREHOUSE,
+      action: PERMISSION.ACTIONS.UPDATE,
+      redirectTo: "/gudang",
+    },
+    {
+      path: ":id",
+      element: <DetailGudang />,
+      resource: PERMISSION.RESOURCES.WAREHOUSE,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/gudang",
+    },
+  ];
+
   return (
     <BrowserRouter>
       <Routes>
@@ -35,163 +194,17 @@ export default function App() {
 
         {/* Protected routes */}
         <Route element={<BaseLayout />}>
-          {/* Dashboard - requires basic authentication */}
+          {/* Dashboard - membutuhkan autentikasi dasar */}
           <Route index element={<Dashboard />} />
 
-          {/* User routes */}
-          <Route path="/pengguna">
-            <Route
-              index
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.READ} redirectTo="/">
-                  <Pengguna />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path="tambah"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.CREATE} redirectTo="/pengguna">
-                  <TambahPengguna />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path="arsip"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.READ} redirectTo="/pengguna">
-                  <ArsipPengguna />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path=":id/log"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.READ} redirectTo="/pengguna">
-                  <LogPengguna />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path="log"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.READ} redirectTo="/pengguna">
-                  <LogSemuaPengguna />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path=":id/edit"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.UPDATE} redirectTo="/pengguna">
-                  <EditPengguna />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path=":id"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.READ} redirectTo="/pengguna">
-                  <DetailPengguna />
-                </RBACLayout>
-              }
-            />
-          </Route>
-          {/* Role routes */}
-          <Route path="/peran">
-            <Route
-              index
-              element={
-                <ActionLayout resource={PERMISSION.RESOURCES.ROLE} action={PERMISSION.ACTIONS.READ} redirectTo="/">
-                  <Role />
-                </ActionLayout>
-              }
-            />
-            <Route
-              path="tambah"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.ROLE} action={PERMISSION.ACTIONS.CREATE} redirectTo="/peran">
-                  <TambahPeran />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path=":id"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.ROLE} action={PERMISSION.ACTIONS.READ} redirectTo="/peran">
-                  <DetailPeran />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path=":id/edit"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.ROLE} action={PERMISSION.ACTIONS.UPDATE} redirectTo="/peran">
-                  <EditPeran />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path=":id/izin"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.PERMISSION} action={PERMISSION.ACTIONS.READ} redirectTo="/peran">
-                  <IzinPeran />
-                </RBACLayout>
-              }
-            />
-          </Route>
+          {/* Rute Pengguna */}
+          <Route path="/pengguna">{userRoutes.map((route) => createProtectedRoute(route))}</Route>
 
-          {/* Gudang routes */}
-          <Route path="/gudang">
-            <Route
-              index
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.WAREHOUSE} action={PERMISSION.ACTIONS.READ} redirectTo="/">
-                  <DaftarGudang />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path="tambah"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.WAREHOUSE} action={PERMISSION.ACTIONS.CREATE} redirectTo="/gudang">
-                  <TambahGudang />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path=":id/log"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.WAREHOUSE} action={PERMISSION.ACTIONS.READ} redirectTo="/gudang">
-                  <LogGudang />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path="log"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.WAREHOUSE} action={PERMISSION.ACTIONS.READ} redirectTo="/gudang">
-                  <LogSemuaGudang />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path=":id/edit"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.WAREHOUSE} action={PERMISSION.ACTIONS.UPDATE} redirectTo="/gudang">
-                  <EditGudang />
-                </RBACLayout>
-              }
-            />
-            <Route
-              path=":id"
-              element={
-                <RBACLayout resource={PERMISSION.RESOURCES.WAREHOUSE} action={PERMISSION.ACTIONS.READ} redirectTo="/gudang">
-                  <DetailGudang />
-                </RBACLayout>
-              }
-            />
-          </Route>
+          {/* Rute Peran */}
+          <Route path="/peran">{roleRoutes.map((route) => createProtectedRoute(route))}</Route>
+
+          {/* Rute Gudang */}
+          <Route path="/gudang">{gudangRoutes.map((route) => createProtectedRoute(route))}</Route>
         </Route>
       </Routes>
     </BrowserRouter>

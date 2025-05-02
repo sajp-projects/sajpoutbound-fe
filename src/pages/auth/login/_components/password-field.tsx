@@ -2,14 +2,9 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import { InputField } from "./input-field";
+import { PasswordFieldProps } from "@/types/auth";
 
-interface PasswordFieldProps {
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-}
-
-export const PasswordField = ({ value, onChange, error }: PasswordFieldProps) => {
+export const PasswordField = ({ value, name, onChange, error }: PasswordFieldProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const PasswordToggleIcon = showPassword ? EyeOff : Eye;
@@ -27,6 +22,7 @@ export const PasswordField = ({ value, onChange, error }: PasswordFieldProps) =>
 
       <InputField
         id="password"
+        name={name}
         label=""
         type={showPassword ? "text" : "password"}
         icon={<Lock className="h-4 w-4" />}
