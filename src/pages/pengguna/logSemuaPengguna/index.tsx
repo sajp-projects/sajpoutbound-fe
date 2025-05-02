@@ -1,7 +1,7 @@
 import { useSearchParams } from "react-router";
 import { Search, Download, RefreshCcw } from "lucide-react";
 
-import { useWarehouseLogs } from "@/hooks/gudangLogs";
+import { useAllUserLogs } from "@/hooks/userLog";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,20 +12,20 @@ import { formatDate, formatDateShort } from "@/utils/date";
 import { Pagination } from "@/components/Pagination";
 import { Link } from "react-router";
 
-export default function LogSemuaGudang() {
+export default function LogSemuaPengguna() {
   const [searchParams] = useSearchParams();
 
   // Mengambil parameter dari URL
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  // Fetch data log semua gudang
+  // Fetch data log semua pengguna
   const {
     data,
     isLoading: loading,
     isError,
     refetch,
-  } = useWarehouseLogs({
+  } = useAllUserLogs({
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -37,7 +37,7 @@ export default function LogSemuaGudang() {
     page: currentPage,
     limit: itemsPerPage,
     totalPages: 0,
-    hasNext: false, 
+    hasNext: false,
     hasPrev: false,
   };
 
@@ -65,7 +65,7 @@ export default function LogSemuaGudang() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className="text-xs font-medium text-gray-700 mb-1">Data gudang yang dibuat:</div>
+          <div className="text-xs font-medium text-gray-700 mb-1">Data pengguna yang dibuat:</div>
           <table className="text-xs w-full border-collapse">
             <tbody>
               <tr>
@@ -73,8 +73,12 @@ export default function LogSemuaGudang() {
                 <td className="border border-gray-200 px-2 py-1">{newData.name as string}</td>
               </tr>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Deskripsi</td>
-                <td className="border border-gray-200 px-2 py-1">{newData.description as string}</td>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Email</td>
+                <td className="border border-gray-200 px-2 py-1">{newData.email as string}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Peran</td>
+                <td className="border border-gray-200 px-2 py-1">{newData.roleId as string}</td>
               </tr>
             </tbody>
           </table>
@@ -82,23 +86,22 @@ export default function LogSemuaGudang() {
       );
     }
 
-    // Untuk aksi DELETE
-    if (oldData && !newData) {
+    // Untuk aksi DELETE atau RESTORE
+    if ((oldData && !newData) || (oldData && newData && oldData.deletedAt !== newData.deletedAt)) {
+      const isRestore = newData?.deletedAt === null;
       return (
         <div>
-          <div className="text-xs font-medium text-gray-700 mb-1">Data gudang yang dihapus:</div>
-          <table className="text-xs w-full border-collapse">
-            <tbody>
-              <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Nama</td>
-                <td className="border border-gray-200 px-2 py-1">{oldData.name as string}</td>
-              </tr>
-              <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Deskripsi</td>
-                <td className="border border-gray-200 px-2 py-1">{oldData.description as string}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="text-xs font-medium text-gray-700 mb-1">{isRestore ? "Pengguna dipulihkan:" : "Data pengguna yang diarsipkan:"}</div>
+          {oldData && (
+            <table className="text-xs w-full border-collapse">
+              <tbody>
+                <tr>
+                  <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Status</td>
+                  <td className="border border-gray-200 px-2 py-1">{isRestore ? "Dipulihkan" : "Diarsipkan"}</td>
+                </tr>
+              </tbody>
+            </table>
+          )}
         </div>
       );
     }
@@ -116,24 +119,19 @@ export default function LogSemuaGudang() {
         });
       }
 
-      if (oldData.description !== newData.description) {
+      if (oldData.email !== newData.email) {
         changes.push({
-          field: "Deskripsi",
-          oldValue: oldData.description as string,
-          newValue: newData.description as string,
+          field: "Email",
+          oldValue: oldData.email as string,
+          newValue: newData.email as string,
         });
       }
 
-      // Bandingkan pengelola jika ada perubahan
-      type UserType = { name: string };
-      const oldUser = (oldData.user as UserType)?.name || "-";
-      const newUser = (newData.user as UserType)?.name || "-";
-
-      if (oldUser !== newUser) {
+      if (oldData.roleId !== newData.roleId) {
         changes.push({
-          field: "Pengelola",
-          oldValue: oldUser,
-          newValue: newUser,
+          field: "Peran",
+          oldValue: oldData.roleId as string,
+          newValue: newData.roleId as string,
         });
       }
 
@@ -170,14 +168,14 @@ export default function LogSemuaGudang() {
   return (
     <div className="space-y-6 px-4 sm:px-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-        <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas Gudang</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas Pengguna</h1>
       </div>
 
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Semua Aktivitas Gudang</h2>
-            <p className="text-sm text-gray-500">Riwayat perubahan data gudang di sistem</p>
+            <h2 className="text-xl font-semibold text-gray-900">Semua Aktivitas Pengguna</h2>
+            <p className="text-sm text-gray-500">Riwayat perubahan data pengguna di sistem</p>
           </div>
           <div className="flex flex-wrap gap-3 w-full sm:w-auto items-center">
             <Button variant="outline" size="sm" className="h-9 min-w-[100px] bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm flex items-center px-3">
@@ -220,7 +218,7 @@ export default function LogSemuaGudang() {
                     <TableRow className="bg-gray-50 border-b border-gray-200">
                       <TableHead className="w-[50px] font-semibold text-gray-700 py-4">No</TableHead>
                       <TableHead className="font-semibold text-gray-700 py-4">Waktu</TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4">Gudang</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Pengguna</TableHead>
                       <TableHead className="font-semibold text-gray-700 py-4">Aksi</TableHead>
                       <TableHead className="font-semibold text-gray-700 py-4">Dilakukan Oleh</TableHead>
                       <TableHead className="font-semibold text-gray-700 py-4">Deskripsi</TableHead>
@@ -242,9 +240,9 @@ export default function LogSemuaGudang() {
                           <TableCell className="font-medium text-center">{index + 1 + (pagination.page - 1) * pagination.limit}</TableCell>
                           <TableCell className="text-gray-700">{formatDate(log.createdAt)}</TableCell>
                           <TableCell>
-                            {log.warehouse && (
-                              <Link to={`/gudang/${log.warehouse.id}`} className="font-medium text-blue-600 hover:underline">
-                                {log.warehouse.name}
+                            {log.user && (
+                              <Link to={`/pengguna/${log.user.id}`} className="font-medium text-blue-600 hover:underline">
+                                {log.user.name}
                               </Link>
                             )}
                           </TableCell>
@@ -300,11 +298,11 @@ export default function LogSemuaGudang() {
                       </div>
 
                       <div className="mb-2">
-                        {log.warehouse && (
+                        {log.user && (
                           <div className="mb-1">
-                            <span className="text-sm font-medium">Gudang: </span>
-                            <Link to={`/gudang/${log.warehouse.id}`} className="text-sm text-blue-600 hover:underline">
-                              {log.warehouse.name}
+                            <span className="text-sm font-medium">Pengguna: </span>
+                            <Link to={`/pengguna/${log.user.id}`} className="text-sm text-blue-600 hover:underline">
+                              {log.user.name}
                             </Link>
                           </div>
                         )}

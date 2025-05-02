@@ -16,6 +16,11 @@ export interface UserLog {
     name: string;
     email: string;
   };
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 // Interface untuk response log dengan pagination

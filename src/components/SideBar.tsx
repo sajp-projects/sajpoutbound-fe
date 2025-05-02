@@ -75,6 +75,11 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
           path: "/pengguna/arsip",
           action: PERMISSION.ACTIONS.READ,
         },
+        {
+          name: "Log Pengguna",
+          path: "/pengguna/log",
+          action: PERMISSION.ACTIONS.READ,
+        },
       ],
     },
     {

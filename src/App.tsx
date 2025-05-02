@@ -22,6 +22,7 @@ import EditGudang from "./pages/gudang/editGudang";
 import TambahGudang from "./pages/gudang/tambahGudang";
 import LogGudang from "./pages/gudang/logGudang";
 import LogSemuaGudang from "./pages/gudang/logSemuaGudang";
+import LogSemuaPengguna from "./pages/pengguna/logSemuaPengguna";
 
 export default function App() {
   return (
@@ -68,6 +69,14 @@ export default function App() {
               element={
                 <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.READ} redirectTo="/pengguna">
                   <LogPengguna />
+                </RBACLayout>
+              }
+            />
+            <Route
+              path="log"
+              element={
+                <RBACLayout resource={PERMISSION.RESOURCES.USER} action={PERMISSION.ACTIONS.READ} redirectTo="/pengguna">
+                  <LogSemuaPengguna />
                 </RBACLayout>
               }
             />
