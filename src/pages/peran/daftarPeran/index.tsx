@@ -2,7 +2,6 @@ import { useDeleteRole, useRoles } from "@/hooks/role";
 import { Search, Plus, Eye, Edit, Trash2, Lock } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
-import Swal from "sweetalert2";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +12,7 @@ import { Pagination } from "@/components/Pagination";
 import { useRolePermissions } from "@/hooks/izin";
 import { useAuth } from "@/hooks/auth";
 import { PERMISSION } from "@/constant/PERMISSION";
+import { showSuccessAlert, showErrorAlert, showForbiddenAlert, showDeleteConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 
 export default function Role() {
   // State untuk input pencarian client-side
@@ -62,30 +62,14 @@ export default function Role() {
     onError: (error) => {
       // Cek jika pesan error adalah Forbidden
       if (error.message && error.message.includes("Forbidden")) {
-        Swal.fire({
-          title: "Akses Ditolak",
-          text: "Anda tidak memiliki akses untuk menghapus peran ini.",
-          icon: "error",
-          confirmButtonText: "Tutup",
-        });
+        showForbiddenAlert("Akses Ditolak", "Anda tidak memiliki akses untuk menghapus peran ini.");
       } else {
         // Untuk error lainnya, tampilkan pesan error normal
-        Swal.fire({
-          icon: "error",
-          title: "Gagal Menghapus Peran",
-          text: error.message || "Terjadi kesalahan saat menghapus peran",
-          confirmButtonText: "Tutup",
-        });
+        showErrorAlert("Gagal Menghapus Peran", error.message || "Terjadi kesalahan saat menghapus peran");
       }
     },
     onSuccess: (data) => {
-      Swal.fire({
-        icon: "success",
-        title: "Peran Berhasil Dihapus",
-        text: `Peran "${data.name}" telah berhasil dihapus`,
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      showSuccessAlert("Peran Berhasil Dihapus", `Peran "${data.name}" telah berhasil dihapus`);
 
       // Refresh data peran setelah berhasil menghapus
       refetch();
@@ -93,17 +77,8 @@ export default function Role() {
   });
 
   const handleDeleteRole = (id: string, name: string) => {
-    Swal.fire({
-      title: "Konfirmasi Hapus Peran",
-      text: `Apakah Anda yakin ingin menghapus peran "${name}"?`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Ya, Hapus",
-      cancelButtonText: "Batal",
-    }).then((result) => {
-      if (result.isConfirmed) {
+    showDeleteConfirmationAlert("Peran", `Apakah Anda yakin ingin menghapus peran "${name}"?`).then((result) => {
+      if (isConfirmed(result)) {
         deleteRole.mutate({ id });
       }
     });

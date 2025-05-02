@@ -2,14 +2,14 @@ import { useRole } from "@/hooks/role";
 import { ArrowLeft, Pencil, Users, Info, Mail, Calendar, User, Eye, Lock } from "lucide-react";
 import { useParams, Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/utils/date";
+import { formatDate, formatDateShort } from "@/utils/date";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import Swal from "sweetalert2";
-import { useRolePermissions } from "@/hooks/izin";
 import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/izin";
 import { PERMISSION } from "@/constant/PERMISSION";
+import { showErrorAlert } from "@/utils/sweetAlert";
 
 export default function DetailPeran() {
   const { id } = useParams<{ id: string }>();
@@ -57,12 +57,8 @@ export default function DetailPeran() {
         errorMessage = "Format ID peran tidak valid. ID peran harus berupa angka.";
       }
 
-      Swal.fire({
-        icon: "error",
-        title: "Peran Tidak Ditemukan",
-        text: errorMessage,
-        confirmButtonText: "Kembali ke Daftar Peran",
-      }).then(() => {
+      // Ganti Swal.fire dengan showErrorAlert
+      showErrorAlert("Peran Tidak Ditemukan", errorMessage).then(() => {
         navigate("/peran");
       });
     }

@@ -10,7 +10,7 @@ import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import Swal from "sweetalert2";
+import { showSuccessAlert, showErrorAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 import { useAuth } from "@/hooks/auth";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useRolePermissions } from "@/hooks/izin";
@@ -75,12 +75,7 @@ export default function TambahPengguna() {
   useEffect(() => {
     if (!hasRoleReadPermission()) {
       // Tampilkan peringatan setelah komponen di-render
-      Swal.fire({
-        title: "Akses Terbatas",
-        text: "Anda tidak memiliki izin untuk melihat daftar peran. Anda tidak akan dapat menambahkan pengguna baru tanpa menetapkan peran yang valid.",
-        icon: "warning",
-        confirmButtonText: "Mengerti",
-      });
+      showErrorAlert("Akses Terbatas", "Anda tidak memiliki izin untuk melihat daftar peran. Anda tidak akan dapat menambahkan pengguna baru tanpa menetapkan peran yang valid.");
     }
   }, [permissions]);
 
@@ -88,13 +83,7 @@ export default function TambahPengguna() {
   const createUserMutation = useCreateUser({
     onSuccess: () => {
       // Tampilkan SweetAlert untuk sukses
-      Swal.fire({
-        title: "Berhasil!",
-        text: "Pengguna baru berhasil ditambahkan",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      }).then(() => {
+      showSuccessAlert("Berhasil!", "Pengguna baru berhasil ditambahkan").then(() => {
         navigate("/pengguna");
       });
     },
@@ -167,12 +156,7 @@ export default function TambahPengguna() {
       });
 
       // Tampilkan pesan SweetAlert
-      Swal.fire({
-        title: "Tidak Dapat Menambahkan Pengguna",
-        text: "Anda tidak memiliki izin untuk melihat daftar peran. Pengguna baru harus memiliki peran yang valid.",
-        icon: "error",
-        confirmButtonText: "Mengerti",
-      });
+      showErrorAlert("Tidak Dapat Menambahkan Pengguna", "Anda tidak memiliki izin untuk melihat daftar peran. Pengguna baru harus memiliki peran yang valid.");
 
       return;
     }
@@ -186,17 +170,8 @@ export default function TambahPengguna() {
     };
 
     // Tampilkan konfirmasi sebelum menambahkan pengguna
-    Swal.fire({
-      title: "Konfirmasi",
-      text: "Apakah Anda yakin ingin menambahkan pengguna baru ini?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Ya, Tambahkan!",
-      cancelButtonText: "Batal",
-    }).then((result) => {
-      if (result.isConfirmed) {
+    showConfirmationAlert("Konfirmasi", "Apakah Anda yakin ingin menambahkan pengguna baru ini?", "Ya, Tambahkan!", "Batal").then((result) => {
+      if (isConfirmed(result)) {
         // Kirim data menggunakan mutation dari tanstack
         createUserMutation.mutate(userData);
       }

@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
 import { Navigate, Outlet } from "react-router";
-import Swal from "sweetalert2";
+import { showErrorAlert } from "@/utils/sweetAlert";
 
 interface RBACLayoutProps {
   resource: string;
@@ -29,26 +29,16 @@ export default function RBACLayout({ resource, action, redirectTo = "/", childre
 
   // If we're not authenticated, redirect to login
   if (!isAuthenticated) {
-    Swal.fire({
-      title: "Akses Ditolak",
-      text: "Anda harus login terlebih dahulu",
-      icon: "error",
-      timer: 2000,
-      showConfirmButton: false,
-    });
+    // Ganti Swal.fire dengan showErrorAlert
+    showErrorAlert("Akses Ditolak", "Anda harus login terlebih dahulu");
     return <Navigate to="/login" replace />;
   }
 
   // If roleId is not available but we're authenticated, there's a configuration issue
   if (isAuthenticated && !roleId) {
     console.error("User is authenticated but has no roleId assigned");
-    Swal.fire({
-      title: "Kesalahan Konfigurasi",
-      text: "Akun Anda tidak memiliki peran. Silakan hubungi administrator.",
-      icon: "error",
-      timer: 3000,
-      showConfirmButton: true,
-    });
+    // Ganti Swal.fire dengan showErrorAlert
+    showErrorAlert("Kesalahan Konfigurasi", "Akun Anda tidak memiliki peran. Silakan hubungi administrator.");
     return <Navigate to={redirectTo} replace />;
   }
 
@@ -57,13 +47,8 @@ export default function RBACLayout({ resource, action, redirectTo = "/", childre
 
   // If access is denied, show message and redirect
   if (!hasAccess) {
-    Swal.fire({
-      title: "Akses Ditolak",
-      text: "Anda tidak memiliki izin untuk mengakses halaman ini",
-      icon: "error",
-      timer: 2000,
-      showConfirmButton: false,
-    });
+    // Ganti Swal.fire dengan showErrorAlert
+    showErrorAlert("Akses Ditolak", "Anda tidak memiliki izin untuk mengakses halaman ini");
     return <Navigate to={redirectTo} replace />;
   }
 

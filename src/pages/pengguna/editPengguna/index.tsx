@@ -4,12 +4,14 @@ import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useParams, Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import { Role } from "@/types/role";
-import Swal from "sweetalert2";
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+
+// Import utilitas SweetAlert
+import { showSuccessAlert, showErrorAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 
 // Type untuk form edit user
 interface UserFormData {
@@ -37,6 +39,7 @@ export default function EditPengguna() {
     data: user,
     isLoading: isLoadingUser,
     isError: isErrorUser,
+    error: userError,
   } = useUser(
     {
       id: id || "",
@@ -57,13 +60,7 @@ export default function EditPengguna() {
   const updateUserMutation = useUpdateUser({
     onSuccess: () => {
       // Tampilkan SweetAlert untuk sukses
-      Swal.fire({
-        title: "Berhasil!",
-        text: "Data pengguna berhasil diperbarui",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      }).then(() => {
+      showSuccessAlert("Berhasil!", "Data pengguna berhasil diperbarui").then(() => {
         navigate(`/pengguna/${id}`);
       });
     },
@@ -134,17 +131,8 @@ export default function EditPengguna() {
     setErrors({});
 
     // Tampilkan konfirmasi sebelum mengubah pengguna
-    Swal.fire({
-      title: "Konfirmasi",
-      text: "Apakah Anda yakin ingin menyimpan perubahan data pengguna ini?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Ya, Simpan!",
-      cancelButtonText: "Batal",
-    }).then((result) => {
-      if (result.isConfirmed) {
+    showConfirmationAlert("Konfirmasi", "Apakah Anda yakin ingin menyimpan perubahan data pengguna ini?", "Ya, Simpan!", "Batal").then((result) => {
+      if (isConfirmed(result)) {
         updateUserMutation.mutate({
           id: id || "",
           name: formData.name,
@@ -158,6 +146,15 @@ export default function EditPengguna() {
   const isLoading = isLoadingUser || isLoadingRoles;
   const isError = isErrorUser || isErrorRoles;
   const isSubmitting = updateUserMutation.isPending;
+
+  useEffect(() => {
+    if (isErrorUser) {
+      // Ganti Swal.fire dengan showErrorAlert
+      showErrorAlert("Gagal!", `Gagal memuat data pengguna: ${userError?.message || "Terjadi kesalahan"}`).then(() => {
+        navigate("/pengguna");
+      });
+    }
+  }, [isErrorUser, userError, navigate]);
 
   return (
     <div className="space-y-6 px-4 sm:px-0">

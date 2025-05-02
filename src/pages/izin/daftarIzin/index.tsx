@@ -5,8 +5,8 @@ import { Permission } from "@/types/izin";
 import { getChangedPermissions, groupPermissionsByResource, hasPermissionChanges } from "@/utils/permission";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
-import Swal from "sweetalert2";
 import { EmptyState, ErrorState, InfoBanner, LoadingState, PageHeader, ResourceGroup } from "./_components";
+import { showSuccessAlert, showErrorAlert, showForbiddenAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 
 export default function IzinPeran() {
   // URL parameters
@@ -99,13 +99,7 @@ export default function IzinPeran() {
   const updateRolePermissions = useUpdateRolePermissions({
     onSuccess: () => {
       refetchRolePermissions();
-      Swal.fire({
-        icon: "success",
-        title: "Izin Peran Berhasil Diperbarui",
-        text: "Perubahan izin peran berhasil disimpan",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      showSuccessAlert("Izin Peran Berhasil Diperbarui", "Perubahan izin peran berhasil disimpan");
       setIsSubmitting(false);
       // Update initialPermissions to current selection after successful update
       setInitialPermissions([...selectedPermissions]);
@@ -115,20 +109,10 @@ export default function IzinPeran() {
 
       // Cek jika pesan error adalah Forbidden
       if (error.message && error.message.includes("Forbidden")) {
-        Swal.fire({
-          title: "Akses Ditolak",
-          text: "Anda tidak memiliki akses untuk mengubah izin peran ini.",
-          icon: "error",
-          confirmButtonText: "Tutup",
-        });
+        showForbiddenAlert("Akses Ditolak", "Anda tidak memiliki akses untuk mengubah izin peran ini.");
       } else {
         // Untuk error lainnya, tampilkan pesan error normal
-        Swal.fire({
-          icon: "error",
-          title: "Gagal Memperbarui Izin Peran",
-          text: error.message || "Terjadi kesalahan saat memperbarui izin peran",
-          confirmButtonText: "Tutup",
-        });
+        showErrorAlert("Gagal Memperbarui Izin Peran", error.message || "Terjadi kesalahan saat memperbarui izin peran");
       }
     },
   });
@@ -137,17 +121,8 @@ export default function IzinPeran() {
   const handleSavePermissions = () => {
     if (!id || !hasChanges) return;
 
-    Swal.fire({
-      title: "Konfirmasi Simpan Izin",
-      text: "Apakah Anda yakin ingin menyimpan perubahan izin peran ini?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Ya, Simpan",
-      cancelButtonText: "Batal",
-    }).then((result) => {
-      if (result.isConfirmed) {
+    showConfirmationAlert("Konfirmasi Simpan Izin", "Apakah Anda yakin ingin menyimpan perubahan izin peran ini?", "Ya, Simpan", "Batal").then((result) => {
+      if (isConfirmed(result)) {
         setIsSubmitting(true);
 
         // Get all permissions that have changed (both newly checked and newly unchecked)

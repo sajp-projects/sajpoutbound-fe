@@ -1,8 +1,7 @@
 import { useDeleteUser, useUsers } from "@/hooks/user";
-import { Archive, Download, Eye, Edit, Plus, Search, History } from "lucide-react";
-import { useEffect } from "react";
+import { Search, Download, Plus, Eye, Edit, Archive, History } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
-import Swal from "sweetalert2";
 
 import { Pagination } from "@/components/Pagination";
 import { RoleFilter } from "@/components/RoleFilter";
@@ -16,6 +15,7 @@ import { formatDate, formatDateShort } from "@/utils/date";
 import { useAuth } from "@/hooks/auth";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useRolePermissions } from "@/hooks/izin";
+import { showSuccessAlert, showErrorAlert, showForbiddenAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 
 export default function Pengguna() {
   const [searchParams] = useSearchParams();
@@ -71,48 +71,21 @@ export default function Pengguna() {
 
   const deleteUser = useDeleteUser({
     onSuccess: () => {
-      Swal.fire({
-        title: "Berhasil!",
-        text: "Pengguna berhasil diarsipkan",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      showSuccessAlert("Berhasil!", "Pengguna berhasil diarsipkan");
       refetch();
     },
     onError: (error) => {
-      // Cek jika pesan error adalah Forbidden
       if (error.message.includes("Forbidden")) {
-        Swal.fire({
-          title: "Akses Ditolak",
-          text: "Anda tidak memiliki akses untuk mengarsipkan pengguna ini.",
-          icon: "error",
-          confirmButtonText: "Tutup",
-        });
+        showForbiddenAlert("Akses Ditolak", "Anda tidak memiliki akses untuk mengarsipkan pengguna ini.");
       } else {
-        // Untuk error lainnya, tampilkan pesan error normal
-        Swal.fire({
-          title: "Gagal!",
-          text: `Gagal mengarsipkan pengguna: ${error.message || "Terjadi kesalahan saat mengarsipkan pengguna."}`,
-          icon: "error",
-          confirmButtonText: "Tutup",
-        });
+        showErrorAlert("Gagal!", `Gagal mengarsipkan pengguna: ${error.message || "Terjadi kesalahan saat mengarsipkan pengguna."}`);
       }
     },
   });
 
   const handleArsipkan = (id: string) => {
-    Swal.fire({
-      title: "Konfirmasi Arsip",
-      text: "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Ya, Arsipkan!",
-      cancelButtonText: "Batal",
-    }).then((result) => {
-      if (result.isConfirmed) {
+    showConfirmationAlert("Konfirmasi Arsip", "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.", "Ya, Arsipkan!", "Batal").then((result) => {
+      if (isConfirmed(result)) {
         deleteUser.mutate({ id });
       }
     });

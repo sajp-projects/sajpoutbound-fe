@@ -6,7 +6,9 @@ import { getRoleBadgeColor, getRoleBadgeVariant } from "@/utils/badges";
 import { formatDate } from "@/utils/date";
 import { Archive, ArrowLeft, FileText, Pencil, RefreshCcw } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
-import Swal from "sweetalert2";
+
+// Import utilitas SweetAlert
+import { showSuccessAlert, showErrorAlert, showForbiddenAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 
 export default function DetailPengguna() {
   const { id } = useParams<{ id: string }>();
@@ -15,47 +17,26 @@ export default function DetailPengguna() {
 
   const deleteUser = useDeleteUser({
     onSuccess: () => {
-      Swal.fire({
-        title: "Berhasil!",
-        text: "Pengguna berhasil diarsipkan",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      }).then(() => {
+      // Ganti Swal.fire dengan showSuccessAlert
+      showSuccessAlert("Berhasil!", "Pengguna berhasil diarsipkan").then(() => {
         navigate("/pengguna");
       });
     },
     onError: (error) => {
       if (error.message.includes("Forbidden")) {
-        Swal.fire({
-          title: "Akses Ditolak",
-          text: "Anda tidak memiliki akses untuk mengarsipkan pengguna ini.",
-          icon: "error",
-          confirmButtonText: "Tutup",
-        });
+        // Ganti Swal.fire dengan showForbiddenAlert
+        showForbiddenAlert("Akses Ditolak", "Anda tidak memiliki akses untuk mengarsipkan pengguna ini.");
       } else {
-        Swal.fire({
-          title: "Gagal!",
-          text: `Gagal mengarsipkan pengguna: ${error.message || "Terjadi kesalahan saat mengarsipkan pengguna."}`,
-          icon: "error",
-          confirmButtonText: "Tutup",
-        });
+        // Ganti Swal.fire dengan showErrorAlert
+        showErrorAlert("Gagal!", `Gagal mengarsipkan pengguna: ${error.message || "Terjadi kesalahan saat mengarsipkan pengguna."}`);
       }
     },
   });
 
   const handleArsipkan = () => {
-    Swal.fire({
-      title: "Konfirmasi Arsip",
-      text: "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Ya, Arsipkan!",
-      cancelButtonText: "Batal",
-    }).then((result) => {
-      if (result.isConfirmed) {
+    // Ganti Swal.fire dengan showConfirmationAlert
+    showConfirmationAlert("Konfirmasi Arsip", "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.", "Ya, Arsipkan!", "Batal").then((result) => {
+      if (isConfirmed(result)) {
         deleteUser.mutate({ id: id || "" });
       }
     });

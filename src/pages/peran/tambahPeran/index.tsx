@@ -5,9 +5,9 @@ import { Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Swal from "sweetalert2";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { showSuccessAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 
 interface FormData {
   name: string;
@@ -30,13 +30,7 @@ export default function TambahPeran() {
 
   const createRoleMutation = useCreateRole({
     onSuccess: (data) => {
-      Swal.fire({
-        title: "Berhasil!",
-        text: `Peran ${data.name} berhasil ditambahkan`,
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      }).then(() => {
+      showSuccessAlert("Berhasil!", `Peran ${data.name} berhasil ditambahkan`).then(() => {
         navigate("/peran");
       });
     },
@@ -89,17 +83,8 @@ export default function TambahPeran() {
     setErrors({});
 
     // Tampilkan konfirmasi sebelum menyimpan
-    Swal.fire({
-      title: "Konfirmasi",
-      text: `Apakah Anda yakin ingin menambahkan peran "${formData.name}"?`,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Ya, Tambahkan",
-      cancelButtonText: "Batal",
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-    }).then((result) => {
-      if (result.isConfirmed) {
+    showConfirmationAlert("Konfirmasi", `Apakah Anda yakin ingin menambahkan peran "${formData.name}"?`, "Ya, Tambahkan", "Batal").then((result) => {
+      if (isConfirmed(result)) {
         createRoleMutation.mutate(formData);
       }
     });

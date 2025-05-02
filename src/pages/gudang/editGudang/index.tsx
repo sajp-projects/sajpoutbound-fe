@@ -5,8 +5,8 @@ import { useWarehouse, useUpdateWarehouse } from "@/hooks/gudang";
 import { ArrowLeft, Loader2, Save, RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router";
-import Swal from "sweetalert2";
 import { cn } from "@/lib/utils";
+import { showSuccessAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 
 // Type untuk form edit warehouse
 interface WarehouseFormData {
@@ -59,13 +59,7 @@ export default function EditGudang() {
   // Mutation untuk update gudang
   const updateWarehouseMutation = useUpdateWarehouse({
     onSuccess: (data) => {
-      Swal.fire({
-        icon: "success",
-        title: "Sukses!",
-        text: "Gudang berhasil diperbarui",
-        timer: 1500,
-        showConfirmButton: false,
-      }).then(() => {
+      showSuccessAlert("Sukses!", "Gudang berhasil diperbarui").then(() => {
         navigate(`/gudang/${data.id}`);
       });
     },
@@ -146,17 +140,8 @@ export default function EditGudang() {
     }
 
     // Tampilkan konfirmasi sebelum mengubah gudang
-    Swal.fire({
-      title: "Konfirmasi",
-      text: "Apakah Anda yakin ingin menyimpan perubahan data gudang ini?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Ya, Simpan!",
-      cancelButtonText: "Batal",
-    }).then((result) => {
-      if (result.isConfirmed) {
+    showConfirmationAlert("Konfirmasi", "Apakah Anda yakin ingin menyimpan perubahan data gudang ini?", "Ya, Simpan!", "Batal").then((result) => {
+      if (isConfirmed(result)) {
         updateWarehouseMutation.mutate({
           id: id || "",
           ...formData,

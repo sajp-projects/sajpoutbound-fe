@@ -2,13 +2,15 @@ import { useRole, useUpdateRole } from "@/hooks/role";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useParams, Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
-import Swal from "sweetalert2";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+
+// Ganti import Swal dengan import utilitas SweetAlert
+import { showSuccessAlert, showErrorAlert, showForbiddenAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 
 // Type untuk form edit role
 interface RoleFormData {
@@ -55,25 +57,14 @@ export default function EditPeran() {
   const updateRoleMutation = useUpdateRole({
     onSuccess: (data) => {
       // Tampilkan SweetAlert untuk sukses
-      Swal.fire({
-        title: "Berhasil!",
-        text: `Peran ${data.name} berhasil diperbarui`,
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      }).then(() => {
+      showSuccessAlert("Berhasil!", `Peran ${data.name} berhasil diperbarui`).then(() => {
         navigate(`/peran/${id}`);
       });
     },
     onError: (error: Error) => {
       // Cek jika pesan error adalah Forbidden
       if (error.message && error.message.includes("Forbidden")) {
-        Swal.fire({
-          title: "Akses Ditolak",
-          text: "Anda tidak memiliki akses untuk mengubah peran ini.",
-          icon: "error",
-          confirmButtonText: "Tutup",
-        });
+        showForbiddenAlert("Akses Ditolak", "Anda tidak memiliki akses untuk mengubah peran ini.");
         return;
       }
 
@@ -146,17 +137,8 @@ export default function EditPeran() {
     }
 
     // Tampilkan konfirmasi sebelum menyimpan
-    Swal.fire({
-      title: "Konfirmasi",
-      text: `Apakah Anda yakin ingin memperbarui peran "${formData.name}"?`,
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Ya, Perbarui",
-      cancelButtonText: "Batal",
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-    }).then((result) => {
-      if (result.isConfirmed) {
+    showConfirmationAlert("Konfirmasi", `Apakah Anda yakin ingin memperbarui peran "${formData.name}"?`, "Ya, Perbarui", "Batal").then((result) => {
+      if (isConfirmed(result)) {
         updateRoleMutation.mutate({
           id: id || "",
           name: formData.name,

@@ -2,7 +2,6 @@ import { useWarehouses, useDeleteWarehouse } from "@/hooks/gudang";
 import { Download, Edit, Eye, History, Plus, Search, Trash2 } from "lucide-react";
 import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
-import Swal from "sweetalert2";
 
 import { Pagination } from "@/components/Pagination";
 import { SearchInput } from "@/components/SearchInput";
@@ -10,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
+import { showSuccessAlert, showErrorAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 
 export default function DaftarGudang() {
   const [searchParams] = useSearchParams();
@@ -51,46 +51,23 @@ export default function DaftarGudang() {
   // Mutation untuk menghapus gudang
   const deleteWarehouseMutation = useDeleteWarehouse({
     onSuccess: () => {
-      Swal.fire({
-        icon: "success",
-        title: "Sukses!",
-        text: "Gudang berhasil dihapus",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      showSuccessAlert("Sukses!", "Gudang berhasil dihapus");
       refetch();
     },
     onError: (error) => {
       try {
         const errorObj = JSON.parse(error.message);
-        Swal.fire({
-          icon: "error",
-          title: "Gagal menghapus gudang",
-          text: errorObj.message || "Terjadi kesalahan saat menghapus gudang",
-        });
+        showErrorAlert("Gagal menghapus gudang", errorObj.message || "Terjadi kesalahan saat menghapus gudang");
       } catch {
-        Swal.fire({
-          icon: "error",
-          title: "Gagal menghapus gudang",
-          text: "Terjadi kesalahan saat menghapus gudang",
-        });
+        showErrorAlert("Gagal menghapus gudang", "Terjadi kesalahan saat menghapus gudang");
       }
     },
   });
 
   // Fungsi untuk konfirmasi penghapusan gudang
   const handleDeleteWarehouse = (id: string, name: string) => {
-    Swal.fire({
-      title: "Apakah Anda yakin?",
-      text: `Gudang "${name}" akan dihapus.`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Ya, hapus!",
-      cancelButtonText: "Batal",
-    }).then((result) => {
-      if (result.isConfirmed) {
+    showConfirmationAlert("Apakah Anda yakin?", `Gudang "${name}" akan dihapus.`, "Ya, hapus!", "Batal").then((result) => {
+      if (isConfirmed(result)) {
         deleteWarehouseMutation.mutate({ id });
       }
     });

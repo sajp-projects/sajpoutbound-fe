@@ -4,8 +4,8 @@ import { Input } from "@/components/ui/input";
 import { useCreateWarehouse } from "@/hooks/gudang";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useState } from "react";
-import { useNavigate, Link } from "react-router";
-import Swal from "sweetalert2";
+import { Link, useNavigate } from "react-router";
+import { showSuccessAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 import { cn } from "@/lib/utils";
 
 interface WarehouseFormData {
@@ -32,13 +32,7 @@ export default function TambahGudang() {
   // Mutation untuk menambah gudang
   const createWarehouseMutation = useCreateWarehouse({
     onSuccess: (data) => {
-      Swal.fire({
-        icon: "success",
-        title: "Sukses!",
-        text: "Gudang berhasil ditambahkan",
-        timer: 1500,
-        showConfirmButton: false,
-      }).then(() => {
+      showSuccessAlert("Sukses!", "Gudang berhasil ditambahkan").then(() => {
         navigate(`/gudang/${data.id}`);
       });
     },
@@ -119,17 +113,8 @@ export default function TambahGudang() {
     }
 
     // Tampilkan konfirmasi sebelum menambahkan gudang
-    Swal.fire({
-      title: "Konfirmasi",
-      text: "Apakah Anda yakin ingin menambahkan gudang baru ini?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Ya, Tambahkan!",
-      cancelButtonText: "Batal",
-    }).then((result) => {
-      if (result.isConfirmed) {
+    showConfirmationAlert("Konfirmasi", "Apakah Anda yakin ingin menambahkan gudang baru ini?", "Ya, Tambahkan!", "Batal").then((result) => {
+      if (isConfirmed(result)) {
         createWarehouseMutation.mutate(formData);
       }
     });

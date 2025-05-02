@@ -74,7 +74,7 @@ export default function LogGudang() {
   };
 
   // Helper untuk menampilkan perubahan data
-  const renderChanges = (oldData: any, newData: any) => {
+  const renderChanges = (oldData: Record<string, unknown> | null, newData: Record<string, unknown> | null) => {
     if (!oldData && !newData) return null;
 
     // Jika tidak ada perubahan untuk ditampilkan
@@ -89,11 +89,11 @@ export default function LogGudang() {
             <tbody>
               <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Nama</td>
-                <td className="border border-gray-200 px-2 py-1">{newData.name}</td>
+                <td className="border border-gray-200 px-2 py-1">{newData.name as string}</td>
               </tr>
               <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Deskripsi</td>
-                <td className="border border-gray-200 px-2 py-1">{newData.description}</td>
+                <td className="border border-gray-200 px-2 py-1">{newData.description as string}</td>
               </tr>
             </tbody>
           </table>
@@ -110,11 +110,11 @@ export default function LogGudang() {
             <tbody>
               <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Nama</td>
-                <td className="border border-gray-200 px-2 py-1">{oldData.name}</td>
+                <td className="border border-gray-200 px-2 py-1">{oldData.name as string}</td>
               </tr>
               <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Deskripsi</td>
-                <td className="border border-gray-200 px-2 py-1">{oldData.description}</td>
+                <td className="border border-gray-200 px-2 py-1">{oldData.description as string}</td>
               </tr>
             </tbody>
           </table>
@@ -130,22 +130,22 @@ export default function LogGudang() {
       if (oldData.name !== newData.name) {
         changes.push({
           field: "Nama",
-          oldValue: oldData.name,
-          newValue: newData.name,
+          oldValue: oldData.name as string,
+          newValue: newData.name as string,
         });
       }
 
       if (oldData.description !== newData.description) {
         changes.push({
           field: "Deskripsi",
-          oldValue: oldData.description,
-          newValue: newData.description,
+          oldValue: oldData.description as string,
+          newValue: newData.description as string,
         });
       }
 
       // Bandingkan pengelola jika ada perubahan
-      const oldUser = oldData.user ? oldData.user.name : "-";
-      const newUser = newData.user ? newData.user.name : "-";
+      const oldUser = oldData.user ? ((oldData.user as Record<string, unknown>).name as string) : "-";
+      const newUser = newData.user ? ((newData.user as Record<string, unknown>).name as string) : "-";
 
       if (oldUser !== newUser) {
         changes.push({

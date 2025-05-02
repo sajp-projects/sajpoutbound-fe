@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import Swal from "sweetalert2";
+import { showSuccessAlert, showWarningAlert } from "@/utils/sweetAlert";
 
 // Definisi tipe untuk data pengguna
 export interface User {
@@ -85,13 +85,7 @@ export function useAuth() {
       setIsAuthenticated(true);
 
       // Tampilkan alert sukses
-      Swal.fire({
-        icon: "success",
-        title: "Login Berhasil",
-        text: `Selamat datang, ${user.name}!`,
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      showSuccessAlert("Login Berhasil", `Selamat datang, ${user.name}!`);
 
       setIsLoading(false);
       return true;
@@ -115,13 +109,7 @@ export function useAuth() {
     setIsAuthenticated(false);
 
     // Tampilkan alert sukses
-    Swal.fire({
-      icon: "success",
-      title: "Logout Berhasil",
-      text: "Anda telah berhasil keluar dari sistem",
-      timer: 1500,
-      showConfirmButton: false,
-    });
+    showSuccessAlert("Logout Berhasil", "Anda telah berhasil keluar dari sistem");
 
     // Redirect ke halaman login
     navigate("/login");
@@ -136,13 +124,7 @@ export function useAuth() {
 
     // Jika halaman memerlukan autentikasi tetapi user belum login
     if (requireAuth && !isAuthenticated) {
-      Swal.fire({
-        title: "Akses Dibatasi",
-        text: "Silakan login terlebih dahulu",
-        icon: "warning",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      showWarningAlert("Akses Dibatasi", "Silakan login terlebih dahulu");
 
       navigate(redirectTo);
       return;

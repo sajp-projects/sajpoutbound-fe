@@ -1,28 +1,21 @@
-import { useArchivedUsers, useRestoreUser } from '@/hooks/user';
-import { Eye, RefreshCw, Search } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router';
-import Swal from 'sweetalert2';
+import { useArchivedUsers, useRestoreUser } from "@/hooks/user";
+import { Eye, RefreshCw, Search } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { cn } from '@/lib/utils';
-import { UserWithRole } from '@/types/user';
-import { getRoleBadgeColor, getRoleBadgeVariant } from '@/utils/badges';
-import { formatDate, formatDateShort } from '@/utils/date';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { UserWithRole } from "@/types/user";
+import { getRoleBadgeColor, getRoleBadgeVariant } from "@/utils/badges";
+import { formatDate, formatDateShort } from "@/utils/date";
+import { showSuccessAlert, showErrorAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 
 export default function ArsipPengguna() {
   // Local states untuk searching (client-side)
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   const {
     data: archivedUsers = [],
@@ -31,44 +24,22 @@ export default function ArsipPengguna() {
     refetch,
   } = useArchivedUsers({
     staleTime: 5000,
-    refetchOnMount: 'always',
+    refetchOnMount: "always",
   });
 
   const restoreUser = useRestoreUser({
     onSuccess: () => {
-      Swal.fire({
-        title: 'Berhasil!',
-        text: 'Pengguna berhasil dipulihkan',
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      showSuccessAlert("Berhasil!", "Pengguna berhasil dipulihkan");
       refetch();
     },
     onError: (error) => {
-      Swal.fire({
-        title: 'Gagal!',
-        text: `Gagal memulihkan pengguna: ${
-          error.message || 'Terjadi kesalahan saat memulihkan pengguna.'
-        }`,
-        icon: 'error',
-        confirmButtonText: 'Tutup',
-      });
+      showErrorAlert("Gagal!", `Gagal memulihkan pengguna: ${error.message || "Terjadi kesalahan saat memulihkan pengguna."}`);
     },
   });
 
   const handleRestore = (id: string) => {
-    Swal.fire({
-      title: 'Konfirmasi Pemulihan',
-      text: 'Apakah Anda yakin ingin memulihkan pengguna ini?',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Ya, Pulihkan!',
-      cancelButtonText: 'Batal',
-    }).then((result) => {
-      if (result.isConfirmed) {
+    showConfirmationAlert("Konfirmasi Pemulihan", "Apakah Anda yakin ingin memulihkan pengguna ini?", "Ya, Pulihkan!", "Batal").then((result) => {
+      if (isConfirmed(result)) {
         restoreUser.mutate({ id });
       }
     });
@@ -76,10 +47,7 @@ export default function ArsipPengguna() {
 
   // Filter berdasarkan search term
   const filteredUsers = archivedUsers.filter(
-    (user: UserWithRole) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.name.toLowerCase().includes(searchTerm.toLowerCase())
+    (user: UserWithRole) => user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase()) || user.role.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -93,12 +61,8 @@ export default function ArsipPengguna() {
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden w-full">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Pengguna Terarsip
-            </h2>
-            <p className="text-sm text-gray-500">
-              Daftar pengguna yang telah diarsipkan dari sistem
-            </p>
+            <h2 className="text-xl font-semibold text-gray-900">Pengguna Terarsip</h2>
+            <p className="text-sm text-gray-500">Daftar pengguna yang telah diarsipkan dari sistem</p>
           </div>
         </div>
 
@@ -119,27 +83,16 @@ export default function ArsipPengguna() {
           <div className="flex justify-center items-center h-60">
             <div className="flex flex-col items-center">
               <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
-              <p className="mt-4 text-blue-600 font-medium">
-                Memuat data pengguna terarsip...
-              </p>
+              <p className="mt-4 text-blue-600 font-medium">Memuat data pengguna terarsip...</p>
             </div>
           </div>
         ) : isError ? (
           <div className="flex justify-center items-center h-60">
             <div className="flex flex-col items-center">
               <div className="w-12 h-12 rounded-full border-4 border-red-200 border-t-red-600 animate-spin"></div>
-              <p className="mt-4 text-red-600 font-medium">
-                Gagal memuat data pengguna terarsip
-              </p>
-              <p className="text-sm text-gray-400">
-                Terjadi kesalahan pada server
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => refetch()}
-                className="mt-4"
-              >
+              <p className="mt-4 text-red-600 font-medium">Gagal memuat data pengguna terarsip</p>
+              <p className="text-sm text-gray-400">Terjadi kesalahan pada server</p>
+              <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
                 Coba lagi
               </Button>
             </div>
@@ -152,27 +105,13 @@ export default function ArsipPengguna() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50 border-b border-gray-200">
-                      <TableHead className="w-[50px] font-semibold text-gray-700 py-4">
-                        ID
-                      </TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4">
-                        Nama
-                      </TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4">
-                        Email
-                      </TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4">
-                        Peran
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">
-                        Tgl. Dibuat
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">
-                        Tgl. Diarsipkan
-                      </TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4 text-center">
-                        Aksi
-                      </TableHead>
+                      <TableHead className="w-[50px] font-semibold text-gray-700 py-4">ID</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Nama</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Email</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4">Peran</TableHead>
+                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">Tgl. Dibuat</TableHead>
+                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">Tgl. Diarsipkan</TableHead>
+                      <TableHead className="font-semibold text-gray-700 py-4 text-center">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -181,58 +120,28 @@ export default function ArsipPengguna() {
                         <TableCell colSpan={7} className="h-24 text-center">
                           <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
                             <Search className="h-10 w-10 mb-2 text-gray-300" />
-                            <p className="text-gray-500">
-                              Tidak ada data pengguna terarsip yang ditemukan.
-                            </p>
-                            <p className="text-sm text-gray-400">
-                              Coba gunakan kata kunci pencarian yang berbeda.
-                            </p>
+                            <p className="text-gray-500">Tidak ada data pengguna terarsip yang ditemukan.</p>
+                            <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
                           </div>
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredUsers.map((user, idx) => (
-                        <TableRow
-                          key={user.id}
-                          className={cn(
-                            idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                          )}
-                        >
-                          <TableCell className="font-medium text-center">
-                            {idx + 1}
-                          </TableCell>
-                          <TableCell className="font-medium text-blue-600">
-                            {user.name}
-                          </TableCell>
-                          <TableCell className="truncate max-w-[150px] sm:max-w-none">
-                            {user.email}
-                          </TableCell>
+                        <TableRow key={user.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50")}>
+                          <TableCell className="font-medium text-center">{idx + 1}</TableCell>
+                          <TableCell className="font-medium text-blue-600">{user.name}</TableCell>
+                          <TableCell className="truncate max-w-[150px] sm:max-w-none">{user.email}</TableCell>
                           <TableCell>
-                            <Badge
-                              variant={getRoleBadgeVariant(user.role.name)}
-                              className={cn(
-                                'px-2 py-0.5 rounded-md font-medium',
-                                getRoleBadgeColor(user.role.name)
-                              )}
-                            >
+                            <Badge variant={getRoleBadgeVariant(user.role.name)} className={cn("px-2 py-0.5 rounded-md font-medium", getRoleBadgeColor(user.role.name))}>
                               {user.role.name}
                             </Badge>
                           </TableCell>
-                          <TableCell className="hidden md:table-cell text-gray-500">
-                            {formatDate(user.createdAt)}
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell text-gray-500">
-                            {user.deletedAt ? formatDate(user.deletedAt) : '-'}
-                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-gray-500">{formatDate(user.createdAt)}</TableCell>
+                          <TableCell className="hidden md:table-cell text-gray-500">{user.deletedAt ? formatDate(user.deletedAt) : "-"}</TableCell>
                           <TableCell>
                             <div className="flex items-center justify-center gap-1">
                               <Link to={`/pengguna/${user.id}`}>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                  title="Lihat Detail"
-                                >
+                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </Link>
@@ -242,17 +151,9 @@ export default function ArsipPengguna() {
                                 className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                 title="Pulihkan"
                                 onClick={() => handleRestore(user.id)}
-                                disabled={
-                                  restoreUser.isPending &&
-                                  restoreUser.variables?.id === user.id
-                                }
+                                disabled={restoreUser.isPending && restoreUser.variables?.id === user.id}
                               >
-                                {restoreUser.isPending &&
-                                restoreUser.variables?.id === user.id ? (
-                                  <div className="h-4 w-4 rounded-full border-2 border-blue-200 border-t-blue-600 animate-spin"></div>
-                                ) : (
-                                  <RefreshCw className="h-4 w-4" />
-                                )}
+                                {restoreUser.isPending && restoreUser.variables?.id === user.id ? <div className="h-4 w-4 rounded-full border-2 border-blue-200 border-t-blue-600 animate-spin"></div> : <RefreshCw className="h-4 w-4" />}
                               </Button>
                             </div>
                           </TableCell>
@@ -269,65 +170,35 @@ export default function ArsipPengguna() {
               {filteredUsers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white w-full">
                   <Search className="h-10 w-10 mb-2 text-gray-300" />
-                  <p className="text-gray-500">
-                    Tidak ada data pengguna terarsip yang ditemukan.
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    Coba gunakan kata kunci pencarian yang berbeda.
-                  </p>
+                  <p className="text-gray-500">Tidak ada data pengguna terarsip yang ditemukan.</p>
+                  <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
                 </div>
               ) : (
                 filteredUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    className="border border-gray-200 rounded-lg bg-white shadow-sm w-full"
-                  >
+                  <div key={user.id} className="border border-gray-200 rounded-lg bg-white shadow-sm w-full">
                     <div className="p-4">
                       <div className="flex justify-between items-start mb-3">
                         <div className="max-w-[60%]">
-                          <h3 className="font-medium text-blue-600 truncate">
-                            {user.name}
-                          </h3>
-                          <p className="text-sm text-gray-600 truncate">
-                            {user.email}
-                          </p>
+                          <h3 className="font-medium text-blue-600 truncate">{user.name}</h3>
+                          <p className="text-sm text-gray-600 truncate">{user.email}</p>
                         </div>
-                        <Badge
-                          variant={getRoleBadgeVariant(user.role.name)}
-                          className={cn(
-                            'px-2 py-0.5 rounded-md font-medium',
-                            getRoleBadgeColor(user.role.name)
-                          )}
-                        >
+                        <Badge variant={getRoleBadgeVariant(user.role.name)} className={cn("px-2 py-0.5 rounded-md font-medium", getRoleBadgeColor(user.role.name))}>
                           {user.role.name}
                         </Badge>
                       </div>
 
                       <div className="text-xs text-gray-500 space-y-1 mb-3">
                         <p>
-                          Dibuat:{' '}
-                          <span className="font-medium">
-                            {formatDateShort(user.createdAt)}
-                          </span>
+                          Dibuat: <span className="font-medium">{formatDateShort(user.createdAt)}</span>
                         </p>
                         <p>
-                          Diarsipkan:{' '}
-                          <span className="font-medium">
-                            {user.deletedAt
-                              ? formatDateShort(user.deletedAt)
-                              : '-'}
-                          </span>
+                          Diarsipkan: <span className="font-medium">{user.deletedAt ? formatDateShort(user.deletedAt) : "-"}</span>
                         </p>
                       </div>
 
                       <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
                         <Link to={`/pengguna/${user.id}`}>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            title="Lihat Detail"
-                          >
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
@@ -337,17 +208,9 @@ export default function ArsipPengguna() {
                           className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                           title="Pulihkan"
                           onClick={() => handleRestore(user.id)}
-                          disabled={
-                            restoreUser.isPending &&
-                            restoreUser.variables?.id === user.id
-                          }
+                          disabled={restoreUser.isPending && restoreUser.variables?.id === user.id}
                         >
-                          {restoreUser.isPending &&
-                          restoreUser.variables?.id === user.id ? (
-                            <div className="h-4 w-4 rounded-full border-2 border-blue-200 border-t-blue-600 animate-spin"></div>
-                          ) : (
-                            <RefreshCw className="h-4 w-4" />
-                          )}
+                          {restoreUser.isPending && restoreUser.variables?.id === user.id ? <div className="h-4 w-4 rounded-full border-2 border-blue-200 border-t-blue-600 animate-spin"></div> : <RefreshCw className="h-4 w-4" />}
                         </Button>
                       </div>
                     </div>
@@ -358,15 +221,7 @@ export default function ArsipPengguna() {
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border-t border-gray-200 mt-4 gap-4">
               <div className="text-sm text-gray-500 text-center sm:text-left">
-                Menampilkan{' '}
-                <strong className="text-gray-700">
-                  {filteredUsers.length}
-                </strong>{' '}
-                dari{' '}
-                <strong className="text-gray-700">
-                  {archivedUsers.length}
-                </strong>{' '}
-                pengguna terarsip
+                Menampilkan <strong className="text-gray-700">{filteredUsers.length}</strong> dari <strong className="text-gray-700">{archivedUsers.length}</strong> pengguna terarsip
               </div>
             </div>
           </div>

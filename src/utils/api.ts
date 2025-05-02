@@ -1,4 +1,6 @@
 import { BASE_URL } from "@/constant/baseUrl";
+import { ApiResponse } from "@/types/api";
+import { handleApiError } from "./errorHandler";
 
 /**
  * Helper untuk menambahkan header autentikasi
@@ -63,3 +65,31 @@ export const fetchApi = async (path: string, params: Record<string, string | num
     },
   });
 };
+
+/**
+ * Fungsi generik untuk mengambil data dari API dan memproses respon secara konsisten
+ * @param path Path API relatif atau lengkap
+ * @param params Parameter query untuk URL
+ * @param options Opsi fetch request
+ * @param errorMessage Pesan error default jika terjadi kesalahan
+ * @returns Data hasil dari API yang sudah diproses
+ */
+export async function fetchApiData<T>(path: string, params: Record<string, string | number | null | undefined> = {}, options: RequestInit = {}, errorMessage: string = "An error occurred"): Promise<T> {
+  const response = await fetchApi(path, params, options);
+
+  if (!response.ok) {
+    throw new Error(`Error fetching data: ${response.statusText}`);
+  }
+
+  const result: ApiResponse<T> = await response.json();
+
+  if (!result.success) {
+    handleApiError(result, errorMessage);
+  }
+
+  if (!result.data) {
+    throw new Error("Data is missing from response");
+  }
+
+  return result.data;
+}
