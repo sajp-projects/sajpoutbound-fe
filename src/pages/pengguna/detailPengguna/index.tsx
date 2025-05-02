@@ -1,14 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
 import { useDeleteUser, useUser } from "@/hooks/user";
 import { cn } from "@/lib/utils";
 import { getRoleBadgeColor, getRoleBadgeVariant } from "@/utils/badges";
 import { formatDate } from "@/utils/date";
-import { Archive, ArrowLeft, FileText, Pencil, RefreshCcw } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router";
-
-// Import utilitas SweetAlert
 import { showSuccessAlert, showErrorAlert, showForbiddenAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
+import { Archive, ArrowLeft, FileText, Pencil } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router";
 
 export default function DetailPengguna() {
   const { id } = useParams<{ id: string }>();
@@ -17,24 +17,20 @@ export default function DetailPengguna() {
 
   const deleteUser = useDeleteUser({
     onSuccess: () => {
-      // Ganti Swal.fire dengan showSuccessAlert
       showSuccessAlert("Berhasil!", "Pengguna berhasil diarsipkan").then(() => {
         navigate("/pengguna");
       });
     },
     onError: (error) => {
       if (error.message.includes("Forbidden")) {
-        // Ganti Swal.fire dengan showForbiddenAlert
         showForbiddenAlert("Akses Ditolak", "Anda tidak memiliki akses untuk mengarsipkan pengguna ini.");
       } else {
-        // Ganti Swal.fire dengan showErrorAlert
         showErrorAlert("Gagal!", `Gagal mengarsipkan pengguna: ${error.message || "Terjadi kesalahan saat mengarsipkan pengguna."}`);
       }
     },
   });
 
   const handleArsipkan = () => {
-    // Ganti Swal.fire dengan showConfirmationAlert
     showConfirmationAlert("Konfirmasi Arsip", "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.", "Ya, Arsipkan!", "Batal").then((result) => {
       if (isConfirmed(result)) {
         deleteUser.mutate({ id: id || "" });
@@ -77,24 +73,9 @@ export default function DetailPengguna() {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
-              <p className="mt-4 text-blue-600 font-medium">Memuat data pengguna...</p>
-            </div>
-          </div>
+          <LoadingState text="Memuat data pengguna..." />
         ) : isError ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border-4 border-red-200 border-t-red-600 animate-spin"></div>
-              <p className="mt-4 text-red-600 font-medium">Gagal memuat data pengguna</p>
-              <p className="text-sm text-gray-400">Terjadi kesalahan pada server</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
-                <RefreshCcw className="h-4 w-4 mr-2" />
-                Coba lagi
-              </Button>
-            </div>
-          </div>
+          <ErrorState title="Gagal memuat data pengguna" message="Terjadi kesalahan pada server" onRetry={refetch} retryButtonText="Coba lagi" />
         ) : (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

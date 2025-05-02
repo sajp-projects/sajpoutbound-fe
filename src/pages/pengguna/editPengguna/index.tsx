@@ -12,6 +12,9 @@ import { Input } from "@/components/ui/input";
 
 // Import utilitas SweetAlert
 import { showSuccessAlert, showErrorAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
+import { FormErrors } from "@/utils/errorHandler";
+import { LoadingState } from "@/components/LoadingState";
+import { ErrorState } from "@/components/ErrorState";
 
 // Type untuk form edit user
 interface UserFormData {
@@ -19,6 +22,11 @@ interface UserFormData {
   email: string;
   roleId: string;
 }
+
+type UserFormErrors = FormErrors<UserFormData> & {
+  id?: string;
+  general?: string;
+};
 
 export default function EditPengguna() {
   const { id } = useParams<{ id: string }>();
@@ -32,7 +40,7 @@ export default function EditPengguna() {
   });
 
   // State untuk error validasi
-  const [errors, setErrors] = useState<{ id?: string; name?: string; email?: string; roleId?: string; general?: string }>({});
+  const [errors, setErrors] = useState<UserFormErrors>({});
 
   // Query untuk mendapatkan data user
   const {
@@ -40,6 +48,7 @@ export default function EditPengguna() {
     isLoading: isLoadingUser,
     isError: isErrorUser,
     error: userError,
+    refetch: refetchUser,
   } = useUser(
     {
       id: id || "",
@@ -51,7 +60,7 @@ export default function EditPengguna() {
   );
 
   // Query untuk mendapatkan daftar role - menggunakan useAllRoles untuk mendapatkan semua data
-  const { data: rolesData, isLoading: isLoadingRoles, isError: isErrorRoles } = useAllRoles();
+  const { data: rolesData, isLoading: isLoadingRoles, isError: isErrorRoles, refetch: refetchRoles } = useAllRoles();
 
   // Pastikan roles selalu array dengan mengakses rolesData.roles jika ada
   const roles = rolesData?.roles || [];
@@ -72,7 +81,7 @@ export default function EditPengguna() {
 
         if (errorObj.errorType === "joiValidationError" && errorObj.details && errorObj.details.length > 0) {
           // Petakan error validasi ke field yang sesuai
-          const newErrors: { id?: string; name?: string; email?: string; roleId?: string; general?: string } = {};
+          const newErrors: UserFormErrors = {};
 
           errorObj.details.forEach((detail: { message: string; path: string[] }) => {
             if (detail.path.includes("id")) {
@@ -114,13 +123,10 @@ export default function EditPengguna() {
   // Handler for input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     // Hapus error untuk field yang diubah
-    if (errors[name as keyof typeof errors]) {
+    if (errors[name as keyof UserFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
@@ -147,6 +153,15 @@ export default function EditPengguna() {
   const isError = isErrorUser || isErrorRoles;
   const isSubmitting = updateUserMutation.isPending;
 
+  // Handle refetch
+  const handleRetry = () => {
+    refetchUser();
+    refetchRoles();
+  };
+
+  // Fungsi helper untuk class input form
+  const inputClassName = (fieldName: keyof UserFormData) => cn("mt-1 w-full border-gray-300", errors[fieldName] ? "border-red-300 focus:border-red-500 focus:ring-red-500" : "focus:border-blue-500 focus:ring-blue-500");
+
   useEffect(() => {
     if (isErrorUser) {
       // Ganti Swal.fire dengan showErrorAlert
@@ -158,16 +173,14 @@ export default function EditPengguna() {
 
   return (
     <div className="space-y-6 px-4 sm:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-        <div className="flex items-center">
-          <Link to={`/pengguna/${id}`}>
-            <Button variant="ghost" size="sm" className="mr-2">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Kembali
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Edit Pengguna</h1>
-        </div>
+      <div className="flex items-center">
+        <Link to={`/pengguna/${id}`}>
+          <Button variant="ghost" size="sm" className="mr-2">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Kembali
+          </Button>
+        </Link>
+        <h1 className="text-2xl font-bold text-gray-900">Edit Pengguna</h1>
       </div>
 
       <Card className="border border-gray-200 rounded-lg shadow-sm">
@@ -177,22 +190,9 @@ export default function EditPengguna() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center items-center h-60">
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
-                <p className="mt-4 text-blue-600 font-medium">Memuat data pengguna...</p>
-              </div>
-            </div>
+            <LoadingState text="Memuat data pengguna..." />
           ) : isError ? (
-            <div className="flex justify-center items-center h-60">
-              <div className="flex flex-col items-center">
-                <p className="text-red-600 font-medium">Gagal memuat data</p>
-                <p className="text-sm text-gray-400">Terjadi kesalahan pada server</p>
-                <Button variant="outline" size="sm" onClick={() => navigate("/pengguna")} className="mt-4">
-                  Kembali ke Daftar Pengguna
-                </Button>
-              </div>
-            </div>
+            <ErrorState title="Gagal memuat data" message="Terjadi kesalahan pada server" onRetry={handleRetry} retryButtonText="Coba lagi" />
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               {(errors.general || errors.id) && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">{errors.general || errors.id}</div>}
@@ -201,9 +201,7 @@ export default function EditPengguna() {
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                   Nama Lengkap
                 </label>
-                <div className="mt-1">
-                  <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Masukkan nama lengkap" className={cn("w-full", errors.name && "border-red-300 focus:border-red-500 focus:ring-red-500")} />
-                </div>
+                <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Masukkan nama lengkap" className={inputClassName("name")} />
                 {errors.name ? <p className="mt-1 text-sm text-red-500">{errors.name}</p> : <p className="mt-1 text-sm text-gray-500">Nama lengkap pengguna yang akan ditampilkan di sistem</p>}
               </div>
 
@@ -211,17 +209,7 @@ export default function EditPengguna() {
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                   Email
                 </label>
-                <div className="mt-1">
-                  <Input
-                    id="email"
-                    name="email"
-                    type="text"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan alamat email"
-                    className={cn("w-full", errors.email && "border-red-300 focus:border-red-500 focus:ring-red-500")}
-                  />
-                </div>
+                <Input id="email" name="email" type="text" value={formData.email} onChange={handleInputChange} placeholder="Masukkan alamat email" className={inputClassName("email")} />
                 {errors.email ? <p className="mt-1 text-sm text-red-500">{errors.email}</p> : <p className="mt-1 text-sm text-gray-500">Alamat email yang digunakan untuk login ke sistem</p>}
               </div>
 
@@ -229,28 +217,31 @@ export default function EditPengguna() {
                 <label htmlFor="roleId" className="block text-sm font-medium text-gray-700">
                   Peran
                 </label>
-                <div className="mt-1">
-                  <select
-                    id="roleId"
-                    name="roleId"
-                    value={formData.roleId}
-                    onChange={handleInputChange}
-                    className={cn(
-                      "block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
-                      errors.roleId && "border-red-300 focus:border-red-500 focus:ring-red-500"
-                    )}
-                  >
-                    {roles && roles.length > 0 ? (
-                      roles.map((role: Role) => (
-                        <option key={role.id} value={role.id}>
-                          {role.name}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="">Tidak ada peran tersedia</option>
-                    )}
-                  </select>
-                </div>
+                <select
+                  id="roleId"
+                  name="roleId"
+                  value={formData.roleId}
+                  onChange={handleInputChange}
+                  className={cn(
+                    "mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+                    errors.roleId && "border-red-300 focus:border-red-500 focus:ring-red-500"
+                  )}
+                >
+                  <option value="" disabled>
+                    Pilih peran
+                  </option>
+                  {roles && roles.length > 0 ? (
+                    roles.map((role: Role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>
+                      Tidak ada peran tersedia
+                    </option>
+                  )}
+                </select>
                 {errors.roleId ? <p className="mt-1 text-sm text-red-500">{errors.roleId}</p> : <p className="mt-1 text-sm text-gray-500">Peran menentukan akses dan hak istimewa pengguna di sistem</p>}
               </div>
 

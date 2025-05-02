@@ -36,7 +36,7 @@ export function SearchInput({ placeholder = "Cari...", className = "", debounceM
   return (
     <div className={`relative ${className}`}>
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-      <Input type="search" placeholder={placeholder} className="w-full pl-10 py-2 rounded-md" value={value} onChange={(e) => setValue(e.target.value)} />
+      <Input type="search" placeholder={placeholder} className="w-full pl-10 py-2 border-gray-300 rounded-md" value={value} onChange={(e) => setValue(e.target.value)} />
     </div>
   );
 }

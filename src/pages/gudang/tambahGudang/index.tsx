@@ -7,29 +7,25 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { showSuccessAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 import { cn } from "@/lib/utils";
+import { FormErrors, FormErrorData } from "@/utils/errorHandler";
 
 interface WarehouseFormData {
   name: string;
   description: string;
 }
 
+type WarehouseFormErrors = FormErrors<WarehouseFormData> & {
+  general?: string;
+};
+
 export default function TambahGudang() {
   const navigate = useNavigate();
-
-  // State untuk form
   const [formData, setFormData] = useState<WarehouseFormData>({
     name: "",
     description: "",
   });
+  const [errors, setErrors] = useState<WarehouseFormErrors>({});
 
-  // State untuk error validasi
-  const [errors, setErrors] = useState<{
-    name?: string;
-    description?: string;
-    general?: string;
-  }>({});
-
-  // Mutation untuk menambah gudang
   const createWarehouseMutation = useCreateWarehouse({
     onSuccess: (data) => {
       showSuccessAlert("Sukses!", "Gudang berhasil ditambahkan").then(() => {
@@ -38,17 +34,12 @@ export default function TambahGudang() {
     },
     onError: (error) => {
       try {
-        const errorObj = JSON.parse(error.message);
+        const errorObj = JSON.parse(error.message) as FormErrorData;
 
         if (errorObj.errorType === "joiValidationError" && errorObj.details && errorObj.details.length > 0) {
-          // Petakan error validasi ke field yang sesuai
-          const newErrors: {
-            name?: string;
-            description?: string;
-            general?: string;
-          } = {};
+          const newErrors: WarehouseFormErrors = {};
 
-          errorObj.details.forEach((detail: { message: string; path: string[] }) => {
+          errorObj.details.forEach((detail) => {
             if (detail.path.includes("name")) {
               newErrors.name = detail.message;
             } else if (detail.path.includes("description")) {
@@ -60,7 +51,6 @@ export default function TambahGudang() {
 
           setErrors(newErrors);
         } else {
-          // Error umum non-validasi
           setErrors({ general: errorObj.message });
         }
       } catch {
@@ -69,50 +59,19 @@ export default function TambahGudang() {
     },
   });
 
-  // Handler untuk perubahan input form
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Hapus error untuk field yang diubah
     if (errors[name as keyof typeof errors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  // Handler untuk submit form
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
-    // Validasi form sederhana
-    const validationErrors: {
-      name?: string;
-      description?: string;
-      general?: string;
-    } = {};
-
-    if (!formData.name.trim()) {
-      validationErrors.name = "Nama gudang harus diisi";
-    } else if (formData.name.trim().length < 3) {
-      validationErrors.name = "Nama gudang minimal 3 karakter";
-    }
-
-    if (!formData.description.trim()) {
-      validationErrors.description = "Deskripsi gudang harus diisi";
-    } else if (formData.description.trim().length < 10) {
-      validationErrors.description = "Deskripsi gudang minimal 10 karakter";
-    }
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
-    // Tampilkan konfirmasi sebelum menambahkan gudang
     showConfirmationAlert("Konfirmasi", "Apakah Anda yakin ingin menambahkan gudang baru ini?", "Ya, Tambahkan!", "Batal").then((result) => {
       if (isConfirmed(result)) {
         createWarehouseMutation.mutate(formData);
@@ -124,16 +83,14 @@ export default function TambahGudang() {
 
   return (
     <div className="space-y-6 px-4 sm:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-        <div className="flex items-center">
-          <Link to="/gudang">
-            <Button variant="ghost" size="sm" className="mr-2">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Kembali
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Tambah Gudang</h1>
-        </div>
+      <div className="flex items-center">
+        <Link to="/gudang">
+          <Button variant="ghost" size="sm" className="mr-2">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Kembali
+          </Button>
+        </Link>
+        <h1 className="text-2xl font-bold text-gray-900">Tambah Gudang</h1>
       </div>
 
       <Card className="border border-gray-200 rounded-lg shadow-sm">
@@ -149,9 +106,14 @@ export default function TambahGudang() {
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                 Nama Gudang
               </label>
-              <div className="mt-1">
-                <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Masukkan nama gudang" className={cn("w-full", errors.name && "border-red-300 focus:border-red-500 focus:ring-red-500")} />
-              </div>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Masukkan nama gudang"
+                className={cn("mt-1 w-full border-gray-300", errors.name ? "border-red-300 focus:border-red-500 focus:ring-red-500" : "focus:border-blue-500 focus:ring-blue-500")}
+              />
               {errors.name ? <p className="mt-1 text-sm text-red-500">{errors.name}</p> : <p className="mt-1 text-sm text-gray-500">Nama untuk mengidentifikasi gudang</p>}
             </div>
 
@@ -159,20 +121,18 @@ export default function TambahGudang() {
               <label htmlFor="description" className="block text-sm font-medium text-gray-700">
                 Deskripsi
               </label>
-              <div className="mt-1">
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows={4}
-                  placeholder="Deskripsikan fungsi dan lokasi gudang"
-                  className={cn(
-                    "block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
-                    errors.description && "border-red-300 focus:border-red-500 focus:ring-red-500"
-                  )}
-                />
-              </div>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows={4}
+                placeholder="Deskripsikan fungsi dan lokasi gudang"
+                className={cn(
+                  "mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+                  errors.description && "border-red-300 focus:border-red-500 focus:ring-red-500"
+                )}
+              />
               {errors.description ? <p className="mt-1 text-sm text-red-500">{errors.description}</p> : <p className="mt-1 text-sm text-gray-500">Deskripsikan fungsi dan lokasi gudang</p>}
             </div>
 

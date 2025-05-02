@@ -9,8 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-// Ganti import Swal dengan import utilitas SweetAlert
-import { showSuccessAlert, showErrorAlert, showForbiddenAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
+// Import utilitas SweetAlert
+import { showSuccessAlert, showForbiddenAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
+import { FormErrors } from "@/utils/errorHandler";
+import { LoadingState } from "@/components/LoadingState";
+import { ErrorState } from "@/components/ErrorState";
 
 // Type untuk form edit role
 interface RoleFormData {
@@ -18,12 +21,10 @@ interface RoleFormData {
   description: string;
 }
 
-// Type untuk error validasi
-interface FormErrors {
-  name?: string;
-  description?: string;
+// Type untuk error validasi dengan memanfaatkan FormErrors utility type
+type RoleFormErrors = FormErrors<RoleFormData> & {
   general?: string;
-}
+};
 
 export default function EditPeran() {
   const { id } = useParams<{ id: string }>();
@@ -36,13 +37,14 @@ export default function EditPeran() {
   });
 
   // State untuk error validasi
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<RoleFormErrors>({});
 
   // Query untuk mendapatkan data peran
   const {
     data: role,
     isLoading: isLoadingRole,
     isError: isErrorRole,
+    refetch,
   } = useRole(
     {
       id: id || "",
@@ -74,7 +76,7 @@ export default function EditPeran() {
 
         if (errorObj.errorType === "joiValidationError" && errorObj.details && errorObj.details.length > 0) {
           // Petakan error validasi ke field yang sesuai
-          const newErrors: FormErrors = {};
+          const newErrors: RoleFormErrors = {};
 
           errorObj.details.forEach((detail: { message: string; path: string[] }) => {
             if (detail.path.includes("name")) {
@@ -114,13 +116,10 @@ export default function EditPeran() {
   // Handler untuk perubahan input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     // Hapus error untuk field yang diubah
-    if (errors[name as keyof FormErrors]) {
+    if (errors[name as keyof RoleFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
@@ -152,18 +151,19 @@ export default function EditPeran() {
   const isError = isErrorRole;
   const isSubmitting = updateRoleMutation.isPending;
 
+  // Helper function untuk class input
+  const inputClassName = (fieldName: keyof RoleFormData) => cn("mt-1 w-full border-gray-300", errors[fieldName] ? "border-red-300 focus:border-red-500 focus:ring-red-500" : "focus:border-blue-500 focus:ring-blue-500");
+
   return (
     <div className="space-y-6 px-4 sm:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-        <div className="flex items-center">
-          <Link to={`/peran/${id}`}>
-            <Button variant="ghost" size="sm" className="mr-2">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Kembali
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Edit Peran</h1>
-        </div>
+      <div className="flex items-center">
+        <Link to={`/peran/${id}`}>
+          <Button variant="ghost" size="sm" className="mr-2">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Kembali
+          </Button>
+        </Link>
+        <h1 className="text-2xl font-bold text-gray-900">Edit Peran</h1>
       </div>
 
       <Card className="border border-gray-200 rounded-lg shadow-sm">
@@ -173,53 +173,32 @@ export default function EditPeran() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center items-center h-60">
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
-                <p className="mt-4 text-blue-600 font-medium">Memuat data peran...</p>
-              </div>
-            </div>
+            <LoadingState text="Memuat data peran..." />
           ) : isError ? (
-            <div className="flex justify-center items-center h-60">
-              <div className="flex flex-col items-center">
-                <p className="text-red-600 font-medium">Gagal memuat data</p>
-                <p className="text-sm text-gray-400">Terjadi kesalahan pada server</p>
-                <Button variant="outline" size="sm" onClick={() => navigate("/peran")} className="mt-4">
-                  Kembali ke Daftar Peran
-                </Button>
-              </div>
-            </div>
+            <ErrorState title="Gagal memuat data" message="Terjadi kesalahan pada server" onRetry={refetch} retryButtonText="Coba lagi" />
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               {errors.general && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">{errors.general}</div>}
 
               <div>
-                <Label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Nama Peran
-                </Label>
-                <div className="mt-1">
-                  <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Masukkan nama peran" className={cn("w-full", errors.name && "border-red-300 focus:border-red-500 focus:ring-red-500")} />
-                </div>
+                <Label htmlFor="name">Nama Peran</Label>
+                <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Masukkan nama peran" className={inputClassName("name")} />
                 {errors.name ? <p className="mt-1 text-sm text-red-500">{errors.name}</p> : <p className="mt-1 text-sm text-gray-500">Nama peran yang akan ditampilkan di sistem</p>}
               </div>
 
               <div>
-                <Label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                  Deskripsi
-                </Label>
-                <div className="mt-1">
-                  <textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan deskripsi peran"
-                    className={cn(
-                      "flex min-h-[120px] w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-blue-500 focus:border-blue-500",
-                      errors.description && "border-red-300 focus:border-red-500 focus:ring-red-500"
-                    )}
-                  />
-                </div>
+                <Label htmlFor="description">Deskripsi</Label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Masukkan deskripsi peran"
+                  className={cn(
+                    "mt-1 min-h-[120px] w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-blue-500 focus:border-blue-500",
+                    errors.description && "border-red-300 focus:border-red-500 focus:ring-red-500"
+                  )}
+                />
                 {errors.description ? <p className="mt-1 text-sm text-red-500">{errors.description}</p> : <p className="mt-1 text-sm text-gray-500">Deskripsi mengenai hak akses dan fungsi peran dalam sistem</p>}
               </div>
 

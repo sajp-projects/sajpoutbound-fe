@@ -37,12 +37,12 @@ export function RoleFilter() {
             <span className="truncate">{activeRoleName}</span>
           </div>
         </SelectTrigger>
-        <SelectContent className="max-h-[300px] overflow-auto">
+        <SelectContent className="max-h-[300px] bg-white border border-gray-300 rounded-md overflow-auto">
           <SelectItem value="all" className={cn(!roleId && "font-medium text-blue-600")}>
             Semua Peran
           </SelectItem>
           {roles.map((role) => (
-            <SelectItem key={role.id} value={role.id} className={cn(role.id === roleId && "font-medium text-blue-600")}>
+            <SelectItem key={role.id} value={role.id} className={cn(role.id === roleId && "font-medium  text-blue-600")}>
               {role.name}
             </SelectItem>
           ))}

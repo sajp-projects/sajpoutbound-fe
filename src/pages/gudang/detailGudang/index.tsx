@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
+import { LoadingState } from "@/components/LoadingState";
+import { ErrorState } from "@/components/ErrorState";
 import { useWarehouse, useDeleteWarehouse } from "@/hooks/gudang";
 import { formatDate } from "@/utils/date";
-import { ArrowLeft, Edit, History, RefreshCcw, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit, History, Trash2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { showSuccessAlert, showErrorAlert, showDeleteConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 
@@ -27,7 +29,6 @@ export default function DetailGudang() {
   // Mutation untuk menghapus gudang
   const deleteWarehouseMutation = useDeleteWarehouse({
     onSuccess: () => {
-      // Ganti Swal.fire dengan showSuccessAlert
       showSuccessAlert("Sukses!", "Gudang berhasil dihapus").then(() => {
         navigate("/gudang");
       });
@@ -35,10 +36,8 @@ export default function DetailGudang() {
     onError: (error) => {
       try {
         const errorObj = JSON.parse(error.message);
-        // Ganti Swal.fire dengan showErrorAlert
         showErrorAlert("Gagal menghapus gudang", errorObj.message || "Terjadi kesalahan saat menghapus gudang");
       } catch {
-        // Ganti Swal.fire dengan showErrorAlert
         showErrorAlert("Gagal menghapus gudang", "Terjadi kesalahan saat menghapus gudang");
       }
     },
@@ -48,7 +47,6 @@ export default function DetailGudang() {
   const handleDeleteWarehouse = () => {
     if (!gudang) return;
 
-    // Ganti Swal.fire dengan showDeleteConfirmationAlert
     showDeleteConfirmationAlert("Gudang", `Apakah Anda yakin ingin menghapus gudang "${gudang.name}"?`).then((result) => {
       if (isConfirmed(result)) {
         deleteWarehouseMutation.mutate({ id: id || "" });
@@ -91,24 +89,9 @@ export default function DetailGudang() {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
-              <p className="mt-4 text-blue-600 font-medium">Memuat data gudang...</p>
-            </div>
-          </div>
+          <LoadingState text="Memuat data gudang..." />
         ) : isError ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border-4 border-red-200 border-t-red-600 animate-spin"></div>
-              <p className="mt-4 text-red-600 font-medium">Gagal memuat data gudang</p>
-              <p className="text-sm text-gray-400">{error instanceof Error ? error.message : "Terjadi kesalahan pada server"}</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
-                <RefreshCcw className="h-4 w-4 mr-2" />
-                Coba lagi
-              </Button>
-            </div>
-          </div>
+          <ErrorState title="Gagal memuat data gudang" message={error instanceof Error ? error.message : "Terjadi kesalahan pada server"} onRetry={refetch} retryButtonText="Coba lagi" />
         ) : (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

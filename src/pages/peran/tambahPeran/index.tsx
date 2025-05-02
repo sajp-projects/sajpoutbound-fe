@@ -8,17 +8,16 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { showSuccessAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
+import { FormErrors, FormErrorData } from "@/utils/errorHandler";
 
 interface FormData {
   name: string;
   description: string;
 }
 
-interface FormErrors {
-  name?: string;
-  description?: string;
+type RoleFormErrors = FormErrors<FormData> & {
   general?: string;
-}
+};
 
 export default function TambahPeran() {
   const navigate = useNavigate();
@@ -26,7 +25,7 @@ export default function TambahPeran() {
     name: "",
     description: "",
   });
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<RoleFormErrors>({});
 
   const createRoleMutation = useCreateRole({
     onSuccess: (data) => {
@@ -36,14 +35,12 @@ export default function TambahPeran() {
     },
     onError: (error: Error) => {
       try {
-        // Parse error yang sudah di-stringify di hook
-        const errorObj = JSON.parse(error.message);
+        const errorObj = JSON.parse(error.message) as FormErrorData;
 
         if (errorObj.errorType === "joiValidationError" && errorObj.details && errorObj.details.length > 0) {
-          // Petakan error validasi ke field yang sesuai
-          const newErrors: FormErrors = {};
+          const newErrors: RoleFormErrors = {};
 
-          errorObj.details.forEach((detail: { message: string; path: string[] }) => {
+          errorObj.details.forEach((detail) => {
             if (detail.path.includes("name")) {
               newErrors.name = detail.message;
             } else if (detail.path.includes("description")) {
@@ -55,10 +52,8 @@ export default function TambahPeran() {
 
           setErrors(newErrors);
         } else if (errorObj.errorType === "ROLE_NAME_DUPLICATE") {
-          // Error khusus untuk nama peran duplikat
           setErrors({ name: errorObj.message });
         } else {
-          // Error umum non-validasi
           setErrors({ general: errorObj.message });
         }
       } catch (e) {
@@ -72,8 +67,7 @@ export default function TambahPeran() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Hapus error untuk field yang diubah
-    if (errors[name as keyof FormErrors]) {
+    if (errors[name as keyof typeof errors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
@@ -82,7 +76,6 @@ export default function TambahPeran() {
     e.preventDefault();
     setErrors({});
 
-    // Tampilkan konfirmasi sebelum menyimpan
     showConfirmationAlert("Konfirmasi", `Apakah Anda yakin ingin menambahkan peran "${formData.name}"?`, "Ya, Tambahkan", "Batal").then((result) => {
       if (isConfirmed(result)) {
         createRoleMutation.mutate(formData);
@@ -94,16 +87,14 @@ export default function TambahPeran() {
 
   return (
     <div className="space-y-6 px-4 sm:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-        <div className="flex items-center">
-          <Link to="/peran">
-            <Button variant="ghost" size="sm" className="mr-2">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Kembali
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Tambah Peran</h1>
-        </div>
+      <div className="flex items-center">
+        <Link to="/peran">
+          <Button variant="ghost" size="sm" className="mr-2">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Kembali
+          </Button>
+        </Link>
+        <h1 className="text-2xl font-bold text-gray-900">Tambah Peran</h1>
       </div>
 
       <Card className="border border-gray-200 rounded-lg shadow-sm">
@@ -116,32 +107,31 @@ export default function TambahPeran() {
             {errors.general && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">{errors.general}</div>}
 
             <div>
-              <Label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Nama Peran
-              </Label>
-              <div className="mt-1">
-                <Input id="name" name="name" value={formData.name} onChange={handleChange} placeholder="Masukkan nama peran" className={cn("w-full", errors.name && "border-red-300 focus:border-red-500 focus:ring-red-500")} />
-              </div>
+              <Label htmlFor="name">Nama Peran</Label>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Masukkan nama peran"
+                className={cn("mt-1 w-full border-gray-300", errors.name ? "border-red-300 focus:border-red-500 focus:ring-red-500" : "focus:border-blue-500 focus:ring-blue-500")}
+              />
               {errors.name ? <p className="mt-1 text-sm text-red-500">{errors.name}</p> : <p className="mt-1 text-sm text-gray-500">Nama peran yang akan ditampilkan di sistem</p>}
             </div>
 
             <div>
-              <Label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                Deskripsi
-              </Label>
-              <div className="mt-1">
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Masukkan deskripsi peran"
-                  className={cn(
-                    "flex min-h-[120px] w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-blue-500 focus:border-blue-500",
-                    errors.description && "border-red-300 focus:border-red-500 focus:ring-red-500"
-                  )}
-                />
-              </div>
+              <Label htmlFor="description">Deskripsi</Label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Masukkan deskripsi peran"
+                className={cn(
+                  "mt-1 min-h-[120px] w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-blue-500 focus:border-blue-500",
+                  errors.description && "border-red-300 focus:border-red-500 focus:ring-red-500"
+                )}
+              />
               {errors.description ? <p className="mt-1 text-sm text-red-500">{errors.description}</p> : <p className="mt-1 text-sm text-gray-500">Deskripsi menjelaskan fungsi dan hak akses peran</p>}
             </div>
 
