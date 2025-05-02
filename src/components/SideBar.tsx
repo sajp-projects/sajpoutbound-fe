@@ -57,12 +57,12 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
   const menuItems: MenuItem[] = [
     {
       name: "Dashboard",
-      icon: <Home className="w-5 h-5" />,
+      icon: <Home className="w-4 h-4 sm:w-5 sm:h-5" />,
       path: "/",
     },
     {
       name: "Pengguna",
-      icon: <Users className="w-5 h-5" />,
+      icon: <Users className="w-4 h-4 sm:w-5 sm:h-5" />,
       resource: PERMISSION.RESOURCES.USER,
       subItems: [
         {
@@ -89,7 +89,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     },
     {
       name: "Peran",
-      icon: <ShieldCheck className="w-5 h-5" />,
+      icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
       resource: PERMISSION.RESOURCES.ROLE,
       subItems: [
         {
@@ -106,7 +106,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     },
     {
       name: "Izin",
-      icon: <Lock className="w-5 h-5" />,
+      icon: <Lock className="w-4 h-4 sm:w-5 sm:h-5" />,
       resource: PERMISSION.RESOURCES.PERMISSION,
       subItems: [
         {
@@ -118,7 +118,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     },
     {
       name: "Barang",
-      icon: <Package className="w-5 h-5" />,
+      icon: <Package className="w-4 h-4 sm:w-5 sm:h-5" />,
       resource: PERMISSION.RESOURCES.BARANG,
       subItems: [
         {
@@ -140,7 +140,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     },
     {
       name: "Kustomer",
-      icon: <UserCheck className="w-5 h-5" />,
+      icon: <UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
       resource: PERMISSION.RESOURCES.KUSTOMER,
       subItems: [
         {
@@ -162,7 +162,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     },
     {
       name: "Gudang",
-      icon: <Warehouse className="w-5 h-5" />,
+      icon: <Warehouse className="w-4 h-4 sm:w-5 sm:h-5" />,
       resource: PERMISSION.RESOURCES.WAREHOUSE,
       subItems: [
         {
@@ -184,7 +184,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     },
     {
       name: "Delivery Order",
-      icon: <FileText className="w-5 h-5" />,
+      icon: <FileText className="w-4 h-4 sm:w-5 sm:h-5" />,
       resource: PERMISSION.RESOURCES.DO,
       subItems: [
         {
@@ -211,7 +211,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     },
     {
       name: "Armada",
-      icon: <Truck className="w-5 h-5" />,
+      icon: <Truck className="w-4 h-4 sm:w-5 sm:h-5" />,
       resource: PERMISSION.RESOURCES.ARMADA,
       subItems: [
         {
@@ -233,7 +233,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     },
     {
       name: "Pengiriman",
-      icon: <PackageCheck className="w-5 h-5" />,
+      icon: <PackageCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
       resource: PERMISSION.RESOURCES.PENGIRIMAN,
       subItems: [
         {
@@ -260,7 +260,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     },
     {
       name: "Laporan",
-      icon: <BarChart3 className="w-5 h-5" />,
+      icon: <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />,
       resource: PERMISSION.RESOURCES.LAPORAN,
       subItems: [
         {
@@ -300,41 +300,41 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
 
   if (isLoading) {
     return (
-      <aside className={cn("h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-300 shadow-sm", isOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0")}>
+      <aside className={cn("h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-200 shadow-sm", isOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0")}>
         <div className="h-full flex flex-col items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <span className="mt-2 text-sm text-gray-500">Loading...</span>
+          <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-500"></div>
+          <span className="mt-2 text-xs sm:text-sm text-gray-500">Loading...</span>
         </div>
       </aside>
     );
   }
 
   return (
-    <aside className={cn("h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-300 shadow-sm", isOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0")}>
+    <aside className={cn("h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-200 shadow-sm", isOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0")}>
       <div className="h-full flex flex-col overflow-hidden">
-        <div className="px-4 py-5 flex flex-col items-center justify-center border-b border-gray-200 relative">
+        <div className="px-3 sm:px-4 py-3 sm:py-5 flex flex-col items-center justify-center border-b border-gray-200 relative">
           {toggleSidebar && (
             <button
               onClick={toggleSidebar}
-              className="absolute right-2 top-2 p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 lg:hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              className="absolute right-1 sm:right-2 top-1 sm:top-2 p-1.5 sm:p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 lg:hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
               aria-label="Close sidebar"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
           )}
 
-          <span className="text-xl font-bold text-blue-600">OUTMANAGE</span>
+          <span className="text-lg sm:text-xl font-bold text-blue-600">OUTMANAGE</span>
           <div className="mt-1 text-xs text-gray-500 font-medium">Sistem Manajemen DO</div>
-          <div className="w-16 h-1 bg-blue-500 rounded-full mt-3"></div>
+          <div className="w-12 sm:w-16 h-1 bg-blue-500 rounded-full mt-2 sm:mt-3"></div>
         </div>
 
-        <div className="px-4 py-3 text-xs text-gray-500 font-medium uppercase flex items-center">
+        <div className="px-3 sm:px-4 py-2 sm:py-3 text-xs text-gray-500 font-medium uppercase flex items-center">
           <div className="flex-grow h-px bg-gray-200"></div>
           <span className="px-2">Modul Sistem</span>
           <div className="flex-grow h-px bg-gray-200"></div>
         </div>
 
-        <nav className="flex-1 px-3 overflow-y-auto py-2">
+        <nav className="flex-1 px-2 sm:px-3 overflow-y-auto py-2">
           <ul className="space-y-1">
             {menuItems.map(
               (item) =>
@@ -343,35 +343,41 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
                     {item.path ? (
                       <Link
                         to={item.path}
-                        className={cn("flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors", location.pathname === item.path && "bg-blue-50 text-blue-600 font-medium")}
+                        className={cn(
+                          "flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-gray-700 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors text-xs sm:text-sm",
+                          location.pathname === item.path && "bg-blue-50 text-blue-600 font-medium"
+                        )}
                       >
                         {item.icon}
-                        <span className="ml-3">{item.name}</span>
+                        <span className="ml-2 sm:ml-3">{item.name}</span>
                       </Link>
                     ) : (
                       <>
                         <button
                           onClick={() => toggleMenu(item.name)}
                           className={cn(
-                            "flex items-center justify-between w-full px-3 py-2 text-gray-700 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors",
+                            "flex items-center justify-between w-full px-2 sm:px-3 py-1.5 sm:py-2 text-gray-700 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors text-xs sm:text-sm",
                             (openMenus.includes(item.name) || isMenuActive(item.name)) && "bg-blue-50 text-blue-600 font-medium"
                           )}
                         >
                           <div className="flex items-center">
                             {item.icon}
-                            <span className="ml-3">{item.name}</span>
+                            <span className="ml-2 sm:ml-3">{item.name}</span>
                           </div>
-                          <ChevronDown className={cn("w-4 h-4 transition-transform", openMenus.includes(item.name) && "transform rotate-180")} />
+                          <ChevronDown className={cn("w-3 h-3 sm:w-4 sm:h-4 transition-transform", openMenus.includes(item.name) && "transform rotate-180")} />
                         </button>
                         {item.subItems && (
-                          <ul className={cn("mt-1 ml-8 space-y-1 overflow-hidden transition-all max-h-0", openMenus.includes(item.name) && "max-h-96")}>
+                          <ul className={cn("mt-1 ml-6 sm:ml-8 space-y-0.5 sm:space-y-1 overflow-hidden transition-all max-h-0", openMenus.includes(item.name) && "max-h-96")}>
                             {item.subItems.map(
                               (subItem) =>
                                 shouldShowSubMenuItem(item, subItem) && (
                                   <li key={subItem.name}>
                                     <Link
                                       to={subItem.path}
-                                      className={cn("block px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors", isSubMenuActive(subItem.path) && "bg-blue-50 text-blue-600 font-medium")}
+                                      className={cn(
+                                        "block px-2 sm:px-3 py-1 sm:py-2 text-xs text-gray-600 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors",
+                                        isSubMenuActive(subItem.path) && "bg-blue-50 text-blue-600 font-medium"
+                                      )}
                                     >
                                       {subItem.name}
                                     </Link>
@@ -389,14 +395,14 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
         </nav>
 
         <div className="mt-auto">
-          <div className="px-4 py-3 text-xs text-gray-500 font-medium uppercase flex items-center">
+          <div className="px-3 sm:px-4 py-2 sm:py-3 text-xs text-gray-500 font-medium uppercase flex items-center">
             <div className="flex-grow h-px bg-gray-200"></div>
             <div className="flex-grow h-px bg-gray-200"></div>
           </div>
-          <div className="px-3 pb-5 pt-1">
-            <button onClick={logout} className="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors group w-full text-left">
-              <LogOut className="w-5 h-5 text-gray-500 group-hover:text-red-500" />
-              <span className="ml-3">Keluar</span>
+          <div className="px-2 sm:px-3 pb-4 sm:pb-5 pt-1">
+            <button onClick={logout} className="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-gray-700 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors group w-full text-left text-xs sm:text-sm">
+              <LogOut className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 group-hover:text-red-500" />
+              <span className="ml-2 sm:ml-3">Keluar</span>
             </button>
           </div>
         </div>

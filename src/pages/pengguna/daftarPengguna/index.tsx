@@ -1,6 +1,5 @@
 import { useDeleteUser, useUsers } from "@/hooks/user";
-import { Search, Download, Plus, Eye, Edit, Archive, History } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Download, Plus } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 
 import { Pagination } from "@/components/Pagination";
@@ -8,7 +7,6 @@ import { RoleFilter } from "@/components/RoleFilter";
 import { SearchInput } from "@/components/SearchInput";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { getRoleBadgeColor, getRoleBadgeVariant } from "@/utils/badges";
 import { formatDate, formatDateShort } from "@/utils/date";
@@ -16,37 +14,40 @@ import { useAuth } from "@/hooks/auth";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useRolePermissions } from "@/hooks/izin";
 import { showSuccessAlert, showErrorAlert, showForbiddenAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
+import { getRoleId } from "@/utils/storage";
+import { hasPermission } from "@/utils/permission";
+import { LoadingState } from "@/components/LoadingState";
+import { ErrorState } from "@/components/ErrorState";
+import { EmptyState } from "@/components/EmptyState";
+import { ActionButtons, ActionType } from "@/components/ActionButtons";
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: {
+    name: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function Pengguna() {
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
+  const roleId = getRoleId() || "";
 
-  // Get roleId dari localStorage
-  const userData = localStorage.getItem("user");
-  const roleId = userData ? JSON.parse(userData)?.roleId : null;
-
-  // Fetch permissions untuk memeriksa apakah user memiliki akses ke role:READ
+  // Fetch permissions untuk memeriksa akses
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && !!roleId && roleId !== "",
+    enabled: isAuthenticated && roleId !== "",
   });
 
-  // Fungsi untuk memeriksa apakah user memiliki izin role:READ
-  const hasRoleReadPermission = (): boolean => {
-    if (!isAuthenticated || !permissions) return false;
-    return permissions.some((permission) => permission.resource === PERMISSION.RESOURCES.ROLE && permission.action === PERMISSION.ACTIONS.READ);
-  };
-
-  // Mengambil parameter langsung dari URL - ini adalah sumber kebenaran utama
+  // Mengambil parameter dari URL
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
   // Fetch users dari API
-  const {
-    data,
-    isLoading: loading,
-    isError,
-    refetch,
-  } = useUsers({
+  const { data, isLoading, isError, refetch } = useUsers({
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -62,13 +63,6 @@ export default function Pengguna() {
     hasPrev: false,
   };
 
-  // Sinkronkan pagination.page dengan URL jika ada perbedaan
-  useEffect(() => {
-    if (data && pagination.page !== currentPage) {
-      console.log(`Page mismatch: URL says ${currentPage}, API says ${pagination.page}`);
-    }
-  }, [data, pagination.page, currentPage]);
-
   const deleteUser = useDeleteUser({
     onSuccess: () => {
       showSuccessAlert("Berhasil!", "Pengguna berhasil diarsipkan");
@@ -83,164 +77,142 @@ export default function Pengguna() {
     },
   });
 
-  const handleArsipkan = (id: string) => {
-    showConfirmationAlert("Konfirmasi Arsip", "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.", "Ya, Arsipkan!", "Batal").then((result) => {
-      if (isConfirmed(result)) {
-        deleteUser.mutate({ id });
-      }
-    });
+  const handleArsipkan = async (id: string) => {
+    const result = await showConfirmationAlert("Konfirmasi Arsip", "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.", "Ya, Arsipkan!", "Batal");
+
+    if (isConfirmed(result)) {
+      deleteUser.mutate({ id });
+    }
   };
 
+  // Cek apakah user memiliki izin tertentu
+  const hasRoleReadAccess = hasPermission(permissions, PERMISSION.RESOURCES.ROLE, PERMISSION.ACTIONS.READ);
+
+  // Mendefinisikan tindakan untuk pengguna
+  const getUserActions = (user: User) => [
+    { type: ActionType.VIEW },
+    { type: ActionType.EDIT },
+    { type: ActionType.LOG },
+    {
+      type: ActionType.ARCHIVE,
+      onClick: () => handleArsipkan(user.id),
+      isLoading: deleteUser.isPending && deleteUser.variables?.id === user.id,
+      disabled: deleteUser.isPending,
+    },
+  ];
+
   return (
-    <div className="space-y-6 px-4 sm:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-        <h1 className="text-2xl font-bold text-gray-900">Daftar Pengguna</h1>
+    <div className="flex flex-col min-h-full w-full space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 w-full">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Daftar Pengguna</h1>
         <Link to="/pengguna/tambah">
-          <Button className="flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm text-sm font-medium text-white w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
+          <Button leftIcon={<Plus className="h-4 w-4" />} size="sm" className="w-full sm:w-auto">
             Tambah Pengguna
           </Button>
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 overflow-hidden w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 w-full">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Pengguna</h2>
-            <p className="text-sm text-gray-500">Manajemen data pengguna sistem</p>
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Pengguna</h2>
+            <p className="text-xs sm:text-sm text-gray-500">Manajemen data pengguna sistem</p>
           </div>
-          <div className="flex flex-wrap gap-3 w-full sm:w-auto items-center">
-            {hasRoleReadPermission() && <RoleFilter />}
-            <Button variant="outline" size="sm" className="h-9 min-w-[100px] bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm flex items-center px-3">
-              <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto items-center">
+            {hasRoleReadAccess && <RoleFilter />}
+            <Button variant="outline" size="sm" leftIcon={<Download className="h-3 w-3 sm:h-4 sm:w-4" />}>
               Export
             </Button>
           </div>
         </div>
 
-        <div className="mb-6">
-          <SearchInput placeholder="Cari pengguna..." className="max-w-full sm:max-w-md" />
+        <div className="mb-4 sm:mb-6 w-full">
+          <SearchInput placeholder="Cari pengguna..." className="w-full sm:max-w-md" />
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
-              <p className="mt-4 text-blue-600 font-medium">Memuat data pengguna...</p>
-            </div>
-          </div>
+        {isLoading ? (
+          <LoadingState text="Memuat data pengguna..." />
         ) : isError ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border-4 border-red-200 border-t-red-600 animate-spin"></div>
-              <p className="mt-4 text-red-600 font-medium">Gagal memuat data pengguna</p>
-              <p className="text-sm text-gray-400">Terjadi kesalahan pada server</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
-                Coba lagi
-              </Button>
-            </div>
-          </div>
+          <ErrorState title="Gagal memuat data pengguna" message="Terjadi kesalahan pada server" onRetry={() => refetch()} />
         ) : (
-          <div>
+          <div className="w-full">
             {/* Table untuk tampilan desktop & tablet */}
-            <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50 border-b border-gray-200">
-                      <TableHead className="w-[50px] font-semibold text-gray-700 py-4">ID</TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4">Nama</TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4">Email</TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4">Peran</TableHead>
-                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">Tgl. Dibuat</TableHead>
-                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">Tgl. Diperbarui</TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4 text-center">Aksi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+            <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden w-full">
+              <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                <table className="w-full min-w-[650px] border-collapse">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">ID</th>
+                      <th className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Nama</th>
+                      <th className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Email</th>
+                      <th className="w-[13%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Peran</th>
+                      <th className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">Tgl. Dibuat</th>
+                      <th className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">Tgl. Diperbarui</th>
+                      <th className="w-[130px] py-3 px-3 text-center font-semibold text-gray-700 text-sm">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                     {users.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
-                          <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
-                            <Search className="h-10 w-10 mb-2 text-gray-300" />
-                            <p className="text-gray-500">Tidak ada data pengguna yang ditemukan.</p>
-                            <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                      <tr>
+                        <td colSpan={7} className="py-6 text-center">
+                          <EmptyState title="Tidak ada data pengguna yang ditemukan" />
+                        </td>
+                      </tr>
                     ) : (
                       users.map((user, idx) => (
-                        <TableRow key={user.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50")}>
-                          <TableCell className="font-medium text-center">{idx + 1 + (pagination.page - 1) * pagination.limit}</TableCell>
-                          <TableCell className="font-medium text-blue-600">{user.name}</TableCell>
-                          <TableCell className="truncate max-w-[150px] sm:max-w-none">{user.email}</TableCell>
-                          <TableCell>
-                            <Badge variant={getRoleBadgeVariant(user.role.name)} className={cn("px-2 py-0.5 rounded-md font-medium", getRoleBadgeColor(user.role.name))}>
+                        <tr key={user.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50", "border-b border-gray-200 last:border-b-0")}>
+                          <td className="py-2.5 px-3 font-medium text-center text-sm">{idx + 1 + (pagination.page - 1) * pagination.limit}</td>
+                          <td className="py-2.5 px-3 font-medium text-blue-600 text-sm">
+                            <div className="truncate max-w-full" title={user.name}>
+                              {user.name}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 text-sm">
+                            <div className="truncate max-w-full" title={user.email}>
+                              {user.email}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <Badge variant={getRoleBadgeVariant(user.role.name)} className={cn("px-2 py-0.5 rounded-md font-medium text-xs", getRoleBadgeColor(user.role.name))}>
                               {user.role.name}
                             </Badge>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell text-gray-500">{formatDate(user.createdAt)}</TableCell>
-                          <TableCell className="hidden md:table-cell text-gray-500">{formatDate(user.updatedAt)}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center gap-1">
-                              <Link to={`/pengguna/${user.id}`}>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                              <Link to={`/pengguna/${user.id}/edit`}>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title="Edit">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                              <Link to={`/pengguna/${user.id}/log`}>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50" title="Log Aktivitas">
-                                  <History className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                title="Arsipkan"
-                                onClick={() => handleArsipkan(user.id)}
-                                disabled={deleteUser.isPending && deleteUser.variables?.id === user.id}
-                              >
-                                {deleteUser.isPending && deleteUser.variables?.id === user.id ? <div className="h-4 w-4 rounded-full border-2 border-red-200 border-t-red-600 animate-spin"></div> : <Archive className="h-4 w-4" />}
-                              </Button>
+                          </td>
+                          <td className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">{formatDate(user.createdAt)}</td>
+                          <td className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">{formatDate(user.updatedAt)}</td>
+                          <td className="py-2.5 px-3">
+                            <div className="flex justify-center items-center">
+                              <ActionButtons actions={getUserActions(user)} entityId={user.id} basePath="/pengguna" />
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </td>
+                        </tr>
                       ))
                     )}
-                  </TableBody>
-                </Table>
+                  </tbody>
+                </table>
               </div>
             </div>
 
             {/* Card untuk tampilan mobile */}
-            <div className="sm:hidden space-y-4">
+            <div className="sm:hidden space-y-3 w-full">
               {users.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
-                  <Search className="h-10 w-10 mb-2 text-gray-300" />
-                  <p className="text-gray-500">Tidak ada data pengguna yang ditemukan.</p>
-                  <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
+                <div className="flex flex-col items-center justify-center p-6 border rounded-lg border-gray-200 bg-white w-full">
+                  <EmptyState title="Tidak ada data pengguna yang ditemukan" />
                 </div>
               ) : (
                 users.map((user) => (
-                  <div key={user.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-medium text-blue-600">{user.name}</h3>
-                          <p className="text-sm text-gray-600 truncate">{user.email}</p>
+                  <div key={user.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm w-full">
+                    <div className="p-3 w-full">
+                      <div className="flex justify-between items-start mb-2 w-full">
+                        <div className="max-w-[65%]">
+                          <h3 className="font-medium text-blue-600 break-words text-sm">{user.name}</h3>
+                          <p className="text-xs text-gray-600 break-all mt-1">{user.email}</p>
                         </div>
-                        <Badge variant={getRoleBadgeVariant(user.role.name)} className={cn("px-2 py-0.5 rounded-md font-medium", getRoleBadgeColor(user.role.name))}>
+                        <Badge variant={getRoleBadgeVariant(user.role.name)} className={cn("px-2 py-0.5 rounded-md font-medium text-xs shrink-0", getRoleBadgeColor(user.role.name))}>
                           {user.role.name}
                         </Badge>
                       </div>
 
-                      <div className="text-xs text-gray-500 space-y-1 mb-3">
+                      <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                         <p>
                           Dibuat: <span className="font-medium">{formatDateShort(user.createdAt)}</span>
                         </p>
@@ -250,31 +222,7 @@ export default function Pengguna() {
                       </div>
 
                       <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
-                        <Link to={`/pengguna/${user.id}`}>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link to={`/pengguna/${user.id}/edit`}>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title="Edit">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link to={`/pengguna/${user.id}/log`}>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50" title="Log Aktivitas">
-                            <History className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          title="Arsipkan"
-                          onClick={() => handleArsipkan(user.id)}
-                          disabled={deleteUser.isPending && deleteUser.variables?.id === user.id}
-                        >
-                          {deleteUser.isPending && deleteUser.variables?.id === user.id ? <div className="h-4 w-4 rounded-full border-2 border-red-200 border-t-red-600 animate-spin"></div> : <Archive className="h-4 w-4" />}
-                        </Button>
+                        <ActionButtons actions={getUserActions(user)} entityId={user.id} basePath="/pengguna" />
                       </div>
                     </div>
                   </div>
@@ -283,7 +231,9 @@ export default function Pengguna() {
             </div>
 
             {/* Pagination */}
-            <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />
+            <div className="w-full mt-4">
+              <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />
+            </div>
           </div>
         )}
       </div>
