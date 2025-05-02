@@ -1,14 +1,15 @@
 import { useSearchParams } from "react-router";
 import { Download } from "lucide-react";
 
-import { useWarehouseLogs } from "@/hooks/gudangLog";
-import { WarehouseLog } from "@/types/gudangLog";
+import { useProductLogs } from "@/hooks/barangLog";
+import { ProductLog } from "@/types/barangLog";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
+import { formatRupiah } from "@/utils/formatCurrency";
 import { Pagination } from "@/components/Pagination";
 import { Link } from "react-router";
 import { LoadingState } from "@/components/LoadingState";
@@ -20,15 +21,15 @@ interface ActionLabel {
   color: string;
 }
 
-export default function LogSemuaGudang() {
+export default function LogSemuaBarang() {
   const [searchParams] = useSearchParams();
 
   // Mengambil parameter dari URL
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  // Fetch data log semua gudang
-  const { data, isLoading } = useWarehouseLogs({
+  // Fetch data log semua barang
+  const { data, isLoading } = useProductLogs({
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -64,7 +65,7 @@ export default function LogSemuaGudang() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className="text-xs font-medium text-gray-700 mb-1">Data gudang yang dibuat:</div>
+          <div className="text-xs font-medium text-gray-700 mb-1">Data barang yang dibuat:</div>
           <table className="text-xs w-full border-collapse">
             <tbody>
               <tr>
@@ -72,8 +73,24 @@ export default function LogSemuaGudang() {
                 <td className="border border-gray-200 px-2 py-1">{newData.name as string}</td>
               </tr>
               <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">SKU</td>
+                <td className="border border-gray-200 px-2 py-1">{newData.sku as string}</td>
+              </tr>
+              <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Deskripsi</td>
                 <td className="border border-gray-200 px-2 py-1">{newData.description as string}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Harga</td>
+                <td className="border border-gray-200 px-2 py-1">{formatRupiah(Number(newData.price))}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Stok</td>
+                <td className="border border-gray-200 px-2 py-1">{newData.quantity as number}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Gudang</td>
+                <td className="border border-gray-200 px-2 py-1">{newData.warehouseName as string}</td>
               </tr>
             </tbody>
           </table>
@@ -85,7 +102,7 @@ export default function LogSemuaGudang() {
     if (oldData && !newData) {
       return (
         <div>
-          <div className="text-xs font-medium text-gray-700 mb-1">Data gudang yang dihapus:</div>
+          <div className="text-xs font-medium text-gray-700 mb-1">Data barang yang dihapus:</div>
           <table className="text-xs w-full border-collapse">
             <tbody>
               <tr>
@@ -93,8 +110,20 @@ export default function LogSemuaGudang() {
                 <td className="border border-gray-200 px-2 py-1">{oldData.name as string}</td>
               </tr>
               <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">SKU</td>
+                <td className="border border-gray-200 px-2 py-1">{oldData.sku as string}</td>
+              </tr>
+              <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Deskripsi</td>
                 <td className="border border-gray-200 px-2 py-1">{oldData.description as string}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Harga</td>
+                <td className="border border-gray-200 px-2 py-1">{formatRupiah(Number(oldData.price))}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Stok</td>
+                <td className="border border-gray-200 px-2 py-1">{oldData.quantity as number}</td>
               </tr>
             </tbody>
           </table>
@@ -123,16 +152,19 @@ export default function LogSemuaGudang() {
         });
       }
 
-      // Bandingkan pengelola jika ada perubahan
-      type UserType = { name: string };
-      const oldUser = (oldData.user as UserType)?.name || "-";
-      const newUser = (newData.user as UserType)?.name || "-";
-
-      if (oldUser !== newUser) {
+      if (oldData.price !== newData.price) {
         changes.push({
-          field: "Pengelola",
-          oldValue: oldUser,
-          newValue: newUser,
+          field: "Harga",
+          oldValue: formatRupiah(Number(oldData.price)),
+          newValue: formatRupiah(Number(newData.price)),
+        });
+      }
+
+      if (oldData.quantity !== newData.quantity) {
+        changes.push({
+          field: "Stok",
+          oldValue: oldData.quantity as string,
+          newValue: newData.quantity as string,
         });
       }
 
@@ -166,16 +198,16 @@ export default function LogSemuaGudang() {
     return null;
   };
 
-  // Helper untuk mendapatkan nama gudang
-  const getWarehouseName = (log: WarehouseLog) => {
-    if (log.warehouse) {
-      return log.warehouse.name;
+  // Helper untuk mendapatkan nama barang
+  const getProductName = (log: ProductLog) => {
+    if (log.product) {
+      return log.product.name;
     } else if (log.newData && log.newData.name) {
       return log.newData.name as string;
     } else if (log.oldData && log.oldData.name) {
       return log.oldData.name as string;
     }
-    return "Gudang tidak diketahui";
+    return "Barang tidak diketahui";
   };
 
   // Render table untuk log activity
@@ -187,7 +219,7 @@ export default function LogSemuaGudang() {
             <TableRow className="bg-gray-50 border-b border-gray-200">
               <TableHead className="w-[50px] font-semibold text-gray-700 py-4">No</TableHead>
               <TableHead className="font-semibold text-gray-700 py-4">Waktu</TableHead>
-              <TableHead className="font-semibold text-gray-700 py-4">Gudang</TableHead>
+              <TableHead className="font-semibold text-gray-700 py-4">Barang</TableHead>
               <TableHead className="font-semibold text-gray-700 py-4">Aksi</TableHead>
               <TableHead className="font-semibold text-gray-700 py-4">Dilakukan Oleh</TableHead>
               <TableHead className="font-semibold text-gray-700 py-4">Deskripsi</TableHead>
@@ -201,17 +233,17 @@ export default function LogSemuaGudang() {
                 </TableCell>
               </TableRow>
             ) : (
-              logs.map((log: WarehouseLog, index: number) => (
+              logs.map((log: ProductLog, index: number) => (
                 <TableRow key={log.id} className={cn(index % 2 === 0 ? "bg-white" : "bg-gray-50")}>
                   <TableCell className="font-medium text-center">{index + 1 + (pagination.page - 1) * pagination.limit}</TableCell>
                   <TableCell className="text-gray-700">{formatDate(log.createdAt)}</TableCell>
                   <TableCell>
-                    {log.warehouse ? (
-                      <Link to={`/gudang/${log.warehouse.id}`} className="font-medium text-blue-600 hover:underline">
-                        {log.warehouse.name}
+                    {log.product ? (
+                      <Link to={`/barang/${log.product.id}`} className="font-medium text-blue-600 hover:underline">
+                        {log.product.name}
                       </Link>
                     ) : (
-                      <span className="text-gray-700">{getWarehouseName(log)}</span>
+                      <span className="text-gray-700">{getProductName(log)}</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -260,7 +292,7 @@ export default function LogSemuaGudang() {
           <EmptyState title="Tidak ada data log yang ditemukan." message="" />
         </div>
       ) : (
-        logs.map((log: WarehouseLog) => (
+        logs.map((log: ProductLog) => (
           <div key={log.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
             <div className="p-4">
               <div className="flex justify-between items-start mb-3">
@@ -270,15 +302,20 @@ export default function LogSemuaGudang() {
 
               <div className="mb-2">
                 <div className="mb-1">
-                  <span className="text-sm font-medium">Gudang: </span>
-                  {log.warehouse ? (
-                    <Link to={`/gudang/${log.warehouse.id}`} className="text-sm text-blue-600 hover:underline">
-                      {log.warehouse.name}
+                  <span className="text-sm font-medium">Barang: </span>
+                  {log.product ? (
+                    <Link to={`/barang/${log.product.id}`} className="text-sm text-blue-600 hover:underline">
+                      {log.product.name}
                     </Link>
                   ) : (
-                    <span className="text-sm text-gray-700">{getWarehouseName(log)}</span>
+                    <span className="text-sm text-gray-700">{getProductName(log)}</span>
                   )}
                 </div>
+                {log.product && log.product.sku && (
+                  <div className="text-xs text-gray-500 mb-1">
+                    SKU: <span className="font-medium">{log.product.sku}</span>
+                  </div>
+                )}
                 <p className="text-sm text-gray-700 mb-1">{log.description}</p>
                 <div className="text-xs text-gray-500">
                   Dilakukan oleh: <span className="font-medium text-blue-600">{log.performedBy.name}</span>
@@ -296,14 +333,14 @@ export default function LogSemuaGudang() {
   return (
     <div className="space-y-6 px-4 sm:px-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-        <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas Gudang</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas Barang</h1>
       </div>
 
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Semua Aktivitas Gudang</h2>
-            <p className="text-sm text-gray-500">Riwayat perubahan data gudang di sistem</p>
+            <h2 className="text-xl font-semibold text-gray-900">Semua Aktivitas Barang</h2>
+            <p className="text-sm text-gray-500">Riwayat perubahan data barang di sistem</p>
           </div>
           <div className="flex flex-wrap gap-3 w-full sm:w-auto items-center">
             <Button variant="outline" size="sm" className="h-9 min-w-[100px] bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm flex items-center px-3">

@@ -1,5 +1,5 @@
 import { Link, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { useUserLogs } from "@/hooks/userLog";
 import { useUser } from "@/hooks/user";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
 import { Pagination } from "@/components/Pagination";
 import { LoadingState } from "@/components/LoadingState";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function LogPengguna() {
   const { id } = useParams<{ id: string }>();
@@ -69,56 +70,120 @@ export default function LogPengguna() {
     return labels[entityType as keyof typeof labels] || { label: entityType, color: "bg-gray-100 text-gray-800 border-gray-200" };
   };
 
-  // Helper untuk menampilkan perubahan data
-  const renderDataChanges = (oldData: Record<string, unknown> | null, newData: Record<string, unknown> | null) => {
+  // Helper untuk render perubahan data
+  const renderChanges = (oldData: Record<string, unknown> | null, newData: Record<string, unknown> | null) => {
     if (!oldData && !newData) return null;
 
-    // Jika hanya ada newData, ini adalah pembuatan baru
-    if (!oldData && newData) {
+    // Untuk aksi CREATE - newData saja
+    if (newData && !oldData) {
       return (
-        <div className="text-xs space-y-1 mt-2">
-          <p className="font-medium text-gray-700">Data baru:</p>
-          <pre className="bg-gray-50 p-2 rounded text-xs overflow-x-auto">{JSON.stringify(newData, null, 2)}</pre>
+        <div>
+          <div className="text-xs font-medium text-gray-700 mb-1">Data pengguna yang dibuat:</div>
+          <table className="text-xs w-full border-collapse">
+            <tbody>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Nama</td>
+                <td className="border border-gray-200 px-2 py-1">{newData.name as string}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Email</td>
+                <td className="border border-gray-200 px-2 py-1">{newData.email as string}</td>
+              </tr>
+              {typeof newData.roleName === "string" && (
+                <tr>
+                  <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Peran</td>
+                  <td className="border border-gray-200 px-2 py-1">{newData.roleName}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       );
     }
 
-    // Jika hanya ada oldData, ini adalah penghapusan
+    // Untuk aksi DELETE - oldData saja
     if (oldData && !newData) {
       return (
-        <div className="text-xs space-y-1 mt-2">
-          <p className="font-medium text-gray-700">Data lama:</p>
-          <pre className="bg-gray-50 p-2 rounded text-xs overflow-x-auto">{JSON.stringify(oldData, null, 2)}</pre>
+        <div>
+          <div className="text-xs font-medium text-gray-700 mb-1">Data pengguna yang diarsipkan:</div>
+          <table className="text-xs w-full border-collapse">
+            <tbody>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Nama</td>
+                <td className="border border-gray-200 px-2 py-1">{oldData.name as string}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Email</td>
+                <td className="border border-gray-200 px-2 py-1">{oldData.email as string}</td>
+              </tr>
+              {typeof oldData.roleName === "string" && (
+                <tr>
+                  <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Peran</td>
+                  <td className="border border-gray-200 px-2 py-1">{oldData.roleName}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       );
     }
 
-    // Jika keduanya ada, ini adalah pembaruan
-    return (
-      <div className="text-xs space-y-1 mt-2">
-        <p className="font-medium text-gray-700">Perubahan:</p>
-        <pre className="bg-gray-50 p-2 rounded text-xs overflow-x-auto">{JSON.stringify({ old: oldData, new: newData }, null, 2)}</pre>
-      </div>
-    );
-  };
+    // Untuk aksi UPDATE - bandingkan old dan new
+    if (oldData && newData) {
+      const changes = [];
 
-  // Komponen untuk header
-  const LogHeader = () => (
-    <div className="flex items-center">
-      <Link to={`/pengguna/${id}`}>
-        <Button variant="ghost" size="sm" className="mr-2">
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Kembali
-        </Button>
-      </Link>
-      <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas Pengguna</h1>
-    </div>
-  );
+      if (oldData.name !== newData.name) {
+        changes.push({ field: "Nama", oldValue: oldData.name as string, newValue: newData.name as string });
+      }
+
+      if (oldData.email !== newData.email) {
+        changes.push({ field: "Email", oldValue: oldData.email as string, newValue: newData.email as string });
+      }
+
+      if (oldData.roleId !== newData.roleId) {
+        const oldRoleName = typeof oldData.roleName === "string" ? oldData.roleName : String(oldData.roleId || "");
+        const newRoleName = typeof newData.roleName === "string" ? newData.roleName : String(newData.roleId || "");
+
+        changes.push({
+          field: "Peran",
+          oldValue: oldRoleName,
+          newValue: newRoleName,
+        });
+      }
+
+      if (changes.length === 0) return null;
+
+      return (
+        <div>
+          <div className="text-xs font-medium text-gray-700 mb-1">Perubahan:</div>
+          <table className="text-xs w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="border border-gray-200 px-2 py-1 text-left font-medium">Field</th>
+                <th className="border border-gray-200 px-2 py-1 text-left font-medium">Nilai Lama</th>
+                <th className="border border-gray-200 px-2 py-1 text-left font-medium">Nilai Baru</th>
+              </tr>
+            </thead>
+            <tbody>
+              {changes.map((change, idx) => (
+                <tr key={idx}>
+                  <td className="border border-gray-200 px-2 py-1 font-medium">{change.field}</td>
+                  <td className="border border-gray-200 px-2 py-1">{change.oldValue}</td>
+                  <td className="border border-gray-200 px-2 py-1">{change.newValue}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+    return null;
+  };
 
   // Komponen untuk tampilan daftar log
   const LogList = () => (
-    <div>
-      {/* Table untuk tampilan desktop & tablet */}
+    <>
+      {/* Table untuk desktop & tablet */}
       <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
@@ -135,10 +200,7 @@ export default function LogPengguna() {
               {logs.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="h-24 text-center">
-                    <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
-                      <Search className="h-10 w-10 mb-2 text-gray-300" />
-                      <p className="text-gray-500">Tidak ada data log yang ditemukan.</p>
-                    </div>
+                    <EmptyState title="Tidak ada data log yang ditemukan." message="" />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -160,6 +222,14 @@ export default function LogPengguna() {
                     </TableCell>
                     <TableCell className="max-w-xs">
                       <p className="text-sm text-gray-700 line-clamp-2">{log.description}</p>
+                      {(log.oldData || log.newData) && (
+                        <div className="mt-2">
+                          <Button variant="ghost" size="sm" className="px-2 py-1 h-auto text-xs text-blue-600 hover:text-blue-800" onClick={(e) => e.currentTarget.nextElementSibling?.classList.toggle("hidden")}>
+                            Lihat Detail
+                          </Button>
+                          <div className="hidden mt-2">{renderChanges(log.oldData, log.newData)}</div>
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
@@ -169,12 +239,11 @@ export default function LogPengguna() {
         </div>
       </div>
 
-      {/* Card untuk tampilan mobile */}
+      {/* Card untuk mobile */}
       <div className="sm:hidden space-y-4">
         {logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
-            <Search className="h-10 w-10 mb-2 text-gray-300" />
-            <p className="text-gray-500">Tidak ada data log yang ditemukan.</p>
+            <EmptyState title="Tidak ada data log yang ditemukan." message="" />
           </div>
         ) : (
           logs.map((log) => (
@@ -195,22 +264,28 @@ export default function LogPengguna() {
                   </div>
                 </div>
 
-                {renderDataChanges(log.oldData, log.newData)}
+                {(log.oldData || log.newData) && <div className="mt-3 border-t border-gray-100 pt-3">{renderChanges(log.oldData, log.newData)}</div>}
               </div>
             </div>
           ))
         )}
       </div>
 
-      {/* Gunakan komponen Pagination */}
-      <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />
-    </div>
+      {/* Pagination */}
+      {data && <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />}
+    </>
   );
 
   return (
     <div className="space-y-6 px-4 sm:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-        <LogHeader />
+      <div className="flex items-center">
+        <Link to={`/pengguna/${id}`}>
+          <Button variant="ghost" size="sm" className="mr-2">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Kembali
+          </Button>
+        </Link>
+        <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas Pengguna</h1>
       </div>
 
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
@@ -221,10 +296,15 @@ export default function LogPengguna() {
             <p className="text-amber-600 font-medium">Peringatan: ID pengguna tidak ditemukan</p>
           </div>
         ) : (
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            <div>
+          <div className="mb-6">
+            <div className="flex flex-col">
               <h2 className="text-xl font-semibold text-gray-900">Log Aktivitas: {userData.name}</h2>
-              <p className="text-sm text-gray-500">{userData.email}</p>
+              <p className="text-sm text-gray-500 mt-1">{userData.email}</p>
+              {userData.role && (
+                <p className="text-sm text-gray-600 mt-1">
+                  <span className="font-medium">Peran:</span> {userData.role.name}
+                </p>
+              )}
             </div>
           </div>
         )}

@@ -1,8 +1,7 @@
-// hooks untuk gudang logs
 import { ApiResponse } from "@/types/api";
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
-import { WarehouseLogsResponse } from "@/types/gudangLogs";
+import { WarehouseLogsResponse } from "@/types/gudangLog";
 import { fetchApi } from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
 import { BASE_URL } from "@/constant/baseUrl";

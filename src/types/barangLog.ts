@@ -1,24 +1,24 @@
-// type untuk gudang logs
+// type untuk log barang
 import { Pagination } from "./user";
-import { UserMinimal, Warehouse } from "./gudang";
+import { UserMinimal } from "./gudang";
+import { Product } from "./barang";
 
-export interface WarehouseLog {
+export interface ProductLog {
   id: string;
-  warehouseId: string;
+  productId: string;
   performedById: string;
-  createdAt: string;
-  updatedAt: string;
   action: "CREATE" | "UPDATE" | "DELETE" | "RESTORE" | string;
-  entityType: "WAREHOUSE" | string;
+  entityType: "PRODUCT" | string;
   oldData: Record<string, unknown> | null;
   newData: Record<string, unknown> | null;
   description: string;
-  warehouse: Partial<Warehouse>;
+  createdAt: string;
+  product: Partial<Product>;
   performedBy: UserMinimal;
 }
 
 // Interface untuk response log dengan pagination
-export interface WarehouseLogsResponse {
-  logs: WarehouseLog[];
+export interface ProductLogsResponse {
+  logs: ProductLog[];
   pagination: Pagination;
 }

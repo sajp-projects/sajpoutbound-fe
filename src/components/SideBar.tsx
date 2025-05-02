@@ -119,7 +119,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     {
       name: "Barang",
       icon: <Package className="w-4 h-4 sm:w-5 sm:h-5" />,
-      resource: PERMISSION.RESOURCES.BARANG,
+      resource: PERMISSION.RESOURCES.PRODUCT,
       subItems: [
         {
           name: "Daftar Barang",

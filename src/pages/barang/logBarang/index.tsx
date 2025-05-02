@@ -1,27 +1,29 @@
 import { Link, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, Search } from "lucide-react";
-import { useWarehouse } from "@/hooks/gudang";
-import { useWarehouseLogsByWarehouseId } from "@/hooks/gudangLog";
+import { ArrowLeft } from "lucide-react";
+import { useProduct } from "@/hooks/barang";
+import { useProductLogsByProductId } from "@/hooks/barangLog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
+import { formatRupiah } from "@/utils/formatCurrency";
 import { Pagination } from "@/components/Pagination";
 import { LoadingState } from "@/components/LoadingState";
+import { EmptyState } from "@/components/EmptyState";
 
-export default function LogGudang() {
+export default function LogBarang() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
-  const warehouseId = id || "";
+  const productId = id || "";
 
-  // Fetch data gudang dan log gudang
-  const { data: gudangData, isLoading: gudangLoading } = useWarehouse({ id: warehouseId }, { enabled: !!warehouseId });
+  // Fetch data barang dan log barang
+  const { data: barangData, isLoading: barangLoading } = useProduct({ id: productId }, { enabled: !!productId });
 
-  const { data, isLoading } = useWarehouseLogsByWarehouseId(warehouseId, {
-    enabled: !!warehouseId,
+  const { data, isLoading } = useProductLogsByProductId(productId, {
+    enabled: !!productId,
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -56,7 +58,7 @@ export default function LogGudang() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className="text-xs font-medium text-gray-700 mb-1">Data gudang yang dibuat:</div>
+          <div className="text-xs font-medium text-gray-700 mb-1">Data barang yang dibuat:</div>
           <table className="text-xs w-full border-collapse">
             <tbody>
               <tr>
@@ -64,8 +66,24 @@ export default function LogGudang() {
                 <td className="border border-gray-200 px-2 py-1">{newData.name as string}</td>
               </tr>
               <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">SKU</td>
+                <td className="border border-gray-200 px-2 py-1">{newData.sku as string}</td>
+              </tr>
+              <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Deskripsi</td>
                 <td className="border border-gray-200 px-2 py-1">{newData.description as string}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Harga</td>
+                <td className="border border-gray-200 px-2 py-1">{formatRupiah(Number(newData.price))}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Stok</td>
+                <td className="border border-gray-200 px-2 py-1">{newData.quantity as number}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Gudang</td>
+                <td className="border border-gray-200 px-2 py-1">{newData.warehouseName as string}</td>
               </tr>
             </tbody>
           </table>
@@ -77,7 +95,7 @@ export default function LogGudang() {
     if (oldData && !newData) {
       return (
         <div>
-          <div className="text-xs font-medium text-gray-700 mb-1">Data gudang yang dihapus:</div>
+          <div className="text-xs font-medium text-gray-700 mb-1">Data barang yang dihapus:</div>
           <table className="text-xs w-full border-collapse">
             <tbody>
               <tr>
@@ -85,8 +103,20 @@ export default function LogGudang() {
                 <td className="border border-gray-200 px-2 py-1">{oldData.name as string}</td>
               </tr>
               <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">SKU</td>
+                <td className="border border-gray-200 px-2 py-1">{oldData.sku as string}</td>
+              </tr>
+              <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Deskripsi</td>
                 <td className="border border-gray-200 px-2 py-1">{oldData.description as string}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Harga</td>
+                <td className="border border-gray-200 px-2 py-1">{formatRupiah(Number(oldData.price))}</td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">Stok</td>
+                <td className="border border-gray-200 px-2 py-1">{oldData.quantity as number}</td>
               </tr>
             </tbody>
           </table>
@@ -97,17 +127,33 @@ export default function LogGudang() {
     // Untuk aksi UPDATE - bandingkan old dan new
     if (oldData && newData) {
       const changes = [];
+
       if (oldData.name !== newData.name) {
         changes.push({ field: "Nama", oldValue: oldData.name as string, newValue: newData.name as string });
       }
+
       if (oldData.description !== newData.description) {
         changes.push({ field: "Deskripsi", oldValue: oldData.description as string, newValue: newData.description as string });
       }
 
-      const oldUser = oldData.user ? ((oldData.user as Record<string, unknown>).name as string) : "-";
-      const newUser = newData.user ? ((newData.user as Record<string, unknown>).name as string) : "-";
-      if (oldUser !== newUser) {
-        changes.push({ field: "Pengelola", oldValue: oldUser, newValue: newUser });
+      if (oldData.price !== newData.price) {
+        changes.push({
+          field: "Harga",
+          oldValue: formatRupiah(Number(oldData.price)),
+          newValue: formatRupiah(Number(newData.price)),
+        });
+      }
+
+      if (oldData.quantity !== newData.quantity) {
+        changes.push({ field: "Stok", oldValue: oldData.quantity as string, newValue: newData.quantity as string });
+      }
+
+      if (oldData.warehouseId !== newData.warehouseId) {
+        changes.push({
+          field: "Gudang",
+          oldValue: (oldData.warehouseName || oldData.warehouseId) as string,
+          newValue: (newData.warehouseName || newData.warehouseId) as string,
+        });
       }
 
       if (changes.length === 0) return null;
@@ -158,10 +204,7 @@ export default function LogGudang() {
             {logs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
-                  <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
-                    <Search className="h-10 w-10 mb-2 text-gray-300" />
-                    <p className="text-gray-500">Tidak ada data log yang ditemukan.</p>
-                  </div>
+                  <EmptyState title="Tidak ada data log yang ditemukan." message="" />
                 </TableCell>
               </TableRow>
             ) : (
@@ -200,8 +243,7 @@ export default function LogGudang() {
       <div className="sm:hidden space-y-4">
         {logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
-            <Search className="h-10 w-10 mb-2 text-gray-300" />
-            <p className="text-gray-500">Tidak ada data log yang ditemukan.</p>
+            <EmptyState title="Tidak ada data log yang ditemukan." message="" />
           </div>
         ) : (
           logs.map((log) => (
@@ -232,26 +274,39 @@ export default function LogGudang() {
   return (
     <div className="space-y-6 px-4 sm:px-0">
       <div className="flex items-center">
-        <Link to={`/gudang/${id}`}>
+        <Link to={`/barang/${id}`}>
           <Button variant="ghost" size="sm" className="mr-2">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Kembali
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas Gudang</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas Barang</h1>
       </div>
 
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
-        {gudangLoading ? (
-          <LoadingState text="Memuat data gudang..." height="h-20" />
-        ) : !gudangData ? (
+        {barangLoading ? (
+          <LoadingState text="Memuat data barang..." height="h-20" />
+        ) : !barangData ? (
           <div className="bg-amber-50 p-4 rounded-md mb-6">
-            <p className="text-amber-600 font-medium">Peringatan: ID gudang tidak ditemukan</p>
+            <p className="text-amber-600 font-medium">Peringatan: ID barang tidak ditemukan</p>
           </div>
         ) : (
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Log Aktivitas: {gudangData.name}</h2>
-            <p className="text-sm text-gray-500">{gudangData.description}</p>
+            <div className="flex flex-col">
+              <h2 className="text-xl font-semibold text-gray-900">Log Aktivitas: {barangData.name}</h2>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1">
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">SKU:</span> {barangData.sku}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Stok:</span> {barangData.quantity}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Harga:</span> {formatRupiah(Number(barangData.price))}
+                </p>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">{barangData.description}</p>
+            </div>
           </div>
         )}
 

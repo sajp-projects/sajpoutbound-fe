@@ -23,6 +23,12 @@ import TambahGudang from "./pages/gudang/tambahGudang";
 import LogGudang from "./pages/gudang/logGudang";
 import LogSemuaGudang from "./pages/gudang/logSemuaGudang";
 import LogSemuaPengguna from "./pages/pengguna/logSemuaPengguna";
+import DaftarBarang from "./pages/barang/daftarBarang";
+import DetailBarang from "./pages/barang/detailBarang";
+import EditBarang from "./pages/barang/editBarang";
+import TambahBarang from "./pages/barang/tambahBarang";
+import LogBarang from "./pages/barang/logBarang";
+import LogSemuaBarang from "./pages/barang/logSemuaBarang";
 
 // Type untuk resource route yang dilindungi
 interface ProtectedRouteConfig {
@@ -184,6 +190,52 @@ export default function App() {
     },
   ];
 
+  // Konfigurasi rute barang
+  const barangRoutes: ProtectedRouteConfig[] = [
+    {
+      path: "",
+      element: <DaftarBarang />,
+      resource: PERMISSION.RESOURCES.PRODUCT,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/",
+    },
+    {
+      path: "tambah",
+      element: <TambahBarang />,
+      resource: PERMISSION.RESOURCES.PRODUCT,
+      action: PERMISSION.ACTIONS.CREATE,
+      redirectTo: "/barang",
+    },
+    {
+      path: ":id/log",
+      element: <LogBarang />,
+      resource: PERMISSION.RESOURCES.PRODUCT,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/barang",
+    },
+    {
+      path: "log",
+      element: <LogSemuaBarang />,
+      resource: PERMISSION.RESOURCES.PRODUCT,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/barang",
+    },
+    {
+      path: ":id/edit",
+      element: <EditBarang />,
+      resource: PERMISSION.RESOURCES.PRODUCT,
+      action: PERMISSION.ACTIONS.UPDATE,
+      redirectTo: "/barang",
+    },
+    {
+      path: ":id",
+      element: <DetailBarang />,
+      resource: PERMISSION.RESOURCES.PRODUCT,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/barang",
+    },
+  ];
+
   return (
     <BrowserRouter>
       <Routes>
@@ -205,6 +257,9 @@ export default function App() {
 
           {/* Rute Gudang */}
           <Route path="/gudang">{gudangRoutes.map((route) => createProtectedRoute(route))}</Route>
+
+          {/* Rute Barang */}
+          <Route path="/barang">{barangRoutes.map((route) => createProtectedRoute(route))}</Route>
         </Route>
       </Routes>
     </BrowserRouter>

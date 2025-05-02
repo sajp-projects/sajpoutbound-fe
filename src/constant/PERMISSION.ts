@@ -10,7 +10,7 @@ export const PERMISSION = {
     USER: "user",
     ROLE: "role",
     PERMISSION: "permission",
-    BARANG: "barang",
+    PRODUCT: "product",
     KUSTOMER: "kustomer",
     WAREHOUSE: "warehouse",
     DO: "do",
