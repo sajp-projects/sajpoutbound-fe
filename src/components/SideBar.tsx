@@ -1,22 +1,23 @@
-import { PERMISSION } from "@/constant/PERMISSION";
+import { PERMISSION } from "@/constant/permission";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
 import { BarChart3, ChevronDown, FileText, Home, LogOut, Package, PackageCheck, ShieldCheck, Truck, UserCheck, Users, Warehouse, X, Lock } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { cn } from "../lib/utils";
+import { getRoleId } from "@/utils/storage";
 
 interface SubMenuItem {
   name: string;
   path: string;
-  action?: string; // Optional action for permission check
+  action?: string;
 }
 
 interface MenuItem {
   name: string;
   icon: React.ReactNode;
   path?: string;
-  resource?: string; // Resource name for permission check
+  resource?: string;
   subItems?: SubMenuItem[];
 }
 
@@ -30,23 +31,15 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const { logout, isAuthenticated } = useAuth();
 
-  // Get roleId from localStorage
-  const userData = localStorage.getItem("user");
-  const roleId = userData ? JSON.parse(userData)?.roleId : null;
+  const roleId = getRoleId() || "";
 
-  // Fetch permissions only if authenticated and have roleId
   const { data: permissions, isLoading } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && !!roleId && roleId !== "",
+    enabled: isAuthenticated && roleId !== "",
   });
-
-  // Mendapatkan path untuk izin berdasarkan roleId
-  const getIzinPath = () => {
-    return roleId ? `/peran/${roleId}/izin` : "/";
-  };
 
   const hasPermission = (resource: string, action: string): boolean => {
     if (!isAuthenticated || !permissions) return false;
-    return permissions.some((permission) => permission.resource === resource && permission.action === action);
+    return permissions.some((p) => p.resource === resource && p.action === action);
   };
 
   const menuItems: MenuItem[] = [
@@ -106,7 +99,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
       subItems: [
         {
           name: "Daftar Izin",
-          path: getIzinPath(),
+          path: roleId ? `/peran/${roleId}/izin` : "/",
           action: PERMISSION.ACTIONS.READ,
         },
       ],
@@ -291,46 +284,24 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     setOpenMenus((prev) => (prev.includes(menuName) ? prev.filter((item) => item !== menuName) : [...prev, menuName]));
   };
 
+  const shouldShowMenuItem = (item: MenuItem): boolean => {
+    if (!item.resource) return true;
+    if (item.subItems) {
+      return item.subItems.some((subItem) => hasPermission(item.resource!, subItem.action || PERMISSION.ACTIONS.READ));
+    }
+    return hasPermission(item.resource, PERMISSION.ACTIONS.READ);
+  };
+
+  const shouldShowSubMenuItem = (item: MenuItem, subItem: SubMenuItem): boolean => {
+    return !item.resource || hasPermission(item.resource, subItem.action || PERMISSION.ACTIONS.READ);
+  };
+
   const isMenuActive = (menuName: string) => {
     return menuItems.find((item) => item.name === menuName)?.subItems?.some((subItem) => location.pathname === subItem.path);
   };
 
-  const isSubMenuActive = (path: string) => {
-    return location.pathname === path;
-  };
+  const isSubMenuActive = (path: string) => location.pathname === path;
 
-  // Check if a menu item should be shown based on permissions
-  const shouldShowMenuItem = (item: MenuItem): boolean => {
-    // If no resource is specified, always show the item
-    if (!item.resource) return true;
-
-    // If it's a menu with subitems, check if any subitem is accessible
-    if (item.subItems) {
-      const hasAnyAccess = item.subItems.some((subItem) => hasPermission(item.resource!, subItem.action || PERMISSION.ACTIONS.READ));
-
-      return hasAnyAccess;
-    }
-
-    // For single items, check the READ permission by default
-    const hasAccess = hasPermission(item.resource, PERMISSION.ACTIONS.READ);
-
-    return hasAccess;
-  };
-
-  // Check if a submenu item should be shown
-  const shouldShowSubMenuItem = (item: MenuItem, subItem: SubMenuItem): boolean => {
-    if (!item.resource) return true;
-
-    const hasAccess = hasPermission(item.resource, subItem.action || PERMISSION.ACTIONS.READ);
-
-    return hasAccess;
-  };
-
-  function handleLogout() {
-    logout();
-  }
-
-  // If loading permissions, show loading state
   if (isLoading) {
     return (
       <aside className={cn("h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-300 shadow-sm", isOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0")}>
@@ -345,12 +316,9 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
   return (
     <aside className={cn("h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-300 shadow-sm", isOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0")}>
       <div className="h-full flex flex-col overflow-hidden">
-        {/* Header with Logo and Close Button */}
         <div className="px-4 py-5 flex flex-col items-center justify-center border-b border-gray-200 relative">
-          {/* Close button for mobile */}
           {toggleSidebar && (
             <button
-              type="button"
               onClick={toggleSidebar}
               className="absolute right-2 top-2 p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 lg:hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
               aria-label="Close sidebar"
@@ -364,14 +332,12 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
           <div className="w-16 h-1 bg-blue-500 rounded-full mt-3"></div>
         </div>
 
-        {/* Menu Categories Label */}
         <div className="px-4 py-3 text-xs text-gray-500 font-medium uppercase flex items-center">
           <div className="flex-grow h-px bg-gray-200"></div>
           <span className="px-2">Modul Sistem</span>
           <div className="flex-grow h-px bg-gray-200"></div>
         </div>
 
-        {/* Main Navigation */}
         <nav className="flex-1 px-3 overflow-y-auto py-2">
           <ul className="space-y-1">
             {menuItems.map(
@@ -426,14 +392,13 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
           </ul>
         </nav>
 
-        {/* User Actions Section with Divider */}
         <div className="mt-auto">
           <div className="px-4 py-3 text-xs text-gray-500 font-medium uppercase flex items-center">
             <div className="flex-grow h-px bg-gray-200"></div>
             <div className="flex-grow h-px bg-gray-200"></div>
           </div>
           <div className="px-3 pb-5 pt-1">
-            <button onClick={handleLogout} className="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors group w-full text-left">
+            <button onClick={logout} className="flex items-center px-3 py-2 text-gray-700 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors group w-full text-left">
               <LogOut className="w-5 h-5 text-gray-500 group-hover:text-red-500" />
               <span className="ml-3">Keluar</span>
             </button>

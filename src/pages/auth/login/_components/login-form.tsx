@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { Mail } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/hooks/auth";
-import { BASE_URL } from "@/constant/baseUrl";
-import { createErrorResponse, handleFormErrors, FormErrors, ApiErrorResponse } from "@/utils/errorHandler";
+import { FormErrors } from "@/utils/errorHandler";
 import { LoginFormData } from "@/types/auth";
 import { InputField } from "./input-field";
 import { LoginHeader } from "./login-header";
@@ -32,26 +31,16 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setErrors({});
 
     try {
-      const response = await fetch(`${BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const success = await login(formData.email, formData.password, setErrors);
 
-      const data = (await response.json()) as ApiErrorResponse;
-
-      if (!data.success) {
-        const errorResult = createErrorResponse(data, "Terjadi kesalahan saat login");
-        handleFormErrors<Record<string, unknown>>(errorResult, ["email", "password"], setErrors);
-        setIsLoading(false);
-        return;
+      if (success) {
+        navigate("/");
       }
-
-      const success = await login(formData.email, formData.password);
-      if (success) navigate("/");
     } catch (error) {
       console.error("Login error:", error);
-      setErrors({ general: "Terjadi kesalahan saat menghubungi server" });
+      setErrors({
+        general: "Terjadi kesalahan saat menghubungi server",
+      });
     } finally {
       setIsLoading(false);
     }

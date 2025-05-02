@@ -3,6 +3,7 @@ export interface User {
   id: number;
   email: string;
   name: string;
+  roleId?: string;
 }
 
 // Tipe untuk respons token
@@ -22,6 +23,12 @@ export interface AuthState {
 export interface LoginFormData {
   email: string;
   password: string;
+}
+
+// Tipe untuk respons data login API
+export interface LoginResponseData {
+  user: User;
+  tokens: Tokens;
 }
 
 // Tipe untuk props komponen InputField

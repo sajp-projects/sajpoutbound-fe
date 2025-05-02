@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
-import { showSuccessAlert, showErrorAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
+import { showSuccessAlert, showErrorAlert, isConfirmed, showForbiddenAlert, showDeleteConfirmationAlert } from "@/utils/sweetAlert";
 
 export default function DaftarGudang() {
   const [searchParams] = useSearchParams();
@@ -56,17 +56,22 @@ export default function DaftarGudang() {
     },
     onError: (error) => {
       try {
-        const errorObj = JSON.parse(error.message);
-        showErrorAlert("Gagal menghapus gudang", errorObj.message || "Terjadi kesalahan saat menghapus gudang");
+        // Cek jika pesan error adalah Forbidden
+        if (error.message && error.message.includes("Forbidden")) {
+          showForbiddenAlert("Akses Ditolak", "Anda tidak memiliki akses untuk menghapus gudang ini.");
+        } else {
+          const errorObj = JSON.parse(error.message);
+          showErrorAlert("Gagal Menghapus Gudang", errorObj.message || "Terjadi kesalahan saat menghapus gudang");
+        }
       } catch {
-        showErrorAlert("Gagal menghapus gudang", "Terjadi kesalahan saat menghapus gudang");
+        showErrorAlert("Gagal Menghapus Gudang", error.message || "Terjadi kesalahan saat menghapus gudang");
       }
     },
   });
 
   // Fungsi untuk konfirmasi penghapusan gudang
   const handleDeleteWarehouse = (id: string, name: string) => {
-    showConfirmationAlert("Apakah Anda yakin?", `Gudang "${name}" akan dihapus.`, "Ya, hapus!", "Batal").then((result) => {
+    showDeleteConfirmationAlert("Gudang", `Apakah Anda yakin ingin menghapus gudang "${name}"?`).then((result) => {
       if (isConfirmed(result)) {
         deleteWarehouseMutation.mutate({ id });
       }

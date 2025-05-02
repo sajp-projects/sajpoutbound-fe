@@ -13,26 +13,18 @@ export function RoleFilter() {
   });
 
   const roles = data?.roles || [];
-
-  // Mendapatkan nama role yang aktif
-  const activeRole = roles.find((role) => role.id === roleId);
-  const activeRoleName = activeRole ? activeRole.name : "Semua Peran";
+  const activeRoleName = roles.find((role) => role.id === roleId)?.name || "Semua Peran";
 
   function handleSelectRole(id: string) {
-    // Menyalin semua parameter yang ada
     const params = Object.fromEntries(searchParams.entries());
 
-    // Menangani perubahan roleId
     if (id && id !== "all") {
       params.roleId = id;
     } else {
       delete params.roleId;
     }
 
-    // Reset halaman ke 1
     params.page = "1";
-
-    // Update parameter URL
     setSearchParams(params);
   }
 
@@ -49,7 +41,6 @@ export function RoleFilter() {
           <SelectItem value="all" className={cn(!roleId && "font-medium text-blue-600")}>
             Semua Peran
           </SelectItem>
-
           {roles.map((role) => (
             <SelectItem key={role.id} value={role.id} className={cn(role.id === roleId && "font-medium text-blue-600")}>
               {role.name}

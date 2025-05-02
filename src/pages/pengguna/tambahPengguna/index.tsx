@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from "@/components/ui/input";
 import { showSuccessAlert, showErrorAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 import { useAuth } from "@/hooks/auth";
-import { PERMISSION } from "@/constant/PERMISSION";
+import { PERMISSION } from "@/constant/permission";
 import { useRolePermissions } from "@/hooks/izin";
 
 // Type untuk form tambah user

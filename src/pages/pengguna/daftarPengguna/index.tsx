@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { getRoleBadgeColor, getRoleBadgeVariant } from "@/utils/badges";
 import { formatDate, formatDateShort } from "@/utils/date";
 import { useAuth } from "@/hooks/auth";
-import { PERMISSION } from "@/constant/PERMISSION";
+import { PERMISSION } from "@/constant/permission";
 import { useRolePermissions } from "@/hooks/izin";
 import { showSuccessAlert, showErrorAlert, showForbiddenAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 

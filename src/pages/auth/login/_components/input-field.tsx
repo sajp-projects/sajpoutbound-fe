@@ -10,18 +10,22 @@ export const InputField = ({ id, label, type, icon, placeholder, value, onChange
         {label}
       </Label>
     )}
+
     <div className="relative">
-      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">{icon}</div>
+      {icon && <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">{icon}</div>}
+
       <Input
         id={id}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={cn("pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 h-10", rightElement && "pr-10", error && "border-red-300 focus:border-red-500 focus:ring-red-500")}
+        className={cn("border-gray-300 focus:border-blue-500 focus:ring-blue-500 h-10", icon && "pl-10", rightElement && "pr-10", error && "border-red-300 focus:border-red-500 focus:ring-red-500")}
         placeholder={placeholder}
       />
+
       {rightElement}
     </div>
+
     {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
   </div>
 );

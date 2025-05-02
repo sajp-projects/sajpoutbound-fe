@@ -160,15 +160,10 @@ export function useDeleteWarehouse(options?: UseMutationOptions<void, Error, { i
   return useMutation({
     mutationFn: async ({ id }) => {
       const response = await fetchApi(`${BASE_URL}/warehouses/${id}`, {}, { method: "DELETE" });
-
-      if (!response.ok) {
-        throw new Error(`Error deleting warehouse: ${response.statusText}`);
-      }
-
       const result: ApiResponse<void> = await response.json();
 
-      if (!result.success) {
-        handleApiError(result, "Gagal menghapus gudang");
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Gagal menghapus peran");
       }
     },
     onSuccess: (_, { id }) => {

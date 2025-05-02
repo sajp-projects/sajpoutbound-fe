@@ -1,49 +1,25 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { showSuccessAlert, showWarningAlert } from "@/utils/sweetAlert";
-
-// Definisi tipe untuk data pengguna
-export interface User {
-  id: number;
-  email: string;
-  name: string;
-}
-
-// Tipe untuk respons token
-export interface Tokens {
-  accessToken: string;
-  refreshToken: string;
-}
-
-// Helper function to check initial auth state
-const getInitialAuthState = () => {
-  const accessToken = localStorage.getItem("accessToken");
-  const userData = localStorage.getItem("user");
-  return !!(accessToken && userData);
-};
+import { fetchApi } from "@/utils/api";
+import { User, LoginFormData, LoginResponseData, Tokens } from "@/types/auth";
+import * as storage from "@/utils/storage";
+import { ApiResponse } from "@/types/api";
+import { createErrorResponse, handleFormErrors, FormErrors } from "@/utils/errorHandler";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(getInitialAuthState());
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(storage.isAuthenticated());
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
   // Cek token dan status autentikasi saat komponen mounting
   useEffect(() => {
-    const accessToken = localStorage.getItem("accessToken");
-    const userData = localStorage.getItem("user");
+    const userData = storage.getUser();
 
-    if (accessToken && userData) {
-      try {
-        setUser(JSON.parse(userData));
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        setIsAuthenticated(false);
-      }
+    if (userData) {
+      setUser(userData);
+      setIsAuthenticated(true);
     } else {
       setIsAuthenticated(false);
     }
@@ -51,89 +27,77 @@ export function useAuth() {
     setIsLoading(false);
   }, []);
 
-  // Function untuk login
-  const login = async (email: string, password: string) => {
+  // Fungsi untuk menangani sukses login
+  const handleLoginSuccess = (userData: User, tokens: Tokens) => {
+    storage.saveAuthData(userData, tokens);
+    setUser(userData);
+    setIsAuthenticated(true);
+    showSuccessAlert("Login Berhasil", `Selamat datang, ${userData.name}!`);
+    return true;
+  };
+
+  // Fungsi login terintegrasi dengan validasi yang lebih baik
+  const login = async (email: string, password: string, setErrors?: (errors: FormErrors<LoginFormData>) => void) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetchApi(
+        "/auth/login",
+        {},
+        {
+          method: "POST",
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
-      const data = await response.json();
+      const result = (await response.json()) as ApiResponse<LoginResponseData>;
 
-      if (!data.success) {
-        // Kita tidak tampilkan alert error disini karena sudah ditangani di form
+      // Jika gagal dan setErrors tersedia, tangani error dengan lebih baik
+      if (!result.success) {
+        if (setErrors) {
+          const errorResult = createErrorResponse(result, "Terjadi kesalahan saat login");
+          handleFormErrors<Record<string, unknown>>(errorResult, ["email", "password"], setErrors);
+        }
         setIsLoading(false);
         return false;
       }
 
       // Login berhasil
-      const { user, tokens } = data.data;
-
-      // Simpan token dan data user di localStorage
-      localStorage.setItem("accessToken", tokens.accessToken);
-      localStorage.setItem("refreshToken", tokens.refreshToken);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      // Update state
-      setUser(user);
-      setIsAuthenticated(true);
-
-      // Tampilkan alert sukses
-      showSuccessAlert("Login Berhasil", `Selamat datang, ${user.name}!`);
-
-      setIsLoading(false);
-      return true;
+      const { user: userData, tokens } = result.data!;
+      return handleLoginSuccess(userData, tokens);
     } catch (error) {
       console.error("Login error:", error);
-      // Kita tidak tampilkan alert error disini karena sudah ditangani di form
+      if (setErrors) {
+        setErrors({ general: "Terjadi kesalahan saat menghubungi server" });
+      }
       setIsLoading(false);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Function untuk logout
   const logout = () => {
-    // Hapus data dari localStorage
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-
-    // Update state
+    storage.clearAuthData();
     setUser(null);
     setIsAuthenticated(false);
-
-    // Tampilkan alert sukses
     showSuccessAlert("Logout Berhasil", "Anda telah berhasil keluar dari sistem");
-
-    // Redirect ke halaman login
     navigate("/login");
   };
 
-  // Fungsi untuk cek apakah halaman ini memerlukan autentikasi
-  const checkAuthRedirect = (requireAuth: boolean = true, redirectTo: string = "/login") => {
-    // Jika masih loading, tidak melakukan apa-apa
-    if (isLoading) {
-      return;
-    }
+  // Fungsi untuk cek dan redirect halaman berdasarkan status autentikasi
+  const checkAuthRedirect = (requireAuth = true, redirectTo = "/login") => {
+    if (isLoading) return;
 
-    // Jika halaman memerlukan autentikasi tetapi user belum login
     if (requireAuth && !isAuthenticated) {
       showWarningAlert("Akses Dibatasi", "Silakan login terlebih dahulu");
-
       navigate(redirectTo);
       return;
     }
 
-    // Jika halaman khusus untuk user yang belum login (seperti halaman login) tetapi user sudah login
     if (!requireAuth && isAuthenticated) {
       navigate("/");
-      return;
     }
   };
 

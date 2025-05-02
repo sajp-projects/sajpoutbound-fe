@@ -1,5 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router";
-import { PERMISSION } from "./constant/PERMISSION";
+import { PERMISSION } from "./constant/permission";
 import AuthLayout from "./layout/AuthLayout";
 import BaseLayout from "./layout/BaseLayout";
 import { default as ActionLayout, default as RBACLayout } from "./layout/RBACLayout";
