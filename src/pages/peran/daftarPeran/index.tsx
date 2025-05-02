@@ -1,46 +1,48 @@
 import { useDeleteRole, useRoles } from "@/hooks/role";
-import { Search, Plus, Eye, Edit, Trash2, Lock } from "lucide-react";
-import { useState } from "react";
-import { Link } from "react-router";
+import { Plus, Lock } from "lucide-react";
+import { Link, useSearchParams } from "react-router";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import { formatDate, formatDateShort } from "@/utils/date";
 import { Pagination } from "@/components/Pagination";
-import { useRolePermissions } from "@/hooks/izin";
+import { SearchInput } from "@/components/SearchInput";
 import { useAuth } from "@/hooks/auth";
 import { PERMISSION } from "@/constant/PERMISSION";
+import { useRolePermissions } from "@/hooks/izin";
 import { showSuccessAlert, showErrorAlert, showForbiddenAlert, showDeleteConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
+import { LoadingState } from "@/components/LoadingState";
+import { ErrorState } from "@/components/ErrorState";
+import { EmptyState } from "@/components/EmptyState";
+import { ActionButtons, ActionType } from "@/components/ActionButtons";
+import { getRoleId } from "@/utils/storage";
+import { hasPermission } from "@/utils/permission";
+import { formatDate, formatDateShort } from "@/utils/date";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+
+interface Role {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function Role() {
-  // State untuk input pencarian client-side
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
+  const roleId = getRoleId() || "";
 
-  // Get roleId dari localStorage
-  const userData = localStorage.getItem("user");
-  const roleId = userData ? JSON.parse(userData)?.roleId : null;
+  // Mengambil parameter dari URL
+  const currentPage = parseInt(searchParams.get("page") || "1");
+  const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  // Fetch permissions untuk memeriksa apakah user memiliki akses ke permission:READ
+  // Fetch permissions untuk memeriksa akses
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && !!roleId && roleId !== "",
+    enabled: isAuthenticated && roleId !== "",
   });
 
-  // Fungsi untuk memeriksa apakah user memiliki izin permission:READ
-  const hasPermissionAccess = (): boolean => {
-    if (!isAuthenticated || !permissions) return false;
-    return permissions.some((permission) => permission.resource === PERMISSION.RESOURCES.PERMISSION && permission.action === PERMISSION.ACTIONS.READ);
-  };
-
   // Fetch peran dari API
-  const {
-    data,
-    isLoading: loading,
-    isError,
-    refetch,
-  } = useRoles({
+  const { data, isLoading, isError, refetch } = useRoles({
     staleTime: 5000,
     refetchOnMount: "always",
   });
@@ -48,30 +50,26 @@ export default function Role() {
   const roles = data?.roles || [];
   const pagination = data?.pagination || {
     total: 0,
-    page: 1,
-    limit: 10,
+    page: currentPage,
+    limit: itemsPerPage,
     totalPages: 0,
     hasNext: false,
     hasPrev: false,
   };
 
-  // Filter berdasarkan search term (client-side)
-  const filteredRoles = roles.filter((role) => role.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Cek apakah user memiliki izin tertentu
+  const hasPermissionAccess = () => hasPermission(permissions, PERMISSION.RESOURCES.PERMISSION, PERMISSION.ACTIONS.READ);
 
   const deleteRole = useDeleteRole({
     onError: (error) => {
-      // Cek jika pesan error adalah Forbidden
       if (error.message && error.message.includes("Forbidden")) {
         showForbiddenAlert("Akses Ditolak", "Anda tidak memiliki akses untuk menghapus peran ini.");
       } else {
-        // Untuk error lainnya, tampilkan pesan error normal
         showErrorAlert("Gagal Menghapus Peran", error.message || "Terjadi kesalahan saat menghapus peran");
       }
     },
     onSuccess: (data) => {
       showSuccessAlert("Peran Berhasil Dihapus", `Peran "${data.name}" telah berhasil dihapus`);
-
-      // Refresh data peran setelah berhasil menghapus
       refetch();
     },
   });
@@ -84,108 +82,95 @@ export default function Role() {
     });
   };
 
+  // Mendefinisikan tindakan untuk peran
+  const getRoleActions = (role: Role) => [
+    { type: ActionType.VIEW },
+    {
+      type: ActionType.CONFIG,
+      path: `/peran/${role.id}/izin`,
+      disabled: !hasPermissionAccess(),
+      icon: <Lock className="h-4 w-4" />,
+      title: "Kelola Izin Peran",
+      className: "text-purple-600 hover:text-purple-700 hover:bg-purple-50",
+    },
+    { type: ActionType.EDIT },
+    {
+      type: ActionType.DELETE,
+      onClick: () => handleDeleteRole(role.id, role.name),
+      isLoading: deleteRole.isPending && deleteRole.variables?.id === role.id,
+      disabled: deleteRole.isPending,
+    },
+  ];
+
   return (
-    <div className="space-y-6 px-4 sm:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-        <h1 className="text-2xl font-bold text-gray-900">Daftar Peran</h1>
+    <div className="flex flex-col min-h-full w-full space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 w-full">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Daftar Peran</h1>
         <Link to="/peran/tambah">
-          <Button className="flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm text-sm font-medium text-white w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
+          <Button leftIcon={<Plus className="h-4 w-4" />} size="sm" className="w-full sm:w-auto">
             Tambah Peran
           </Button>
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 overflow-hidden w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 w-full">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Peran</h2>
-            <p className="text-sm text-gray-500">Manajemen data peran dalam sistem</p>
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Peran</h2>
+            <p className="text-xs sm:text-sm text-gray-500">Manajemen data peran dalam sistem</p>
           </div>
         </div>
 
-        <div className="mb-6">
-          <div className="relative max-w-full sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input type="search" placeholder="Cari peran..." className="w-full pl-10 py-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-          </div>
+        <div className="mb-4 sm:mb-6 w-full">
+          <SearchInput placeholder="Cari peran..." className="w-full sm:max-w-md" />
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
-              <p className="mt-4 text-blue-600 font-medium">Memuat data peran...</p>
-            </div>
-          </div>
+        {isLoading ? (
+          <LoadingState text="Memuat data peran..." />
         ) : isError ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border-4 border-red-200 border-t-red-600 animate-spin"></div>
-              <p className="mt-4 text-red-600 font-medium">Gagal memuat data peran</p>
-              <p className="text-sm text-gray-400">Terjadi kesalahan pada server</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
-                Coba lagi
-              </Button>
-            </div>
-          </div>
+          <ErrorState title="Gagal memuat data peran" message="Terjadi kesalahan pada server" onRetry={() => refetch()} />
         ) : (
-          <div>
+          <div className="w-full">
             {/* Table untuk tampilan desktop & tablet */}
-            <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
+            <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden w-full">
+              <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50 border-b border-gray-200">
-                      <TableHead className="w-[50px] font-semibold text-gray-700 py-4">ID</TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4">Nama Peran</TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4">Deskripsi</TableHead>
-                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">Tgl. Dibuat</TableHead>
-                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">Tgl. Diperbarui</TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4 text-center">Aksi</TableHead>
+                      <TableHead className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">ID</TableHead>
+                      <TableHead className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Nama Peran</TableHead>
+                      <TableHead className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Deskripsi</TableHead>
+                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">Tgl. Dibuat</TableHead>
+                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">Tgl. Diperbarui</TableHead>
+                      <TableHead className="w-[130px] py-3 px-3 text-center font-semibold text-gray-700 text-sm">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredRoles.length === 0 ? (
+                    {roles.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="h-24 text-center">
-                          <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
-                            <Search className="h-10 w-10 mb-2 text-gray-300" />
-                            <p className="text-gray-500">Tidak ada data peran yang ditemukan.</p>
-                            <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
-                          </div>
+                          <EmptyState title="Tidak ada data peran yang ditemukan" />
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredRoles.map((role, idx) => (
-                        <TableRow key={role.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50")}>
-                          <TableCell className="font-medium text-center">{idx + 1 + (pagination.page - 1) * pagination.limit}</TableCell>
-                          <TableCell className="font-medium text-blue-600">{role.name}</TableCell>
-                          <TableCell className="text-gray-600">{role.description}</TableCell>
-                          <TableCell className="hidden md:table-cell text-gray-500">{formatDate(role.createdAt)}</TableCell>
-                          <TableCell className="hidden md:table-cell text-gray-500">{formatDate(role.updatedAt)}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center gap-1">
-                              <Link to={`/peran/${role.id}`}>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                              {hasPermissionAccess() && (
-                                <Link to={`/peran/${role.id}/izin`}>
-                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50" title="Kelola Izin Peran">
-                                    <Lock className="h-4 w-4" />
-                                  </Button>
-                                </Link>
-                              )}
-                              <Link to={`/peran/${role.id}/edit`}>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title="Edit">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" title="Hapus" onClick={() => handleDeleteRole(role.id, role.name)} disabled={deleteRole.isPending}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                      roles.map((role, idx) => (
+                        <TableRow key={role.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50", "border-b border-gray-200 last:border-b-0")}>
+                          <TableCell className="py-2.5 px-3 font-medium text-center text-sm">{idx + 1 + (pagination.page - 1) * pagination.limit}</TableCell>
+                          <TableCell className="py-2.5 px-3 font-medium text-blue-600 text-sm">
+                            <div className="truncate max-w-full" title={role.name}>
+                              {role.name}
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 text-sm">
+                            <div className="truncate max-w-full" title={role.description}>
+                              {role.description}
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">{formatDate(role.createdAt)}</TableCell>
+                          <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">{formatDate(role.updatedAt)}</TableCell>
+                          <TableCell className="py-2.5 px-3">
+                            <div className="flex justify-center items-center">
+                              <ActionButtons actions={getRoleActions(role)} entityId={role.id} basePath="/peran" />
                             </div>
                           </TableCell>
                         </TableRow>
@@ -197,24 +182,23 @@ export default function Role() {
             </div>
 
             {/* Card untuk tampilan mobile */}
-            <div className="sm:hidden space-y-4">
-              {filteredRoles.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
-                  <Search className="h-10 w-10 mb-2 text-gray-300" />
-                  <p className="text-gray-500">Tidak ada data peran yang ditemukan.</p>
-                  <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
+            <div className="sm:hidden space-y-3 w-full">
+              {roles.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-6 border rounded-lg border-gray-200 bg-white w-full">
+                  <EmptyState title="Tidak ada data peran yang ditemukan" />
                 </div>
               ) : (
-                filteredRoles.map((role) => (
-                  <div key={role.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-medium text-blue-600">{role.name}</h3>
+                roles.map((role) => (
+                  <div key={role.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm w-full">
+                    <div className="p-3 w-full">
+                      <div className="flex justify-between items-start mb-2 w-full">
+                        <div className="max-w-[65%]">
+                          <h3 className="font-medium text-blue-600 break-words text-sm">{role.name}</h3>
+                          <p className="text-xs text-gray-600 break-all mt-1">{role.description}</p>
+                        </div>
                       </div>
 
-                      <p className="text-sm text-gray-600 mb-3">{role.description}</p>
-
-                      <div className="text-xs text-gray-500 space-y-1 mb-3">
+                      <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                         <p>
                           Dibuat: <span className="font-medium">{formatDateShort(role.createdAt)}</span>
                         </p>
@@ -224,26 +208,7 @@ export default function Role() {
                       </div>
 
                       <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
-                        <Link to={`/peran/${role.id}`}>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        {hasPermissionAccess() && (
-                          <Link to={`/peran/${role.id}/izin`}>
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50" title="Kelola Izin Peran">
-                              <Lock className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                        )}
-                        <Link to={`/peran/${role.id}/edit`}>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title="Edit">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" title="Hapus" onClick={() => handleDeleteRole(role.id, role.name)} disabled={deleteRole.isPending}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <ActionButtons actions={getRoleActions(role)} entityId={role.id} basePath="/peran" />
                       </div>
                     </div>
                   </div>
@@ -251,8 +216,10 @@ export default function Role() {
               )}
             </div>
 
-            {/* Menggunakan komponen Pagination yang sudah dibuat */}
-            <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />
+            {/* Pagination */}
+            <div className="w-full mt-4">
+              <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />
+            </div>
           </div>
         )}
       </div>

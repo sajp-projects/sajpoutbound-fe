@@ -1,6 +1,5 @@
 import { useWarehouses, useDeleteWarehouse } from "@/hooks/gudang";
-import { Download, Edit, Eye, History, Plus, Search, Trash2 } from "lucide-react";
-import { useEffect } from "react";
+import { Download, Plus } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 
 import { Pagination } from "@/components/Pagination";
@@ -10,6 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
 import { showSuccessAlert, showErrorAlert, isConfirmed, showForbiddenAlert, showDeleteConfirmationAlert } from "@/utils/sweetAlert";
+import { LoadingState } from "@/components/LoadingState";
+import { ErrorState } from "@/components/ErrorState";
+import { EmptyState } from "@/components/EmptyState";
+import { ActionButtons, ActionType } from "@/components/ActionButtons";
+import { Warehouse } from "@/types/gudang";
 
 export default function DaftarGudang() {
   const [searchParams] = useSearchParams();
@@ -41,13 +45,6 @@ export default function DaftarGudang() {
     hasPrev: false,
   };
 
-  // Sinkronkan pagination.page dengan URL jika ada perbedaan
-  useEffect(() => {
-    if (data && pagination.page !== currentPage) {
-      console.log(`Page mismatch: URL says ${currentPage}, API says ${pagination.page}`);
-    }
-  }, [data, pagination.page, currentPage]);
-
   // Mutation untuk menghapus gudang
   const deleteWarehouseMutation = useDeleteWarehouse({
     onSuccess: () => {
@@ -78,88 +75,89 @@ export default function DaftarGudang() {
     });
   };
 
+  // Mendefinisikan tindakan untuk gudang
+  const getWarehouseActions = (warehouse: Warehouse) => [
+    { type: ActionType.VIEW },
+    { type: ActionType.EDIT },
+    { type: ActionType.LOG },
+    {
+      type: ActionType.DELETE,
+      onClick: () => handleDeleteWarehouse(warehouse.id, warehouse.name),
+      isLoading: deleteWarehouseMutation.isPending && deleteWarehouseMutation.variables?.id === warehouse.id,
+      disabled: deleteWarehouseMutation.isPending,
+    },
+  ];
+
   return (
-    <div className="space-y-6 px-4 sm:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-        <h1 className="text-2xl font-bold text-gray-900">Daftar Gudang</h1>
+    <div className="flex flex-col min-h-full w-full space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 w-full">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Daftar Gudang</h1>
         <Link to="/gudang/tambah">
-          <Button className="flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm text-sm font-medium text-white w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
+          <Button leftIcon={<Plus className="h-4 w-4" />} size="sm" className="w-full sm:w-auto">
             Tambah Gudang
           </Button>
         </Link>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 overflow-hidden w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 w-full">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Gudang</h2>
-            <p className="text-sm text-gray-500">Manajemen data gudang penyimpanan</p>
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Gudang</h2>
+            <p className="text-xs sm:text-sm text-gray-500">Manajemen data gudang penyimpanan</p>
           </div>
-          <div className="flex flex-wrap gap-3 w-full sm:w-auto items-center">
-            <Button variant="outline" size="sm" className="h-9 min-w-[100px] bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm flex items-center px-3">
-              <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto items-center">
+            <Button variant="outline" size="sm" leftIcon={<Download className="h-3 w-3 sm:h-4 sm:w-4" />}>
               Export
             </Button>
           </div>
         </div>
 
-        <div className="mb-6">
-          <SearchInput placeholder="Cari gudang..." className="max-w-full sm:max-w-md" />
+        <div className="mb-4 sm:mb-6 w-full">
+          <SearchInput placeholder="Cari gudang..." className="w-full sm:max-w-md" />
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin"></div>
-              <p className="mt-4 text-blue-600 font-medium">Memuat data gudang...</p>
-            </div>
-          </div>
+          <LoadingState text="Memuat data gudang..." />
         ) : isError ? (
-          <div className="flex justify-center items-center h-60">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full border-4 border-red-200 border-t-red-600 animate-spin"></div>
-              <p className="mt-4 text-red-600 font-medium">Gagal memuat data gudang</p>
-              <p className="text-sm text-gray-400 max-w-md">{warehouseError instanceof Error ? warehouseError.message : "Terjadi kesalahan pada server"}</p>
-              <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
-                Coba lagi
-              </Button>
-            </div>
-          </div>
+          <ErrorState title="Gagal memuat data gudang" message={warehouseError instanceof Error ? warehouseError.message : "Terjadi kesalahan pada server"} onRetry={() => refetch()} />
         ) : (
-          <div>
+          <div className="w-full">
             {/* Table untuk tampilan desktop & tablet */}
-            <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
+            <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden w-full">
+              <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50 border-b border-gray-200">
-                      <TableHead className="w-[50px] font-semibold text-gray-700 py-4">No.</TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4">Nama</TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4">Deskripsi</TableHead>
-                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">Pengelola</TableHead>
-                      <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">Tgl. Dibuat</TableHead>
-                      <TableHead className="font-semibold text-gray-700 py-4 text-center">Aksi</TableHead>
+                      <TableHead className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">No.</TableHead>
+                      <TableHead className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Nama</TableHead>
+                      <TableHead className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Deskripsi</TableHead>
+                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">Pengelola</TableHead>
+                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">Tgl. Dibuat</TableHead>
+                      <TableHead className="w-[130px] py-3 px-3 text-center font-semibold text-gray-700 text-sm">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {warehouses.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="h-24 text-center">
-                          <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
-                            <Search className="h-10 w-10 mb-2 text-gray-300" />
-                            <p className="text-gray-500">Tidak ada data gudang yang ditemukan.</p>
-                            <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
-                          </div>
+                          <EmptyState title="Tidak ada data gudang yang ditemukan" />
                         </TableCell>
                       </TableRow>
                     ) : (
                       warehouses.map((gudang, idx) => (
-                        <TableRow key={gudang.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50")}>
-                          <TableCell className="font-medium text-center">{idx + 1 + (pagination.page - 1) * pagination.limit}</TableCell>
-                          <TableCell className="font-medium text-blue-600">{gudang.name}</TableCell>
-                          <TableCell className="truncate max-w-[200px] sm:max-w-none text-gray-600">{gudang.description}</TableCell>
-                          <TableCell className="hidden md:table-cell">
+                        <TableRow key={gudang.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50", "border-b border-gray-200 last:border-b-0")}>
+                          <TableCell className="py-2.5 px-3 font-medium text-center text-sm">{idx + 1 + (pagination.page - 1) * pagination.limit}</TableCell>
+                          <TableCell className="py-2.5 px-3 font-medium text-blue-600 text-sm">
+                            <div className="truncate max-w-full" title={gudang.name}>
+                              {gudang.name}
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 text-sm">
+                            <div className="truncate max-w-full" title={gudang.description}>
+                              {gudang.description}
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
                             {gudang.user ? (
                               <Link to={`/pengguna/${gudang.user.id}`} className="text-blue-600 hover:underline">
                                 {gudang.user.name}
@@ -168,38 +166,10 @@ export default function DaftarGudang() {
                               <span className="text-gray-500">-</span>
                             )}
                           </TableCell>
-                          <TableCell className="hidden md:table-cell text-gray-500">{formatDate(gudang.createdAt)}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center gap-1">
-                              <Link to={`/gudang/${gudang.id}`}>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                              <Link to={`/gudang/${gudang.id}/edit`}>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title="Edit">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                              <Link to={`/gudang/${gudang.id}/log`}>
-                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50" title="Log Aktivitas">
-                                  <History className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                title="Hapus"
-                                onClick={() => handleDeleteWarehouse(gudang.id, gudang.name)}
-                                disabled={deleteWarehouseMutation.isPending && deleteWarehouseMutation.variables?.id === gudang.id}
-                              >
-                                {deleteWarehouseMutation.isPending && deleteWarehouseMutation.variables?.id === gudang.id ? (
-                                  <div className="h-4 w-4 rounded-full border-2 border-red-200 border-t-red-600 animate-spin"></div>
-                                ) : (
-                                  <Trash2 className="h-4 w-4" />
-                                )}
-                              </Button>
+                          <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">{formatDate(gudang.createdAt)}</TableCell>
+                          <TableCell className="py-2.5 px-3">
+                            <div className="flex justify-center items-center">
+                              <ActionButtons actions={getWarehouseActions(gudang)} entityId={gudang.id} basePath="/gudang" />
                             </div>
                           </TableCell>
                         </TableRow>
@@ -211,25 +181,23 @@ export default function DaftarGudang() {
             </div>
 
             {/* Card untuk tampilan mobile */}
-            <div className="sm:hidden space-y-4">
+            <div className="sm:hidden space-y-3 w-full">
               {warehouses.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
-                  <Search className="h-10 w-10 mb-2 text-gray-300" />
-                  <p className="text-gray-500">Tidak ada data gudang yang ditemukan.</p>
-                  <p className="text-sm text-gray-400">Coba gunakan kata kunci pencarian yang berbeda.</p>
+                <div className="flex flex-col items-center justify-center p-6 border rounded-lg border-gray-200 bg-white w-full">
+                  <EmptyState title="Tidak ada data gudang yang ditemukan" />
                 </div>
               ) : (
                 warehouses.map((gudang) => (
-                  <div key={gudang.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-medium text-blue-600">{gudang.name}</h3>
-                          <p className="text-sm text-gray-600 truncate">{gudang.description}</p>
+                  <div key={gudang.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm w-full">
+                    <div className="p-3 w-full">
+                      <div className="flex justify-between items-start mb-2 w-full">
+                        <div className="max-w-[65%]">
+                          <h3 className="font-medium text-blue-600 break-words text-sm">{gudang.name}</h3>
+                          <p className="text-xs text-gray-600 break-all mt-1">{gudang.description}</p>
                         </div>
                       </div>
 
-                      <div className="text-xs text-gray-500 space-y-1 mb-3">
+                      <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                         <p>
                           Dibuat: <span className="font-medium">{formatDateShort(gudang.createdAt)}</span>
                         </p>
@@ -244,35 +212,7 @@ export default function DaftarGudang() {
                       </div>
 
                       <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
-                        <Link to={`/gudang/${gudang.id}`}>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link to={`/gudang/${gudang.id}/edit`}>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50" title="Edit">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link to={`/gudang/${gudang.id}/log`}>
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50" title="Log Aktivitas">
-                            <History className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          title="Hapus"
-                          onClick={() => handleDeleteWarehouse(gudang.id, gudang.name)}
-                          disabled={deleteWarehouseMutation.isPending && deleteWarehouseMutation.variables?.id === gudang.id}
-                        >
-                          {deleteWarehouseMutation.isPending && deleteWarehouseMutation.variables?.id === gudang.id ? (
-                            <div className="h-4 w-4 rounded-full border-2 border-red-200 border-t-red-600 animate-spin"></div>
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
+                        <ActionButtons actions={getWarehouseActions(gudang)} entityId={gudang.id} basePath="/gudang" />
                       </div>
                     </div>
                   </div>
@@ -281,7 +221,9 @@ export default function DaftarGudang() {
             </div>
 
             {/* Pagination */}
-            {data && <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />}
+            <div className="w-full mt-4">
+              <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />
+            </div>
           </div>
         )}
       </div>

@@ -5,8 +5,11 @@ import { Permission } from "@/types/izin";
 import { getChangedPermissions, groupPermissionsByResource, hasPermissionChanges } from "@/utils/permission";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
-import { EmptyState, ErrorState, InfoBanner, LoadingState, PageHeader, ResourceGroup } from "./_components";
+import { InfoBanner, PageHeader, ResourceGroup } from "./_components";
 import { showSuccessAlert, showErrorAlert, showForbiddenAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
 
 export default function IzinPeran() {
   // URL parameters
@@ -138,14 +141,14 @@ export default function IzinPeran() {
 
   // ===== RENDER =====
   return (
-    <div className="space-y-6 px-4 sm:px-0">
+    <div className="flex flex-col min-h-full w-full space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-0">
       <PageHeader roleName={roleData?.name || ""} roleId={id || ""} onSave={handleSavePermissions} isSubmitting={isSubmitting} hasChanges={hasChanges} />
 
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 overflow-hidden w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 w-full">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Daftar Izin</h2>
-            <p className="text-sm text-gray-500">Pilih izin yang akan diberikan pada peran ini</p>
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Daftar Izin</h2>
+            <p className="text-xs sm:text-sm text-gray-500">Pilih izin yang akan diberikan pada peran ini</p>
           </div>
           <div className="text-sm text-gray-500">
             Total: <span className="font-medium text-gray-700">{permissionsData?.pagination?.total || 0}</span> izin
@@ -156,13 +159,13 @@ export default function IzinPeran() {
         <InfoBanner title="Petunjuk Penggunaan" message="Centang kotak di sebelah kiri untuk memberikan izin kepada peran ini. Perubahan tidak akan disimpan hingga Anda menekan tombol 'Simpan Perubahan'." />
 
         {isLoading ? (
-          <LoadingState />
+          <LoadingState text="Memuat data izin..." />
         ) : isError ? (
-          <ErrorState onRetry={refetchPermissions} />
+          <ErrorState title="Gagal memuat data izin" message="Terjadi kesalahan pada server" onRetry={refetchPermissions} />
         ) : (
-          <div>
+          <div className="w-full">
             {Object.keys(groupedPermissions).length === 0 ? (
-              <EmptyState />
+              <EmptyState title="Tidak ada data izin yang ditemukan" />
             ) : (
               <div className="space-y-6">
                 {Object.entries(groupedPermissions).map(([resource, resourcePermissions]) => (
@@ -175,14 +178,16 @@ export default function IzinPeran() {
 
         {/* Pagination - selalu tampil */}
         {!isLoading && !isError && (
-          <Pagination
-            totalItems={permissionsData?.pagination?.total || 0}
-            itemsPerPage={permissionsData?.pagination?.limit || 10}
-            currentPage={permissionsData?.pagination?.page || 1}
-            totalPages={permissionsData?.pagination?.totalPages || 1}
-            hasNext={permissionsData?.pagination?.hasNext || false}
-            hasPrev={permissionsData?.pagination?.hasPrev || false}
-          />
+          <div className="w-full mt-4">
+            <Pagination
+              totalItems={permissionsData?.pagination?.total || 0}
+              itemsPerPage={permissionsData?.pagination?.limit || 10}
+              currentPage={permissionsData?.pagination?.page || 1}
+              totalPages={permissionsData?.pagination?.totalPages || 1}
+              hasNext={permissionsData?.pagination?.hasNext || false}
+              hasPrev={permissionsData?.pagination?.hasPrev || false}
+            />
+          </div>
         )}
       </div>
     </div>

@@ -1,15 +1,8 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { cn } from '@/lib/utils';
-import { Permission } from '@/types/izin';
-import { getActionBadgeClass } from '@/utils/badges';
-import { formatDate } from '@/utils/date';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { Permission } from "@/types/izin";
+import { getActionBadgeClass } from "@/utils/badges";
+import { formatDate } from "@/utils/date";
 
 interface PermissionsTableProps {
   permissions: Permission[];
@@ -21,94 +14,55 @@ interface PermissionsTableProps {
 /**
  * Permissions table component for desktop view
  */
-export const PermissionsTable = ({
-  permissions,
-  isPermissionSelected,
-  togglePermission,
-  isPermissionChanged,
-}: PermissionsTableProps) => {
+export const PermissionsTable = ({ permissions, isPermissionSelected, togglePermission, isPermissionChanged }: PermissionsTableProps) => {
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-gray-50 border-b border-gray-200">
-            <TableHead className="w-[50px] font-semibold text-gray-700 py-3">
-              Pilih
-            </TableHead>
-            <TableHead className="font-semibold text-gray-700 py-3">
-              Aksi
-            </TableHead>
-            <TableHead className="font-semibold text-gray-700 py-3">
-              Nama Izin
-            </TableHead>
-            <TableHead className="font-semibold text-gray-700 py-3">
-              Deskripsi
-            </TableHead>
-            <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-3">
-              Dibuat
-            </TableHead>
-            <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-3 w-[100px]">
-              Status
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {permissions.map((permission, idx) => {
-            const wasChanged = isPermissionChanged(permission.id);
-            return (
-              <TableRow
-                key={permission.id}
-                className={cn(
-                  idx % 2 === 0 ? 'bg-white' : 'bg-gray-50',
-                  wasChanged && 'bg-blue-50/70'
-                )}
-              >
-                <TableCell className="text-center">
-                  <div className="flex items-center justify-center">
-                    <input
-                      type="checkbox"
-                      className={cn(
-                        'h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500',
-                        wasChanged && 'ring-2 ring-blue-400'
-                      )}
-                      checked={isPermissionSelected(permission.id)}
-                      onChange={() => togglePermission(permission.id)}
-                      id={`permission-${permission.id}`}
-                    />
-                  </div>
-                </TableCell>
-                <TableCell className="font-medium">
-                  <span
-                    className={cn(
-                      'px-2 py-1 text-xs font-medium rounded-full',
-                      getActionBadgeClass(permission.action)
-                    )}
-                  >
-                    {permission.action}
-                  </span>
-                </TableCell>
-                <TableCell className="font-medium text-blue-600">
+    <Table>
+      <TableHeader>
+        <TableRow className="bg-gray-50 border-b border-gray-200">
+          <TableHead className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Pilih</TableHead>
+          <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Aksi</TableHead>
+          <TableHead className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Nama Izin</TableHead>
+          <TableHead className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Deskripsi</TableHead>
+          <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">Dibuat</TableHead>
+          <TableHead className="w-[10%] py-3 px-3 text-center font-semibold text-gray-700 text-sm hidden md:table-cell">Status</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {permissions.map((permission, idx) => {
+          const wasChanged = isPermissionChanged(permission.id);
+          return (
+            <TableRow key={permission.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50", wasChanged && "bg-blue-50/70", "border-b border-gray-200 last:border-b-0")}>
+              <TableCell className="py-2.5 px-3 text-center">
+                <div className="flex items-center justify-center">
+                  <input
+                    type="checkbox"
+                    className={cn("h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500", wasChanged && "ring-2 ring-blue-400")}
+                    checked={isPermissionSelected(permission.id)}
+                    onChange={() => togglePermission(permission.id)}
+                    id={`permission-${permission.id}`}
+                  />
+                </div>
+              </TableCell>
+              <TableCell className="py-2.5 px-3 font-medium text-sm">
+                <span className={cn("px-2 py-1 text-xs font-medium rounded-full", getActionBadgeClass(permission.action))}>{permission.action}</span>
+              </TableCell>
+              <TableCell className="py-2.5 px-3 font-medium text-blue-600 text-sm">
+                <div className="truncate max-w-full" title={permission.name}>
                   {permission.name}
-                </TableCell>
-                <TableCell className="text-gray-600">
+                </div>
+              </TableCell>
+              <TableCell className="py-2.5 px-3 text-gray-600 text-sm">
+                <div className="truncate max-w-full" title={permission.description}>
                   {permission.description}
-                </TableCell>
-                <TableCell className="hidden md:table-cell text-gray-500">
-                  {formatDate(permission.createdAt)}
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {wasChanged && (
-                    <span className="text-xs text-blue-600 font-medium bg-blue-100 px-2 py-1 rounded-full">
-                      Diubah
-                    </span>
-                  )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
+                </div>
+              </TableCell>
+              <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">{formatDate(permission.createdAt)}</TableCell>
+              <TableCell className="py-2.5 px-3 text-center hidden md:table-cell">{wasChanged && <span className="text-xs text-blue-600 font-medium bg-blue-100 px-2 py-1 rounded-full">Diubah</span>}</TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
   );
 };
 

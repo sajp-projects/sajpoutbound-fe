@@ -1,4 +1,4 @@
-import { Eye, Edit, History, Archive, Trash2, FileCog, Pencil, FileSearch } from "lucide-react";
+import { Eye, Edit, History, Archive, Trash2, FileCog, Pencil } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 

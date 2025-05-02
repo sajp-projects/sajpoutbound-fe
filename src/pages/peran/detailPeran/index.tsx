@@ -2,7 +2,7 @@ import { useRole } from "@/hooks/role";
 import { ArrowLeft, Pencil, Users, Info, Mail, Calendar, User, Eye, Lock } from "lucide-react";
 import { useParams, Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
-import { formatDate, formatDateShort } from "@/utils/date";
+import { formatDate } from "@/utils/date";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
