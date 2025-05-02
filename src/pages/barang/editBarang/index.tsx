@@ -71,8 +71,8 @@ export default function EditBarang() {
         name: barang.name || "",
         sku: barang.sku || "",
         description: barang.description || "",
-        price: barang.price.toString() || "",
-        quantity: barang.quantity.toString() || "0",
+        price: barang.price !== null && barang.price !== undefined ? barang.price.toString() : "",
+        quantity: barang.quantity !== null && barang.quantity !== undefined ? barang.quantity.toString() : "0",
         warehouseId: barang.warehouseId || "",
       });
     }
@@ -136,22 +136,10 @@ export default function EditBarang() {
     e.preventDefault();
     setErrors({});
 
-    // Validation
-    const newErrors: ProductFormErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Nama barang harus diisi";
-    if (!formData.price.trim()) newErrors.price = "Harga harus diisi";
-    if (!formData.quantity.trim()) newErrors.quantity = "Jumlah stok harus diisi";
-    if (!formData.warehouseId.trim()) newErrors.warehouseId = "Gudang harus dipilih";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
     // Parse numeric values
     const productData = {
       ...formData,
-      price: parseFloat(formData.price.replace(/[^\d.-]/g, "")),
+      price: parseFloat(formData.price),
       quantity: parseInt(formData.quantity, 10),
     };
 
@@ -218,7 +206,7 @@ export default function EditBarang() {
                   <label htmlFor="price" className="block text-sm font-medium text-gray-700">
                     Harga
                   </label>
-                  <Input id="price" name="price" value={formData.price} onChange={handleInputChange} placeholder="Masukkan harga barang" className={inputClassName("price")} />
+                  <Input id="price" name="price" type="number" min="0" step="1" value={formData.price} onChange={handleInputChange} placeholder="Masukkan harga barang" className={inputClassName("price")} />
                   {errors.price ? <p className="mt-1 text-sm text-red-500">{errors.price}</p> : <p className="mt-1 text-sm text-gray-500">Harga barang dalam Rupiah</p>}
                 </div>
 

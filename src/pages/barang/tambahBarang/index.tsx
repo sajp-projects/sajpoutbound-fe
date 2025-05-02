@@ -95,23 +95,10 @@ export default function TambahBarang() {
     e.preventDefault();
     setErrors({});
 
-    // Validasi form
-    const newErrors: ProductFormErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Nama barang harus diisi";
-    if (!formData.sku.trim()) newErrors.sku = "SKU harus diisi";
-    if (!formData.price.trim()) newErrors.price = "Harga harus diisi";
-    if (!formData.quantity.trim()) newErrors.quantity = "Jumlah stok harus diisi";
-    if (!formData.warehouseId.trim()) newErrors.warehouseId = "Gudang harus dipilih";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
     // Parse numeric values
     const productData = {
       ...formData,
-      price: parseFloat(formData.price.replace(/[^\d.-]/g, "")),
+      price: parseFloat(formData.price),
       quantity: parseInt(formData.quantity, 10),
     };
 
@@ -183,6 +170,9 @@ export default function TambahBarang() {
                 <Input
                   id="price"
                   name="price"
+                  type="number"
+                  min="0"
+                  step="1"
                   value={formData.price}
                   onChange={handleInputChange}
                   placeholder="Masukkan harga barang"
