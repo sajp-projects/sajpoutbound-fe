@@ -166,6 +166,18 @@ export default function LogSemuaGudang() {
     return null;
   };
 
+  // Helper untuk mendapatkan nama gudang
+  const getWarehouseName = (log: WarehouseLog) => {
+    if (log.warehouse) {
+      return log.warehouse.name;
+    } else if (log.newData && log.newData.name) {
+      return log.newData.name as string;
+    } else if (log.oldData && log.oldData.name) {
+      return log.oldData.name as string;
+    }
+    return "Gudang tidak diketahui";
+  };
+
   // Render table untuk log activity
   const renderLogTable = () => (
     <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
@@ -194,10 +206,12 @@ export default function LogSemuaGudang() {
                   <TableCell className="font-medium text-center">{index + 1 + (pagination.page - 1) * pagination.limit}</TableCell>
                   <TableCell className="text-gray-700">{formatDate(log.createdAt)}</TableCell>
                   <TableCell>
-                    {log.warehouse && (
+                    {log.warehouse ? (
                       <Link to={`/gudang/${log.warehouse.id}`} className="font-medium text-blue-600 hover:underline">
                         {log.warehouse.name}
                       </Link>
+                    ) : (
+                      <span className="text-gray-700">{getWarehouseName(log)}</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -255,14 +269,16 @@ export default function LogSemuaGudang() {
               </div>
 
               <div className="mb-2">
-                {log.warehouse && (
-                  <div className="mb-1">
-                    <span className="text-sm font-medium">Gudang: </span>
+                <div className="mb-1">
+                  <span className="text-sm font-medium">Gudang: </span>
+                  {log.warehouse ? (
                     <Link to={`/gudang/${log.warehouse.id}`} className="text-sm text-blue-600 hover:underline">
                       {log.warehouse.name}
                     </Link>
-                  </div>
-                )}
+                  ) : (
+                    <span className="text-sm text-gray-700">{getWarehouseName(log)}</span>
+                  )}
+                </div>
                 <p className="text-sm text-gray-700 mb-1">{log.description}</p>
                 <div className="text-xs text-gray-500">
                   Dilakukan oleh: <span className="font-medium text-blue-600">{log.performedBy.name}</span>

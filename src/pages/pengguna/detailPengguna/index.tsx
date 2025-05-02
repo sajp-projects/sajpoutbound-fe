@@ -57,10 +57,12 @@ export default function DetailPengguna() {
               Edit Pengguna
             </Button>
           </Link>
-          <Button className="flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 rounded-md shadow-sm text-sm font-medium text-white" onClick={handleArsipkan} disabled={deleteUser.isPending}>
-            <Archive className="h-4 w-4 mr-2" />
-            {deleteUser.isPending ? "Mengarsipkan..." : "Arsipkan"}
-          </Button>
+          {user && !user.deletedAt && (
+            <Button className="flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 rounded-md shadow-sm text-sm font-medium text-white" onClick={handleArsipkan} disabled={deleteUser.isPending}>
+              <Archive className="h-4 w-4 mr-2" />
+              {deleteUser.isPending ? "Mengarsipkan..." : "Arsipkan"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -148,10 +150,12 @@ export default function DetailPengguna() {
                         Edit Pengguna
                       </Button>
                     </Link>
-                    <Button variant="outline" className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700" onClick={handleArsipkan} disabled={deleteUser.isPending}>
-                      <Archive className="h-4 w-4 mr-2" />
-                      {deleteUser.isPending ? "Mengarsipkan..." : "Arsipkan Pengguna"}
-                    </Button>
+                    {user && !user.deletedAt && (
+                      <Button variant="outline" className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700" onClick={handleArsipkan} disabled={deleteUser.isPending}>
+                        <Archive className="h-4 w-4 mr-2" />
+                        {deleteUser.isPending ? "Mengarsipkan..." : "Arsipkan Pengguna"}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
