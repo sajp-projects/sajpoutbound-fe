@@ -286,7 +286,7 @@ export default function DaftarBarang() {
                             {barang.name}
                           </h3>
                           <p className="text-xs text-gray-600 mt-1">
-                            ID SL: {barang.id_sl}
+                            ID: {barang.id_sl}
                           </p>
                         </div>
                       </div>

@@ -102,7 +102,7 @@ export default function LogBarang() {
               </tr>
               <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
-                  ID SL
+                  ID
                 </td>
                 <td className="border border-gray-200 px-2 py-1">
                   {newData.id_sl as string}
@@ -149,7 +149,7 @@ export default function LogBarang() {
               </tr>
               <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
-                  ID SL
+                  ID
                 </td>
                 <td className="border border-gray-200 px-2 py-1">
                   {oldData.id_sl as string}
@@ -431,7 +431,7 @@ export default function LogBarang() {
               </h2>
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1">
                 <p className="text-sm text-gray-600">
-                  <span className="font-medium">ID SL:</span> {barangData.id_sl}
+                  <span className="font-medium">ID:</span> {barangData.id_sl}
                 </p>
                 {barangData.warehouse && (
                   <p className="text-sm text-gray-600">

@@ -106,7 +106,7 @@ export default function LogSemuaBarang() {
               </tr>
               <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
-                  ID SL
+                  ID
                 </td>
                 <td className="border border-gray-200 px-2 py-1">
                   {newData.id_sl as string}
@@ -153,7 +153,7 @@ export default function LogSemuaBarang() {
               </tr>
               <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
-                  ID SL
+                  ID
                 </td>
                 <td className="border border-gray-200 px-2 py-1">
                   {oldData.id_sl as string}
@@ -422,8 +422,7 @@ export default function LogSemuaBarang() {
                 </div>
                 {log.product && log.product.id_sl && (
                   <div className="text-xs text-gray-500 mb-1">
-                    ID SL:{' '}
-                    <span className="font-medium">{log.product.id_sl}</span>
+                    ID: <span className="font-medium">{log.product.id_sl}</span>
                   </div>
                 )}
                 <p className="text-sm text-gray-700 mb-1">{log.description}</p>

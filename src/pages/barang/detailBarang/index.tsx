@@ -7,6 +7,7 @@ import {
   isConfirmed,
   showDeleteConfirmationAlert,
   showErrorAlert,
+  showForbiddenAlert,
   showSuccessAlert,
 } from '@/utils/sweetAlert';
 import { ArrowLeft, Edit, History, Trash2 } from 'lucide-react';
@@ -40,15 +41,23 @@ export default function DetailBarang() {
     },
     onError: (error) => {
       try {
-        const errorObj = JSON.parse(error.message);
-        showErrorAlert(
-          'Gagal menghapus barang',
-          errorObj.message || 'Terjadi kesalahan saat menghapus barang'
-        );
+        // Cek jika pesan error adalah Forbidden
+        if (error.message && error.message.includes('Forbidden')) {
+          showForbiddenAlert(
+            'Akses Ditolak',
+            'Anda tidak memiliki akses untuk menghapus barang ini.'
+          );
+        } else {
+          const errorObj = JSON.parse(error.message);
+          showErrorAlert(
+            'Gagal Menghapus Barang',
+            errorObj.message || 'Terjadi kesalahan saat menghapus barang'
+          );
+        }
       } catch {
         showErrorAlert(
-          'Gagal menghapus barang',
-          'Terjadi kesalahan saat menghapus barang'
+          'Gagal Menghapus Barang',
+          error.message || 'Terjadi kesalahan saat menghapus barang'
         );
       }
     },

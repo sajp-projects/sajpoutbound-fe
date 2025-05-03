@@ -242,20 +242,23 @@ export default function EditBarang() {
                     htmlFor="id_sl"
                     className="block text-sm font-medium text-gray-700"
                   >
-                    ID SL
+                    ID
                   </label>
                   <Input
                     id="id_sl"
                     name="id_sl"
                     value={formData.id_sl}
                     onChange={handleInputChange}
-                    disabled
                     placeholder="Masukkan ID SL barang"
                     className={inputClassName('id_sl')}
                   />
-                  <p className="mt-1 text-sm text-gray-500">
-                    ID SL tidak dapat diubah
-                  </p>
+                  {errors.id_sl ? (
+                    <p className="mt-1 text-sm text-red-500">{errors.id_sl}</p>
+                  ) : (
+                    <p className="mt-1 text-sm text-gray-500">
+                      ID untuk mengidentifikasi barang
+                    </p>
+                  )}
                 </div>
 
                 <div>
