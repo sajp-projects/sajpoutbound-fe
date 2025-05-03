@@ -1,5 +1,5 @@
 // type untuk barang
-import { Pagination } from "./user";
+import { Pagination } from './user';
 
 export interface Warehouse {
   id: string;
@@ -10,10 +10,8 @@ export interface Warehouse {
 export interface Product {
   id: string;
   name: string;
-  sku: string;
+  id_sl: string;
   description: string;
-  price: number | string;
-  quantity: number;
   warehouseId: string;
   createdAt: string;
   updatedAt: string;
@@ -30,19 +28,15 @@ export interface ProductsResponse {
 // Tipe untuk input pembuatan barang baru
 export interface CreateProductInput {
   name: string;
-  sku: string;
+  id_sl: string;
   description: string;
-  price: number;
-  quantity: number;
   warehouseId: string;
 }
 
 // Tipe untuk update barang
 export interface UpdateProductInput {
   name?: string;
-  sku?: string;
+  id_sl?: string;
   description?: string;
-  price?: number;
-  quantity?: number;
   warehouseId?: string;
 }

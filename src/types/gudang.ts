@@ -1,5 +1,5 @@
 // type untuk gudang
-import { Pagination } from "./user";
+import { Pagination } from './user';
 
 export interface UserMinimal {
   id: string;
@@ -34,5 +34,5 @@ export interface CreateWarehouseInput {
 export interface UpdateWarehouseInput {
   name?: string;
   description?: string;
-  userId?: string;
+  userId?: string | null;
 }
