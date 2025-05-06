@@ -22,7 +22,7 @@ import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 
-// Type untuk form edit warehouse
+
 interface WarehouseFormData {
   name: string;
   description: string;
@@ -37,20 +37,20 @@ export default function EditGudang() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // State untuk form
+  
   const [formData, setFormData] = useState<WarehouseFormData>({
     name: '',
     description: '',
     userId: '',
   });
 
-  // State untuk melacak apakah user sedang mengubah penanggung jawab
+  
   const [isChangingUser, setIsChangingUser] = useState(false);
 
-  // State untuk error validasi
+  
   const [errors, setErrors] = useState<WarehouseFormErrors>({});
 
-  // Fetch detail gudang
+  
   const {
     data: gudang,
     isLoading,
@@ -65,14 +65,14 @@ export default function EditGudang() {
     }
   );
 
-  // Fetch daftar pengguna untuk dropdown hanya jika sedang mengubah user
+  
   const { data: usersData } = useUsers({
-    staleTime: 300000, // 5 menit
-    enabled: isChangingUser, // Hanya fetch jika sedang mengubah user
+    staleTime: 300000, 
+    enabled: isChangingUser, 
   });
   const users = usersData?.users || [];
 
-  // Set form data dari gudang yang diterima
+  
   useEffect(() => {
     if (gudang) {
       setFormData({
@@ -83,7 +83,7 @@ export default function EditGudang() {
     }
   }, [gudang]);
 
-  // Mutation untuk update gudang
+  
   const updateWarehouseMutation = useUpdateWarehouse({
     onSuccess: (data) => {
       showSuccessAlert('Sukses!', 'Gudang berhasil diperbarui').then(() => {
@@ -125,7 +125,7 @@ export default function EditGudang() {
     },
   });
 
-  // Handler untuk perubahan form
+  
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -134,18 +134,18 @@ export default function EditGudang() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Hapus error untuk field yang diubah
+    
     if (errors[name as keyof WarehouseFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  // Handler untuk mulai mengubah user
+  
   const handleChangeUser = () => {
     setIsChangingUser(true);
   };
 
-  // Handler untuk batalkan mengubah user
+  
   const handleCancelChangeUser = () => {
     if (gudang?.user) {
       setFormData((prev) => ({ ...prev, userId: gudang.user?.id || '' }));
@@ -153,18 +153,18 @@ export default function EditGudang() {
     setIsChangingUser(false);
   };
 
-  // Handler untuk submit form
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
-    // Jika userId adalah string kosong, kirim undefined
+    
     const submissionData = {
       ...formData,
       userId: formData.userId === '' ? null : formData.userId,
     };
 
-    // Tampilkan konfirmasi sebelum mengubah gudang
+    
     showConfirmationAlert(
       'Konfirmasi',
       'Apakah Anda yakin ingin menyimpan perubahan data gudang ini?',
@@ -182,7 +182,7 @@ export default function EditGudang() {
 
   const isSubmitting = updateWarehouseMutation.isPending;
 
-  // Helper function untuk class input
+  
   const inputClassName = (fieldName: keyof WarehouseFormData) =>
     cn(
       'mt-1 w-full border-gray-300',
@@ -191,7 +191,7 @@ export default function EditGudang() {
         : 'focus:border-blue-500 focus:ring-blue-500'
     );
 
-  // Periksa apakah gudang memiliki user yang terkait dan user belum memilih untuk mengubahnya
+  
   const hasAssignedUser = gudang?.user?.id && !isChangingUser;
 
   return (

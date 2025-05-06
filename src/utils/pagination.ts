@@ -1,6 +1,4 @@
-/**
- * Get page range with ellipsis for pagination
- */
+
 export function getPageRange(
   currentPage: number,
   totalPages: number

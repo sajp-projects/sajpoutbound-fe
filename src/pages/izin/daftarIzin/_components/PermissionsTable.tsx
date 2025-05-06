@@ -11,9 +11,7 @@ interface PermissionsTableProps {
   isPermissionChanged: (id: string) => boolean;
 }
 
-/**
- * Permissions table component for desktop view
- */
+
 export const PermissionsTable = ({ permissions, isPermissionSelected, togglePermission, isPermissionChanged }: PermissionsTableProps) => {
   return (
     <Table>

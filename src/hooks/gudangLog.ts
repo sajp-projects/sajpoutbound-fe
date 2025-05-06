@@ -6,7 +6,7 @@ import { fetchApi } from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
 import { BASE_URL } from "@/constant/baseUrl";
 
-// Query keys untuk caching
+
 export const warehouseLogKeys = {
   all: ["warehouseLogs"] as const,
   lists: () => [...warehouseLogKeys.all, "list"] as const,
@@ -14,7 +14,7 @@ export const warehouseLogKeys = {
   warehouseLogs: (warehouseId: string, filters: Record<string, unknown>) => [...warehouseLogKeys.lists(), warehouseId, { filters }] as const,
 };
 
-// Hook untuk mengambil semua log gudang dengan pagination
+
 export function useWarehouseLogs(options?: Omit<UseQueryOptions<WarehouseLogsResponse, Error, WarehouseLogsResponse, ReturnType<typeof warehouseLogKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
   const filters = {
@@ -47,7 +47,7 @@ export function useWarehouseLogs(options?: Omit<UseQueryOptions<WarehouseLogsRes
   });
 }
 
-// Hook untuk mengambil log gudang berdasarkan ID gudang
+
 export function useWarehouseLogsByWarehouseId(warehouseId: string, options?: Omit<UseQueryOptions<WarehouseLogsResponse, Error, WarehouseLogsResponse, ReturnType<typeof warehouseLogKeys.warehouseLogs>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
   const filters = {

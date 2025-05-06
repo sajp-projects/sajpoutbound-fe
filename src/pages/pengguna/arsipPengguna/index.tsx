@@ -41,7 +41,7 @@ export default function ArsipPengguna() {
     });
   };
 
-  // Render table untuk desktop & tablet
+  
   const renderTable = () => (
     <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
@@ -105,7 +105,7 @@ export default function ArsipPengguna() {
     </div>
   );
 
-  // Render cards untuk mobile
+  
   const renderCards = () => (
     <div className="sm:hidden space-y-4 w-full">
       {archivedUsers.length === 0 ? (

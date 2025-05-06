@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type Us
 import { useSearchParams } from "react-router";
 import { BASE_URL } from "@/constant/baseUrl";
 
-// Query keys for caching
+
 export const permissionKeys = {
   all: ["permissions"] as const,
   lists: () => [...permissionKeys.all, "list"] as const,
@@ -14,7 +14,7 @@ export const permissionKeys = {
   rolePermissions: (roleId: string) => [...permissionKeys.all, "role", roleId] as const,
 };
 
-// Hook untuk mengambil semua izin dengan pagination
+
 export function usePermissions(options?: Omit<UseQueryOptions<PermissionsResponse, Error, PermissionsResponse, ReturnType<typeof permissionKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
   const filters = {
@@ -48,7 +48,7 @@ export function usePermissions(options?: Omit<UseQueryOptions<PermissionsRespons
   });
 }
 
-// Hook untuk mengambil izin yang dimiliki oleh peran tertentu
+
 export function useRolePermissions(roleId: string, options?: Omit<UseQueryOptions<Permission[], Error, Permission[], ReturnType<typeof permissionKeys.rolePermissions>>, "queryKey" | "queryFn">) {
   return useQuery({
     queryKey: permissionKeys.rolePermissions(roleId),
@@ -74,7 +74,7 @@ export function useRolePermissions(roleId: string, options?: Omit<UseQueryOption
   });
 }
 
-// Hook untuk memperbarui izin peran secara massal
+
 export function useUpdateRolePermissions(options?: UseMutationOptions<RolePermission[], Error, { roleId: string; permissionIds: string[] }>) {
   const queryClient = useQueryClient();
 

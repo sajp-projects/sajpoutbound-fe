@@ -23,7 +23,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
   const updateFormData = (field: keyof LoginFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error for this field
+    
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }

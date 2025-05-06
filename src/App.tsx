@@ -30,7 +30,7 @@ import TambahBarang from "./pages/barang/tambahBarang";
 import LogBarang from "./pages/barang/logBarang";
 import LogSemuaBarang from "./pages/barang/logSemuaBarang";
 
-// Type untuk resource route yang dilindungi
+
 interface ProtectedRouteConfig {
   path: string;
   element: React.ReactNode;
@@ -40,7 +40,7 @@ interface ProtectedRouteConfig {
 }
 
 export default function App() {
-  // Helper untuk membuat protected route dengan RBAC
+  
   const createProtectedRoute = ({ path, element, resource, action, redirectTo }: ProtectedRouteConfig) => (
     <Route
       path={path}
@@ -52,7 +52,7 @@ export default function App() {
     />
   );
 
-  // Konfigurasi rute pengguna
+  
   const userRoutes: ProtectedRouteConfig[] = [
     {
       path: "",
@@ -105,7 +105,7 @@ export default function App() {
     },
   ];
 
-  // Konfigurasi rute peran
+  
   const roleRoutes: ProtectedRouteConfig[] = [
     {
       path: "",
@@ -144,7 +144,7 @@ export default function App() {
     },
   ];
 
-  // Konfigurasi rute gudang
+  
   const gudangRoutes: ProtectedRouteConfig[] = [
     {
       path: "",
@@ -190,7 +190,7 @@ export default function App() {
     },
   ];
 
-  // Konfigurasi rute barang
+  
   const barangRoutes: ProtectedRouteConfig[] = [
     {
       path: "",
@@ -239,26 +239,26 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Authentication routes */}
+        {}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
         </Route>
 
-        {/* Protected routes */}
+        {}
         <Route element={<BaseLayout />}>
-          {/* Dashboard - membutuhkan autentikasi dasar */}
+          {}
           <Route index element={<Dashboard />} />
 
-          {/* Rute Pengguna */}
+          {}
           <Route path="/pengguna">{userRoutes.map((route) => createProtectedRoute(route))}</Route>
 
-          {/* Rute Peran */}
+          {}
           <Route path="/peran">{roleRoutes.map((route) => createProtectedRoute(route))}</Route>
 
-          {/* Rute Gudang */}
+          {}
           <Route path="/gudang">{gudangRoutes.map((route) => createProtectedRoute(route))}</Route>
 
-          {/* Rute Barang */}
+          {}
           <Route path="/barang">{barangRoutes.map((route) => createProtectedRoute(route))}</Route>
         </Route>
       </Routes>

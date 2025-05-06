@@ -25,7 +25,7 @@ export default function LogBarang() {
   const itemsPerPage = parseInt(searchParams.get('limit') || '10');
   const productId = id || '';
 
-  // Fetch data barang dan log barang
+  
   const { data: barangData, isLoading: barangLoading } = useProduct(
     { id: productId },
     { enabled: !!productId }
@@ -48,7 +48,7 @@ export default function LogBarang() {
     hasPrev: false,
   };
 
-  // Helper untuk label aksi
+  
   const getActionLabel = (action: string) => {
     const labels = {
       CREATE: {
@@ -76,14 +76,14 @@ export default function LogBarang() {
     );
   };
 
-  // Helper untuk render perubahan data
+  
   const renderChanges = (
     oldData: Record<string, unknown> | null,
     newData: Record<string, unknown> | null
   ) => {
     if (!oldData && !newData) return null;
 
-    // Untuk aksi CREATE - newData saja
+    
     if (newData && !oldData) {
       return (
         <div>
@@ -130,7 +130,7 @@ export default function LogBarang() {
       );
     }
 
-    // Untuk aksi DELETE - oldData saja
+    
     if (oldData && !newData) {
       return (
         <div>
@@ -169,7 +169,7 @@ export default function LogBarang() {
       );
     }
 
-    // Untuk aksi UPDATE - bandingkan old dan new
+    
     if (oldData && newData) {
       const changes = [];
 
@@ -240,10 +240,10 @@ export default function LogBarang() {
     return null;
   };
 
-  // Komponen untuk tampilan daftar log
+  
   const LogList = () => (
     <>
-      {/* Table untuk desktop & tablet */}
+      {}
       <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
         <Table>
           <TableHeader>
@@ -338,7 +338,7 @@ export default function LogBarang() {
         </Table>
       </div>
 
-      {/* Card untuk mobile */}
+      {}
       <div className="sm:hidden space-y-4">
         {logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
@@ -386,7 +386,7 @@ export default function LogBarang() {
         )}
       </div>
 
-      {/* Pagination */}
+      {}
       {data && (
         <Pagination
           totalItems={pagination.total}

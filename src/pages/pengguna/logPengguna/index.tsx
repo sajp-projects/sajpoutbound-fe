@@ -17,14 +17,14 @@ export default function LogPengguna() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
 
-  // Mengambil parameter dari URL
+  
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  // Pastikan kita memiliki ID pengguna
+  
   const userId = id || "";
 
-  // Fetch data user
+  
   const { data: userData, isLoading: userLoading } = useUser(
     { id: userId },
     {
@@ -32,7 +32,7 @@ export default function LogPengguna() {
     }
   );
 
-  // Fetch data log pengguna
+  
   const { data, isLoading } = useUserLogs(userId, {
     enabled: !!userId,
     staleTime: 0,
@@ -50,7 +50,7 @@ export default function LogPengguna() {
     hasPrev: false,
   };
 
-  // Helper untuk mendapatkan label yang sesuai untuk jenis aksi
+  
   const getActionLabel = (action: string) => {
     const labels = {
       CREATE: { label: "Dibuat", color: "bg-green-100 text-green-800 border-green-200" },
@@ -61,7 +61,7 @@ export default function LogPengguna() {
     return labels[action as keyof typeof labels] || { label: action, color: "bg-gray-100 text-gray-800 border-gray-200" };
   };
 
-  // Helper untuk mendapatkan label yang sesuai untuk jenis entitas
+  
   const getEntityTypeLabel = (entityType: string) => {
     const labels = {
       USER: { label: "Pengguna", color: "bg-purple-100 text-purple-800 border-purple-200" },
@@ -70,11 +70,11 @@ export default function LogPengguna() {
     return labels[entityType as keyof typeof labels] || { label: entityType, color: "bg-gray-100 text-gray-800 border-gray-200" };
   };
 
-  // Helper untuk render perubahan data
+  
   const renderChanges = (oldData: Record<string, unknown> | null, newData: Record<string, unknown> | null) => {
     if (!oldData && !newData) return null;
 
-    // Untuk aksi CREATE - newData saja
+    
     if (newData && !oldData) {
       return (
         <div>
@@ -101,7 +101,7 @@ export default function LogPengguna() {
       );
     }
 
-    // Untuk aksi DELETE - oldData saja
+    
     if (oldData && !newData) {
       return (
         <div>
@@ -128,7 +128,7 @@ export default function LogPengguna() {
       );
     }
 
-    // Untuk aksi UPDATE - bandingkan old dan new
+    
     if (oldData && newData) {
       const changes = [];
 
@@ -180,10 +180,10 @@ export default function LogPengguna() {
     return null;
   };
 
-  // Komponen untuk tampilan daftar log
+  
   const LogList = () => (
     <>
-      {/* Table untuk desktop & tablet */}
+      {}
       <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
@@ -239,7 +239,7 @@ export default function LogPengguna() {
         </div>
       </div>
 
-      {/* Card untuk mobile */}
+      {}
       <div className="sm:hidden space-y-4">
         {logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
@@ -271,7 +271,7 @@ export default function LogPengguna() {
         )}
       </div>
 
-      {/* Pagination */}
+      {}
       {data && <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />}
     </>
   );

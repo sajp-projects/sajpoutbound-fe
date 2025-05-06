@@ -32,16 +32,16 @@ export default function Role() {
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
 
-  // Mengambil parameter dari URL
+  
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  // Fetch permissions untuk memeriksa akses
+  
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && roleId !== "",
   });
 
-  // Fetch peran dari API
+  
   const { data, isLoading, isError, refetch } = useRoles({
     staleTime: 5000,
     refetchOnMount: "always",
@@ -57,7 +57,7 @@ export default function Role() {
     hasPrev: false,
   };
 
-  // Cek apakah user memiliki izin tertentu
+  
   const hasPermissionAccess = () => hasPermission(permissions, PERMISSION.RESOURCES.PERMISSION, PERMISSION.ACTIONS.READ);
 
   const deleteRole = useDeleteRole({
@@ -82,7 +82,7 @@ export default function Role() {
     });
   };
 
-  // Mendefinisikan tindakan untuk peran
+  
   const getRoleActions = (role: Role) => [
     { type: ActionType.VIEW },
     {
@@ -131,7 +131,7 @@ export default function Role() {
           <ErrorState title="Gagal memuat data peran" message="Terjadi kesalahan pada server" onRetry={() => refetch()} />
         ) : (
           <div className="w-full">
-            {/* Table untuk tampilan desktop & tablet */}
+            {}
             <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden w-full">
               <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <Table>
@@ -181,7 +181,7 @@ export default function Role() {
               </div>
             </div>
 
-            {/* Card untuk tampilan mobile */}
+            {}
             <div className="sm:hidden space-y-3 w-full">
               {roles.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-6 border rounded-lg border-gray-200 bg-white w-full">
@@ -216,7 +216,7 @@ export default function Role() {
               )}
             </div>
 
-            {/* Pagination */}
+            {}
             <div className="w-full mt-4">
               <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />
             </div>

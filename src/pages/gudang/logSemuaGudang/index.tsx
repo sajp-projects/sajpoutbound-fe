@@ -14,7 +14,7 @@ import { Link } from "react-router";
 import { LoadingState } from "@/components/LoadingState";
 import { EmptyState } from "@/components/EmptyState";
 
-// Tipe untuk label aksi
+
 interface ActionLabel {
   label: string;
   color: string;
@@ -23,11 +23,11 @@ interface ActionLabel {
 export default function LogSemuaGudang() {
   const [searchParams] = useSearchParams();
 
-  // Mengambil parameter dari URL
+  
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  // Fetch data log semua gudang
+  
   const { data, isLoading } = useWarehouseLogs({
     staleTime: 0,
     refetchOnMount: true,
@@ -44,7 +44,7 @@ export default function LogSemuaGudang() {
     hasPrev: false,
   };
 
-  // Helper untuk mendapatkan label yang sesuai untuk jenis aksi
+  
   const getActionLabel = (action: string): ActionLabel => {
     const labels: Record<string, ActionLabel> = {
       CREATE: { label: "Dibuat", color: "bg-green-100 text-green-800 border-green-200" },
@@ -56,11 +56,11 @@ export default function LogSemuaGudang() {
     return labels[action] || { label: action, color: "bg-gray-100 text-gray-800 border-gray-200" };
   };
 
-  // Helper untuk menampilkan perubahan data
+  
   const renderChanges = (oldData: Record<string, unknown> | null, newData: Record<string, unknown> | null) => {
     if (!oldData && !newData) return null;
 
-    // Untuk aksi CREATE
+    
     if (newData && !oldData) {
       return (
         <div>
@@ -81,7 +81,7 @@ export default function LogSemuaGudang() {
       );
     }
 
-    // Untuk aksi DELETE
+    
     if (oldData && !newData) {
       return (
         <div>
@@ -102,11 +102,11 @@ export default function LogSemuaGudang() {
       );
     }
 
-    // Untuk aksi UPDATE
+    
     if (oldData && newData) {
       const changes = [];
 
-      // Bandingkan field-field untuk melihat perubahan
+      
       if (oldData.name !== newData.name) {
         changes.push({
           field: "Nama",
@@ -123,7 +123,7 @@ export default function LogSemuaGudang() {
         });
       }
 
-      // Bandingkan pengelola jika ada perubahan
+      
       type UserType = { name: string };
       const oldUser = (oldData.user as UserType)?.name || "-";
       const newUser = (newData.user as UserType)?.name || "-";
@@ -166,7 +166,7 @@ export default function LogSemuaGudang() {
     return null;
   };
 
-  // Helper untuk mendapatkan nama gudang
+  
   const getWarehouseName = (log: WarehouseLog) => {
     if (log.warehouse) {
       return log.warehouse.name;
@@ -178,7 +178,7 @@ export default function LogSemuaGudang() {
     return "Gudang tidak diketahui";
   };
 
-  // Render table untuk log activity
+  
   const renderLogTable = () => (
     <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
@@ -252,7 +252,7 @@ export default function LogSemuaGudang() {
     </div>
   );
 
-  // Render cards untuk tampilan mobile
+  
   const renderLogCards = () => (
     <div className="sm:hidden space-y-4">
       {logs.length === 0 ? (

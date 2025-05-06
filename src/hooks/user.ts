@@ -6,14 +6,14 @@ import { fetchApi } from "@/utils/api";
 import { handleApiError, createErrorResponse } from "@/utils/errorHandler";
 import { BASE_URL } from "@/constant/baseUrl";
 
-// Type for user update input based on backend Joi schema
+
 export interface UserUpdateInput {
   name?: string;
   email?: string;
   roleId?: string;
 }
 
-// Query keys for caching
+
 export const userKeys = {
   all: ["users"] as const,
   lists: () => [...userKeys.all, "list"] as const,
@@ -48,7 +48,7 @@ export function useUser({ id }: { id: string }, options?: Omit<UseQueryOptions<U
   });
 }
 
-// Hook untuk mendapatkan daftar pengguna dengan pagination dari server
+
 export function useUsers(options?: Omit<UseQueryOptions<UsersResponse, Error, UsersResponse, ReturnType<typeof userKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
   const filters = {
@@ -84,7 +84,7 @@ export function useUsers(options?: Omit<UseQueryOptions<UsersResponse, Error, Us
   });
 }
 
-// Create a new user
+
 export function useCreateUser(options?: UseMutationOptions<UserWithRole, Error, CreateUserInput>) {
   const queryClient = useQueryClient();
 
@@ -119,7 +119,7 @@ export function useCreateUser(options?: UseMutationOptions<UserWithRole, Error, 
   });
 }
 
-// Update an existing user
+
 export function useUpdateUser(options?: UseMutationOptions<UserWithRole, Error, { id: string } & UserUpdateInput>) {
   const queryClient = useQueryClient();
 
@@ -158,7 +158,7 @@ export function useUpdateUser(options?: UseMutationOptions<UserWithRole, Error, 
   });
 }
 
-// Delete a user
+
 export function useDeleteUser(options?: UseMutationOptions<void, Error, { id: string }>) {
   const queryClient = useQueryClient();
 
@@ -210,7 +210,7 @@ export function useArchivedUsers(options?: Omit<UseQueryOptions<UserWithRole[], 
   });
 }
 
-// Restore an archived user
+
 export function useRestoreUser(options?: UseMutationOptions<UserWithRole, Error, { id: string }>) {
   const queryClient = useQueryClient();
 

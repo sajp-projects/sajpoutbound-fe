@@ -41,9 +41,9 @@ export default function TambahBarang() {
   });
   const [errors, setErrors] = useState<ProductFormErrors>({});
 
-  // Fetch daftar gudang untuk dropdown
+  
   const { data: warehousesData } = useWarehouses({
-    staleTime: 300000, // 5 menit
+    staleTime: 300000, 
   });
   const warehouses = warehousesData?.warehouses || [];
 

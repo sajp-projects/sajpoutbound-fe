@@ -13,7 +13,7 @@ import { Link } from "react-router";
 import { LoadingState } from "@/components/LoadingState";
 import { EmptyState } from "@/components/EmptyState";
 
-// Tipe untuk log pengguna
+
 interface UserLog {
   id: string;
   createdAt: string;
@@ -31,7 +31,7 @@ interface UserLog {
   };
 }
 
-// Tipe untuk label aksi
+
 interface ActionLabel {
   label: string;
   color: string;
@@ -40,11 +40,11 @@ interface ActionLabel {
 export default function LogSemuaPengguna() {
   const [searchParams] = useSearchParams();
 
-  // Mengambil parameter dari URL
+  
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  // Fetch data log semua pengguna
+  
   const { data, isLoading } = useAllUserLogs({
     staleTime: 0,
     refetchOnMount: true,
@@ -61,7 +61,7 @@ export default function LogSemuaPengguna() {
     hasPrev: false,
   };
 
-  // Helper untuk mendapatkan label yang sesuai untuk jenis aksi
+  
   const getActionLabel = (action: string): ActionLabel => {
     const labels: Record<string, ActionLabel> = {
       CREATE: { label: "Dibuat", color: "bg-green-100 text-green-800 border-green-200" },
@@ -73,11 +73,11 @@ export default function LogSemuaPengguna() {
     return labels[action] || { label: action, color: "bg-gray-100 text-gray-800 border-gray-200" };
   };
 
-  // Helper untuk menampilkan perubahan data
+  
   const renderChanges = (oldData: Record<string, unknown> | null, newData: Record<string, unknown> | null) => {
     if (!oldData && !newData) return null;
 
-    // Untuk aksi CREATE
+    
     if (newData && !oldData) {
       return (
         <div>
@@ -102,7 +102,7 @@ export default function LogSemuaPengguna() {
       );
     }
 
-    // Untuk aksi DELETE atau RESTORE
+    
     if ((oldData && !newData) || (oldData && newData && oldData.deletedAt !== newData.deletedAt)) {
       const isRestore = newData?.deletedAt === null;
       return (
@@ -122,9 +122,9 @@ export default function LogSemuaPengguna() {
       );
     }
 
-    // Untuk aksi UPDATE
+    
     if (oldData && newData) {
-      // Bandingkan field-field untuk melihat perubahan
+      
       const changes = [];
 
       if (oldData.name !== newData.name) {
@@ -181,7 +181,7 @@ export default function LogSemuaPengguna() {
     return null;
   };
 
-  // Render table untuk log activity
+  
   const renderLogTable = () => (
     <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
@@ -253,7 +253,7 @@ export default function LogSemuaPengguna() {
     </div>
   );
 
-  // Render cards untuk tampilan mobile
+  
   const renderLogCards = () => (
     <div className="sm:hidden space-y-4">
       {logs.length === 0 ? (

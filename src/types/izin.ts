@@ -1,4 +1,4 @@
-// Izin Type
+
 
 export interface Permission {
   id: string;

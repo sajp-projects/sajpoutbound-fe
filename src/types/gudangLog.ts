@@ -16,7 +16,7 @@ export interface WarehouseLog {
   performedBy: UserMinimal;
 }
 
-// Interface untuk response log dengan pagination
+
 export interface WarehouseLogsResponse {
   logs: WarehouseLog[];
   pagination: Pagination;

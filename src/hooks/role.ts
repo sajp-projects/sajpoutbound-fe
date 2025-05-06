@@ -6,7 +6,7 @@ import { useSearchParams } from "react-router";
 import { handleApiError, createErrorResponse } from "@/utils/errorHandler";
 import { BASE_URL } from "@/constant/baseUrl";
 
-// Interface untuk respons API roles dengan pagination
+
 export interface RolesResponse {
   roles: Role[];
   pagination: {
@@ -19,7 +19,7 @@ export interface RolesResponse {
   };
 }
 
-// Query keys for caching
+
 export const roleKeys = {
   all: ["roles"] as const,
   lists: () => [...roleKeys.all, "list"] as const,
@@ -29,7 +29,7 @@ export const roleKeys = {
   detail: (id: string) => [...roleKeys.details(), id] as const,
 };
 
-// Type for role update input based on backend Joi schema
+
 export interface RoleUpdateInput {
   name?: string;
   description?: string;
@@ -40,7 +40,7 @@ export interface CreateRoleInput {
   description: string;
 }
 
-// Hook for fetching a single role
+
 export function useRole({ id }: { id: string }, options?: Omit<UseQueryOptions<Role, Error, Role, ReturnType<typeof roleKeys.detail>>, "queryKey" | "queryFn">) {
   return useQuery({
     queryKey: roleKeys.detail(id.toString()),
@@ -62,17 +62,17 @@ export function useRole({ id }: { id: string }, options?: Omit<UseQueryOptions<R
   });
 }
 
-// Type untuk respons role tanpa pagination
+
 export interface AllRolesResponse {
   roles: Role[];
 }
 
-// Hook untuk mengambil semua peran tanpa paginasi
+
 export function useAllRoles(options?: Omit<UseQueryOptions<AllRolesResponse, Error, AllRolesResponse, ReturnType<typeof roleKeys.allRoles>>, "queryKey" | "queryFn">) {
   return useQuery({
     queryKey: roleKeys.allRoles(),
     queryFn: async () => {
-      // Fetch tanpa menggunakan filter/paginasi
+      
       const response = await fetchApi(`${BASE_URL}/roles`, {});
 
       if (!response.ok) {
@@ -89,14 +89,14 @@ export function useAllRoles(options?: Omit<UseQueryOptions<AllRolesResponse, Err
         throw new Error("Roles data is missing");
       }
 
-      // Kembalikan hanya data roles tanpa pagination
+      
       return { roles: result.data.roles };
     },
     ...options,
   });
 }
 
-// Hook for fetching roles with pagination
+
 export function useRoles(options?: Omit<UseQueryOptions<RolesResponse, Error, RolesResponse, ReturnType<typeof roleKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
 
@@ -130,7 +130,7 @@ export function useRoles(options?: Omit<UseQueryOptions<RolesResponse, Error, Ro
   });
 }
 
-// Create a new role
+
 export function useCreateRole(options?: UseMutationOptions<Role, Error, CreateRoleInput>) {
   const queryClient = useQueryClient();
 
@@ -165,7 +165,7 @@ export function useCreateRole(options?: UseMutationOptions<Role, Error, CreateRo
   });
 }
 
-// Update a role
+
 export function useUpdateRole(options?: UseMutationOptions<Role, Error, { id: string } & RoleUpdateInput>) {
   const queryClient = useQueryClient();
 
@@ -204,7 +204,7 @@ export function useUpdateRole(options?: UseMutationOptions<Role, Error, { id: st
   });
 }
 
-// Delete a role
+
 export function useDeleteRole(options?: UseMutationOptions<Role, Error, { id: string }>) {
   const queryClient = useQueryClient();
 

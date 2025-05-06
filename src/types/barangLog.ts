@@ -1,4 +1,4 @@
-// type untuk log barang
+
 import { Pagination } from "./user";
 import { UserMinimal } from "./gudang";
 import { Product } from "./barang";
@@ -17,7 +17,7 @@ export interface ProductLog {
   performedBy: UserMinimal;
 }
 
-// Interface untuk response log dengan pagination
+
 export interface ProductLogsResponse {
   logs: ProductLog[];
   pagination: Pagination;

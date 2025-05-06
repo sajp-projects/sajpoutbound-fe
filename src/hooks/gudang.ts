@@ -1,4 +1,4 @@
-// hooks untuk gudang
+
 import { ApiResponse, ApiErrorResult } from "@/types/api";
 import { CreateWarehouseInput, UpdateWarehouseInput, Warehouse, WarehousesResponse } from "@/types/gudang";
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
@@ -7,7 +7,7 @@ import { fetchApi } from "@/utils/api";
 import { handleApiError, createErrorResponse } from "@/utils/errorHandler";
 import { BASE_URL } from "@/constant/baseUrl";
 
-// Query keys untuk caching
+
 export const warehouseKeys = {
   all: ["warehouses"] as const,
   lists: () => [...warehouseKeys.all, "list"] as const,
@@ -17,7 +17,7 @@ export const warehouseKeys = {
   logs: () => [...warehouseKeys.all, "logs"] as const,
 };
 
-// Hook untuk mengambil daftar gudang dengan pagination
+
 export function useWarehouses(options?: Omit<UseQueryOptions<WarehousesResponse, Error, WarehousesResponse, ReturnType<typeof warehouseKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
   const filters = {
@@ -52,7 +52,7 @@ export function useWarehouses(options?: Omit<UseQueryOptions<WarehousesResponse,
   });
 }
 
-// Hook untuk mengambil detail gudang berdasarkan ID
+
 export function useWarehouse({ id }: { id: string }, options?: Omit<UseQueryOptions<Warehouse, Error, Warehouse, ReturnType<typeof warehouseKeys.detail>>, "queryKey" | "queryFn">) {
   return useQuery({
     queryKey: warehouseKeys.detail(id),
@@ -79,7 +79,7 @@ export function useWarehouse({ id }: { id: string }, options?: Omit<UseQueryOpti
   });
 }
 
-// Hook untuk membuat gudang baru
+
 export function useCreateWarehouse(options?: UseMutationOptions<Warehouse, Error, CreateWarehouseInput>) {
   const queryClient = useQueryClient();
 
@@ -114,7 +114,7 @@ export function useCreateWarehouse(options?: UseMutationOptions<Warehouse, Error
   });
 }
 
-// Hook untuk memperbarui gudang
+
 export function useUpdateWarehouse(options?: UseMutationOptions<Warehouse, Error, { id: string } & UpdateWarehouseInput>) {
   const queryClient = useQueryClient();
 
@@ -153,7 +153,7 @@ export function useUpdateWarehouse(options?: UseMutationOptions<Warehouse, Error
   });
 }
 
-// Hook untuk menghapus gudang
+
 export function useDeleteWarehouse(options?: UseMutationOptions<void, Error, { id: string }>) {
   const queryClient = useQueryClient();
 

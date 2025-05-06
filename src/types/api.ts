@@ -1,4 +1,4 @@
-// Generic API response type
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -6,7 +6,7 @@ export interface ApiResponse<T> {
   errorType?: string;
 }
 
-// Error response structures
+
 export interface JoiValidationError {
   message: string;
   errorType: "joiValidationError";
@@ -22,7 +22,7 @@ export interface CustomError {
   errorType: string;
 }
 
-// Interface untuk respons API dengan errorType dan details
+
 export interface ApiErrorResult {
   success: boolean;
   message?: string;
@@ -31,7 +31,7 @@ export interface ApiErrorResult {
   data?: unknown;
 }
 
-// Error response for type-safe handling
+
 export interface ApiErrorResponse {
   message: string;
   errorType?: string;

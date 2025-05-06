@@ -11,9 +11,7 @@ interface ResourceGroupProps {
   isPermissionChanged: (id: string) => boolean;
 }
 
-/**
- * Resource group component that groups permissions by resource
- */
+
 export const ResourceGroup = ({ resource, permissions, isPermissionSelected, togglePermission, isPermissionChanged }: ResourceGroupProps) => (
   <div className="border border-gray-200 rounded-lg overflow-hidden">
     <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
@@ -23,7 +21,7 @@ export const ResourceGroup = ({ resource, permissions, isPermissionSelected, tog
       </h3>
     </div>
 
-    {/* Table untuk tampilan desktop & tablet */}
+    {}
     <div className="hidden sm:block">
       <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         <div className="min-w-[900px]">
@@ -32,7 +30,7 @@ export const ResourceGroup = ({ resource, permissions, isPermissionSelected, tog
       </div>
     </div>
 
-    {/* Card untuk tampilan mobile */}
+    {}
     <div className="sm:hidden space-y-4">
       {permissions.map((permission) => (
         <PermissionCard key={permission.id} permission={permission} isSelected={isPermissionSelected(permission.id)} onToggle={togglePermission} isChanged={isPermissionChanged(permission.id)} />

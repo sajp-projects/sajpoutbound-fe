@@ -17,7 +17,7 @@ export default function Navbar({ toggleSidebar }: NavbarProps) {
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
       <div className="px-2 sm:px-4 lg:px-6">
         <div className="flex h-14 sm:h-16 items-center justify-between">
-          {/* Left Side */}
+          {}
           <div className="flex items-center">
             <button
               type="button"
@@ -29,7 +29,7 @@ export default function Navbar({ toggleSidebar }: NavbarProps) {
             </button>
           </div>
 
-          {/* Right Side */}
+          {}
           <div className="relative">
             <button type="button" className="flex items-center gap-1.5 sm:gap-2 py-1 sm:py-1.5 px-1.5 sm:px-2 rounded-lg hover:bg-gray-100 text-xs sm:text-sm" onClick={() => setIsProfileOpen(!isProfileOpen)}>
               <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-gradient-to-r from-blue-500 to-blue-700 flex items-center justify-center text-white">
@@ -42,7 +42,7 @@ export default function Navbar({ toggleSidebar }: NavbarProps) {
               <ChevronDown className={cn("h-4 w-4 text-gray-500 transition-transform", isProfileOpen && "transform rotate-180")} />
             </button>
 
-            {/* Dropdown Menu */}
+            {}
             {isProfileOpen && (
               <div className="absolute right-0 mt-1 sm:mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                 <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-100">

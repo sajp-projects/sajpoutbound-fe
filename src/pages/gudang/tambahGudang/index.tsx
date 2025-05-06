@@ -39,9 +39,9 @@ export default function TambahGudang() {
   });
   const [errors, setErrors] = useState<WarehouseFormErrors>({});
 
-  // Fetch daftar pengguna untuk dropdown
+  
   const { data: usersData } = useUsers({
-    staleTime: 300000, // 5 menit
+    staleTime: 300000, 
   });
   const users = usersData?.users || [];
 
@@ -101,7 +101,7 @@ export default function TambahGudang() {
     e.preventDefault();
     setErrors({});
 
-    // Jika userId adalah string kosong, kirim undefined
+    
     const submissionData = {
       ...formData,
       userId: formData.userId === '' ? undefined : formData.userId,

@@ -19,7 +19,7 @@ export default function BaseLayout() {
       }
     };
 
-    handleResize(); // Set initial value
+    handleResize(); 
     window.addEventListener("resize", handleResize);
 
     return () => {
@@ -31,22 +31,22 @@ export default function BaseLayout() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  // Cek apakah sudah login, jika belum redirect ke halaman login
+  
   useEffect(() => {
     checkAuthRedirect(true, "/login");
   }, [checkAuthRedirect]);
 
-  // Jika masih loading atau belum login, jangan tampilkan apapun
+  
   if (isLoading || !isAuthenticated) {
     return null;
   }
 
   return (
     <div className="flex h-screen overflow-hidden w-full bg-gray-50">
-      {/* Sidebar - Full Height */}
+      {}
       <SideBar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
-      {/* Main Content */}
+      {}
       <div className={`flex flex-col flex-1 min-h-screen transition-all duration-200 ease-in-out w-full ${isSidebarOpen ? "lg:ml-64" : ""}`}>
         <Navbar toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 

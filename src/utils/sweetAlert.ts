@@ -1,7 +1,7 @@
-// sweetAlert.ts
+
 import Swal, { SweetAlertResult } from "sweetalert2";
 
-// Fungsi untuk alert sukses dengan durasi singkat (auto-close)
+
 export const showSuccessAlert = (title: string, text?: string) => {
   return Swal.fire({
     icon: "success",
@@ -12,7 +12,7 @@ export const showSuccessAlert = (title: string, text?: string) => {
   });
 };
 
-// Fungsi untuk alert error
+
 export const showErrorAlert = (title: string, text?: string) => {
   return Swal.fire({
     icon: "error",
@@ -22,7 +22,7 @@ export const showErrorAlert = (title: string, text?: string) => {
   });
 };
 
-// Fungsi untuk alert warning/peringatan dengan konfirmasi
+
 export const showWarningAlert = (title: string, text: string) => {
   return Swal.fire({
     icon: "warning",
@@ -32,7 +32,7 @@ export const showWarningAlert = (title: string, text: string) => {
   });
 };
 
-// Fungsi untuk alert konfirmasi dengan opsi Ya/Tidak
+
 export const showConfirmationAlert = (title: string, text: string, confirmButtonText = "Ya", cancelButtonText = "Batal") => {
   return Swal.fire({
     title,
@@ -46,7 +46,7 @@ export const showConfirmationAlert = (title: string, text: string, confirmButton
   });
 };
 
-// Fungsi untuk alert konfirmasi penghapusan
+
 export const showDeleteConfirmationAlert = (itemName: string, message?: string) => {
   return Swal.fire({
     title: `Konfirmasi Hapus ${itemName}`,
@@ -60,7 +60,7 @@ export const showDeleteConfirmationAlert = (itemName: string, message?: string) 
   });
 };
 
-// Fungsi untuk alert akses ditolak
+
 export const showForbiddenAlert = (title = "Akses Ditolak", text = "Anda tidak memiliki akses untuk melakukan tindakan ini.") => {
   return Swal.fire({
     title,
@@ -70,10 +70,10 @@ export const showForbiddenAlert = (title = "Akses Ditolak", text = "Anda tidak m
   });
 };
 
-// Helper untuk memeriksa apakah konfirmasi dikonfirmasi
+
 export const isConfirmed = (result: SweetAlertResult) => {
   return result.isConfirmed;
 };
 
-// Export Swal langsung jika ada kasus yang tidak tercakup
+
 export default Swal;

@@ -1,4 +1,4 @@
-// hooks untuk log barang
+
 import { ApiResponse } from "@/types/api";
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
@@ -7,7 +7,7 @@ import { fetchApi } from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
 import { BASE_URL } from "@/constant/baseUrl";
 
-// Query keys untuk caching
+
 export const productLogKeys = {
   all: ["productLogs"] as const,
   lists: () => [...productLogKeys.all, "list"] as const,
@@ -15,7 +15,7 @@ export const productLogKeys = {
   productLogs: (productId: string, filters: Record<string, unknown>) => [...productLogKeys.lists(), productId, { filters }] as const,
 };
 
-// Hook untuk mengambil semua log barang dengan pagination
+
 export function useProductLogs(options?: Omit<UseQueryOptions<ProductLogsResponse, Error, ProductLogsResponse, ReturnType<typeof productLogKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
   const filters = {
@@ -48,7 +48,7 @@ export function useProductLogs(options?: Omit<UseQueryOptions<ProductLogsRespons
   });
 }
 
-// Hook untuk mengambil log barang berdasarkan ID barang
+
 export function useProductLogsByProductId(productId: string, options?: Omit<UseQueryOptions<ProductLogsResponse, Error, ProductLogsResponse, ReturnType<typeof productLogKeys.productLogs>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
   const filters = {

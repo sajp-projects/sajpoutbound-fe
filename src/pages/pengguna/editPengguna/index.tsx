@@ -10,13 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-// Import utilitas SweetAlert
+
 import { showSuccessAlert, showErrorAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 import { FormErrors } from "@/utils/errorHandler";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
 
-// Type untuk form edit user
+
 interface UserFormData {
   name: string;
   email: string;
@@ -32,17 +32,17 @@ export default function EditPengguna() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // State untuk form
+  
   const [formData, setFormData] = useState<UserFormData>({
     name: "",
     email: "",
     roleId: "",
   });
 
-  // State untuk error validasi
+  
   const [errors, setErrors] = useState<UserFormErrors>({});
 
-  // Query untuk mendapatkan data user
+  
   const {
     data: user,
     isLoading: isLoadingUser,
@@ -59,28 +59,28 @@ export default function EditPengguna() {
     }
   );
 
-  // Query untuk mendapatkan daftar role - menggunakan useAllRoles untuk mendapatkan semua data
+  
   const { data: rolesData, isLoading: isLoadingRoles, isError: isErrorRoles, refetch: refetchRoles } = useAllRoles();
 
-  // Pastikan roles selalu array dengan mengakses rolesData.roles jika ada
+  
   const roles = rolesData?.roles || [];
 
-  // Mutation untuk update user
+  
   const updateUserMutation = useUpdateUser({
     onSuccess: () => {
-      // Tampilkan SweetAlert untuk sukses
+      
       showSuccessAlert("Berhasil!", "Data pengguna berhasil diperbarui").then(() => {
         navigate(`/pengguna/${id}`);
       });
     },
     onError: (error) => {
-      // Tangani error dari backend
+      
       try {
-        // Parse error yang sudah di-stringify di hook
+        
         const errorObj = JSON.parse(error.message);
 
         if (errorObj.errorType === "joiValidationError" && errorObj.details && errorObj.details.length > 0) {
-          // Petakan error validasi ke field yang sesuai
+          
           const newErrors: UserFormErrors = {};
 
           errorObj.details.forEach((detail: { message: string; path: string[] }) => {
@@ -99,7 +99,7 @@ export default function EditPengguna() {
 
           setErrors(newErrors);
         } else {
-          // Error umum non-validasi
+          
           setErrors({ general: errorObj.message });
         }
       } catch (e) {
@@ -109,7 +109,7 @@ export default function EditPengguna() {
     },
   });
 
-  // Isi form dengan data user ketika data sudah tersedia
+  
   useEffect(() => {
     if (user) {
       setFormData({
@@ -120,23 +120,23 @@ export default function EditPengguna() {
     }
   }, [user]);
 
-  // Handler for input changes
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Hapus error untuk field yang diubah
+    
     if (errors[name as keyof UserFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  // Handler submit form
+  
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
 
-    // Tampilkan konfirmasi sebelum mengubah pengguna
+    
     showConfirmationAlert("Konfirmasi", "Apakah Anda yakin ingin menyimpan perubahan data pengguna ini?", "Ya, Simpan!", "Batal").then((result) => {
       if (isConfirmed(result)) {
         updateUserMutation.mutate({
@@ -153,18 +153,18 @@ export default function EditPengguna() {
   const isError = isErrorUser || isErrorRoles;
   const isSubmitting = updateUserMutation.isPending;
 
-  // Handle refetch
+  
   const handleRetry = () => {
     refetchUser();
     refetchRoles();
   };
 
-  // Fungsi helper untuk class input form
+  
   const inputClassName = (fieldName: keyof UserFormData) => cn("mt-1 w-full border-gray-300", errors[fieldName] ? "border-red-300 focus:border-red-500 focus:ring-red-500" : "focus:border-blue-500 focus:ring-blue-500");
 
   useEffect(() => {
     if (isErrorUser) {
-      // Ganti Swal.fire dengan showErrorAlert
+      
       showErrorAlert("Gagal!", `Gagal memuat data pengguna: ${userError?.message || "Terjadi kesalahan"}`).then(() => {
         navigate("/pengguna");
       });

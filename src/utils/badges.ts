@@ -1,6 +1,4 @@
-/**
- * Get badge variant based on role name
- */
+
 export function getRoleBadgeVariant(
   roleName: string
 ): 'default' | 'destructive' | 'outline' | 'secondary' | 'info' {
@@ -16,9 +14,7 @@ export function getRoleBadgeVariant(
   }
 }
 
-/**
- * Get badge color based on role name
- */
+
 export function getRoleBadgeColor(roleName: string): string {
   switch (roleName.toLowerCase()) {
     case 'admin':
@@ -32,9 +28,7 @@ export function getRoleBadgeColor(roleName: string): string {
   }
 }
 
-/**
- * Get badge class based on permission action
- */
+
 export function getActionBadgeClass(action: string): string {
   switch (action.toUpperCase()) {
     case 'CREATE':

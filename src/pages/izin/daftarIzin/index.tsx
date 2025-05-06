@@ -12,12 +12,12 @@ import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 
 export default function IzinPeran() {
-  // URL parameters
+  
   const { id } = useParams<{ id: string }>();
 
-  // ===== DATA FETCHING =====
+  
 
-  // Fetch data peran dari API
+  
   const {
     data: roleData,
     isLoading: roleLoading,
@@ -26,10 +26,10 @@ export default function IzinPeran() {
     id: id || "",
   });
 
-  // Fetch data izin dari API
+  
   const { data: permissionsData, isLoading: permissionsLoading, isError: permissionsError, refetch: refetchPermissions } = usePermissions();
 
-  // Fetch izin yang dimiliki oleh peran ini
+  
   const {
     data: rolePermissions,
     isLoading: rolePermissionsLoading,
@@ -40,40 +40,40 @@ export default function IzinPeran() {
     refetchOnMount: true,
   });
 
-  // ===== STATE MANAGEMENT =====
+  
 
-  // Component state
+  
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [initialPermissions, setInitialPermissions] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // UI state
+  
   const isLoading = roleLoading || permissionsLoading || rolePermissionsLoading;
   const isError = roleError || permissionsError || rolePermissionsError;
 
-  // ===== PERMISSIONS MANAGEMENT =====
+  
 
-  // Initialize selected permissions when role permissions are loaded
+  
   useEffect(() => {
     if (!rolePermissionsLoading) {
-      // Even if rolePermissions is empty array, we should still update the state
+      
       const permissionIds = rolePermissions?.map((permission) => permission.id) || [];
       setSelectedPermissions(permissionIds);
       setInitialPermissions(permissionIds);
     }
   }, [rolePermissions, rolePermissionsLoading, id]);
 
-  // Group permissions by resource
+  
   const groupedPermissions = useMemo(() => {
     return groupPermissionsByResource<Permission>(permissionsData?.permissions || []);
   }, [permissionsData?.permissions]);
 
-  // Check if permission is selected
+  
   const isPermissionSelected = (permissionId: string) => {
     return selectedPermissions.includes(permissionId);
   };
 
-  // Handle toggle permission
+  
   const togglePermission = (permissionId: string) => {
     setSelectedPermissions((prev) => {
       if (prev.includes(permissionId)) {
@@ -84,43 +84,43 @@ export default function IzinPeran() {
     });
   };
 
-  // Check if permission has been changed from its initial state
+  
   const isPermissionChanged = (permissionId: string) => {
     const wasInitiallySelected = initialPermissions.includes(permissionId);
     const isCurrentlySelected = selectedPermissions.includes(permissionId);
     return wasInitiallySelected !== isCurrentlySelected;
   };
 
-  // Check if there are any changes to save
+  
   const hasChanges = useMemo(() => {
     return hasPermissionChanges(initialPermissions, selectedPermissions);
   }, [selectedPermissions, initialPermissions]);
 
-  // ===== SAVE PERMISSIONS =====
+  
 
-  // Update rolePermissions mutation
+  
   const updateRolePermissions = useUpdateRolePermissions({
     onSuccess: () => {
       refetchRolePermissions();
       showSuccessAlert("Izin Peran Berhasil Diperbarui", "Perubahan izin peran berhasil disimpan");
       setIsSubmitting(false);
-      // Update initialPermissions to current selection after successful update
+      
       setInitialPermissions([...selectedPermissions]);
     },
     onError: (error) => {
       setIsSubmitting(false);
 
-      // Cek jika pesan error adalah Forbidden
+      
       if (error.message && error.message.includes("Forbidden")) {
         showForbiddenAlert("Akses Ditolak", "Anda tidak memiliki akses untuk mengubah izin peran ini.");
       } else {
-        // Untuk error lainnya, tampilkan pesan error normal
+        
         showErrorAlert("Gagal Memperbarui Izin Peran", error.message || "Terjadi kesalahan saat memperbarui izin peran");
       }
     },
   });
 
-  // Handle save permissions
+  
   const handleSavePermissions = () => {
     if (!id || !hasChanges) return;
 
@@ -128,7 +128,7 @@ export default function IzinPeran() {
       if (isConfirmed(result)) {
         setIsSubmitting(true);
 
-        // Get all permissions that have changed (both newly checked and newly unchecked)
+        
         const { added, removed } = getChangedPermissions(initialPermissions, selectedPermissions);
 
         updateRolePermissions.mutate({
@@ -139,7 +139,7 @@ export default function IzinPeran() {
     });
   };
 
-  // ===== RENDER =====
+  
   return (
     <div className="flex flex-col min-h-full w-full space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-0">
       <PageHeader roleName={roleData?.name || ""} roleId={id || ""} onSave={handleSavePermissions} isSubmitting={isSubmitting} hasChanges={hasChanges} />
@@ -155,7 +155,7 @@ export default function IzinPeran() {
           </div>
         </div>
 
-        {/* Alert banner untuk petunjuk penggunaan */}
+        {}
         <InfoBanner title="Petunjuk Penggunaan" message="Centang kotak di sebelah kiri untuk memberikan izin kepada peran ini. Perubahan tidak akan disimpan hingga Anda menekan tombol 'Simpan Perubahan'." />
 
         {isLoading ? (
@@ -176,7 +176,7 @@ export default function IzinPeran() {
           </div>
         )}
 
-        {/* Pagination - selalu tampil */}
+        {}
         {!isLoading && !isError && (
           <div className="w-full mt-4">
             <Pagination

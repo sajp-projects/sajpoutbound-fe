@@ -11,9 +11,7 @@ interface PermissionCardProps {
   isChanged: boolean;
 }
 
-/**
- * Permission card component for mobile view
- */
+
 export const PermissionCard = ({
   permission,
   isSelected,

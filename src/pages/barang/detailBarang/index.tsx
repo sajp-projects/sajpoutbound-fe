@@ -17,7 +17,7 @@ export default function DetailBarang() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Fetch detail barang
+  
   const {
     data: barang,
     isLoading,
@@ -32,7 +32,7 @@ export default function DetailBarang() {
     }
   );
 
-  // Mutation untuk menghapus barang
+  
   const deleteProductMutation = useDeleteProduct({
     onSuccess: () => {
       showSuccessAlert('Sukses!', 'Barang berhasil dihapus').then(() => {
@@ -41,7 +41,7 @@ export default function DetailBarang() {
     },
     onError: (error) => {
       try {
-        // Cek jika pesan error adalah Forbidden
+        
         if (error.message && error.message.includes('Forbidden')) {
           showForbiddenAlert(
             'Akses Ditolak',
@@ -63,7 +63,7 @@ export default function DetailBarang() {
     },
   });
 
-  // Fungsi untuk konfirmasi penghapusan
+  
   const handleDeleteProduct = () => {
     if (!barang) return;
 

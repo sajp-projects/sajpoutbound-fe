@@ -17,7 +17,7 @@ export default function DetailGudang() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Fetch detail gudang
+  
   const {
     data: gudang,
     isLoading,
@@ -32,7 +32,7 @@ export default function DetailGudang() {
     }
   );
 
-  // Mutation untuk menghapus gudang
+  
   const deleteWarehouseMutation = useDeleteWarehouse({
     onSuccess: () => {
       showSuccessAlert('Sukses!', 'Gudang berhasil dihapus').then(() => {
@@ -41,7 +41,7 @@ export default function DetailGudang() {
     },
     onError: (error) => {
       try {
-        // Cek jika pesan error adalah Forbidden
+        
         if (error.message && error.message.includes('Forbidden')) {
           showForbiddenAlert(
             'Akses Ditolak',
@@ -63,7 +63,7 @@ export default function DetailGudang() {
     },
   });
 
-  // Fungsi untuk konfirmasi penghapusan
+  
   const handleDeleteWarehouse = () => {
     if (!gudang) return;
 

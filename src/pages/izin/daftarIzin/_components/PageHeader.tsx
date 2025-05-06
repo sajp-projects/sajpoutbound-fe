@@ -9,9 +9,7 @@ interface PageHeaderProps {
   hasChanges: boolean;
 }
 
-/**
- * Page header component with role info and action buttons
- */
+
 export const PageHeader = ({
   roleName,
   roleId,

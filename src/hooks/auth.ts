@@ -13,7 +13,7 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
-  // Cek token dan status autentikasi saat komponen mounting
+  
   useEffect(() => {
     const userData = storage.getUser();
 
@@ -27,7 +27,7 @@ export function useAuth() {
     setIsLoading(false);
   }, []);
 
-  // Fungsi untuk menangani sukses login
+  
   const handleLoginSuccess = (userData: User, tokens: Tokens) => {
     storage.saveAuthData(userData, tokens);
     setUser(userData);
@@ -36,7 +36,7 @@ export function useAuth() {
     return true;
   };
 
-  // Fungsi login terintegrasi dengan validasi yang lebih baik
+  
   const login = async (email: string, password: string, setErrors?: (errors: FormErrors<LoginFormData>) => void) => {
     setIsLoading(true);
 
@@ -52,7 +52,7 @@ export function useAuth() {
 
       const result = (await response.json()) as ApiResponse<LoginResponseData>;
 
-      // Jika gagal dan setErrors tersedia, tangani error dengan lebih baik
+      
       if (!result.success) {
         if (setErrors) {
           const errorResult = createErrorResponse(result, "Terjadi kesalahan saat login");
@@ -62,7 +62,7 @@ export function useAuth() {
         return false;
       }
 
-      // Login berhasil
+      
       const { user: userData, tokens } = result.data!;
       return handleLoginSuccess(userData, tokens);
     } catch (error) {
@@ -77,7 +77,7 @@ export function useAuth() {
     }
   };
 
-  // Function untuk logout
+  
   const logout = () => {
     storage.clearAuthData();
     setUser(null);
@@ -86,7 +86,7 @@ export function useAuth() {
     navigate("/login");
   };
 
-  // Fungsi untuk cek dan redirect halaman berdasarkan status autentikasi
+  
   const checkAuthRedirect = (requireAuth = true, redirectTo = "/login") => {
     if (isLoading) return;
 

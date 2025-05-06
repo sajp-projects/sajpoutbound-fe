@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import { formatDate, formatDateShort } from '@/utils/date';
 import { Link } from 'react-router';
 
-// Tipe untuk label aksi
+
 interface ActionLabel {
   label: string;
   color: string;
@@ -30,11 +30,11 @@ interface ActionLabel {
 export default function LogSemuaBarang() {
   const [searchParams] = useSearchParams();
 
-  // Mengambil parameter dari URL
+  
   const currentPage = parseInt(searchParams.get('page') || '1');
   const itemsPerPage = parseInt(searchParams.get('limit') || '10');
 
-  // Fetch data log semua barang
+  
   const { data, isLoading } = useProductLogs({
     staleTime: 0,
     refetchOnMount: true,
@@ -51,7 +51,7 @@ export default function LogSemuaBarang() {
     hasPrev: false,
   };
 
-  // Helper untuk mendapatkan label yang sesuai untuk jenis aksi
+  
   const getActionLabel = (action: string): ActionLabel => {
     const labels: Record<string, ActionLabel> = {
       CREATE: {
@@ -80,14 +80,14 @@ export default function LogSemuaBarang() {
     );
   };
 
-  // Helper untuk menampilkan perubahan data
+  
   const renderChanges = (
     oldData: Record<string, unknown> | null,
     newData: Record<string, unknown> | null
   ) => {
     if (!oldData && !newData) return null;
 
-    // Untuk aksi CREATE
+    
     if (newData && !oldData) {
       return (
         <div>
@@ -134,7 +134,7 @@ export default function LogSemuaBarang() {
       );
     }
 
-    // Untuk aksi DELETE
+    
     if (oldData && !newData) {
       return (
         <div>
@@ -173,11 +173,11 @@ export default function LogSemuaBarang() {
       );
     }
 
-    // Untuk aksi UPDATE
+    
     if (oldData && newData) {
       const changes = [];
 
-      // Bandingkan field-field untuk melihat perubahan
+      
       if (oldData.name !== newData.name) {
         changes.push({
           field: 'Nama',
@@ -246,7 +246,7 @@ export default function LogSemuaBarang() {
     return null;
   };
 
-  // Helper untuk mendapatkan nama barang
+  
   const getProductName = (log: ProductLog) => {
     if (log.product) {
       return log.product.name;
@@ -258,7 +258,7 @@ export default function LogSemuaBarang() {
     return 'Barang tidak diketahui';
   };
 
-  // Render table untuk log activity
+  
   const renderLogTable = () => (
     <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
@@ -376,7 +376,7 @@ export default function LogSemuaBarang() {
     </div>
   );
 
-  // Render cards untuk tampilan mobile
+  
   const renderLogCards = () => (
     <div className="sm:hidden space-y-4">
       {logs.length === 0 ? (

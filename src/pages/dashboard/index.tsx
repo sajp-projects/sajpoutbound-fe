@@ -123,7 +123,7 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Stat Cards */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
           <div key={stat.title} className={`${getCardBgClass(stat.color)} rounded-lg shadow-md overflow-hidden text-white`}>
@@ -143,7 +143,7 @@ export default function Dashboard() {
                 <div className={`${getColorClasses(stat.color).replace("text-", "bg-").replace("bg-", "text-")} p-2 rounded-full`}>{stat.icon}</div>
               </div>
               <div className="mt-4">
-                {/* Simple line chart representation */}
+                {}
                 <div className="flex items-end space-x-1 h-10">
                   {Array.from({ length: 8 }).map((_, i) => (
                     <div
@@ -161,7 +161,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Traffic Chart */}
+      {}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -182,7 +182,7 @@ export default function Dashboard() {
         </div>
 
         <div className="h-60 mb-8 bg-gray-50 rounded-md p-4">
-          {/* Placeholder for chart */}
+          {}
           <div className="h-full flex items-center justify-center">
             <p className="text-gray-400">Visualisasi data lalu lintas akan muncul di sini</p>
           </div>
@@ -204,7 +204,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Social Media Cards */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { name: "Facebook", color: "bg-blue-600" },

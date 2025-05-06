@@ -13,12 +13,12 @@ export interface UserSchema {
 
 export type User = Omit<UserSchema, "roleId" | "password">;
 
-// Tipe yang menyertakan role dalam user
+
 export type UserWithRole = User & {
   role: Role;
 };
 
-// Tipe untuk input pembuatan user baru
+
 export interface CreateUserInput {
   name: string;
   email: string;
@@ -26,7 +26,7 @@ export interface CreateUserInput {
   roleId: string;
 }
 
-// Tipe untuk pagination
+
 export interface Pagination {
   total: number;
   page: number;
@@ -36,7 +36,7 @@ export interface Pagination {
   hasPrev: boolean;
 }
 
-// Tipe untuk response yang berisi users dan pagination
+
 export interface UsersResponse {
   users: UserWithRole[];
   pagination: Pagination;

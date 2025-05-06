@@ -29,7 +29,7 @@ interface ActionButtonsProps {
   basePath?: string;
 }
 
-// Map icon berdasarkan tipe aksi
+
 const getDefaultIcon = (type: ActionType) => {
   switch (type) {
     case ActionType.VIEW:
@@ -49,7 +49,7 @@ const getDefaultIcon = (type: ActionType) => {
   }
 };
 
-// Map style berdasarkan tipe aksi
+
 const getDefaultStyle = (type: ActionType) => {
   switch (type) {
     case ActionType.VIEW:
@@ -69,7 +69,7 @@ const getDefaultStyle = (type: ActionType) => {
   }
 };
 
-// Map title berdasarkan tipe aksi
+
 const getDefaultTitle = (type: ActionType) => {
   switch (type) {
     case ActionType.VIEW:
@@ -89,7 +89,7 @@ const getDefaultTitle = (type: ActionType) => {
   }
 };
 
-// Komponen untuk loading spinner
+
 const LoadingSpinner = () => <div className="h-4 w-4 rounded-full border-2 border-red-200 border-t-red-600 animate-spin"></div>;
 
 export function ActionButtons({ actions, entityId = "", basePath = "" }: ActionButtonsProps) {
@@ -100,7 +100,7 @@ export function ActionButtons({ actions, entityId = "", basePath = "" }: ActionB
         const styleClass = action.className || getDefaultStyle(action.type);
         const title = action.title || getDefaultTitle(action.type);
 
-        // Jika ada path, gunakan Link
+        
         if (action.path || (entityId && !action.onClick)) {
           const to = action.path || `${basePath}/${entityId}${action.type === ActionType.EDIT ? "/edit" : action.type === ActionType.LOG ? "/log" : ""}`;
 
@@ -113,7 +113,7 @@ export function ActionButtons({ actions, entityId = "", basePath = "" }: ActionB
           );
         }
 
-        // Jika ada onClick, gunakan Button biasa
+        
         return (
           <Button key={`${action.type}-${index}`} size="sm" variant="ghost" className={`h-8 w-8 p-0 ${styleClass}`} title={title} onClick={action.onClick} disabled={action.disabled || action.isLoading}>
             {action.isLoading ? <LoadingSpinner /> : icon}

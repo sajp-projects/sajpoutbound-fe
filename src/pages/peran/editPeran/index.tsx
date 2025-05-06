@@ -9,19 +9,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-// Import utilitas SweetAlert
+
 import { showSuccessAlert, showForbiddenAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 import { FormErrors } from "@/utils/errorHandler";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
 
-// Type untuk form edit role
+
 interface RoleFormData {
   name: string;
   description: string;
 }
 
-// Type untuk error validasi dengan memanfaatkan FormErrors utility type
+
 type RoleFormErrors = FormErrors<RoleFormData> & {
   general?: string;
 };
@@ -30,16 +30,16 @@ export default function EditPeran() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // State untuk form
+  
   const [formData, setFormData] = useState<RoleFormData>({
     name: "",
     description: "",
   });
 
-  // State untuk error validasi
+  
   const [errors, setErrors] = useState<RoleFormErrors>({});
 
-  // Query untuk mendapatkan data peran
+  
   const {
     data: role,
     isLoading: isLoadingRole,
@@ -55,27 +55,27 @@ export default function EditPeran() {
     }
   );
 
-  // Mutation untuk update peran
+  
   const updateRoleMutation = useUpdateRole({
     onSuccess: (data) => {
-      // Tampilkan SweetAlert untuk sukses
+      
       showSuccessAlert("Berhasil!", `Peran ${data.name} berhasil diperbarui`).then(() => {
         navigate(`/peran/${id}`);
       });
     },
     onError: (error: Error) => {
-      // Cek jika pesan error adalah Forbidden
+      
       if (error.message && error.message.includes("Forbidden")) {
         showForbiddenAlert("Akses Ditolak", "Anda tidak memiliki akses untuk mengubah peran ini.");
         return;
       }
 
       try {
-        // Parse error yang sudah di-stringify di hook
+        
         const errorObj = JSON.parse(error.message);
 
         if (errorObj.errorType === "joiValidationError" && errorObj.details && errorObj.details.length > 0) {
-          // Petakan error validasi ke field yang sesuai
+          
           const newErrors: RoleFormErrors = {};
 
           errorObj.details.forEach((detail: { message: string; path: string[] }) => {
@@ -90,10 +90,10 @@ export default function EditPeran() {
 
           setErrors(newErrors);
         } else if (errorObj.errorType === "ROLE_NAME_DUPLICATE") {
-          // Error khusus untuk nama peran duplikat
+          
           setErrors({ name: errorObj.message });
         } else {
-          // Error umum non-validasi
+          
           setErrors({ general: errorObj.message });
         }
       } catch (e) {
@@ -103,7 +103,7 @@ export default function EditPeran() {
     },
   });
 
-  // Isi form dengan data peran ketika data sudah tersedia
+  
   useEffect(() => {
     if (role) {
       setFormData({
@@ -113,29 +113,29 @@ export default function EditPeran() {
     }
   }, [role]);
 
-  // Handler untuk perubahan input
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Hapus error untuk field yang diubah
+    
     if (errors[name as keyof RoleFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  // Handler submit form
+  
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
 
-    // Cek apakah ada perubahan data
+    
     if (role && role.name === formData.name && role.description === formData.description) {
       setErrors({ general: "Tidak ada perubahan data" });
       return;
     }
 
-    // Tampilkan konfirmasi sebelum menyimpan
+    
     showConfirmationAlert("Konfirmasi", `Apakah Anda yakin ingin memperbarui peran "${formData.name}"?`, "Ya, Perbarui", "Batal").then((result) => {
       if (isConfirmed(result)) {
         updateRoleMutation.mutate({
@@ -151,7 +151,7 @@ export default function EditPeran() {
   const isError = isErrorRole;
   const isSubmitting = updateRoleMutation.isPending;
 
-  // Helper function untuk class input
+  
   const inputClassName = (fieldName: keyof RoleFormData) => cn("mt-1 w-full border-gray-300", errors[fieldName] ? "border-red-300 focus:border-red-500 focus:ring-red-500" : "focus:border-blue-500 focus:ring-blue-500");
 
   return (

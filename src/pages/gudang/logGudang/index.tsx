@@ -17,7 +17,7 @@ export default function LogGudang() {
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
   const warehouseId = id || "";
 
-  // Fetch data gudang dan log gudang
+  
   const { data: gudangData, isLoading: gudangLoading } = useWarehouse({ id: warehouseId }, { enabled: !!warehouseId });
 
   const { data, isLoading } = useWarehouseLogsByWarehouseId(warehouseId, {
@@ -37,7 +37,7 @@ export default function LogGudang() {
     hasPrev: false,
   };
 
-  // Helper untuk label aksi
+  
   const getActionLabel = (action: string) => {
     const labels = {
       CREATE: { label: "Dibuat", color: "bg-green-100 text-green-800 border-green-200" },
@@ -48,11 +48,11 @@ export default function LogGudang() {
     return labels[action as keyof typeof labels] || { label: action, color: "bg-gray-100 text-gray-800 border-gray-200" };
   };
 
-  // Helper untuk render perubahan data
+  
   const renderChanges = (oldData: Record<string, unknown> | null, newData: Record<string, unknown> | null) => {
     if (!oldData && !newData) return null;
 
-    // Untuk aksi CREATE - newData saja
+    
     if (newData && !oldData) {
       return (
         <div>
@@ -73,7 +73,7 @@ export default function LogGudang() {
       );
     }
 
-    // Untuk aksi DELETE - oldData saja
+    
     if (oldData && !newData) {
       return (
         <div>
@@ -94,7 +94,7 @@ export default function LogGudang() {
       );
     }
 
-    // Untuk aksi UPDATE - bandingkan old dan new
+    
     if (oldData && newData) {
       const changes = [];
       if (oldData.name !== newData.name) {
@@ -139,10 +139,10 @@ export default function LogGudang() {
     return null;
   };
 
-  // Komponen untuk tampilan daftar log
+  
   const LogList = () => (
     <>
-      {/* Table untuk desktop & tablet */}
+      {}
       <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
         <Table>
           <TableHeader>
@@ -196,7 +196,7 @@ export default function LogGudang() {
         </Table>
       </div>
 
-      {/* Card untuk mobile */}
+      {}
       <div className="sm:hidden space-y-4">
         {logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
@@ -224,7 +224,7 @@ export default function LogGudang() {
         )}
       </div>
 
-      {/* Pagination */}
+      {}
       {data && <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />}
     </>
   );

@@ -5,9 +5,7 @@ interface InfoBannerProps {
   message: string;
 }
 
-/**
- * Info banner component for displaying helpful information
- */
+
 export const InfoBanner = ({ title, message }: InfoBannerProps) => {
   return (
     <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">

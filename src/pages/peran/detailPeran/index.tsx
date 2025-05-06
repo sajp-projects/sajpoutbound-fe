@@ -17,22 +17,22 @@ export default function DetailPeran() {
   const [activeTab, setActiveTab] = useState<"info" | "users">("info");
   const { isAuthenticated } = useAuth();
 
-  // Get roleId dari localStorage
+  
   const userData = localStorage.getItem("user");
   const roleId = userData ? JSON.parse(userData)?.roleId : null;
 
-  // Fetch permissions untuk memeriksa apakah user memiliki akses ke permission:READ
+  
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
   });
 
-  // Fungsi untuk memeriksa apakah user memiliki izin permission:READ
+  
   const hasPermissionAccess = (): boolean => {
     if (!isAuthenticated || !permissions) return false;
     return permissions.some((permission) => permission.resource === PERMISSION.RESOURCES.PERMISSION && permission.action === PERMISSION.ACTIONS.READ);
   };
 
-  // Konfigurasi untuk useRole hook
+  
   const {
     data: role,
     isLoading,
@@ -92,7 +92,7 @@ export default function DetailPeran() {
           <ErrorState title="Gagal memuat data peran" message={error?.message || "Terjadi kesalahan saat memuat data peran"} onRetry={refetch} retryButtonText="Coba lagi" />
         ) : (
           <div className="space-y-6">
-            {/* Tab Navigation */}
+            {}
             <div className="flex border-b border-gray-200">
               <button
                 className={cn("px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center", activeTab === "info" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300")}
@@ -110,7 +110,7 @@ export default function DetailPeran() {
               </button>
             </div>
 
-            {/* Tab Content */}
+            {}
             {activeTab === "info" && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
@@ -192,7 +192,7 @@ export default function DetailPeran() {
                     )}
                   </div>
 
-                  {/* Tampilan daftar pengguna */}
+                  {}
                   {!role?.users || role.users.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-gray-300 rounded-lg">
                       <Users className="h-12 w-12 text-gray-400 mb-4" />
@@ -201,7 +201,7 @@ export default function DetailPeran() {
                     </div>
                   ) : (
                     <div>
-                      {/* Table untuk tampilan desktop & tablet */}
+                      {}
                       <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
                         <div className="overflow-x-auto">
                           <Table>
@@ -241,7 +241,7 @@ export default function DetailPeran() {
                         </div>
                       </div>
 
-                      {/* Card untuk tampilan mobile */}
+                      {}
                       <div className="sm:hidden space-y-4">
                         {role.users.map((user) => (
                           <div key={user.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">

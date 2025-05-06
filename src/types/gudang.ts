@@ -1,4 +1,4 @@
-// type untuk gudang
+
 import { Pagination } from './user';
 
 export interface UserMinimal {
@@ -17,20 +17,20 @@ export interface Warehouse {
   user: UserMinimal | null;
 }
 
-// Tipe untuk response yang berisi warehouses dan pagination
+
 export interface WarehousesResponse {
   warehouses: Warehouse[];
   pagination: Pagination;
 }
 
-// Tipe untuk input pembuatan gudang baru
+
 export interface CreateWarehouseInput {
   name: string;
   description: string;
   userId?: string;
 }
 
-// Tipe untuk update gudang
+
 export interface UpdateWarehouseInput {
   name?: string;
   description?: string;

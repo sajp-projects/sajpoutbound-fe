@@ -22,7 +22,7 @@ import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 
-// Type untuk form edit product
+
 interface ProductFormData {
   name: string;
   id_sl: string;
@@ -38,7 +38,7 @@ export default function EditBarang() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // State untuk form
+  
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     id_sl: '',
@@ -46,10 +46,10 @@ export default function EditBarang() {
     warehouseId: '',
   });
 
-  // State untuk error validasi
+  
   const [errors, setErrors] = useState<ProductFormErrors>({});
 
-  // Fetch detail barang
+  
   const {
     data: barang,
     isLoading,
@@ -64,13 +64,13 @@ export default function EditBarang() {
     }
   );
 
-  // Fetch daftar gudang untuk dropdown
+  
   const { data: warehousesData } = useWarehouses({
-    staleTime: 300000, // 5 menit
+    staleTime: 300000, 
   });
   const warehouses = warehousesData?.warehouses || [];
 
-  // Set form data dari barang yang diterima
+  
   useEffect(() => {
     if (barang) {
       setFormData({
@@ -82,7 +82,7 @@ export default function EditBarang() {
     }
   }, [barang]);
 
-  // Mutation untuk update barang
+  
   const updateProductMutation = useUpdateProduct({
     onSuccess: (data) => {
       showSuccessAlert('Sukses!', 'Barang berhasil diperbarui').then(() => {
@@ -126,7 +126,7 @@ export default function EditBarang() {
     },
   });
 
-  // Handler untuk perubahan form
+  
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -135,18 +135,18 @@ export default function EditBarang() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Hapus error untuk field yang diubah
+    
     if (errors[name as keyof ProductFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  // Handler untuk submit form
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
-    // Tampilkan konfirmasi sebelum mengubah barang
+    
     showConfirmationAlert(
       'Konfirmasi',
       'Apakah Anda yakin ingin menyimpan perubahan data barang ini?',
@@ -164,7 +164,7 @@ export default function EditBarang() {
 
   const isSubmitting = updateProductMutation.isPending;
 
-  // Helper function untuk class input
+  
   const inputClassName = (fieldName: keyof ProductFormData) =>
     cn(
       'mt-1 w-full border-gray-300',

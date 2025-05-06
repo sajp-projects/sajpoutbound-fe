@@ -37,16 +37,16 @@ export default function Pengguna() {
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
 
-  // Fetch permissions untuk memeriksa akses
+  
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && roleId !== "",
   });
 
-  // Mengambil parameter dari URL
+  
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  // Fetch users dari API
+  
   const { data, isLoading, isError, refetch } = useUsers({
     staleTime: 0,
     refetchOnMount: true,
@@ -85,10 +85,10 @@ export default function Pengguna() {
     }
   };
 
-  // Cek apakah user memiliki izin tertentu
+  
   const hasRoleReadAccess = hasPermission(permissions, PERMISSION.RESOURCES.ROLE, PERMISSION.ACTIONS.READ);
 
-  // Mendefinisikan tindakan untuk pengguna
+  
   const getUserActions = (user: User) => [
     { type: ActionType.VIEW },
     { type: ActionType.EDIT },
@@ -136,7 +136,7 @@ export default function Pengguna() {
           <ErrorState title="Gagal memuat data pengguna" message="Terjadi kesalahan pada server" onRetry={() => refetch()} />
         ) : (
           <div className="w-full">
-            {/* Table untuk tampilan desktop & tablet */}
+            {}
             <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden w-full">
               <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <table className="w-full min-w-[650px] border-collapse">
@@ -192,7 +192,7 @@ export default function Pengguna() {
               </div>
             </div>
 
-            {/* Card untuk tampilan mobile */}
+            {}
             <div className="sm:hidden space-y-3 w-full">
               {users.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-6 border rounded-lg border-gray-200 bg-white w-full">
@@ -230,7 +230,7 @@ export default function Pengguna() {
               )}
             </div>
 
-            {/* Pagination */}
+            {}
             <div className="w-full mt-4">
               <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />
             </div>

@@ -6,7 +6,7 @@ import { fetchApi } from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
 import { BASE_URL } from "@/constant/baseUrl";
 
-// Query keys untuk caching
+
 export const userLogKeys = {
   all: ["userLogs"] as const,
   lists: () => [...userLogKeys.all, "list"] as const,
@@ -14,7 +14,7 @@ export const userLogKeys = {
   allLogs: (filters: Record<string, unknown>) => [...userLogKeys.lists(), "all", { filters }] as const,
 };
 
-// Hook untuk mengambil log pengguna dengan pagination
+
 export function useUserLogs(userId: string, options?: Omit<UseQueryOptions<UserLogsResponse, Error, UserLogsResponse, ReturnType<typeof userLogKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
   const filters = {
@@ -47,7 +47,7 @@ export function useUserLogs(userId: string, options?: Omit<UseQueryOptions<UserL
   });
 }
 
-// Hook untuk mengambil semua log pengguna dengan pagination
+
 export function useAllUserLogs(options?: Omit<UseQueryOptions<UserLogsResponse, Error, UserLogsResponse, ReturnType<typeof userLogKeys.allLogs>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
   const filters = {

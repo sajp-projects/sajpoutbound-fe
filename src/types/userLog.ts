@@ -23,7 +23,7 @@ export interface UserLog {
   };
 }
 
-// Interface untuk response log dengan pagination
+
 export interface UserLogsResponse {
   logs: UserLog[];
   pagination: Pagination;

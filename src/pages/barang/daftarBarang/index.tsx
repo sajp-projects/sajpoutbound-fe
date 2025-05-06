@@ -31,11 +31,11 @@ import {
 export default function DaftarBarang() {
   const [searchParams] = useSearchParams();
 
-  // Mengambil parameter langsung dari URL
+  
   const currentPage = parseInt(searchParams.get('page') || '1');
   const itemsPerPage = parseInt(searchParams.get('limit') || '10');
 
-  // Fetch barang dengan pagination
+  
   const {
     data,
     isLoading,
@@ -58,7 +58,7 @@ export default function DaftarBarang() {
     hasPrev: false,
   };
 
-  // Mutation untuk menghapus barang
+  
   const deleteProductMutation = useDeleteProduct({
     onSuccess: () => {
       showSuccessAlert('Sukses!', 'Barang berhasil dihapus');
@@ -66,7 +66,7 @@ export default function DaftarBarang() {
     },
     onError: (error) => {
       try {
-        // Cek jika pesan error adalah Forbidden
+        
         if (error.message && error.message.includes('Forbidden')) {
           showForbiddenAlert(
             'Akses Ditolak',
@@ -88,7 +88,7 @@ export default function DaftarBarang() {
     },
   });
 
-  // Fungsi untuk konfirmasi penghapusan barang
+  
   const handleDeleteProduct = (id: string, name: string) => {
     showDeleteConfirmationAlert(
       'Barang',
@@ -100,7 +100,7 @@ export default function DaftarBarang() {
     });
   };
 
-  // Mendefinisikan tindakan untuk barang
+  
   const getProductActions = (product: Product) => [
     { type: ActionType.VIEW },
     { type: ActionType.EDIT },
@@ -174,7 +174,7 @@ export default function DaftarBarang() {
           />
         ) : (
           <div className="w-full">
-            {/* Table untuk tampilan desktop & tablet */}
+            {}
             <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden w-full">
               <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <Table>
@@ -267,7 +267,7 @@ export default function DaftarBarang() {
               </div>
             </div>
 
-            {/* Card untuk tampilan mobile */}
+            {}
             <div className="sm:hidden space-y-3 w-full">
               {products.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-6 border rounded-lg border-gray-200 bg-white w-full">
@@ -324,7 +324,7 @@ export default function DaftarBarang() {
               )}
             </div>
 
-            {/* Pagination */}
+            {}
             <div className="w-full mt-4">
               <Pagination
                 totalItems={pagination.total}

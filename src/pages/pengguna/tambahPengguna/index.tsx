@@ -30,7 +30,7 @@ import {
   showSuccessAlert,
 } from '@/utils/sweetAlert';
 
-// Type untuk form tambah user
+
 interface UserFormData {
   name: string;
   email: string;
@@ -38,12 +38,12 @@ interface UserFormData {
   roleId: string;
 }
 
-// Interface untuk error validation
+
 type UserFormErrors = FormErrors<UserFormData> & {
   general?: string;
 };
 
-// Component untuk field form yang digunakan berulang kali
+
 interface FormFieldProps {
   id: string;
   label: string;
@@ -72,16 +72,16 @@ export default function TambahPengguna() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  // Get roleId dari localStorage untuk cek permission
+  
   const userData = localStorage.getItem('user');
   const currentUserRoleId = userData ? JSON.parse(userData)?.roleId : null;
 
-  // Fetch permissions untuk memeriksa apakah user memiliki akses ke role:READ
+  
   const { data: permissions } = useRolePermissions(currentUserRoleId, {
     enabled: isAuthenticated && !!currentUserRoleId && currentUserRoleId !== '',
   });
 
-  // Fungsi untuk memeriksa apakah user memiliki izin role:READ
+  
   const hasRoleReadPermission = (): boolean => {
     if (!isAuthenticated || !permissions) return false;
     return permissions.some(
@@ -91,7 +91,7 @@ export default function TambahPengguna() {
     );
   };
 
-  // State untuk form
+  
   const [formData, setFormData] = useState<UserFormData>({
     name: '',
     email: '',
@@ -99,37 +99,37 @@ export default function TambahPengguna() {
     roleId: '',
   });
 
-  // State untuk error validasi
+  
   const [errors, setErrors] = useState<UserFormErrors>({});
 
-  // Query untuk mendapatkan daftar role - menggunakan useAllRoles untuk mendapatkan semua data
+  
   const {
     data: rolesData,
     isLoading: isLoadingRoles,
     isError: isErrorRoles,
   } = useAllRoles({
-    enabled: hasRoleReadPermission(), // Hanya fetch jika memiliki izin
+    enabled: hasRoleReadPermission(), 
   });
 
-  // Pastikan roles selalu array dengan mengakses rolesData.roles jika ada
+  
   const roles = rolesData?.roles || [];
 
-  // Tampilkan peringatan jika tidak punya akses ke roles
+  
   useEffect(() => {
     if (!hasRoleReadPermission()) {
-      // Tampilkan peringatan setelah komponen di-render
+      
       showErrorAlert(
         'Akses Terbatas',
         'Anda tidak memiliki izin untuk melihat daftar peran. Anda tidak akan dapat menambahkan pengguna baru tanpa menetapkan peran yang valid.'
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [permissions]);
 
-  // Mutation untuk membuat user baru
+  
   const createUserMutation = useCreateUser({
     onSuccess: () => {
-      // Tampilkan SweetAlert untuk sukses
+      
       showSuccessAlert('Berhasil!', 'Pengguna baru berhasil ditambahkan').then(
         () => {
           navigate('/pengguna');
@@ -172,7 +172,7 @@ export default function TambahPengguna() {
     },
   });
 
-  // Handler for input changes
+  
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -187,12 +187,12 @@ export default function TambahPengguna() {
     }
   };
 
-  // Handler submit form
+  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
 
-    // Validasi khusus untuk izin role (ini perlu dipertahankan karena masalah izin tidak bisa dihandle di server)
+    
     if (!hasRoleReadPermission() || !formData.roleId) {
       setErrors({
         roleId: 'Anda harus memilih peran untuk pengguna ini',
@@ -206,7 +206,7 @@ export default function TambahPengguna() {
       return;
     }
 
-    // Persiapkan data untuk API
+    
     const userData: CreateUserInput = {
       name: formData.name,
       email: formData.email,
@@ -214,7 +214,7 @@ export default function TambahPengguna() {
       roleId: formData.roleId,
     };
 
-    // Tampilkan konfirmasi sebelum menambahkan pengguna
+    
     showConfirmationAlert(
       'Konfirmasi',
       'Apakah Anda yakin ingin menambahkan pengguna baru ini?',

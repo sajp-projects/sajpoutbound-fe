@@ -1,4 +1,4 @@
-// type untuk barang
+
 import { Pagination } from './user';
 
 export interface Warehouse {
@@ -19,13 +19,13 @@ export interface Product {
   warehouse: Warehouse;
 }
 
-// Tipe untuk response yang berisi products dan pagination
+
 export interface ProductsResponse {
   products: Product[];
   pagination: Pagination;
 }
 
-// Tipe untuk input pembuatan barang baru
+
 export interface CreateProductInput {
   name: string;
   id_sl: string;
@@ -33,7 +33,7 @@ export interface CreateProductInput {
   warehouseId: string;
 }
 
-// Tipe untuk update barang
+
 export interface UpdateProductInput {
   name?: string;
   id_sl?: string;

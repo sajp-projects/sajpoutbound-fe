@@ -1,4 +1,4 @@
-// hooks untuk barang
+
 import { ApiResponse, ApiErrorResult } from "@/types/api";
 import { CreateProductInput, Product, ProductsResponse, UpdateProductInput } from "@/types/barang";
 import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
@@ -7,7 +7,7 @@ import { fetchApi } from "@/utils/api";
 import { handleApiError, createErrorResponse } from "@/utils/errorHandler";
 import { BASE_URL } from "@/constant/baseUrl";
 
-// Query keys untuk caching
+
 export const productKeys = {
   all: ["products"] as const,
   lists: () => [...productKeys.all, "list"] as const,
@@ -17,7 +17,7 @@ export const productKeys = {
   logs: () => [...productKeys.all, "logs"] as const,
 };
 
-// Hook untuk mengambil daftar barang dengan pagination
+
 export function useProducts(options?: Omit<UseQueryOptions<ProductsResponse, Error, ProductsResponse, ReturnType<typeof productKeys.list>>, "queryKey" | "queryFn">) {
   const [searchParams] = useSearchParams();
   const filters = {
@@ -52,7 +52,7 @@ export function useProducts(options?: Omit<UseQueryOptions<ProductsResponse, Err
   });
 }
 
-// Hook untuk mengambil detail barang berdasarkan ID
+
 export function useProduct({ id }: { id: string }, options?: Omit<UseQueryOptions<Product, Error, Product, ReturnType<typeof productKeys.detail>>, "queryKey" | "queryFn">) {
   return useQuery({
     queryKey: productKeys.detail(id),
@@ -79,7 +79,7 @@ export function useProduct({ id }: { id: string }, options?: Omit<UseQueryOption
   });
 }
 
-// Hook untuk membuat barang baru
+
 export function useCreateProduct(options?: UseMutationOptions<Product, Error, CreateProductInput>) {
   const queryClient = useQueryClient();
 
@@ -114,7 +114,7 @@ export function useCreateProduct(options?: UseMutationOptions<Product, Error, Cr
   });
 }
 
-// Hook untuk memperbarui barang
+
 export function useUpdateProduct(options?: UseMutationOptions<Product, Error, { id: string } & UpdateProductInput>) {
   const queryClient = useQueryClient();
 
@@ -153,7 +153,7 @@ export function useUpdateProduct(options?: UseMutationOptions<Product, Error, { 
   });
 }
 
-// Hook untuk menghapus barang
+
 export function useDeleteProduct(options?: UseMutationOptions<void, Error, { id: string }>) {
   const queryClient = useQueryClient();
 
