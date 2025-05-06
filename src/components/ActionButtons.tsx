@@ -1,4 +1,12 @@
-import { Eye, Edit, History, Archive, Trash2, FileCog, Pencil } from "lucide-react";
+import {
+  Eye,
+  Edit,
+  History,
+  Archive,
+  Trash2,
+  FileCog,
+  Pencil,
+} from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 
@@ -29,7 +37,6 @@ interface ActionButtonsProps {
   basePath?: string;
 }
 
-
 const getDefaultIcon = (type: ActionType) => {
   switch (type) {
     case ActionType.VIEW:
@@ -48,7 +55,6 @@ const getDefaultIcon = (type: ActionType) => {
       return <Pencil className="h-4 w-4" />;
   }
 };
-
 
 const getDefaultStyle = (type: ActionType) => {
   switch (type) {
@@ -69,7 +75,6 @@ const getDefaultStyle = (type: ActionType) => {
   }
 };
 
-
 const getDefaultTitle = (type: ActionType) => {
   switch (type) {
     case ActionType.VIEW:
@@ -89,10 +94,15 @@ const getDefaultTitle = (type: ActionType) => {
   }
 };
 
+const LoadingSpinner = () => (
+  <div className="h-4 w-4 rounded-full border-2 border-red-200 border-t-red-600 animate-spin"></div>
+);
 
-const LoadingSpinner = () => <div className="h-4 w-4 rounded-full border-2 border-red-200 border-t-red-600 animate-spin"></div>;
-
-export function ActionButtons({ actions, entityId = "", basePath = "" }: ActionButtonsProps) {
+export function ActionButtons({
+  actions,
+  entityId = "",
+  basePath = "",
+}: ActionButtonsProps) {
   return (
     <div className="flex items-center justify-center gap-1">
       {actions.map((action, index) => {
@@ -100,22 +110,42 @@ export function ActionButtons({ actions, entityId = "", basePath = "" }: ActionB
         const styleClass = action.className || getDefaultStyle(action.type);
         const title = action.title || getDefaultTitle(action.type);
 
-        
         if (action.path || (entityId && !action.onClick)) {
-          const to = action.path || `${basePath}/${entityId}${action.type === ActionType.EDIT ? "/edit" : action.type === ActionType.LOG ? "/log" : ""}`;
+          const to =
+            action.path ||
+            `${basePath}/${entityId}${
+              action.type === ActionType.EDIT
+                ? "/edit"
+                : action.type === ActionType.LOG
+                ? "/log"
+                : ""
+            }`;
 
           return (
             <Link key={`${action.type}-${index}`} to={to}>
-              <Button size="sm" variant="ghost" className={`h-8 w-8 p-0 ${styleClass}`} title={title} disabled={action.disabled}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className={`h-8 w-8 p-0 ${styleClass}`}
+                title={title}
+                disabled={action.disabled}
+              >
                 {icon}
               </Button>
             </Link>
           );
         }
 
-        
         return (
-          <Button key={`${action.type}-${index}`} size="sm" variant="ghost" className={`h-8 w-8 p-0 ${styleClass}`} title={title} onClick={action.onClick} disabled={action.disabled || action.isLoading}>
+          <Button
+            key={`${action.type}-${index}`}
+            size="sm"
+            variant="ghost"
+            className={`h-8 w-8 p-0 ${styleClass}`}
+            title={title}
+            onClick={action.onClick}
+            disabled={action.disabled || action.isLoading}
+          >
             {action.isLoading ? <LoadingSpinner /> : icon}
           </Button>
         );

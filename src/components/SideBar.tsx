@@ -139,23 +139,23 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
       ],
     },
     {
-      name: "Kustomer",
+      name: "Pelanggan",
       icon: <UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
-      resource: PERMISSION.RESOURCES.KUSTOMER,
+      resource: PERMISSION.RESOURCES.CUSTOMER,
       subItems: [
         {
-          name: "Daftar Kustomer",
-          path: "/kustomer",
+          name: "Daftar Pelanggan",
+          path: "/pelanggan",
           action: PERMISSION.ACTIONS.READ,
         },
         {
-          name: "Tambah Kustomer",
-          path: "/kustomer/tambah",
+          name: "Tambah Pelanggan",
+          path: "/pelanggan/tambah",
           action: PERMISSION.ACTIONS.CREATE,
         },
         {
-          name: "Log Kustomer",
-          path: "/kustomer/log",
+          name: "Log Pelanggan",
+          path: "/pelanggan/log",
           action: PERMISSION.ACTIONS.READ,
         },
       ],
@@ -301,9 +301,9 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
   if (isLoading) {
     return (
       <aside className={cn("h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-200 shadow-sm", isOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0")}>
-        <div className="h-full flex flex-col items-center justify-center">
-          <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-500"></div>
-          <span className="mt-2 text-xs sm:text-sm text-gray-500">Loading...</span>
+        <div className="flex flex-col items-center justify-center h-full">
+          <div className="w-6 h-6 border-b-2 border-blue-500 rounded-full animate-spin sm:h-8 sm:w-8"></div>
+          <span className="mt-2 text-xs text-gray-500 sm:text-sm">Loading...</span>
         </div>
       </aside>
     );
@@ -311,30 +311,30 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
 
   return (
     <aside className={cn("h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-200 shadow-sm", isOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0")}>
-      <div className="h-full flex flex-col overflow-hidden">
-        <div className="px-3 sm:px-4 py-3 sm:py-5 flex flex-col items-center justify-center border-b border-gray-200 relative">
+      <div className="flex flex-col h-full overflow-hidden">
+        <div className="relative flex flex-col items-center justify-center px-3 py-3 border-b border-gray-200 sm:px-4 sm:py-5">
           {toggleSidebar && (
             <button
               onClick={toggleSidebar}
               className="absolute right-1 sm:right-2 top-1 sm:top-2 p-1.5 sm:p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 lg:hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
               aria-label="Close sidebar"
             >
-              <X className="h-4 w-4 sm:h-5 sm:w-5" />
+              <X className="w-4 h-4 sm:h-5 sm:w-5" />
             </button>
           )}
 
-          <span className="text-lg sm:text-xl font-bold text-blue-600">OUTMANAGE</span>
-          <div className="mt-1 text-xs text-gray-500 font-medium">Sistem Manajemen DO</div>
-          <div className="w-12 sm:w-16 h-1 bg-blue-500 rounded-full mt-2 sm:mt-3"></div>
+          <span className="text-lg font-bold text-blue-600 sm:text-xl">OUTMANAGE</span>
+          <div className="mt-1 text-xs font-medium text-gray-500">Sistem Manajemen DO</div>
+          <div className="w-12 h-1 mt-2 bg-blue-500 rounded-full sm:w-16 sm:mt-3"></div>
         </div>
 
-        <div className="px-3 sm:px-4 py-2 sm:py-3 text-xs text-gray-500 font-medium uppercase flex items-center">
+        <div className="flex items-center px-3 py-2 text-xs font-medium text-gray-500 uppercase sm:px-4 sm:py-3">
           <div className="flex-grow h-px bg-gray-200"></div>
           <span className="px-2">Modul Sistem</span>
           <div className="flex-grow h-px bg-gray-200"></div>
         </div>
 
-        <nav className="flex-1 px-2 sm:px-3 overflow-y-auto py-2">
+        <nav className="flex-1 px-2 py-2 overflow-y-auto sm:px-3">
           <ul className="space-y-1">
             {menuItems.map(
               (item) =>
@@ -395,13 +395,13 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
         </nav>
 
         <div className="mt-auto">
-          <div className="px-3 sm:px-4 py-2 sm:py-3 text-xs text-gray-500 font-medium uppercase flex items-center">
+          <div className="flex items-center px-3 py-2 text-xs font-medium text-gray-500 uppercase sm:px-4 sm:py-3">
             <div className="flex-grow h-px bg-gray-200"></div>
             <div className="flex-grow h-px bg-gray-200"></div>
           </div>
-          <div className="px-2 sm:px-3 pb-4 sm:pb-5 pt-1">
+          <div className="px-2 pt-1 pb-4 sm:px-3 sm:pb-5">
             <button onClick={logout} className="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-gray-700 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors group w-full text-left text-xs sm:text-sm">
-              <LogOut className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 group-hover:text-red-500" />
+              <LogOut className="w-4 h-4 text-gray-500 sm:w-5 sm:h-5 group-hover:text-red-500" />
               <span className="ml-2 sm:ml-3">Keluar</span>
             </button>
           </div>

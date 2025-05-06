@@ -29,7 +29,12 @@ import EditBarang from "./pages/barang/editBarang";
 import TambahBarang from "./pages/barang/tambahBarang";
 import LogBarang from "./pages/barang/logBarang";
 import LogSemuaBarang from "./pages/barang/logSemuaBarang";
-
+import DaftarPelanggan from "./pages/pelanggan/daftarPelanggan";
+import TambahPelanggan from "./pages/pelanggan/tambahPelanggan";
+import LogPelanggan from "./pages/pelanggan/logPelanggan";
+import LogSemuaPelanggan from "./pages/pelanggan/logSemuaPelanggan";
+import EditPelanggan from "./pages/pelanggan/editPelanggan";
+import DetailPelanggan from "./pages/pelanggan/detailPelanggan";
 
 interface ProtectedRouteConfig {
   path: string;
@@ -40,8 +45,13 @@ interface ProtectedRouteConfig {
 }
 
 export default function App() {
-  
-  const createProtectedRoute = ({ path, element, resource, action, redirectTo }: ProtectedRouteConfig) => (
+  const createProtectedRoute = ({
+    path,
+    element,
+    resource,
+    action,
+    redirectTo,
+  }: ProtectedRouteConfig) => (
     <Route
       path={path}
       element={
@@ -52,7 +62,6 @@ export default function App() {
     />
   );
 
-  
   const userRoutes: ProtectedRouteConfig[] = [
     {
       path: "",
@@ -105,7 +114,6 @@ export default function App() {
     },
   ];
 
-  
   const roleRoutes: ProtectedRouteConfig[] = [
     {
       path: "",
@@ -144,7 +152,6 @@ export default function App() {
     },
   ];
 
-  
   const gudangRoutes: ProtectedRouteConfig[] = [
     {
       path: "",
@@ -190,7 +197,6 @@ export default function App() {
     },
   ];
 
-  
   const barangRoutes: ProtectedRouteConfig[] = [
     {
       path: "",
@@ -236,6 +242,57 @@ export default function App() {
     },
   ];
 
+  const pelangganRoutes: ProtectedRouteConfig[] = [
+    {
+      path: "",
+      element: <DaftarPelanggan />,
+      resource: PERMISSION.RESOURCES.CUSTOMER,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pelanggan",
+    },
+    {
+      path: "tambah",
+      element: <TambahPelanggan />,
+      resource: PERMISSION.RESOURCES.CUSTOMER,
+      action: PERMISSION.ACTIONS.CREATE,
+      redirectTo: "/pelanggan",
+    },
+    {
+      path: ":id/log",
+      element: <LogPelanggan />,
+      resource: PERMISSION.RESOURCES.CUSTOMER,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pelanggan",
+    },
+    {
+      path: "log",
+      element: <LogSemuaPelanggan />,
+      resource: PERMISSION.RESOURCES.CUSTOMER,
+      action: PERMISSION.ACTIONS.READ,
+    },
+    {
+      path: ":id/edit",
+      element: <EditPelanggan />,
+      resource: PERMISSION.RESOURCES.CUSTOMER,
+      action: PERMISSION.ACTIONS.UPDATE,
+      redirectTo: "/pelanggan",
+    },
+    {
+      path: ":id",
+      element: <DetailPelanggan />,
+      resource: PERMISSION.RESOURCES.CUSTOMER,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pelanggan",
+    },
+    {
+      path: "log",
+      element: <LogSemuaPelanggan />,
+      resource: PERMISSION.RESOURCES.CUSTOMER,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pelanggan",
+    },
+  ];
+
   return (
     <BrowserRouter>
       <Routes>
@@ -250,16 +307,29 @@ export default function App() {
           <Route index element={<Dashboard />} />
 
           {}
-          <Route path="/pengguna">{userRoutes.map((route) => createProtectedRoute(route))}</Route>
+          <Route path="/pengguna">
+            {userRoutes.map((route) => createProtectedRoute(route))}
+          </Route>
 
           {}
-          <Route path="/peran">{roleRoutes.map((route) => createProtectedRoute(route))}</Route>
+          <Route path="/peran">
+            {roleRoutes.map((route) => createProtectedRoute(route))}
+          </Route>
 
           {}
-          <Route path="/gudang">{gudangRoutes.map((route) => createProtectedRoute(route))}</Route>
+          <Route path="/gudang">
+            {gudangRoutes.map((route) => createProtectedRoute(route))}
+          </Route>
 
           {}
-          <Route path="/barang">{barangRoutes.map((route) => createProtectedRoute(route))}</Route>
+          <Route path="/barang">
+            {barangRoutes.map((route) => createProtectedRoute(route))}
+          </Route>
+
+          {}
+          <Route path="/pelanggan">
+            {pelangganRoutes.map((route) => createProtectedRoute(route))}
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
