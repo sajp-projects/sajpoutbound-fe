@@ -101,7 +101,16 @@ export default function DaftarPelanggan() {
 
   // Konfigurasi tombol aksi
   const getCustomerActions = (customer: Customer) => {
-    const actions = [
+    const actions: {
+      type: ActionType;
+      icon?: React.ReactNode;
+      title?: string;
+      path?: string;
+      onClick?: () => void;
+      isLoading?: boolean;
+      disabled?: boolean;
+      className?: string;
+    }[] = [
       { type: ActionType.VIEW },
       { type: ActionType.EDIT },
       { type: ActionType.LOG },

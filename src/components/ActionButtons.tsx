@@ -40,19 +40,19 @@ interface ActionButtonsProps {
 const getDefaultIcon = (type: ActionType) => {
   switch (type) {
     case ActionType.VIEW:
-      return <Eye className="h-4 w-4" />;
+      return <Eye className="w-4 h-4" />;
     case ActionType.EDIT:
-      return <Edit className="h-4 w-4" />;
+      return <Edit className="w-4 h-4" />;
     case ActionType.LOG:
-      return <History className="h-4 w-4" />;
+      return <History className="w-4 h-4" />;
     case ActionType.ARCHIVE:
-      return <Archive className="h-4 w-4" />;
+      return <Archive className="w-4 h-4" />;
     case ActionType.DELETE:
-      return <Trash2 className="h-4 w-4" />;
+      return <Trash2 className="w-4 h-4" />;
     case ActionType.CONFIG:
-      return <FileCog className="h-4 w-4" />;
+      return <FileCog className="w-4 h-4" />;
     default:
-      return <Pencil className="h-4 w-4" />;
+      return <Pencil className="w-4 h-4" />;
   }
 };
 
@@ -95,7 +95,7 @@ const getDefaultTitle = (type: ActionType) => {
 };
 
 const LoadingSpinner = () => (
-  <div className="h-4 w-4 rounded-full border-2 border-red-200 border-t-red-600 animate-spin"></div>
+  <div className="w-4 h-4 border-2 border-red-200 rounded-full border-t-red-600 animate-spin"></div>
 );
 
 export function ActionButtons({

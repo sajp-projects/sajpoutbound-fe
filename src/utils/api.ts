@@ -12,8 +12,15 @@ export const getAuthHeaders = (): HeadersInit => {
   return headers;
 };
 
-export const buildApiUrl = (path: string, params: Record<string, string | number | null | undefined> = {}): string => {
-  const fullPath = path.startsWith(BASE_URL) ? path : path.startsWith("/") ? `${BASE_URL}${path}` : `${BASE_URL}/${path}`;
+export const buildApiUrl = (
+  path: string,
+  params: Record<string, string | number | null | undefined> = {}
+): string => {
+  const fullPath = path.startsWith(BASE_URL)
+    ? path
+    : path.startsWith("/")
+    ? `${BASE_URL}${path}`
+    : `${BASE_URL}/${path}`;
 
   const validParams = Object.fromEntries(
     Object.entries(params)
@@ -27,9 +34,17 @@ export const buildApiUrl = (path: string, params: Record<string, string | number
   return `${fullPath}${separator}${new URLSearchParams(validParams)}`;
 };
 
-export const fetchApi = async (path: string, params: Record<string, string | number | null | undefined> = {}, options: RequestInit = {}): Promise<Response> => {
-  const isExternalUrl = path.startsWith("http://") || path.startsWith("https://");
-  const url = isExternalUrl && !path.startsWith(BASE_URL) ? path : buildApiUrl(path, params);
+export const fetchApi = async (
+  path: string,
+  params: Record<string, string | number | null | undefined> = {},
+  options: RequestInit = {}
+): Promise<Response> => {
+  const isExternalUrl =
+    path.startsWith("http://") || path.startsWith("https://");
+  const url =
+    isExternalUrl && !path.startsWith(BASE_URL)
+      ? path
+      : buildApiUrl(path, params);
 
   return fetch(url, {
     ...options,
@@ -40,7 +55,12 @@ export const fetchApi = async (path: string, params: Record<string, string | num
   });
 };
 
-export async function fetchApiData<T>(path: string, params: Record<string, string | number | null | undefined> = {}, options: RequestInit = {}, errorMessage = "An error occurred"): Promise<T> {
+export async function fetchApiData<T>(
+  path: string,
+  params: Record<string, string | number | null | undefined> = {},
+  options: RequestInit = {},
+  errorMessage = "An error occurred"
+): Promise<T> {
   const response = await fetchApi(path, params, options);
 
   if (!response.ok) {

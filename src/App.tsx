@@ -35,7 +35,12 @@ import LogPelanggan from "./pages/pelanggan/logPelanggan";
 import LogSemuaPelanggan from "./pages/pelanggan/logSemuaPelanggan";
 import EditPelanggan from "./pages/pelanggan/editPelanggan";
 import DetailPelanggan from "./pages/pelanggan/detailPelanggan";
-
+import DaftarArmada from "./pages/armada/daftarArmada";
+import TambahArmada from "./pages/armada/tambahArmada";
+import LogArmada from "./pages/armada/logArmada";
+import LogSemuaArmada from "./pages/armada/logSemuaArmada";
+import EditArmada from "./pages/armada/editArmada";
+import DetailArmada from "./pages/armada/detailArmada";
 interface ProtectedRouteConfig {
   path: string;
   element: React.ReactNode;
@@ -293,6 +298,58 @@ export default function App() {
     },
   ];
 
+  const armadaRoutes: ProtectedRouteConfig[] = [
+    {
+      path: "",
+      element: <DaftarArmada />,
+      resource: PERMISSION.RESOURCES.ARMADA,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/armada",
+    },
+    {
+      path: "tambah",
+      element: <TambahArmada />,
+      resource: PERMISSION.RESOURCES.ARMADA,
+      action: PERMISSION.ACTIONS.CREATE,
+      redirectTo: "/armada",
+    },
+    {
+      path: ":id/log",
+      element: <LogArmada />,
+      resource: PERMISSION.RESOURCES.ARMADA,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/armada",
+    },
+    {
+      path: "log",
+      element: <LogSemuaArmada />,
+      resource: PERMISSION.RESOURCES.ARMADA,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/armada",
+    },
+    {
+      path: ":id/edit",
+      element: <EditArmada />,
+      resource: PERMISSION.RESOURCES.ARMADA,
+      action: PERMISSION.ACTIONS.UPDATE,
+      redirectTo: "/armada",
+    },
+    {
+      path: ":id",
+      element: <DetailArmada />,
+      resource: PERMISSION.RESOURCES.ARMADA,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/armada",
+    },
+    {
+      path: "log",
+      element: <LogSemuaArmada />,
+      resource: PERMISSION.RESOURCES.ARMADA,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/armada",
+    },
+  ];
+
   return (
     <BrowserRouter>
       <Routes>
@@ -329,6 +386,11 @@ export default function App() {
           {}
           <Route path="/pelanggan">
             {pelangganRoutes.map((route) => createProtectedRoute(route))}
+          </Route>
+
+          {}
+          <Route path="/armada">
+            {armadaRoutes.map((route) => createProtectedRoute(route))}
           </Route>
         </Route>
       </Routes>
