@@ -22,6 +22,7 @@ import {
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+import { UpdateProductInput } from "@/types/barang";
 
 interface ProductFormData {
   name: string;
@@ -142,6 +143,22 @@ export default function EditBarang() {
     e.preventDefault();
     setErrors({});
 
+    const validationErrors: ProductFormErrors = {};
+    if (!formData.name.trim()) {
+      validationErrors.name = "Nama barang harus diisi";
+    }
+    if (!formData.satuan.trim()) {
+      validationErrors.satuan = "Satuan harus dipilih";
+    }
+    if (!formData.warehouseId.trim()) {
+      validationErrors.warehouseId = "Gudang harus dipilih";
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     showConfirmationAlert(
       "Konfirmasi",
       "Apakah Anda yakin ingin menyimpan perubahan data barang ini?",
@@ -149,10 +166,19 @@ export default function EditBarang() {
       "Batal"
     ).then((result) => {
       if (isConfirmed(result)) {
-        updateProductMutation.mutate({
+        const updateData: UpdateProductInput & { id: string } = {
           id: id || "",
-          ...formData,
-        });
+          name: formData.name,
+          description: formData.description,
+          satuan: formData.satuan,
+          warehouseId: formData.warehouseId,
+        };
+
+        if (formData.id_sl.trim()) {
+          updateData.id_sl = formData.id_sl;
+        }
+
+        updateProductMutation.mutate(updateData);
       }
     });
   };
@@ -236,21 +262,21 @@ export default function EditBarang() {
                     htmlFor="id_sl"
                     className="block text-sm font-medium text-gray-700"
                   >
-                    ID
+                    ID SL
                   </label>
                   <Input
                     id="id_sl"
                     name="id_sl"
                     value={formData.id_sl}
                     onChange={handleInputChange}
-                    placeholder="Masukkan ID SL barang"
+                    placeholder="Masukkan ID SL barang (opsional)"
                     className={inputClassName("id_sl")}
                   />
                   {errors.id_sl ? (
                     <p className="mt-1 text-sm text-red-500">{errors.id_sl}</p>
                   ) : (
                     <p className="mt-1 text-sm text-gray-500">
-                      ID untuk mengidentifikasi barang
+                      Kode identifikasi unik untuk barang (opsional)
                     </p>
                   )}
                 </div>

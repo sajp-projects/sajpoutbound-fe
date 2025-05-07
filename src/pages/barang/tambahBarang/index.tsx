@@ -20,6 +20,7 @@ import {
 import { Loader2, Save } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { CreateProductInput } from "@/types/barang";
 
 interface ProductFormData {
   name: string;
@@ -109,6 +110,22 @@ export default function TambahBarang() {
     e.preventDefault();
     setErrors({});
 
+    const validationErrors: ProductFormErrors = {};
+    if (!formData.name.trim()) {
+      validationErrors.name = "Nama barang harus diisi";
+    }
+    if (!formData.satuan.trim()) {
+      validationErrors.satuan = "Satuan harus dipilih";
+    }
+    if (!formData.warehouseId.trim()) {
+      validationErrors.warehouseId = "Gudang harus dipilih";
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
     showConfirmationAlert(
       "Konfirmasi",
       "Apakah Anda yakin ingin menambahkan barang baru ini?",
@@ -116,7 +133,18 @@ export default function TambahBarang() {
       "Batal"
     ).then((result) => {
       if (isConfirmed(result)) {
-        createProductMutation.mutate(formData);
+        const productData: CreateProductInput = {
+          name: formData.name,
+          description: formData.description,
+          warehouseId: formData.warehouseId,
+          satuan: formData.satuan,
+        };
+
+        if (formData.id_sl.trim()) {
+          productData.id_sl = formData.id_sl;
+        }
+
+        createProductMutation.mutate(productData);
       }
     });
   };
@@ -186,7 +214,7 @@ export default function TambahBarang() {
                   name="id_sl"
                   value={formData.id_sl}
                   onChange={handleInputChange}
-                  placeholder="Masukkan ID SL barang"
+                  placeholder="Masukkan ID SL barang (opsional)"
                   className={cn(
                     "mt-1 w-full border-gray-300",
                     errors.id_sl
@@ -198,7 +226,7 @@ export default function TambahBarang() {
                   <p className="mt-1 text-sm text-red-500">{errors.id_sl}</p>
                 ) : (
                   <p className="mt-1 text-sm text-gray-500">
-                    Kode identifikasi unik untuk barang
+                    Kode identifikasi unik untuk barang (opsional)
                   </p>
                 )}
               </div>

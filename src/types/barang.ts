@@ -26,7 +26,7 @@ export interface ProductsResponse {
 
 export interface CreateProductInput {
   name: string;
-  id_sl: string;
+  id_sl?: string;
   description: string;
   satuan: string;
   warehouseId: string;
