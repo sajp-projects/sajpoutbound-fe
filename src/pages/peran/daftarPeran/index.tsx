@@ -55,6 +55,7 @@ export default function Role() {
   const { data, isLoading, isError, refetch } = useRoles({
     staleTime: 5000,
     refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const roles = data?.roles || [];
@@ -160,6 +161,7 @@ export default function Role() {
           <SearchInput
             placeholder="Cari peran..."
             className="w-full sm:max-w-md"
+            debounceMs={300}
           />
         </div>
 
