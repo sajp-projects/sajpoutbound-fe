@@ -30,6 +30,42 @@
   width: 100%;
 }
 
+/* Text handling styles for long text */
+.truncate-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.truncate-text-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.truncate-text-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Text wrapping for tables and detail views */
+.wrap-text {
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.wrap-text-table-cell {
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+  max-width: 250px;
+}
+
 /* Improve mobile responsiveness */
 html,
 body {

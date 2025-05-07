@@ -13,7 +13,13 @@ import { formatDate, formatDateShort } from "@/utils/date";
 import { useAuth } from "@/hooks/auth";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useRolePermissions } from "@/hooks/izin";
-import { showSuccessAlert, showErrorAlert, showForbiddenAlert, showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  showForbiddenAlert,
+  showConfirmationAlert,
+  isConfirmed,
+} from "@/utils/sweetAlert";
 import { getRoleId } from "@/utils/storage";
 import { hasPermission } from "@/utils/permission";
 import { LoadingState } from "@/components/LoadingState";
@@ -37,16 +43,13 @@ export default function Pengguna() {
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
 
-  
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && roleId !== "",
   });
 
-  
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  
   const { data, isLoading, isError, refetch } = useUsers({
     staleTime: 0,
     refetchOnMount: true,
@@ -70,25 +73,40 @@ export default function Pengguna() {
     },
     onError: (error) => {
       if (error.message.includes("Forbidden")) {
-        showForbiddenAlert("Akses Ditolak", "Anda tidak memiliki akses untuk mengarsipkan pengguna ini.");
+        showForbiddenAlert(
+          "Akses Ditolak",
+          "Anda tidak memiliki akses untuk mengarsipkan pengguna ini."
+        );
       } else {
-        showErrorAlert("Gagal!", `Gagal mengarsipkan pengguna: ${error.message || "Terjadi kesalahan saat mengarsipkan pengguna."}`);
+        showErrorAlert(
+          "Gagal!",
+          `Gagal mengarsipkan pengguna: ${
+            error.message || "Terjadi kesalahan saat mengarsipkan pengguna."
+          }`
+        );
       }
     },
   });
 
   const handleArsipkan = async (id: string) => {
-    const result = await showConfirmationAlert("Konfirmasi Arsip", "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.", "Ya, Arsipkan!", "Batal");
+    const result = await showConfirmationAlert(
+      "Konfirmasi Arsip",
+      "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.",
+      "Ya, Arsipkan!",
+      "Batal"
+    );
 
     if (isConfirmed(result)) {
       deleteUser.mutate({ id });
     }
   };
 
-  
-  const hasRoleReadAccess = hasPermission(permissions, PERMISSION.RESOURCES.ROLE, PERMISSION.ACTIONS.READ);
+  const hasRoleReadAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ROLE,
+    PERMISSION.ACTIONS.READ
+  );
 
-  
   const getUserActions = (user: User) => [
     { type: ActionType.VIEW },
     { type: ActionType.EDIT },
@@ -104,9 +122,15 @@ export default function Pengguna() {
   return (
     <div className="flex flex-col min-h-full w-full space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 w-full">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Daftar Pengguna</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          Daftar Pengguna
+        </h1>
         <Link to="/pengguna/tambah">
-          <Button leftIcon={<Plus className="h-4 w-4" />} size="sm" className="w-full sm:w-auto">
+          <Button
+            leftIcon={<Plus className="h-4 w-4" />}
+            size="sm"
+            className="w-full sm:w-auto"
+          >
             Tambah Pengguna
           </Button>
         </Link>
@@ -115,25 +139,40 @@ export default function Pengguna() {
       <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 overflow-hidden w-full">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 w-full">
           <div>
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Pengguna</h2>
-            <p className="text-xs sm:text-sm text-gray-500">Manajemen data pengguna sistem</p>
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+              Pengguna
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-500">
+              Manajemen data pengguna sistem
+            </p>
           </div>
           <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto items-center">
             {hasRoleReadAccess && <RoleFilter />}
-            <Button variant="outline" size="sm" leftIcon={<Download className="h-3 w-3 sm:h-4 sm:w-4" />}>
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<Download className="h-3 w-3 sm:h-4 sm:w-4" />}
+            >
               Export
             </Button>
           </div>
         </div>
 
         <div className="mb-4 sm:mb-6 w-full">
-          <SearchInput placeholder="Cari pengguna..." className="w-full sm:max-w-md" />
+          <SearchInput
+            placeholder="Cari pengguna..."
+            className="w-full sm:max-w-md"
+          />
         </div>
 
         {isLoading ? (
           <LoadingState text="Memuat data pengguna..." />
         ) : isError ? (
-          <ErrorState title="Gagal memuat data pengguna" message="Terjadi kesalahan pada server" onRetry={() => refetch()} />
+          <ErrorState
+            title="Gagal memuat data pengguna"
+            message="Terjadi kesalahan pada server"
+            onRetry={() => refetch()}
+          />
         ) : (
           <div className="w-full">
             {}
@@ -142,13 +181,27 @@ export default function Pengguna() {
                 <table className="w-full min-w-[650px] border-collapse">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">ID</th>
-                      <th className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Nama</th>
-                      <th className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Email</th>
-                      <th className="w-[13%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Peran</th>
-                      <th className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">Tgl. Dibuat</th>
-                      <th className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">Tgl. Diperbarui</th>
-                      <th className="w-[130px] py-3 px-3 text-center font-semibold text-gray-700 text-sm">Aksi</th>
+                      <th className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                        ID
+                      </th>
+                      <th className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                        Nama
+                      </th>
+                      <th className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                        Email
+                      </th>
+                      <th className="w-[13%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                        Peran
+                      </th>
+                      <th className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
+                        Tgl. Dibuat
+                      </th>
+                      <th className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
+                        Tgl. Diperbarui
+                      </th>
+                      <th className="w-[130px] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
+                        Aksi
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -160,28 +213,50 @@ export default function Pengguna() {
                       </tr>
                     ) : (
                       users.map((user, idx) => (
-                        <tr key={user.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50", "border-b border-gray-200 last:border-b-0")}>
-                          <td className="py-2.5 px-3 font-medium text-center text-sm">{idx + 1 + (pagination.page - 1) * pagination.limit}</td>
+                        <tr
+                          key={user.id}
+                          className={cn(
+                            idx % 2 === 0 ? "bg-white" : "bg-gray-50",
+                            "border-b border-gray-200 last:border-b-0"
+                          )}
+                        >
+                          <td className="py-2.5 px-3 font-medium text-center text-sm">
+                            {idx + 1 + (pagination.page - 1) * pagination.limit}
+                          </td>
                           <td className="py-2.5 px-3 font-medium text-blue-600 text-sm">
-                            <div className="truncate max-w-full" title={user.name}>
+                            <div className="wrap-text" title={user.name}>
                               {user.name}
                             </div>
                           </td>
-                          <td className="py-2.5 px-3 text-sm">
-                            <div className="truncate max-w-full" title={user.email}>
+                          <td className="py-2.5 px-3 text-gray-600 text-sm">
+                            <div className="wrap-text" title={user.email}>
                               {user.email}
                             </div>
                           </td>
                           <td className="py-2.5 px-3">
-                            <Badge variant={getRoleBadgeVariant(user.role.name)} className={cn("px-2 py-0.5 rounded-md font-medium text-xs", getRoleBadgeColor(user.role.name))}>
+                            <Badge
+                              variant={getRoleBadgeVariant(user.role.name)}
+                              className={cn(
+                                "px-2 py-0.5 rounded-md font-medium text-xs",
+                                getRoleBadgeColor(user.role.name)
+                              )}
+                            >
                               {user.role.name}
                             </Badge>
                           </td>
-                          <td className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">{formatDate(user.createdAt)}</td>
-                          <td className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">{formatDate(user.updatedAt)}</td>
+                          <td className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
+                            {formatDate(user.createdAt)}
+                          </td>
+                          <td className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
+                            {formatDate(user.updatedAt)}
+                          </td>
                           <td className="py-2.5 px-3">
                             <div className="flex justify-center items-center">
-                              <ActionButtons actions={getUserActions(user)} entityId={user.id} basePath="/pengguna" />
+                              <ActionButtons
+                                actions={getUserActions(user)}
+                                entityId={user.id}
+                                basePath="/pengguna"
+                              />
                             </div>
                           </td>
                         </tr>
@@ -200,29 +275,52 @@ export default function Pengguna() {
                 </div>
               ) : (
                 users.map((user) => (
-                  <div key={user.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm w-full">
+                  <div
+                    key={user.id}
+                    className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm w-full"
+                  >
                     <div className="p-3 w-full">
                       <div className="flex justify-between items-start mb-2 w-full">
                         <div className="max-w-[65%]">
-                          <h3 className="font-medium text-blue-600 break-words text-sm">{user.name}</h3>
-                          <p className="text-xs text-gray-600 break-all mt-1">{user.email}</p>
+                          <h3 className="font-medium text-blue-600 break-words text-sm">
+                            {user.name}
+                          </h3>
+                          <p className="text-xs text-gray-600 break-all mt-1">
+                            {user.email}
+                          </p>
                         </div>
-                        <Badge variant={getRoleBadgeVariant(user.role.name)} className={cn("px-2 py-0.5 rounded-md font-medium text-xs shrink-0", getRoleBadgeColor(user.role.name))}>
+                        <Badge
+                          variant={getRoleBadgeVariant(user.role.name)}
+                          className={cn(
+                            "px-2 py-0.5 rounded-md font-medium text-xs shrink-0",
+                            getRoleBadgeColor(user.role.name)
+                          )}
+                        >
                           {user.role.name}
                         </Badge>
                       </div>
 
                       <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                         <p>
-                          Dibuat: <span className="font-medium">{formatDateShort(user.createdAt)}</span>
+                          Dibuat:{" "}
+                          <span className="font-medium">
+                            {formatDateShort(user.createdAt)}
+                          </span>
                         </p>
                         <p>
-                          Diperbarui: <span className="font-medium">{formatDateShort(user.updatedAt)}</span>
+                          Diperbarui:{" "}
+                          <span className="font-medium">
+                            {formatDateShort(user.updatedAt)}
+                          </span>
                         </p>
                       </div>
 
                       <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
-                        <ActionButtons actions={getUserActions(user)} entityId={user.id} basePath="/pengguna" />
+                        <ActionButtons
+                          actions={getUserActions(user)}
+                          entityId={user.id}
+                          basePath="/pengguna"
+                        />
                       </div>
                     </div>
                   </div>
@@ -232,7 +330,14 @@ export default function Pengguna() {
 
             {}
             <div className="w-full mt-4">
-              <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />
+              <Pagination
+                totalItems={pagination.total}
+                itemsPerPage={pagination.limit}
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                hasNext={pagination.hasNext}
+                hasPrev={pagination.hasPrev}
+              />
             </div>
           </div>
         )}

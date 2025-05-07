@@ -1,11 +1,28 @@
 import { useRole } from "@/hooks/role";
-import { ArrowLeft, Pencil, Users, Info, Mail, Calendar, User, Eye, Lock } from "lucide-react";
+import {
+  ArrowLeft,
+  Pencil,
+  Users,
+  Info,
+  Mail,
+  Calendar,
+  User,
+  Eye,
+  Lock,
+} from "lucide-react";
 import { useParams, Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utils/date";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
 import { PERMISSION } from "@/constant/PERMISSION";
@@ -17,22 +34,22 @@ export default function DetailPeran() {
   const [activeTab, setActiveTab] = useState<"info" | "users">("info");
   const { isAuthenticated } = useAuth();
 
-  
   const userData = localStorage.getItem("user");
   const roleId = userData ? JSON.parse(userData)?.roleId : null;
 
-  
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
   });
 
-  
   const hasPermissionAccess = (): boolean => {
     if (!isAuthenticated || !permissions) return false;
-    return permissions.some((permission) => permission.resource === PERMISSION.RESOURCES.PERMISSION && permission.action === PERMISSION.ACTIONS.READ);
+    return permissions.some(
+      (permission) =>
+        permission.resource === PERMISSION.RESOURCES.PERMISSION &&
+        permission.action === PERMISSION.ACTIONS.READ
+    );
   };
 
-  
   const {
     data: role,
     isLoading,
@@ -81,7 +98,9 @@ export default function DetailPeran() {
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Informasi Peran</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Informasi Peran
+            </h2>
             <p className="text-sm text-gray-500">Detail peran dalam sistem</p>
           </div>
         </div>
@@ -89,24 +108,46 @@ export default function DetailPeran() {
         {isLoading ? (
           <LoadingState text="Memuat data peran..." />
         ) : isError ? (
-          <ErrorState title="Gagal memuat data peran" message={error?.message || "Terjadi kesalahan saat memuat data peran"} onRetry={refetch} retryButtonText="Coba lagi" />
+          <ErrorState
+            title="Gagal memuat data peran"
+            message={
+              error?.message || "Terjadi kesalahan saat memuat data peran"
+            }
+            onRetry={refetch}
+            retryButtonText="Coba lagi"
+          />
         ) : (
           <div className="space-y-6">
             {}
             <div className="flex border-b border-gray-200">
               <button
-                className={cn("px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center", activeTab === "info" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300")}
+                className={cn(
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center",
+                  activeTab === "info"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                )}
                 onClick={() => setActiveTab("info")}
               >
                 <Info className="h-4 w-4 mr-2" />
                 Informasi Peran
               </button>
               <button
-                className={cn("px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center", activeTab === "users" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300")}
+                className={cn(
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center",
+                  activeTab === "users"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                )}
                 onClick={() => setActiveTab("users")}
               >
                 <Users className="h-4 w-4 mr-2" />
-                Pengguna Terkait {role?.users && role.users.length > 0 && <span className="ml-1 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">{role.users.length}</span>}
+                Pengguna Terkait{" "}
+                {role?.users && role.users.length > 0 && (
+                  <span className="ml-1 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                    {role.users.length}
+                  </span>
+                )}
               </button>
             </div>
 
@@ -115,19 +156,36 @@ export default function DetailPeran() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Data Peran</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      Data Peran
+                    </h3>
                     <div className="space-y-3">
                       <div>
                         <p className="text-sm text-gray-500">ID Peran</p>
-                        <p className="font-medium text-gray-900">{role?.id}</p>
+                        <p
+                          className="font-medium text-gray-900 wrap-text"
+                          title={role?.id}
+                        >
+                          {role?.id}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Nama Peran</p>
-                        <p className="font-medium text-blue-600">{role?.name}</p>
+                        <p
+                          className="font-medium text-blue-600 wrap-text"
+                          title={role?.name}
+                        >
+                          {role?.name}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Deskripsi</p>
-                        <p className="font-medium text-gray-900">{role?.description}</p>
+                        <p
+                          className="font-medium text-gray-900 wrap-text"
+                          title={role?.description}
+                        >
+                          {role?.description}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -135,44 +193,70 @@ export default function DetailPeran() {
 
                 <div className="space-y-4">
                   <div className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Informasi Waktu</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      Informasi Waktu
+                    </h3>
                     <div className="space-y-3">
                       <div>
                         <p className="text-sm text-gray-500">Tanggal Dibuat</p>
-                        <p className="font-medium text-gray-900">{role?.createdAt ? formatDate(role.createdAt) : "-"}</p>
+                        <p className="font-medium text-gray-900">
+                          {role?.createdAt ? formatDate(role.createdAt) : "-"}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Tanggal Diperbarui</p>
-                        <p className="font-medium text-gray-900">{role?.updatedAt ? formatDate(role.updatedAt) : "-"}</p>
+                        <p className="text-sm text-gray-500">
+                          Tanggal Diperbarui
+                        </p>
+                        <p className="font-medium text-gray-900">
+                          {role?.updatedAt ? formatDate(role.updatedAt) : "-"}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Status</p>
-                        <p className="font-medium text-gray-900">{role?.deletedAt ? "Tidak Aktif" : "Aktif"}</p>
+                        <p className="font-medium text-gray-900">
+                          {role?.deletedAt ? "Tidak Aktif" : "Aktif"}
+                        </p>
                       </div>
                     </div>
                   </div>
 
                   <div className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Tindakan</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      Tindakan
+                    </h3>
                     <div className="space-y-3">
                       <Link to={`/peran/${id}/edit`} className="w-full">
-                        <Button variant="outline" className="w-full justify-start text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700">
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                        >
                           <Pencil className="h-4 w-4 mr-2" />
                           Edit Peran
                         </Button>
                       </Link>
                       {hasPermissionAccess() && (
                         <Link to={`/peran/${id}/izin`} className="w-full">
-                          <Button variant="outline" className="w-full justify-start text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700">
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700"
+                          >
                             <Lock className="h-4 w-4 mr-2" />
                             Kelola Izin Peran
                           </Button>
                         </Link>
                       )}
-                      <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab("users")}>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => setActiveTab("users")}
+                      >
                         <Users className="h-4 w-4 mr-2" />
                         Lihat Pengguna Terkait
-                        {role?.users && role.users.length > 0 && <span className="ml-2 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">{role.users.length}</span>}
+                        {role?.users && role.users.length > 0 && (
+                          <span className="ml-2 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                            {role.users.length}
+                          </span>
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -184,10 +268,16 @@ export default function DetailPeran() {
               <div className="space-y-4">
                 <div className="border border-gray-200 rounded-lg p-4">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">Pengguna dengan Peran {role?.name}</h3>
+                    <h3 className="text-lg font-medium text-gray-900">
+                      Pengguna dengan Peran {role?.name}
+                    </h3>
                     {role?.users && (
                       <span className="text-sm text-gray-500">
-                        Total: <span className="font-medium text-gray-700">{role.users.length}</span> pengguna
+                        Total:{" "}
+                        <span className="font-medium text-gray-700">
+                          {role.users.length}
+                        </span>{" "}
+                        pengguna
                       </span>
                     )}
                   </div>
@@ -196,8 +286,13 @@ export default function DetailPeran() {
                   {!role?.users || role.users.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-gray-300 rounded-lg">
                       <Users className="h-12 w-12 text-gray-400 mb-4" />
-                      <p className="text-gray-600 font-medium">Tidak ada pengguna yang memiliki peran ini</p>
-                      <p className="text-sm text-gray-500 max-w-md mt-2">Belum ada pengguna yang ditetapkan dengan peran {role?.name}</p>
+                      <p className="text-gray-600 font-medium">
+                        Tidak ada pengguna yang memiliki peran ini
+                      </p>
+                      <p className="text-sm text-gray-500 max-w-md mt-2">
+                        Belum ada pengguna yang ditetapkan dengan peran{" "}
+                        {role?.name}
+                      </p>
                     </div>
                   ) : (
                     <div>
@@ -207,28 +302,75 @@ export default function DetailPeran() {
                           <Table>
                             <TableHeader>
                               <TableRow className="bg-gray-50 border-b border-gray-200">
-                                <TableHead className="w-[50px] font-semibold text-gray-700 py-4">ID</TableHead>
-                                <TableHead className="font-semibold text-gray-700 py-4">Nama</TableHead>
-                                <TableHead className="font-semibold text-gray-700 py-4">Email</TableHead>
-                                <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">Tgl. Bergabung</TableHead>
-                                <TableHead className="font-semibold text-gray-700 py-4 text-center">Status</TableHead>
-                                <TableHead className="font-semibold text-gray-700 py-4 text-center">Aksi</TableHead>
+                                <TableHead className="w-[50px] font-semibold text-gray-700 py-4">
+                                  ID
+                                </TableHead>
+                                <TableHead className="font-semibold text-gray-700 py-4">
+                                  Nama
+                                </TableHead>
+                                <TableHead className="font-semibold text-gray-700 py-4">
+                                  Email
+                                </TableHead>
+                                <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">
+                                  Tgl. Bergabung
+                                </TableHead>
+                                <TableHead className="font-semibold text-gray-700 py-4 text-center">
+                                  Status
+                                </TableHead>
+                                <TableHead className="font-semibold text-gray-700 py-4 text-center">
+                                  Aksi
+                                </TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
                               {role.users.map((user, idx) => (
-                                <TableRow key={user.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50")}>
-                                  <TableCell className="font-medium text-center">{idx + 1}</TableCell>
-                                  <TableCell className="font-medium text-blue-600">{user.name}</TableCell>
-                                  <TableCell className="text-gray-600">{user.email}</TableCell>
-                                  <TableCell className="hidden md:table-cell text-gray-500">{formatDate(user.createdAt)}</TableCell>
+                                <TableRow
+                                  key={user.id}
+                                  className={cn(
+                                    idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                  )}
+                                >
+                                  <TableCell className="font-medium text-center">
+                                    {idx + 1}
+                                  </TableCell>
+                                  <TableCell className="font-medium text-blue-600">
+                                    {user.name}
+                                  </TableCell>
+                                  <TableCell className="text-gray-600">
+                                    <div className="flex items-center text-sm text-gray-600">
+                                      <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                                      <span
+                                        className="truncate-text"
+                                        title={user.email}
+                                      >
+                                        {user.email}
+                                      </span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="hidden md:table-cell text-gray-500">
+                                    {formatDate(user.createdAt)}
+                                  </TableCell>
                                   <TableCell className="text-center">
-                                    <span className={cn("px-2 py-1 text-xs rounded-full", user.deletedAt ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700")}>{user.deletedAt ? "Tidak Aktif" : "Aktif"}</span>
+                                    <span
+                                      className={cn(
+                                        "px-2 py-1 text-xs rounded-full",
+                                        user.deletedAt
+                                          ? "bg-red-100 text-red-700"
+                                          : "bg-green-100 text-green-700"
+                                      )}
+                                    >
+                                      {user.deletedAt ? "Tidak Aktif" : "Aktif"}
+                                    </span>
                                   </TableCell>
                                   <TableCell>
                                     <div className="flex items-center justify-center gap-1">
                                       <Link to={`/pengguna/${user.id}`}>
-                                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                          title="Lihat Detail"
+                                        >
                                           <Eye className="h-4 w-4" />
                                         </Button>
                                       </Link>
@@ -244,31 +386,67 @@ export default function DetailPeran() {
                       {}
                       <div className="sm:hidden space-y-4">
                         {role.users.map((user) => (
-                          <div key={user.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm">
+                          <div
+                            key={user.id}
+                            className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm"
+                          >
                             <div className="p-4">
                               <div className="flex justify-between items-start mb-2">
-                                <h3 className="font-medium text-blue-600">{user.name}</h3>
-                                <span className={cn("px-2 py-1 text-xs rounded-full", user.deletedAt ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700")}>{user.deletedAt ? "Tidak Aktif" : "Aktif"}</span>
+                                <h3 className="font-medium text-blue-600">
+                                  {user.name}
+                                </h3>
+                                <span
+                                  className={cn(
+                                    "px-2 py-1 text-xs rounded-full",
+                                    user.deletedAt
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-green-100 text-green-700"
+                                  )}
+                                >
+                                  {user.deletedAt ? "Tidak Aktif" : "Aktif"}
+                                </span>
                               </div>
 
                               <div className="space-y-2 mt-3">
                                 <div className="flex items-center text-sm text-gray-600">
                                   <Mail className="h-4 w-4 mr-2 text-gray-400" />
-                                  <span>{user.email}</span>
+                                  <span
+                                    className="truncate-text"
+                                    title={user.email}
+                                  >
+                                    {user.email}
+                                  </span>
                                 </div>
                                 <div className="flex items-center text-sm text-gray-600">
                                   <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                                  <span>Bergabung: {formatDate(user.createdAt)}</span>
+                                  <span
+                                    className="truncate-text"
+                                    title={`Bergabung: ${formatDate(
+                                      user.createdAt
+                                    )}`}
+                                  >
+                                    Bergabung: {formatDate(user.createdAt)}
+                                  </span>
                                 </div>
                                 <div className="flex items-center text-sm text-gray-600">
                                   <User className="h-4 w-4 mr-2 text-gray-400" />
-                                  <span>ID: {user.id}</span>
+                                  <span
+                                    className="truncate-text"
+                                    title={`ID: ${user.id}`}
+                                  >
+                                    ID: {user.id}
+                                  </span>
                                 </div>
                               </div>
 
                               <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
                                 <Link to={`/pengguna/${user.id}`}>
-                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50" title="Lihat Detail">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                    title="Lihat Detail"
+                                  >
                                     <Eye className="h-4 w-4" />
                                   </Button>
                                 </Link>

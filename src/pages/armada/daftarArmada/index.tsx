@@ -27,11 +27,10 @@ import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import { ActionButtons, ActionType } from "@/components/ActionButtons";
 import { Armada } from "@/types/armada";
-import { useEffect } from "react";
 
 export default function DaftarArmada() {
   const [searchParams] = useSearchParams();
-    
+
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
@@ -56,11 +55,6 @@ export default function DaftarArmada() {
     hasNext: false,
     hasPrev: false,
   };
-
-  useEffect(() => {
-    console.log(armadas);
-    console.log(armadaError);
-  }, [armadas, armadaError]);
 
   const deleteArmadaMutation = useDeleteArmada({
     onSuccess: () => {
@@ -187,12 +181,9 @@ export default function DaftarArmada() {
                         Model
                       </TableHead>
                       <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
-                        ID SL
-                      </TableHead>
-                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Plat Nomor
                       </TableHead>
-                      <TableHead className="w-[23%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
+                      <TableHead className="w-[38%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
                         Deskripsi
                       </TableHead>
                       <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
@@ -206,7 +197,7 @@ export default function DaftarArmada() {
                   <TableBody>
                     {armadas.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="h-24 text-center">
+                        <TableCell colSpan={6} className="h-24 text-center">
                           <EmptyState title="Tidak ada data armada yang ditemukan" />
                         </TableCell>
                       </TableRow>
@@ -223,24 +214,13 @@ export default function DaftarArmada() {
                             {idx + 1 + (pagination.page - 1) * pagination.limit}
                           </TableCell>
                           <TableCell className="py-2.5 px-3 font-medium text-blue-600 text-sm">
-                            <div
-                              className="max-w-full truncate"
-                              title={armada.model}
-                            >
+                            <div className="wrap-text" title={armada.model}>
                               {armada.model}
                             </div>
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-sm">
                             <div
-                              className="max-w-full truncate"
-                              title={armada.id_sl}
-                            >
-                              {armada.id_sl}
-                            </div>
-                          </TableCell>
-                          <TableCell className="py-2.5 px-3 text-sm">
-                            <div
-                              className="max-w-full truncate"
+                              className="wrap-text"
                               title={armada.plateNumber}
                             >
                               {armada.plateNumber}
@@ -248,7 +228,7 @@ export default function DaftarArmada() {
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
                             <div
-                              className="max-w-full truncate"
+                              className="wrap-text"
                               title={armada.description}
                             >
                               {armada.description}
@@ -295,10 +275,6 @@ export default function DaftarArmada() {
                           <p className="mt-1 text-xs text-gray-600 break-all">
                             {armada.plateNumber}
                           </p>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          ID:{" "}
-                          <span className="font-medium">{armada.id_sl}</span>
                         </div>
                       </div>
 

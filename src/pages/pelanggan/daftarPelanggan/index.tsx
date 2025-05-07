@@ -33,8 +33,8 @@ export default function DaftarPelanggan() {
 
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && roleId !== "",
-  }); 
-  
+  });
+
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
@@ -188,10 +188,7 @@ export default function DaftarPelanggan() {
                       <th className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Nama
                       </th>
-                      <th className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
-                        ID SL
-                      </th>
-                      <th className="w-[25%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                      <th className="w-[40%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Alamat
                       </th>
                       <th className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
@@ -208,7 +205,7 @@ export default function DaftarPelanggan() {
                   <tbody>
                     {customers.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="py-6 text-center">
+                        <td colSpan={6} className="py-6 text-center">
                           <EmptyState title="Tidak ada data pelanggan yang ditemukan" />
                         </td>
                       </tr>
@@ -225,26 +222,12 @@ export default function DaftarPelanggan() {
                             {idx + 1 + (pagination.page - 1) * pagination.limit}
                           </td>
                           <td className="py-2.5 px-3 font-medium text-blue-600 text-sm">
-                            <div
-                              className="max-w-full truncate"
-                              title={customer.name}
-                            >
+                            <div className="wrap-text" title={customer.name}>
                               {customer.name}
                             </div>
                           </td>
                           <td className="py-2.5 px-3 text-sm">
-                            <div
-                              className="max-w-full truncate"
-                              title={customer.id_sl}
-                            >
-                              {customer.id_sl}
-                            </div>
-                          </td>
-                          <td className="py-2.5 px-3 text-sm">
-                            <div
-                              className="max-w-full truncate"
-                              title={customer.address}
-                            >
+                            <div className="wrap-text" title={customer.address}>
                               {customer.address}
                             </div>
                           </td>
@@ -289,9 +272,6 @@ export default function DaftarPelanggan() {
                           <h3 className="text-sm font-medium text-blue-600 break-words">
                             {customer.name}
                           </h3>
-                          <p className="mt-1 text-xs text-gray-600 break-all">
-                            {customer.id_sl}
-                          </p>
                         </div>
                         <Badge className="px-2 py-0.5 rounded-md font-medium text-xs shrink-0 bg-blue-100 text-blue-800 border-blue-200">
                           Pelanggan

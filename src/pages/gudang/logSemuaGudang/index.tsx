@@ -6,14 +6,20 @@ import { WarehouseLog } from "@/types/gudangLog";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
 import { Pagination } from "@/components/Pagination";
 import { Link } from "react-router";
 import { LoadingState } from "@/components/LoadingState";
 import { EmptyState } from "@/components/EmptyState";
-
 
 interface ActionLabel {
   label: string;
@@ -23,11 +29,9 @@ interface ActionLabel {
 export default function LogSemuaGudang() {
   const [searchParams] = useSearchParams();
 
-  
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  
   const { data, isLoading } = useWarehouseLogs({
     staleTime: 0,
     refetchOnMount: true,
@@ -44,36 +48,63 @@ export default function LogSemuaGudang() {
     hasPrev: false,
   };
 
-  
   const getActionLabel = (action: string): ActionLabel => {
     const labels: Record<string, ActionLabel> = {
-      CREATE: { label: "Dibuat", color: "bg-green-100 text-green-800 border-green-200" },
-      UPDATE: { label: "Diperbarui", color: "bg-amber-100 text-amber-800 border-amber-200" },
-      DELETE: { label: "Dihapus", color: "bg-red-100 text-red-800 border-red-200" },
-      RESTORE: { label: "Dipulihkan", color: "bg-blue-100 text-blue-800 border-blue-200" },
+      CREATE: {
+        label: "Dibuat",
+        color: "bg-green-100 text-green-800 border-green-200",
+      },
+      UPDATE: {
+        label: "Diperbarui",
+        color: "bg-amber-100 text-amber-800 border-amber-200",
+      },
+      DELETE: {
+        label: "Dihapus",
+        color: "bg-red-100 text-red-800 border-red-200",
+      },
+      RESTORE: {
+        label: "Dipulihkan",
+        color: "bg-blue-100 text-blue-800 border-blue-200",
+      },
     };
 
-    return labels[action] || { label: action, color: "bg-gray-100 text-gray-800 border-gray-200" };
+    return (
+      labels[action] || {
+        label: action,
+        color: "bg-gray-100 text-gray-800 border-gray-200",
+      }
+    );
   };
 
-  
-  const renderChanges = (oldData: Record<string, unknown> | null, newData: Record<string, unknown> | null) => {
+  const renderChanges = (
+    oldData: Record<string, unknown> | null,
+    newData: Record<string, unknown> | null
+  ) => {
     if (!oldData && !newData) return null;
 
-    
     if (newData && !oldData) {
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">Data gudang yang dibuat:</div>
+          <div className="mb-1 text-xs font-medium text-gray-700">
+            Data gudang yang dibuat:
+          </div>
           <table className="w-full text-xs border-collapse">
             <tbody>
               <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">Nama</td>
-                <td className="px-2 py-1 border border-gray-200">{newData.name as string}</td>
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                  Nama
+                </td>
+                <td className="px-2 py-1 border border-gray-200">
+                  {newData.name as string}
+                </td>
               </tr>
               <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">Deskripsi</td>
-                <td className="px-2 py-1 border border-gray-200">{newData.description as string}</td>
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                  Deskripsi
+                </td>
+                <td className="px-2 py-1 border border-gray-200">
+                  {newData.description as string}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -81,20 +112,29 @@ export default function LogSemuaGudang() {
       );
     }
 
-    
     if (oldData && !newData) {
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">Data gudang yang dihapus:</div>
+          <div className="mb-1 text-xs font-medium text-gray-700">
+            Data gudang yang dihapus:
+          </div>
           <table className="w-full text-xs border-collapse">
             <tbody>
               <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">Nama</td>
-                <td className="px-2 py-1 border border-gray-200">{oldData.name as string}</td>
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                  Nama
+                </td>
+                <td className="px-2 py-1 border border-gray-200">
+                  {oldData.name as string}
+                </td>
               </tr>
               <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">Deskripsi</td>
-                <td className="px-2 py-1 border border-gray-200">{oldData.description as string}</td>
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                  Deskripsi
+                </td>
+                <td className="px-2 py-1 border border-gray-200">
+                  {oldData.description as string}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -102,11 +142,9 @@ export default function LogSemuaGudang() {
       );
     }
 
-    
     if (oldData && newData) {
       const changes = [];
 
-      
       if (oldData.name !== newData.name) {
         changes.push({
           field: "Nama",
@@ -123,7 +161,6 @@ export default function LogSemuaGudang() {
         });
       }
 
-      
       type UserType = { name: string };
       const oldUser = (oldData.user as UserType)?.name || "-";
       const newUser = (newData.user as UserType)?.name || "-";
@@ -140,21 +177,35 @@ export default function LogSemuaGudang() {
 
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">Perubahan:</div>
+          <div className="mb-1 text-xs font-medium text-gray-700">
+            Perubahan:
+          </div>
           <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="bg-gray-50">
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">Field</th>
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">Nilai Lama</th>
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">Nilai Baru</th>
+                <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                  Field
+                </th>
+                <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                  Nilai Lama
+                </th>
+                <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                  Nilai Baru
+                </th>
               </tr>
             </thead>
             <tbody>
               {changes.map((change, idx) => (
                 <tr key={idx}>
-                  <td className="px-2 py-1 font-medium border border-gray-200">{change.field}</td>
-                  <td className="px-2 py-1 border border-gray-200">{change.oldValue}</td>
-                  <td className="px-2 py-1 border border-gray-200">{change.newValue}</td>
+                  <td className="px-2 py-1 font-medium border border-gray-200">
+                    {change.field}
+                  </td>
+                  <td className="px-2 py-1 border border-gray-200">
+                    {change.oldValue}
+                  </td>
+                  <td className="px-2 py-1 border border-gray-200">
+                    {change.newValue}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -166,7 +217,6 @@ export default function LogSemuaGudang() {
     return null;
   };
 
-  
   const getWarehouseName = (log: WarehouseLog) => {
     if (log.warehouse) {
       return log.warehouse.name;
@@ -178,53 +228,92 @@ export default function LogSemuaGudang() {
     return "Gudang tidak diketahui";
   };
 
-  
   const renderLogTable = () => (
     <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-gray-200 bg-gray-50">
-              <TableHead className="w-[50px] font-semibold text-gray-700 py-4">No</TableHead>
-              <TableHead className="py-4 font-semibold text-gray-700">Waktu</TableHead>
-              <TableHead className="py-4 font-semibold text-gray-700">Gudang</TableHead>
-              <TableHead className="py-4 font-semibold text-gray-700">Aksi</TableHead>
-              <TableHead className="py-4 font-semibold text-gray-700">Dilakukan Oleh</TableHead>
-              <TableHead className="py-4 font-semibold text-gray-700">Deskripsi</TableHead>
+              <TableHead className="w-[50px] font-semibold text-gray-700 py-4">
+                No
+              </TableHead>
+              <TableHead className="py-4 font-semibold text-gray-700">
+                Waktu
+              </TableHead>
+              <TableHead className="py-4 font-semibold text-gray-700">
+                Gudang
+              </TableHead>
+              <TableHead className="py-4 font-semibold text-gray-700">
+                Aksi
+              </TableHead>
+              <TableHead className="py-4 font-semibold text-gray-700">
+                Dilakukan Oleh
+              </TableHead>
+              <TableHead className="py-4 font-semibold text-gray-700">
+                Deskripsi
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {logs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  <EmptyState title="Tidak ada data log yang ditemukan." message="" />
+                  <EmptyState
+                    title="Tidak ada data log yang ditemukan."
+                    message=""
+                  />
                 </TableCell>
               </TableRow>
             ) : (
               logs.map((log: WarehouseLog, index: number) => (
-                <TableRow key={log.id} className={cn(index % 2 === 0 ? "bg-white" : "bg-gray-50")}>
-                  <TableCell className="font-medium text-center">{index + 1 + (pagination.page - 1) * pagination.limit}</TableCell>
-                  <TableCell className="text-gray-700">{formatDate(log.createdAt)}</TableCell>
+                <TableRow
+                  key={log.id}
+                  className={cn(index % 2 === 0 ? "bg-white" : "bg-gray-50")}
+                >
+                  <TableCell className="font-medium text-center">
+                    {index + 1 + (pagination.page - 1) * pagination.limit}
+                  </TableCell>
+                  <TableCell className="text-gray-700">
+                    {formatDate(log.createdAt)}
+                  </TableCell>
                   <TableCell>
                     {log.warehouse ? (
-                      <Link to={`/gudang/${log.warehouse.id}`} className="font-medium text-blue-600 hover:underline">
+                      <Link
+                        to={`/gudang/${log.warehouse.id}`}
+                        className="font-medium text-blue-600 hover:underline"
+                      >
                         {log.warehouse.name}
                       </Link>
                     ) : (
-                      <span className="text-gray-700">{getWarehouseName(log)}</span>
+                      <span className="text-gray-700">
+                        {getWarehouseName(log)}
+                      </span>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge className={cn("rounded-md font-medium border", getActionLabel(log.action).color)}>{getActionLabel(log.action).label}</Badge>
+                    <Badge
+                      className={cn(
+                        "rounded-md font-medium border",
+                        getActionLabel(log.action).color
+                      )}
+                    >
+                      {getActionLabel(log.action).label}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium text-blue-600">{log.performedBy.name}</span>
-                      <span className="text-xs text-gray-500">{log.performedBy.email}</span>
+                      <span className="font-medium text-blue-600">
+                        {log.performedBy.name}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {log.performedBy.email}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <p className="text-sm text-gray-700 line-clamp-2">{log.description}</p>
+                    <p className="text-sm text-gray-700 line-clamp-2">
+                      {log.description}
+                    </p>
                     <div className="mt-2">
                       {(log.oldData || log.newData) && (
                         <>
@@ -233,12 +322,16 @@ export default function LogSemuaGudang() {
                             size="sm"
                             className="h-auto px-2 py-1 text-xs text-blue-600 hover:text-blue-800"
                             onClick={(e) => {
-                              e.currentTarget.nextElementSibling?.classList.toggle("hidden");
+                              e.currentTarget.nextElementSibling?.classList.toggle(
+                                "hidden"
+                              );
                             }}
                           >
                             Lihat Detail
                           </Button>
-                          <div className="hidden mt-2">{renderChanges(log.oldData, log.newData)}</div>
+                          <div className="hidden mt-2">
+                            {renderChanges(log.oldData, log.newData)}
+                          </div>
                         </>
                       )}
                     </div>
@@ -252,7 +345,6 @@ export default function LogSemuaGudang() {
     </div>
   );
 
-  
   const renderLogCards = () => (
     <div className="space-y-4 sm:hidden">
       {logs.length === 0 ? (
@@ -261,31 +353,55 @@ export default function LogSemuaGudang() {
         </div>
       ) : (
         logs.map((log: WarehouseLog) => (
-          <div key={log.id} className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div
+            key={log.id}
+            className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
+          >
             <div className="p-4">
               <div className="flex items-start justify-between mb-3">
-                <Badge className={cn("rounded-md font-medium border", getActionLabel(log.action).color)}>{getActionLabel(log.action).label}</Badge>
-                <span className="text-xs text-gray-500">{formatDateShort(log.createdAt)}</span>
+                <Badge
+                  className={cn(
+                    "rounded-md font-medium border",
+                    getActionLabel(log.action).color
+                  )}
+                >
+                  {getActionLabel(log.action).label}
+                </Badge>
+                <span className="text-xs text-gray-500">
+                  {formatDateShort(log.createdAt)}
+                </span>
               </div>
 
               <div className="mb-2">
                 <div className="mb-1">
                   <span className="text-sm font-medium">Gudang: </span>
                   {log.warehouse ? (
-                    <Link to={`/gudang/${log.warehouse.id}`} className="text-sm text-blue-600 hover:underline">
+                    <Link
+                      to={`/gudang/${log.warehouse.id}`}
+                      className="text-sm text-blue-600 hover:underline"
+                    >
                       {log.warehouse.name}
                     </Link>
                   ) : (
-                    <span className="text-sm text-gray-700">{getWarehouseName(log)}</span>
+                    <span className="text-sm text-gray-700">
+                      {getWarehouseName(log)}
+                    </span>
                   )}
                 </div>
                 <p className="mb-1 text-sm text-gray-700">{log.description}</p>
                 <div className="text-xs text-gray-500">
-                  Dilakukan oleh: <span className="font-medium text-blue-600">{log.performedBy.name}</span>
+                  Dilakukan oleh:{" "}
+                  <span className="font-medium text-blue-600">
+                    {log.performedBy.name}
+                  </span>
                 </div>
               </div>
 
-              {(log.oldData || log.newData) && <div className="pt-3 mt-3 border-t border-gray-100">{renderChanges(log.oldData, log.newData)}</div>}
+              {(log.oldData || log.newData) && (
+                <div className="pt-3 mt-3 border-t border-gray-100">
+                  {renderChanges(log.oldData, log.newData)}
+                </div>
+              )}
             </div>
           </div>
         ))
@@ -296,17 +412,27 @@ export default function LogSemuaGudang() {
   return (
     <div className="px-4 space-y-6 sm:px-0">
       <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
-        <h1 className="text-2xl font-bold text-gray-900">Log Aktivitas Gudang</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Log Aktivitas Gudang
+        </h1>
       </div>
 
       <div className="p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">
         <div className="flex flex-col items-start justify-between gap-4 mb-6 sm:flex-row sm:items-center">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Semua Aktivitas Gudang</h2>
-            <p className="text-sm text-gray-500">Riwayat perubahan data gudang di sistem</p>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Semua Aktivitas Gudang
+            </h2>
+            <p className="text-sm text-gray-500">
+              Riwayat perubahan data gudang di sistem
+            </p>
           </div>
           <div className="flex flex-wrap items-center w-full gap-3 sm:w-auto">
-            <Button variant="outline" size="sm" className="h-9 min-w-[100px] bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm flex items-center px-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 min-w-[100px] bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm flex items-center px-3"
+            >
               <Download className="w-3 h-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
               Export
             </Button>
@@ -319,7 +445,16 @@ export default function LogSemuaGudang() {
           <div>
             {renderLogTable()}
             {renderLogCards()}
-            {data && <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />}
+            {data && (
+              <Pagination
+                totalItems={pagination.total}
+                itemsPerPage={pagination.limit}
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                hasNext={pagination.hasNext}
+                hasPrev={pagination.hasPrev}
+              />
+            )}
           </div>
         )}
       </div>

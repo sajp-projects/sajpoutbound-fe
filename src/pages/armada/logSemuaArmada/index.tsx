@@ -28,7 +28,7 @@ interface ActionLabel {
 
 export default function LogSemuaArmada() {
   const [searchParams] = useSearchParams();
-  
+
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
@@ -310,18 +310,21 @@ export default function LogSemuaArmada() {
                     {index + 1 + (pagination.page - 1) * pagination.limit}
                   </TableCell>
                   <TableCell className="text-gray-700">
-                    {formatDate(log.createdAt)}
+                    <div className="truncate-text" title={formatDate(log.createdAt)}>
+                      {formatDate(log.createdAt)}
+                    </div>
                   </TableCell>
                   <TableCell>
                     {log.armada ? (
                       <Link
                         to={`/armada/${log.armada.id}`}
-                        className="font-medium text-blue-600 hover:underline"
+                        className="font-medium text-blue-600 hover:underline truncate-text block"
+                        title={log.armada.model}
                       >
                         {log.armada.model}
                       </Link>
                     ) : (
-                      <span className="text-gray-700">
+                      <span className="text-gray-700 truncate-text" title={getArmadaName(log)}>
                         {getArmadaName(log)}
                       </span>
                     )}
@@ -338,16 +341,19 @@ export default function LogSemuaArmada() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium text-blue-600">
+                      <span className="font-medium text-blue-600 truncate-text" title={log.performedBy.name}>
                         {log.performedBy.name}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 truncate-text" title={log.performedBy.email}>
                         {log.performedBy.email}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <p className="text-sm text-gray-700 line-clamp-2">
+                    <p
+                      className="text-sm text-gray-700 truncate-text-2"
+                      title={log.description}
+                    >
                       {log.description}
                     </p>
                     <div className="mt-2">
@@ -414,17 +420,20 @@ export default function LogSemuaArmada() {
                   {log.armada ? (
                     <Link
                       to={`/armada/${log.armada.id}`}
-                      className="text-sm text-blue-600 hover:underline"
+                      className="text-sm text-blue-600 hover:underline truncate-text inline-block max-w-[150px] align-bottom"
+                      title={log.armada.model}
                     >
                       {log.armada.model}
                     </Link>
                   ) : (
-                    <span className="text-sm text-gray-700">
+                    <span className="text-sm text-gray-700 truncate-text" title={getArmadaName(log)}>
                       {getArmadaName(log)}
                     </span>
                   )}
                 </div>
-                <p className="mb-1 text-sm text-gray-700">{log.description}</p>
+                <p className="mb-1 text-sm text-gray-700 truncate-text-2" title={log.description}>
+                  {log.description}
+                </p>
                 <div className="text-xs text-gray-500">
                   Dilakukan oleh:{" "}
                   <span className="font-medium text-blue-600">

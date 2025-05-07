@@ -1,14 +1,14 @@
-import { useDeleteProduct, useProducts } from '@/hooks/barang';
-import { Download, Plus } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router';
+import { useDeleteProduct, useProducts } from "@/hooks/barang";
+import { Download, Plus } from "lucide-react";
+import { Link, useSearchParams } from "react-router";
 
-import { ActionButtons, ActionType } from '@/components/ActionButtons';
-import { EmptyState } from '@/components/EmptyState';
-import { ErrorState } from '@/components/ErrorState';
-import { LoadingState } from '@/components/LoadingState';
-import { Pagination } from '@/components/Pagination';
-import { SearchInput } from '@/components/SearchInput';
-import { Button } from '@/components/ui/button';
+import { ActionButtons, ActionType } from "@/components/ActionButtons";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
+import { Pagination } from "@/components/Pagination";
+import { SearchInput } from "@/components/SearchInput";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -16,26 +16,24 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { cn } from '@/lib/utils';
-import { Product } from '@/types/barang';
-import { formatDate, formatDateShort } from '@/utils/date';
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { Product } from "@/types/barang";
+import { formatDate, formatDateShort } from "@/utils/date";
 import {
   isConfirmed,
   showDeleteConfirmationAlert,
   showErrorAlert,
   showForbiddenAlert,
   showSuccessAlert,
-} from '@/utils/sweetAlert';
+} from "@/utils/sweetAlert";
 
 export default function DaftarBarang() {
   const [searchParams] = useSearchParams();
 
-  
-  const currentPage = parseInt(searchParams.get('page') || '1');
-  const itemsPerPage = parseInt(searchParams.get('limit') || '10');
+  const currentPage = parseInt(searchParams.get("page") || "1");
+  const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  
   const {
     data,
     isLoading,
@@ -58,40 +56,37 @@ export default function DaftarBarang() {
     hasPrev: false,
   };
 
-  
   const deleteProductMutation = useDeleteProduct({
     onSuccess: () => {
-      showSuccessAlert('Sukses!', 'Barang berhasil dihapus');
+      showSuccessAlert("Sukses!", "Barang berhasil dihapus");
       refetch();
     },
     onError: (error) => {
       try {
-        
-        if (error.message && error.message.includes('Forbidden')) {
+        if (error.message && error.message.includes("Forbidden")) {
           showForbiddenAlert(
-            'Akses Ditolak',
-            'Anda tidak memiliki akses untuk menghapus barang ini.'
+            "Akses Ditolak",
+            "Anda tidak memiliki akses untuk menghapus barang ini."
           );
         } else {
           const errorObj = JSON.parse(error.message);
           showErrorAlert(
-            'Gagal Menghapus Barang',
-            errorObj.message || 'Terjadi kesalahan saat menghapus barang'
+            "Gagal Menghapus Barang",
+            errorObj.message || "Terjadi kesalahan saat menghapus barang"
           );
         }
       } catch {
         showErrorAlert(
-          'Gagal Menghapus Barang',
-          error.message || 'Terjadi kesalahan saat menghapus barang'
+          "Gagal Menghapus Barang",
+          error.message || "Terjadi kesalahan saat menghapus barang"
         );
       }
     },
   });
 
-  
   const handleDeleteProduct = (id: string, name: string) => {
     showDeleteConfirmationAlert(
-      'Barang',
+      "Barang",
       `Apakah Anda yakin ingin menghapus barang "${name}"?`
     ).then((result) => {
       if (isConfirmed(result)) {
@@ -100,7 +95,6 @@ export default function DaftarBarang() {
     });
   };
 
-  
   const getProductActions = (product: Product) => [
     { type: ActionType.VIEW },
     { type: ActionType.EDIT },
@@ -168,7 +162,7 @@ export default function DaftarBarang() {
             message={
               productError instanceof Error
                 ? productError.message
-                : 'Terjadi kesalahan pada server'
+                : "Terjadi kesalahan pada server"
             }
             onRetry={() => refetch()}
           />
@@ -212,18 +206,15 @@ export default function DaftarBarang() {
                         <TableRow
                           key={barang.id}
                           className={cn(
-                            idx % 2 === 0 ? 'bg-white' : 'bg-gray-50',
-                            'border-b border-gray-200 last:border-b-0'
+                            idx % 2 === 0 ? "bg-white" : "bg-gray-50",
+                            "border-b border-gray-200 last:border-b-0"
                           )}
                         >
                           <TableCell className="py-2.5 px-3 font-medium text-center text-sm">
                             {idx + 1 + (pagination.page - 1) * pagination.limit}
                           </TableCell>
                           <TableCell className="py-2.5 px-3 font-medium text-blue-600 text-sm">
-                            <div
-                              className="truncate max-w-full"
-                              title={barang.id_sl}
-                            >
+                            <div className="wrap-text" title={barang.id_sl}>
                               {barang.id_sl}
                             </div>
                           </TableCell>
@@ -232,7 +223,9 @@ export default function DaftarBarang() {
                               to={`/barang/${barang.id}`}
                               className="hover:underline"
                             >
-                              {barang.name}
+                              <div className="wrap-text" title={barang.name}>
+                                {barang.name}
+                              </div>
                             </Link>
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
@@ -293,14 +286,14 @@ export default function DaftarBarang() {
 
                       <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                         <p>
-                          Dibuat:{' '}
+                          Dibuat:{" "}
                           <span className="font-medium">
                             {formatDateShort(barang.createdAt)}
                           </span>
                         </p>
                         {barang.warehouse && (
                           <p>
-                            Gudang:{' '}
+                            Gudang:{" "}
                             <Link
                               to={`/gudang/${barang.warehouse.id}`}
                               className="text-blue-600 hover:underline"

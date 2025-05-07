@@ -5,10 +5,23 @@ import { Link, useSearchParams } from "react-router";
 import { Pagination } from "@/components/Pagination";
 import { SearchInput } from "@/components/SearchInput";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
-import { showSuccessAlert, showErrorAlert, isConfirmed, showForbiddenAlert, showDeleteConfirmationAlert } from "@/utils/sweetAlert";
+import {
+  showSuccessAlert,
+  showErrorAlert,
+  isConfirmed,
+  showForbiddenAlert,
+  showDeleteConfirmationAlert,
+} from "@/utils/sweetAlert";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
@@ -18,11 +31,9 @@ import { Warehouse } from "@/types/gudang";
 export default function DaftarGudang() {
   const [searchParams] = useSearchParams();
 
-  
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  
   const {
     data,
     isLoading,
@@ -45,7 +56,6 @@ export default function DaftarGudang() {
     hasPrev: false,
   };
 
-  
   const deleteWarehouseMutation = useDeleteWarehouse({
     onSuccess: () => {
       showSuccessAlert("Sukses!", "Gudang berhasil dihapus");
@@ -53,29 +63,38 @@ export default function DaftarGudang() {
     },
     onError: (error) => {
       try {
-        
         if (error.message && error.message.includes("Forbidden")) {
-          showForbiddenAlert("Akses Ditolak", "Anda tidak memiliki akses untuk menghapus gudang ini.");
+          showForbiddenAlert(
+            "Akses Ditolak",
+            "Anda tidak memiliki akses untuk menghapus gudang ini."
+          );
         } else {
           const errorObj = JSON.parse(error.message);
-          showErrorAlert("Gagal Menghapus Gudang", errorObj.message || "Terjadi kesalahan saat menghapus gudang");
+          showErrorAlert(
+            "Gagal Menghapus Gudang",
+            errorObj.message || "Terjadi kesalahan saat menghapus gudang"
+          );
         }
       } catch {
-        showErrorAlert("Gagal Menghapus Gudang", error.message || "Terjadi kesalahan saat menghapus gudang");
+        showErrorAlert(
+          "Gagal Menghapus Gudang",
+          error.message || "Terjadi kesalahan saat menghapus gudang"
+        );
       }
     },
   });
 
-  
   const handleDeleteWarehouse = (id: string, name: string) => {
-    showDeleteConfirmationAlert("Gudang", `Apakah Anda yakin ingin menghapus gudang "${name}"?`).then((result) => {
+    showDeleteConfirmationAlert(
+      "Gudang",
+      `Apakah Anda yakin ingin menghapus gudang "${name}"?`
+    ).then((result) => {
       if (isConfirmed(result)) {
         deleteWarehouseMutation.mutate({ id });
       }
     });
   };
 
-  
   const getWarehouseActions = (warehouse: Warehouse) => [
     { type: ActionType.VIEW },
     { type: ActionType.EDIT },
@@ -83,7 +102,9 @@ export default function DaftarGudang() {
     {
       type: ActionType.DELETE,
       onClick: () => handleDeleteWarehouse(warehouse.id, warehouse.name),
-      isLoading: deleteWarehouseMutation.isPending && deleteWarehouseMutation.variables?.id === warehouse.id,
+      isLoading:
+        deleteWarehouseMutation.isPending &&
+        deleteWarehouseMutation.variables?.id === warehouse.id,
       disabled: deleteWarehouseMutation.isPending,
     },
   ];
@@ -91,9 +112,15 @@ export default function DaftarGudang() {
   return (
     <div className="flex flex-col min-h-full w-full space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 w-full">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Daftar Gudang</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          Daftar Gudang
+        </h1>
         <Link to="/gudang/tambah">
-          <Button leftIcon={<Plus className="h-4 w-4" />} size="sm" className="w-full sm:w-auto">
+          <Button
+            leftIcon={<Plus className="h-4 w-4" />}
+            size="sm"
+            className="w-full sm:w-auto"
+          >
             Tambah Gudang
           </Button>
         </Link>
@@ -102,24 +129,43 @@ export default function DaftarGudang() {
       <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 overflow-hidden w-full">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 w-full">
           <div>
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Gudang</h2>
-            <p className="text-xs sm:text-sm text-gray-500">Manajemen data gudang penyimpanan</p>
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+              Gudang
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-500">
+              Manajemen data gudang penyimpanan
+            </p>
           </div>
           <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto items-center">
-            <Button variant="outline" size="sm" leftIcon={<Download className="h-3 w-3 sm:h-4 sm:w-4" />}>
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<Download className="h-3 w-3 sm:h-4 sm:w-4" />}
+            >
               Export
             </Button>
           </div>
         </div>
 
         <div className="mb-4 sm:mb-6 w-full">
-          <SearchInput placeholder="Cari gudang..." className="w-full sm:max-w-md" />
+          <SearchInput
+            placeholder="Cari gudang..."
+            className="w-full sm:max-w-md"
+          />
         </div>
 
         {isLoading ? (
           <LoadingState text="Memuat data gudang..." />
         ) : isError ? (
-          <ErrorState title="Gagal memuat data gudang" message={warehouseError instanceof Error ? warehouseError.message : "Terjadi kesalahan pada server"} onRetry={() => refetch()} />
+          <ErrorState
+            title="Gagal memuat data gudang"
+            message={
+              warehouseError instanceof Error
+                ? warehouseError.message
+                : "Terjadi kesalahan pada server"
+            }
+            onRetry={() => refetch()}
+          />
         ) : (
           <div className="w-full">
             {}
@@ -128,12 +174,24 @@ export default function DaftarGudang() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50 border-b border-gray-200">
-                      <TableHead className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">No.</TableHead>
-                      <TableHead className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Nama</TableHead>
-                      <TableHead className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">Deskripsi</TableHead>
-                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">Pengelola</TableHead>
-                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">Tgl. Dibuat</TableHead>
-                      <TableHead className="w-[130px] py-3 px-3 text-center font-semibold text-gray-700 text-sm">Aksi</TableHead>
+                      <TableHead className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                        No.
+                      </TableHead>
+                      <TableHead className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                        Nama
+                      </TableHead>
+                      <TableHead className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                        Deskripsi
+                      </TableHead>
+                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
+                        Pengelola
+                      </TableHead>
+                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
+                        Tgl. Dibuat
+                      </TableHead>
+                      <TableHead className="w-[130px] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
+                        Aksi
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -145,31 +203,56 @@ export default function DaftarGudang() {
                       </TableRow>
                     ) : (
                       warehouses.map((gudang, idx) => (
-                        <TableRow key={gudang.id} className={cn(idx % 2 === 0 ? "bg-white" : "bg-gray-50", "border-b border-gray-200 last:border-b-0")}>
-                          <TableCell className="py-2.5 px-3 font-medium text-center text-sm">{idx + 1 + (pagination.page - 1) * pagination.limit}</TableCell>
+                        <TableRow
+                          key={gudang.id}
+                          className={cn(
+                            idx % 2 === 0 ? "bg-white" : "bg-gray-50",
+                            "border-b border-gray-200 last:border-b-0"
+                          )}
+                        >
+                          <TableCell className="py-2.5 px-3 font-medium text-center text-sm">
+                            {idx + 1 + (pagination.page - 1) * pagination.limit}
+                          </TableCell>
                           <TableCell className="py-2.5 px-3 font-medium text-blue-600 text-sm">
-                            <div className="truncate max-w-full" title={gudang.name}>
-                              {gudang.name}
-                            </div>
+                            <Link
+                              to={`/gudang/${gudang.id}`}
+                              className="hover:underline"
+                            >
+                              <div className="wrap-text" title={gudang.name}>
+                                {gudang.name}
+                              </div>
+                            </Link>
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-sm">
-                            <div className="truncate max-w-full" title={gudang.description}>
+                            <div
+                              className="wrap-text"
+                              title={gudang.description}
+                            >
                               {gudang.description}
                             </div>
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
                             {gudang.user ? (
-                              <Link to={`/pengguna/${gudang.user.id}`} className="text-blue-600 hover:underline">
+                              <Link
+                                to={`/pengguna/${gudang.user.id}`}
+                                className="text-blue-600 hover:underline"
+                              >
                                 {gudang.user.name}
                               </Link>
                             ) : (
                               <span className="text-gray-500">-</span>
                             )}
                           </TableCell>
-                          <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">{formatDate(gudang.createdAt)}</TableCell>
+                          <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
+                            {formatDate(gudang.createdAt)}
+                          </TableCell>
                           <TableCell className="py-2.5 px-3">
                             <div className="flex justify-center items-center">
-                              <ActionButtons actions={getWarehouseActions(gudang)} entityId={gudang.id} basePath="/gudang" />
+                              <ActionButtons
+                                actions={getWarehouseActions(gudang)}
+                                entityId={gudang.id}
+                                basePath="/gudang"
+                              />
                             </div>
                           </TableCell>
                         </TableRow>
@@ -188,23 +271,36 @@ export default function DaftarGudang() {
                 </div>
               ) : (
                 warehouses.map((gudang) => (
-                  <div key={gudang.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm w-full">
+                  <div
+                    key={gudang.id}
+                    className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm w-full"
+                  >
                     <div className="p-3 w-full">
                       <div className="flex justify-between items-start mb-2 w-full">
                         <div className="max-w-[65%]">
-                          <h3 className="font-medium text-blue-600 break-words text-sm">{gudang.name}</h3>
-                          <p className="text-xs text-gray-600 break-all mt-1">{gudang.description}</p>
+                          <h3 className="font-medium text-blue-600 break-words text-sm">
+                            {gudang.name}
+                          </h3>
+                          <p className="text-xs text-gray-600 break-all mt-1">
+                            {gudang.description}
+                          </p>
                         </div>
                       </div>
 
                       <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                         <p>
-                          Dibuat: <span className="font-medium">{formatDateShort(gudang.createdAt)}</span>
+                          Dibuat:{" "}
+                          <span className="font-medium">
+                            {formatDateShort(gudang.createdAt)}
+                          </span>
                         </p>
                         {gudang.user && (
                           <p>
                             Pengelola:{" "}
-                            <Link to={`/pengguna/${gudang.user.id}`} className="text-blue-600 hover:underline">
+                            <Link
+                              to={`/pengguna/${gudang.user.id}`}
+                              className="text-blue-600 hover:underline"
+                            >
                               {gudang.user.name}
                             </Link>
                           </p>
@@ -212,7 +308,11 @@ export default function DaftarGudang() {
                       </div>
 
                       <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
-                        <ActionButtons actions={getWarehouseActions(gudang)} entityId={gudang.id} basePath="/gudang" />
+                        <ActionButtons
+                          actions={getWarehouseActions(gudang)}
+                          entityId={gudang.id}
+                          basePath="/gudang"
+                        />
                       </div>
                     </div>
                   </div>
@@ -222,7 +322,14 @@ export default function DaftarGudang() {
 
             {}
             <div className="w-full mt-4">
-              <Pagination totalItems={pagination.total} itemsPerPage={pagination.limit} currentPage={pagination.page} totalPages={pagination.totalPages} hasNext={pagination.hasNext} hasPrev={pagination.hasPrev} />
+              <Pagination
+                totalItems={pagination.total}
+                itemsPerPage={pagination.limit}
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                hasNext={pagination.hasNext}
+                hasPrev={pagination.hasPrev}
+              />
             </div>
           </div>
         )}
