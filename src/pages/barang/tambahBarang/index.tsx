@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useCreateProduct } from "@/hooks/barang";
 import { useWarehouses } from "@/hooks/gudang";
 import { cn } from "@/lib/utils";
+import { SATUAN_OPTIONS } from "@/utils/satuan";
 import { FormErrorData, FormErrors } from "@/utils/errorHandler";
 import {
   isConfirmed,
@@ -25,6 +26,7 @@ interface ProductFormData {
   id_sl: string;
   description: string;
   warehouseId: string;
+  satuan: string;
 }
 
 type ProductFormErrors = FormErrors<ProductFormData> & {
@@ -38,6 +40,7 @@ export default function TambahBarang() {
     id_sl: "",
     description: "",
     warehouseId: "",
+    satuan: "",
   });
   const [errors, setErrors] = useState<ProductFormErrors>({});
 
@@ -72,6 +75,8 @@ export default function TambahBarang() {
               newErrors.description = detail.message;
             } else if (detail.path.includes("warehouseId")) {
               newErrors.warehouseId = detail.message;
+            } else if (detail.path.includes("satuan")) {
+              newErrors.satuan = detail.message;
             } else {
               newErrors.general = detail.message;
             }
@@ -194,6 +199,40 @@ export default function TambahBarang() {
                 ) : (
                   <p className="mt-1 text-sm text-gray-500">
                     Kode identifikasi unik untuk barang
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="satuan"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Satuan
+                </label>
+                <select
+                  id="satuan"
+                  name="satuan"
+                  value={formData.satuan}
+                  onChange={handleInputChange}
+                  className={cn(
+                    "mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+                    errors.satuan &&
+                      "border-red-300 focus:border-red-500 focus:ring-red-500"
+                  )}
+                >
+                  <option value="">Pilih satuan</option>
+                  {SATUAN_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.satuan ? (
+                  <p className="mt-1 text-sm text-red-500">{errors.satuan}</p>
+                ) : (
+                  <p className="mt-1 text-sm text-gray-500">
+                    Satuan ukuran barang
                   </p>
                 )}
               </div>

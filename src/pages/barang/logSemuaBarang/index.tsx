@@ -1,14 +1,14 @@
-import { Download } from 'lucide-react';
-import { useSearchParams } from 'react-router';
+import { Download } from "lucide-react";
+import { useSearchParams } from "react-router";
 
-import { useProductLogs } from '@/hooks/barangLog';
-import { ProductLog } from '@/types/barangLog';
+import { useProductLogs } from "@/hooks/barangLog";
+import { ProductLog } from "@/types/barangLog";
 
-import { EmptyState } from '@/components/EmptyState';
-import { LoadingState } from '@/components/LoadingState';
-import { Pagination } from '@/components/Pagination';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { EmptyState } from "@/components/EmptyState";
+import { LoadingState } from "@/components/LoadingState";
+import { Pagination } from "@/components/Pagination";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -16,11 +16,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { cn } from '@/lib/utils';
-import { formatDate, formatDateShort } from '@/utils/date';
-import { Link } from 'react-router';
-
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { formatDate, formatDateShort } from "@/utils/date";
+import { Link } from "react-router";
 
 interface ActionLabel {
   label: string;
@@ -30,11 +29,9 @@ interface ActionLabel {
 export default function LogSemuaBarang() {
   const [searchParams] = useSearchParams();
 
-  
-  const currentPage = parseInt(searchParams.get('page') || '1');
-  const itemsPerPage = parseInt(searchParams.get('limit') || '10');
+  const currentPage = parseInt(searchParams.get("page") || "1");
+  const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  
   const { data, isLoading } = useProductLogs({
     staleTime: 0,
     refetchOnMount: true,
@@ -51,43 +48,40 @@ export default function LogSemuaBarang() {
     hasPrev: false,
   };
 
-  
   const getActionLabel = (action: string): ActionLabel => {
     const labels: Record<string, ActionLabel> = {
       CREATE: {
-        label: 'Dibuat',
-        color: 'bg-green-100 text-green-800 border-green-200',
+        label: "Dibuat",
+        color: "bg-green-100 text-green-800 border-green-200",
       },
       UPDATE: {
-        label: 'Diperbarui',
-        color: 'bg-amber-100 text-amber-800 border-amber-200',
+        label: "Diperbarui",
+        color: "bg-amber-100 text-amber-800 border-amber-200",
       },
       DELETE: {
-        label: 'Dihapus',
-        color: 'bg-red-100 text-red-800 border-red-200',
+        label: "Dihapus",
+        color: "bg-red-100 text-red-800 border-red-200",
       },
       RESTORE: {
-        label: 'Dipulihkan',
-        color: 'bg-blue-100 text-blue-800 border-blue-200',
+        label: "Dipulihkan",
+        color: "bg-blue-100 text-blue-800 border-blue-200",
       },
     };
 
     return (
       labels[action] || {
         label: action,
-        color: 'bg-gray-100 text-gray-800 border-gray-200',
+        color: "bg-gray-100 text-gray-800 border-gray-200",
       }
     );
   };
 
-  
   const renderChanges = (
     oldData: Record<string, unknown> | null,
     newData: Record<string, unknown> | null
   ) => {
     if (!oldData && !newData) return null;
 
-    
     if (newData && !oldData) {
       return (
         <div>
@@ -114,6 +108,14 @@ export default function LogSemuaBarang() {
               </tr>
               <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                  Satuan
+                </td>
+                <td className="border border-gray-200 px-2 py-1">
+                  {newData.satuan as string}
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
                   Deskripsi
                 </td>
                 <td className="border border-gray-200 px-2 py-1">
@@ -125,7 +127,7 @@ export default function LogSemuaBarang() {
                   Gudang
                 </td>
                 <td className="border border-gray-200 px-2 py-1">
-                  {newData.warehouseName as string}
+                  {(newData.warehouseName || newData.warehouseId) as string}
                 </td>
               </tr>
             </tbody>
@@ -134,7 +136,6 @@ export default function LogSemuaBarang() {
       );
     }
 
-    
     if (oldData && !newData) {
       return (
         <div>
@@ -161,10 +162,26 @@ export default function LogSemuaBarang() {
               </tr>
               <tr>
                 <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                  Satuan
+                </td>
+                <td className="border border-gray-200 px-2 py-1">
+                  {oldData.satuan as string}
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
                   Deskripsi
                 </td>
                 <td className="border border-gray-200 px-2 py-1">
                   {oldData.description as string}
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                  Gudang
+                </td>
+                <td className="border border-gray-200 px-2 py-1">
+                  {(oldData.warehouseName || oldData.warehouseId) as string}
                 </td>
               </tr>
             </tbody>
@@ -173,14 +190,12 @@ export default function LogSemuaBarang() {
       );
     }
 
-    
     if (oldData && newData) {
       const changes = [];
 
-      
       if (oldData.name !== newData.name) {
         changes.push({
-          field: 'Nama',
+          field: "Nama",
           oldValue: oldData.name as string,
           newValue: newData.name as string,
         });
@@ -188,7 +203,7 @@ export default function LogSemuaBarang() {
 
       if (oldData.description !== newData.description) {
         changes.push({
-          field: 'Deskripsi',
+          field: "Deskripsi",
           oldValue: oldData.description as string,
           newValue: newData.description as string,
         });
@@ -196,9 +211,17 @@ export default function LogSemuaBarang() {
 
       if (oldData.warehouseId !== newData.warehouseId) {
         changes.push({
-          field: 'Gudang',
+          field: "Gudang",
           oldValue: (oldData.warehouseName || oldData.warehouseId) as string,
           newValue: (newData.warehouseName || newData.warehouseId) as string,
+        });
+      }
+
+      if (oldData.satuan !== newData.satuan) {
+        changes.push({
+          field: "Satuan",
+          oldValue: oldData.satuan as string,
+          newValue: newData.satuan as string,
         });
       }
 
@@ -246,7 +269,6 @@ export default function LogSemuaBarang() {
     return null;
   };
 
-  
   const getProductName = (log: ProductLog) => {
     if (log.product) {
       return log.product.name;
@@ -255,10 +277,9 @@ export default function LogSemuaBarang() {
     } else if (log.oldData && log.oldData.name) {
       return log.oldData.name as string;
     }
-    return 'Barang tidak diketahui';
+    return "Barang tidak diketahui";
   };
 
-  
   const renderLogTable = () => (
     <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
@@ -299,7 +320,7 @@ export default function LogSemuaBarang() {
               logs.map((log: ProductLog, index: number) => (
                 <TableRow
                   key={log.id}
-                  className={cn(index % 2 === 0 ? 'bg-white' : 'bg-gray-50')}
+                  className={cn(index % 2 === 0 ? "bg-white" : "bg-gray-50")}
                 >
                   <TableCell className="font-medium text-center">
                     {index + 1 + (pagination.page - 1) * pagination.limit}
@@ -324,7 +345,7 @@ export default function LogSemuaBarang() {
                   <TableCell>
                     <Badge
                       className={cn(
-                        'rounded-md font-medium border',
+                        "rounded-md font-medium border",
                         getActionLabel(log.action).color
                       )}
                     >
@@ -354,7 +375,7 @@ export default function LogSemuaBarang() {
                             className="px-2 py-1 h-auto text-xs text-blue-600 hover:text-blue-800"
                             onClick={(e) => {
                               e.currentTarget.nextElementSibling?.classList.toggle(
-                                'hidden'
+                                "hidden"
                               );
                             }}
                           >
@@ -376,7 +397,6 @@ export default function LogSemuaBarang() {
     </div>
   );
 
-  
   const renderLogCards = () => (
     <div className="sm:hidden space-y-4">
       {logs.length === 0 ? (
@@ -393,7 +413,7 @@ export default function LogSemuaBarang() {
               <div className="flex justify-between items-start mb-3">
                 <Badge
                   className={cn(
-                    'rounded-md font-medium border',
+                    "rounded-md font-medium border",
                     getActionLabel(log.action).color
                   )}
                 >
@@ -427,7 +447,7 @@ export default function LogSemuaBarang() {
                 )}
                 <p className="text-sm text-gray-700 mb-1">{log.description}</p>
                 <div className="text-xs text-gray-500">
-                  Dilakukan oleh:{' '}
+                  Dilakukan oleh:{" "}
                   <span className="font-medium text-blue-600">
                     {log.performedBy.name}
                   </span>

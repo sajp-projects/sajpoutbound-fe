@@ -1,23 +1,22 @@
-import { ErrorState } from '@/components/ErrorState';
-import { LoadingState } from '@/components/LoadingState';
-import { Button } from '@/components/ui/button';
-import { useDeleteProduct, useProduct } from '@/hooks/barang';
-import { formatDate } from '@/utils/date';
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
+import { Button } from "@/components/ui/button";
+import { useDeleteProduct, useProduct } from "@/hooks/barang";
+import { formatDate } from "@/utils/date";
 import {
   isConfirmed,
   showDeleteConfirmationAlert,
   showErrorAlert,
   showForbiddenAlert,
   showSuccessAlert,
-} from '@/utils/sweetAlert';
-import { ArrowLeft, Edit, History, Trash2 } from 'lucide-react';
-import { Link, useNavigate, useParams } from 'react-router';
+} from "@/utils/sweetAlert";
+import { ArrowLeft, Edit, History, Trash2 } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router";
 
 export default function DetailBarang() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  
   const {
     data: barang,
     isLoading,
@@ -25,54 +24,51 @@ export default function DetailBarang() {
     error,
     refetch,
   } = useProduct(
-    { id: id || '' },
+    { id: id || "" },
     {
       staleTime: 5000,
-      refetchOnMount: 'always',
+      refetchOnMount: "always",
     }
   );
 
-  
   const deleteProductMutation = useDeleteProduct({
     onSuccess: () => {
-      showSuccessAlert('Sukses!', 'Barang berhasil dihapus').then(() => {
-        navigate('/barang');
+      showSuccessAlert("Sukses!", "Barang berhasil dihapus").then(() => {
+        navigate("/barang");
       });
     },
     onError: (error) => {
       try {
-        
-        if (error.message && error.message.includes('Forbidden')) {
+        if (error.message && error.message.includes("Forbidden")) {
           showForbiddenAlert(
-            'Akses Ditolak',
-            'Anda tidak memiliki akses untuk menghapus barang ini.'
+            "Akses Ditolak",
+            "Anda tidak memiliki akses untuk menghapus barang ini."
           );
         } else {
           const errorObj = JSON.parse(error.message);
           showErrorAlert(
-            'Gagal Menghapus Barang',
-            errorObj.message || 'Terjadi kesalahan saat menghapus barang'
+            "Gagal Menghapus Barang",
+            errorObj.message || "Terjadi kesalahan saat menghapus barang"
           );
         }
       } catch {
         showErrorAlert(
-          'Gagal Menghapus Barang',
-          error.message || 'Terjadi kesalahan saat menghapus barang'
+          "Gagal Menghapus Barang",
+          error.message || "Terjadi kesalahan saat menghapus barang"
         );
       }
     },
   });
 
-  
   const handleDeleteProduct = () => {
     if (!barang) return;
 
     showDeleteConfirmationAlert(
-      'Barang',
+      "Barang",
       `Apakah Anda yakin ingin menghapus barang "${barang.name}"?`
     ).then((result) => {
       if (isConfirmed(result)) {
-        deleteProductMutation.mutate({ id: id || '' });
+        deleteProductMutation.mutate({ id: id || "" });
       }
     });
   };
@@ -102,7 +98,7 @@ export default function DetailBarang() {
             disabled={deleteProductMutation.isPending}
           >
             <Trash2 className="h-4 w-4 mr-2" />
-            {deleteProductMutation.isPending ? 'Menghapus...' : 'Hapus'}
+            {deleteProductMutation.isPending ? "Menghapus..." : "Hapus"}
           </Button>
         </div>
       </div>
@@ -127,7 +123,7 @@ export default function DetailBarang() {
             message={
               error instanceof Error
                 ? error.message
-                : 'Terjadi kesalahan pada server'
+                : "Terjadi kesalahan pada server"
             }
             onRetry={refetch}
             retryButtonText="Coba lagi"
@@ -154,9 +150,15 @@ export default function DetailBarang() {
                       </p>
                     </div>
                     <div>
+                      <p className="text-sm text-gray-500">Satuan</p>
+                      <p className="font-medium text-gray-900">
+                        {barang?.satuan || "-"}
+                      </p>
+                    </div>
+                    <div>
                       <p className="text-sm text-gray-500">Deskripsi</p>
                       <p className="font-medium text-gray-900">
-                        {barang?.description || '-'}
+                        {barang?.description || "-"}
                       </p>
                     </div>
                     <div>
@@ -189,7 +191,7 @@ export default function DetailBarang() {
                     <div>
                       <p className="text-sm text-gray-500">Tanggal Dibuat</p>
                       <p className="font-medium text-gray-900">
-                        {barang?.createdAt ? formatDate(barang.createdAt) : '-'}
+                        {barang?.createdAt ? formatDate(barang.createdAt) : "-"}
                       </p>
                     </div>
                     <div>
@@ -197,7 +199,7 @@ export default function DetailBarang() {
                         Tanggal Diperbarui
                       </p>
                       <p className="font-medium text-gray-900">
-                        {barang?.updatedAt ? formatDate(barang.updatedAt) : '-'}
+                        {barang?.updatedAt ? formatDate(barang.updatedAt) : "-"}
                       </p>
                     </div>
                   </div>
@@ -234,8 +236,8 @@ export default function DetailBarang() {
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       {deleteProductMutation.isPending
-                        ? 'Menghapus...'
-                        : 'Hapus Barang'}
+                        ? "Menghapus..."
+                        : "Hapus Barang"}
                     </Button>
                   </div>
                 </div>
