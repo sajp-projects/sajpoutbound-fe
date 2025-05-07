@@ -169,7 +169,7 @@ export function useUpdateCustomer(
         `${BASE_URL}/customers/${id}`,
         {},
         {
-          method: "PATCH",
+          method: "PUT",
           body: JSON.stringify(updateData),
         }
       );

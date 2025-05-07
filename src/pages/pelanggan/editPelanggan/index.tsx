@@ -61,13 +61,13 @@ function FormField({ id, label, error, children, helpText }: FormFieldProps) {
 export default function EditPelanggan() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState<CustomerFormData>({
     name: "",
     id_sl: "",
     address: "",
   });
-  
+
   const [errors, setErrors] = useState<CustomerFormErrors>({});
 
   const {
@@ -129,7 +129,7 @@ export default function EditPelanggan() {
       }
     },
   });
-  
+
   useEffect(() => {
     if (customer) {
       setFormData({
@@ -150,7 +150,7 @@ export default function EditPelanggan() {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
-  
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
@@ -181,7 +181,7 @@ export default function EditPelanggan() {
           address: formData.address,
         };
 
-        if (formData.id_sl.trim()) {
+        if (formData.id_sl && formData.id_sl.trim()) {
           updateData.id_sl = formData.id_sl;
         }
 
@@ -294,10 +294,11 @@ export default function EditPelanggan() {
                   value={formData.address}
                   onChange={handleInputChange}
                   placeholder="Masukkan alamat"
-                  rows={3}
+                  rows={4}
                   className={cn(
-                    "mt-1 block w-full rounded-md shadow-sm sm:text-sm",
-                    inputClassName("address")
+                    "mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+                    errors.address &&
+                      "border-red-300 focus:border-red-500 focus:ring-red-500"
                   )}
                 />
               </FormField>
