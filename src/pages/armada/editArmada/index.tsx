@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useUpdateArmada, useArmada } from "@/hooks/armada";
 import { cn } from "@/lib/utils";
+import { UpdateArmadaInput } from "@/types/armada";
 import { FormErrors } from "@/utils/errorHandler";
 import {
   isConfirmed,
@@ -36,18 +37,15 @@ export default function EditArmada() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // State untuk form data
   const [formData, setFormData] = useState<ArmadaFormData>({
     model: "",
     id_sl: "",
     plateNumber: "",
     description: "",
   });
-
-  // State untuk error
+  
   const [errors, setErrors] = useState<ArmadaFormErrors>({});
 
-  // Fetch data armada
   const {
     data: armada,
     isLoading,
@@ -62,7 +60,6 @@ export default function EditArmada() {
     }
   );
 
-  // Mutation untuk update armada
   const updateArmadaMutation = useUpdateArmada({
     onSuccess: (data) => {
       showSuccessAlert("Sukses!", "Armada berhasil diperbarui").then(() => {
@@ -106,7 +103,6 @@ export default function EditArmada() {
     },
   });
 
-  // Mengisi form dengan data armada yang ada
   useEffect(() => {
     if (armada) {
       setFormData({
@@ -117,8 +113,7 @@ export default function EditArmada() {
       });
     }
   }, [armada]);
-
-  // Handler untuk perubahan input
+  
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -127,24 +122,18 @@ export default function EditArmada() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Hapus error jika field diisi
     if (errors[name as keyof ArmadaFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  // Handler untuk submit form
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
-    // Validasi sederhana
     const validationErrors: ArmadaFormErrors = {};
     if (!formData.model.trim()) {
       validationErrors.model = "Model armada harus diisi";
-    }
-    if (!formData.id_sl.trim()) {
-      validationErrors.id_sl = "ID SL harus diisi";
     }
     if (!formData.plateNumber.trim()) {
       validationErrors.plateNumber = "Plat nomor harus diisi";
@@ -155,7 +144,6 @@ export default function EditArmada() {
       return;
     }
 
-    // Konfirmasi sebelum update
     showConfirmationAlert(
       "Konfirmasi",
       "Apakah Anda yakin ingin menyimpan perubahan data armada ini?",
@@ -163,17 +151,24 @@ export default function EditArmada() {
       "Batal"
     ).then((result) => {
       if (isConfirmed(result)) {
-        updateArmadaMutation.mutate({
+        const updateData: UpdateArmadaInput & { id: string } = {
           id: id || "",
-          ...formData,
-        });
+          model: formData.model,
+          plateNumber: formData.plateNumber,
+          description: formData.description,
+        };
+
+        if (formData.id_sl.trim()) {
+          updateData.id_sl = formData.id_sl;
+        }
+
+        updateArmadaMutation.mutate(updateData);
       }
     });
   };
 
   const isSubmitting = updateArmadaMutation.isPending;
 
-  // Styling untuk input berdasarkan error
   const inputClassName = (fieldName: keyof ArmadaFormData) =>
     cn(
       "mt-1 w-full border-gray-300",
@@ -183,11 +178,11 @@ export default function EditArmada() {
     );
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
+    <div className="px-4 space-y-6 sm:px-0">
       <div className="flex items-center">
         <Link to={`/armada/${id}`}>
           <Button variant="ghost" size="sm" className="mr-2">
-            <ArrowLeft className="h-4 w-4 mr-1" />
+            <ArrowLeft className="w-4 h-4 mr-1" />
             Kembali
           </Button>
         </Link>
@@ -216,12 +211,12 @@ export default function EditArmada() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               {errors.general && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
+                <div className="p-3 mb-4 text-sm text-red-600 border border-red-200 rounded-md bg-red-50">
                   {errors.general}
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <label
                     htmlFor="model"
@@ -265,7 +260,7 @@ export default function EditArmada() {
                     <p className="mt-1 text-sm text-red-500">{errors.id_sl}</p>
                   ) : (
                     <p className="mt-1 text-sm text-gray-500">
-                      ID SL untuk identifikasi armada
+                      ID SL untuk identifikasi armada (opsional)
                     </p>
                   )}
                 </div>
@@ -341,16 +336,16 @@ export default function EditArmada() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="text-white bg-blue-600 hover:bg-blue-700"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Menyimpan...
                     </>
                   ) : (
                     <>
-                      <Save className="mr-2 h-4 w-4" />
+                      <Save className="w-4 h-4 mr-2" />
                       Simpan
                     </>
                   )}

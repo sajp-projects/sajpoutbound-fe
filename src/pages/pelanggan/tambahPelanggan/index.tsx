@@ -57,18 +57,15 @@ function FormField({ id, label, error, children, helpText }: FormFieldProps) {
 
 export default function TambahPelanggan() {
   const navigate = useNavigate();
-
-  // State untuk form
+  
   const [formData, setFormData] = useState<CustomerFormData>({
     name: "",
     id_sl: "",
     address: "",
   });
-
-  // State untuk error
+  
   const [errors, setErrors] = useState<CustomerFormErrors>({});
 
-  // Mutation untuk membuat pelanggan baru
   const createCustomerMutation = useCreateCustomer({
     onSuccess: () => {
       showSuccessAlert("Berhasil!", "Pelanggan baru berhasil ditambahkan").then(
@@ -113,7 +110,6 @@ export default function TambahPelanggan() {
     },
   });
 
-  // Handler untuk perubahan input
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -128,18 +124,13 @@ export default function TambahPelanggan() {
     }
   };
 
-  // Handler untuk submit form
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
 
-    // Validasi sederhana
     const validationErrors: CustomerFormErrors = {};
     if (!formData.name.trim()) {
       validationErrors.name = "Nama pelanggan harus diisi";
-    }
-    if (!formData.id_sl.trim()) {
-      validationErrors.id_sl = "ID SL harus diisi";
     }
     if (!formData.address.trim()) {
       validationErrors.address = "Alamat harus diisi";
@@ -149,15 +140,16 @@ export default function TambahPelanggan() {
       setErrors(validationErrors);
       return;
     }
-
-    // Data untuk API
+    
     const customerData: CustomerInput = {
       name: formData.name,
-      id_sl: formData.id_sl,
       address: formData.address,
     };
+    
+    if (formData.id_sl.trim()) {
+      customerData.id_sl = formData.id_sl;
+    }
 
-    // Konfirmasi sebelum menambahkan
     showConfirmationAlert(
       "Konfirmasi",
       "Apakah Anda yakin ingin menambahkan pelanggan baru ini?",
@@ -221,7 +213,7 @@ export default function TambahPelanggan() {
               id="id_sl"
               label="ID SL"
               error={errors.id_sl}
-              helpText="ID SL adalah kode pelanggan"
+              helpText="ID SL adalah kode pelanggan (opsional)"
             >
               <Input
                 id="id_sl"

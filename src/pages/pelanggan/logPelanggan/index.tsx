@@ -23,15 +23,12 @@ import { EmptyState } from "@/components/EmptyState";
 export default function LogPelanggan() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-
-  // Parameter paginasi
+  
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  // ID pelanggan
   const customerId = id || "";
 
-  // Fetch data pelanggan
   const { data: customerData, isLoading: customerLoading } = useCustomer(
     { id: customerId },
     {
@@ -39,7 +36,6 @@ export default function LogPelanggan() {
     }
   );
 
-  // Fetch log pelanggan
   const { data, isLoading } = useCustomerLogs(customerId, {
     enabled: !!customerId,
     staleTime: 0,
@@ -57,7 +53,6 @@ export default function LogPelanggan() {
     hasPrev: false,
   };
 
-  // Label untuk jenis aksi
   const getActionLabel = (action: string) => {
     const labels = {
       CREATE: {
@@ -85,7 +80,6 @@ export default function LogPelanggan() {
     );
   };
 
-  // Label untuk jenis entitas
   const getEntityTypeLabel = (entityType: string) => {
     const labels = {
       CUSTOMER: {
@@ -100,44 +94,42 @@ export default function LogPelanggan() {
       }
     );
   };
-
-  // Render perubahan data
+  
   const renderChanges = (
     oldData: Record<string, unknown> | null,
     newData: Record<string, unknown> | null
   ) => {
     if (!oldData && !newData) return null;
 
-    // Untuk pembuatan data baru
     if (newData && !oldData) {
       return (
         <div>
-          <div className="text-xs font-medium text-gray-700 mb-1">
+          <div className="mb-1 text-xs font-medium text-gray-700">
             Data pelanggan yang dibuat:
           </div>
-          <table className="text-xs w-full border-collapse">
+          <table className="w-full text-xs border-collapse">
             <tbody>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   Nama
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {newData.name as string}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   ID SL
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {newData.id_sl as string}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   Alamat
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {newData.address as string}
                 </td>
               </tr>
@@ -147,36 +139,35 @@ export default function LogPelanggan() {
       );
     }
 
-    // Untuk penghapusan data
     if (oldData && !newData) {
       return (
         <div>
-          <div className="text-xs font-medium text-gray-700 mb-1">
+          <div className="mb-1 text-xs font-medium text-gray-700">
             Data pelanggan yang dihapus:
           </div>
-          <table className="text-xs w-full border-collapse">
+          <table className="w-full text-xs border-collapse">
             <tbody>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   Nama
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {oldData.name as string}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   ID SL
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {oldData.id_sl as string}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   Alamat
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {oldData.address as string}
                 </td>
               </tr>
@@ -186,7 +177,6 @@ export default function LogPelanggan() {
       );
     }
 
-    // Untuk pembaruan data
     if (oldData && newData) {
       const changes = [];
 
@@ -218,19 +208,19 @@ export default function LogPelanggan() {
 
       return (
         <div>
-          <div className="text-xs font-medium text-gray-700 mb-1">
+          <div className="mb-1 text-xs font-medium text-gray-700">
             Perubahan:
           </div>
-          <table className="text-xs w-full border-collapse">
+          <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="bg-gray-50">
-                <th className="border border-gray-200 px-2 py-1 text-left font-medium">
+                <th className="px-2 py-1 font-medium text-left border border-gray-200">
                   Field
                 </th>
-                <th className="border border-gray-200 px-2 py-1 text-left font-medium">
+                <th className="px-2 py-1 font-medium text-left border border-gray-200">
                   Nilai Lama
                 </th>
-                <th className="border border-gray-200 px-2 py-1 text-left font-medium">
+                <th className="px-2 py-1 font-medium text-left border border-gray-200">
                   Nilai Baru
                 </th>
               </tr>
@@ -238,13 +228,13 @@ export default function LogPelanggan() {
             <tbody>
               {changes.map((change, idx) => (
                 <tr key={idx}>
-                  <td className="border border-gray-200 px-2 py-1 font-medium">
+                  <td className="px-2 py-1 font-medium border border-gray-200">
                     {change.field}
                   </td>
-                  <td className="border border-gray-200 px-2 py-1">
+                  <td className="px-2 py-1 border border-gray-200">
                     {change.oldValue}
                   </td>
-                  <td className="border border-gray-200 px-2 py-1">
+                  <td className="px-2 py-1 border border-gray-200">
                     {change.newValue}
                   </td>
                 </tr>
@@ -257,28 +247,27 @@ export default function LogPelanggan() {
     return null;
   };
 
-  // Komponen untuk menampilkan daftar log
   const LogList = () => (
     <>
       {/* Tabel Desktop */}
-      <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
+      <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50 border-b border-gray-200">
+              <TableRow className="border-b border-gray-200 bg-gray-50">
                 <TableHead className="w-[50px] font-semibold text-gray-700 py-4">
                   No
                 </TableHead>
-                <TableHead className="font-semibold text-gray-700 py-4">
+                <TableHead className="py-4 font-semibold text-gray-700">
                   Waktu
                 </TableHead>
-                <TableHead className="font-semibold text-gray-700 py-4">
+                <TableHead className="py-4 font-semibold text-gray-700">
                   Aksi
                 </TableHead>
-                <TableHead className="font-semibold text-gray-700 py-4">
+                <TableHead className="py-4 font-semibold text-gray-700">
                   Dilakukan Oleh
                 </TableHead>
-                <TableHead className="font-semibold text-gray-700 py-4">
+                <TableHead className="py-4 font-semibold text-gray-700">
                   Deskripsi
                 </TableHead>
               </TableRow>
@@ -344,7 +333,7 @@ export default function LogPelanggan() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="px-2 py-1 h-auto text-xs text-blue-600 hover:text-blue-800"
+                            className="h-auto px-2 py-1 text-xs text-blue-600 hover:text-blue-800"
                             onClick={(e) =>
                               e.currentTarget.nextElementSibling?.classList.toggle(
                                 "hidden"
@@ -368,20 +357,20 @@ export default function LogPelanggan() {
       </div>
 
       {/* Mobile Card View */}
-      <div className="sm:hidden space-y-4">
+      <div className="space-y-4 sm:hidden">
         {logs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
+          <div className="flex flex-col items-center justify-center p-8 bg-white border border-gray-200 rounded-lg">
             <EmptyState title="Tidak ada data log yang ditemukan." message="" />
           </div>
         ) : (
           logs.map((log) => (
             <div
               key={log.id}
-              className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm"
+              className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
             >
               <div className="p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge
                       className={cn(
                         "rounded-md font-medium border",
@@ -405,7 +394,7 @@ export default function LogPelanggan() {
                 </div>
 
                 <div className="mb-3">
-                  <p className="text-sm text-gray-700 mb-1">
+                  <p className="mb-1 text-sm text-gray-700">
                     {log.description}
                   </p>
                   <div className="text-xs text-gray-500">
@@ -417,7 +406,7 @@ export default function LogPelanggan() {
                 </div>
 
                 {(log.oldData || log.newData) && (
-                  <div className="mt-3 border-t border-gray-100 pt-3">
+                  <div className="pt-3 mt-3 border-t border-gray-100">
                     {renderChanges(log.oldData, log.newData)}
                   </div>
                 )}
@@ -442,11 +431,11 @@ export default function LogPelanggan() {
   );
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
+    <div className="px-4 space-y-6 sm:px-0">
       <div className="flex items-center">
         <Link to={`/pelanggan/${id}`}>
           <Button variant="ghost" size="sm" className="mr-2">
-            <ArrowLeft className="h-4 w-4 mr-1" />
+            <ArrowLeft className="w-4 h-4 mr-1" />
             Kembali
           </Button>
         </Link>
@@ -455,12 +444,12 @@ export default function LogPelanggan() {
         </h1>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
+      <div className="p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">
         {customerLoading ? (
           <LoadingState text="Memuat data pelanggan..." height="h-20" />
         ) : !customerData ? (
-          <div className="bg-amber-50 p-4 rounded-md mb-6">
-            <p className="text-amber-600 font-medium">
+          <div className="p-4 mb-6 rounded-md bg-amber-50">
+            <p className="font-medium text-amber-600">
               Peringatan: ID pelanggan tidak ditemukan
             </p>
           </div>
@@ -470,10 +459,10 @@ export default function LogPelanggan() {
               <h2 className="text-xl font-semibold text-gray-900">
                 Log Aktivitas: {customerData.name}
               </h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="mt-1 text-sm text-gray-500">
                 ID SL: {customerData.id_sl}
               </p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="mt-1 text-sm text-gray-600">
                 <span className="font-medium">Alamat:</span>{" "}
                 {customerData.address}
               </p>

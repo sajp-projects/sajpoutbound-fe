@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router";
+import { CustomerUpdateInput } from "@/types/pelanggan";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -60,18 +61,15 @@ function FormField({ id, label, error, children, helpText }: FormFieldProps) {
 export default function EditPelanggan() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
-  // State untuk form
+  
   const [formData, setFormData] = useState<CustomerFormData>({
     name: "",
     id_sl: "",
     address: "",
   });
-
-  // State untuk error
+  
   const [errors, setErrors] = useState<CustomerFormErrors>({});
 
-  // Fetch data pelanggan
   const {
     data: customer,
     isLoading,
@@ -88,7 +86,6 @@ export default function EditPelanggan() {
     }
   );
 
-  // Mutation untuk update pelanggan
   const updateCustomerMutation = useUpdateCustomer({
     onSuccess: () => {
       showSuccessAlert("Berhasil!", "Data pelanggan berhasil diperbarui").then(
@@ -132,8 +129,7 @@ export default function EditPelanggan() {
       }
     },
   });
-
-  // Mengisi form dengan data pelanggan yang sudah ada
+  
   useEffect(() => {
     if (customer) {
       setFormData({
@@ -144,7 +140,6 @@ export default function EditPelanggan() {
     }
   }, [customer]);
 
-  // Handler untuk perubahan input
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -155,19 +150,14 @@ export default function EditPelanggan() {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
-
-  // Handler untuk submit form
+  
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
 
-    // Validasi sederhana
     const validationErrors: CustomerFormErrors = {};
     if (!formData.name.trim()) {
       validationErrors.name = "Nama pelanggan harus diisi";
-    }
-    if (!formData.id_sl.trim()) {
-      validationErrors.id_sl = "ID SL harus diisi";
     }
     if (!formData.address.trim()) {
       validationErrors.address = "Alamat harus diisi";
@@ -178,7 +168,6 @@ export default function EditPelanggan() {
       return;
     }
 
-    // Konfirmasi sebelum update
     showConfirmationAlert(
       "Konfirmasi",
       "Apakah Anda yakin ingin menyimpan perubahan data pelanggan ini?",
@@ -186,24 +175,27 @@ export default function EditPelanggan() {
       "Batal"
     ).then((result) => {
       if (isConfirmed(result)) {
-        updateCustomerMutation.mutate({
+        const updateData: CustomerUpdateInput & { id: string } = {
           id: id || "",
           name: formData.name,
-          id_sl: formData.id_sl,
           address: formData.address,
-        });
+        };
+
+        if (formData.id_sl.trim()) {
+          updateData.id_sl = formData.id_sl;
+        }
+
+        updateCustomerMutation.mutate(updateData);
       }
     });
   };
 
   const isSubmitting = updateCustomerMutation.isPending;
 
-  // Handler untuk retry fetch data
   const handleRetry = () => {
     refetch();
   };
 
-  // Class untuk styling input
   const inputClassName = (fieldName: keyof CustomerFormData) =>
     cn(
       "mt-1 w-full border-gray-300",
@@ -212,7 +204,6 @@ export default function EditPelanggan() {
         : "focus:border-blue-500 focus:ring-blue-500"
     );
 
-  // Redirect jika error fetch data
   useEffect(() => {
     if (isError) {
       showErrorAlert(
@@ -225,11 +216,11 @@ export default function EditPelanggan() {
   }, [isError, error, navigate]);
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
+    <div className="px-4 space-y-6 sm:px-0">
       <div className="flex items-center">
         <Link to={`/pelanggan/${id}`}>
           <Button variant="ghost" size="sm" className="mr-2">
-            <ArrowLeft className="h-4 w-4 mr-1" />
+            <ArrowLeft className="w-4 h-4 mr-1" />
             Kembali
           </Button>
         </Link>
@@ -254,7 +245,7 @@ export default function EditPelanggan() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               {errors.general && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
+                <div className="p-3 mb-4 text-sm text-red-600 border border-red-200 rounded-md bg-red-50">
                   {errors.general}
                 </div>
               )}
@@ -279,7 +270,7 @@ export default function EditPelanggan() {
                 id="id_sl"
                 label="ID SL"
                 error={errors.id_sl}
-                helpText="ID SL adalah kode pelanggan"
+                helpText="ID SL adalah kode pelanggan (opsional)"
               >
                 <Input
                   id="id_sl"
@@ -323,16 +314,16 @@ export default function EditPelanggan() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="text-white bg-blue-600 hover:bg-blue-700"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Menyimpan...
                     </>
                   ) : (
                     <>
-                      <Save className="mr-2 h-4 w-4" />
+                      <Save className="w-4 h-4 mr-2" />
                       Simpan
                     </>
                   )}

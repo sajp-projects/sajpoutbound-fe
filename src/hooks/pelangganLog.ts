@@ -1,5 +1,3 @@
-// hooks untuk pelanggan log
-
 import { ApiResponse } from "@/types/api";
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";

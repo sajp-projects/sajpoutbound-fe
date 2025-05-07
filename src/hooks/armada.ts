@@ -1,4 +1,3 @@
-// import { ApiResponse, ApiErrorResult } from "@/types/api";
 import {
   Armada,
   ArmadasResponse,
@@ -14,10 +13,8 @@ import {
 } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 import { fetchApi } from "@/utils/api";
-// import { handleApiError, createErrorResponse } from "@/utils/errorHandler";
 import { BASE_URL } from "@/constant/baseUrl";
 
-// Query keys untuk armada
 export const armadaKeys = {
   all: ["armadas"] as const,
   lists: () => [...armadaKeys.all, "list"] as const,
@@ -28,7 +25,6 @@ export const armadaKeys = {
   logs: () => [...armadaKeys.all, "logs"] as const,
 };
 
-// Hook untuk mengambil semua data armada
 export function useArmadas(
   options?: Omit<
     UseQueryOptions<
@@ -73,7 +69,6 @@ export function useArmadas(
   });
 }
 
-// Hook untuk mengambil detail armada berdasarkan ID
 export function useArmada(
   { id }: { id: string },
   options?: Omit<
@@ -111,7 +106,6 @@ export function useArmada(
   });
 }
 
-// Hook untuk membuat armada baru
 export function useCreateArmada(
   options?: UseMutationOptions<Armada, Error, CreateArmadaInput>
 ) {
@@ -156,7 +150,6 @@ export function useCreateArmada(
   });
 }
 
-// Hook untuk memperbarui armada
 export function useUpdateArmada(
   options?: UseMutationOptions<
     Armada,
@@ -215,7 +208,6 @@ export function useUpdateArmada(
   });
 }
 
-// Hook untuk menghapus armada
 export function useDeleteArmada(
   options?: UseMutationOptions<Armada, Error, { id: string }>
 ) {

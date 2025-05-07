@@ -1,5 +1,3 @@
-// types untuk pelanggan
-
 import { Pagination } from "./user";
 
 export interface Customer {
@@ -13,7 +11,7 @@ export interface Customer {
 
 export interface CustomerInput {
   name: string;
-  id_sl: string;
+  id_sl?: string;
   address: string;
 }
 

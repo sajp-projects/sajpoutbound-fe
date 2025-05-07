@@ -66,7 +66,6 @@ export default function LogSemuaPelanggan() {
   };
 
   const getCustomerName = (log: CustomerLog) => {
-    // Prioritaskan data dari log.customer, lalu newData, lalu oldData
     if (log.customer) {
       return log.customer.name;
     } else if (log.newData && log.newData.name) {
@@ -111,7 +110,6 @@ export default function LogSemuaPelanggan() {
   ) => {
     if (!oldData && !newData) return null;
 
-    // Untuk pembuatan data baru
     if (newData && !oldData) {
       return (
         <div>
@@ -150,7 +148,6 @@ export default function LogSemuaPelanggan() {
       );
     }
 
-    // Untuk penghapusan data
     if (oldData && !newData) {
       return (
         <div>
@@ -189,7 +186,6 @@ export default function LogSemuaPelanggan() {
       );
     }
 
-    // Untuk pembaruan data
     if (oldData && newData) {
       const changes = [];
 

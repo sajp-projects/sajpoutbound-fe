@@ -9,6 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useCreateArmada } from "@/hooks/armada";
 import { cn } from "@/lib/utils";
+import { CreateArmadaInput } from "@/types/armada";
 import { FormErrors } from "@/utils/errorHandler";
 import {
   isConfirmed,
@@ -99,14 +100,10 @@ export default function TambahArmada() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-
-    // Validasi sederhana
+    
     const validationErrors: ArmadaFormErrors = {};
     if (!formData.model.trim()) {
       validationErrors.model = "Model armada harus diisi";
-    }
-    if (!formData.id_sl.trim()) {
-      validationErrors.id_sl = "ID SL harus diisi";
     }
     if (!formData.plateNumber.trim()) {
       validationErrors.plateNumber = "Plat nomor harus diisi";
@@ -124,7 +121,17 @@ export default function TambahArmada() {
       "Batal"
     ).then((result) => {
       if (isConfirmed(result)) {
-        createArmadaMutation.mutate(formData);
+        const armadaData: CreateArmadaInput = {
+          model: formData.model,
+          plateNumber: formData.plateNumber,
+          description: formData.description,
+        };
+
+        if (formData.id_sl.trim()) {
+          armadaData.id_sl = formData.id_sl;
+        }
+
+        createArmadaMutation.mutate(armadaData);
       }
     });
   };
@@ -206,7 +213,7 @@ export default function TambahArmada() {
                   <p className="mt-1 text-sm text-red-500">{errors.id_sl}</p>
                 ) : (
                   <p className="mt-1 text-sm text-gray-500">
-                    ID SL untuk identifikasi armada
+                    ID SL untuk identifikasi armada (opsional)
                   </p>
                 )}
               </div>

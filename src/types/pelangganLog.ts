@@ -1,5 +1,3 @@
-// types untuk pelanggan log
-
 import { Pagination } from "./user";
 import { Customer } from "./pelanggan";
 

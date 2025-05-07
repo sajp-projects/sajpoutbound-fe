@@ -17,7 +17,6 @@ export default function DetailArmada() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Fetch data armada
   const {
     data: armada,
     isLoading,
@@ -31,8 +30,7 @@ export default function DetailArmada() {
       refetchOnMount: "always",
     }
   );
-
-  // Mutation untuk menghapus armada
+  
   const deleteArmadaMutation = useDeleteArmada({
     onSuccess: () => {
       showSuccessAlert("Sukses!", "Armada berhasil dihapus").then(() => {
@@ -41,7 +39,6 @@ export default function DetailArmada() {
     },
     onError: (error) => {
       try {
-        // Check for forbidden error
         if (error.message && error.message.includes("Forbidden")) {
           showForbiddenAlert(
             "Akses Ditolak",
@@ -63,7 +60,6 @@ export default function DetailArmada() {
     },
   });
 
-  // Handler untuk menghapus armada
   const handleDeleteArmada = () => {
     if (!armada) return;
 
@@ -78,12 +74,12 @@ export default function DetailArmada() {
   };
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+    <div className="px-4 space-y-6 sm:px-0">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
         <div className="flex items-center">
           <Link to="/armada">
             <Button variant="ghost" size="sm" className="mr-2">
-              <ArrowLeft className="h-4 w-4 mr-1" />
+              <ArrowLeft className="w-4 h-4 mr-1" />
               Kembali
             </Button>
           </Link>
@@ -91,24 +87,24 @@ export default function DetailArmada() {
         </div>
         <div className="flex gap-2">
           <Link to={`/armada/${id}/edit`}>
-            <Button className="flex items-center px-3 py-2 bg-amber-600 hover:bg-amber-700 rounded-md shadow-sm text-sm font-medium text-white">
-              <Edit className="h-4 w-4 mr-2" />
+            <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
+              <Edit className="w-4 h-4 mr-2" />
               Edit Armada
             </Button>
           </Link>
           <Button
-            className="flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 rounded-md shadow-sm text-sm font-medium text-white"
+            className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
             onClick={handleDeleteArmada}
             disabled={deleteArmadaMutation.isPending}
           >
-            <Trash2 className="h-4 w-4 mr-2" />
+            <Trash2 className="w-4 h-4 mr-2" />
             {deleteArmadaMutation.isPending ? "Menghapus..." : "Hapus"}
           </Button>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div className="p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">
+        <div className="flex flex-col items-start justify-between gap-4 mb-6 sm:flex-row sm:items-center">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
               Informasi Armada
@@ -134,16 +130,16 @@ export default function DetailArmada() {
           />
         ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-4">
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="p-4 border border-gray-200 rounded-lg">
+                  <h3 className="mb-4 text-lg font-medium text-gray-900">
                     Data Armada
                   </h3>
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm text-gray-500">ID Armada</p>
-                      <p className="font-medium text-gray-900 font-mono bg-gray-50 p-1 rounded">
+                      <p className="p-1 font-mono font-medium text-gray-900 rounded bg-gray-50">
                         {armada?.id}
                       </p>
                     </div>
@@ -176,8 +172,8 @@ export default function DetailArmada() {
               </div>
 
               <div className="space-y-4">
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="p-4 border border-gray-200 rounded-lg">
+                  <h3 className="mb-4 text-lg font-medium text-gray-900">
                     Informasi Waktu
                   </h3>
                   <div className="space-y-3">
@@ -198,36 +194,36 @@ export default function DetailArmada() {
                   </div>
                 </div>
 
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="p-4 border border-gray-200 rounded-lg">
+                  <h3 className="mb-4 text-lg font-medium text-gray-900">
                     Tindakan
                   </h3>
                   <div className="space-y-3">
                     <Link to={`/armada/${id}/log`} className="w-full">
                       <Button
                         variant="outline"
-                        className="w-full justify-start"
+                        className="justify-start w-full"
                       >
-                        <FileText className="h-4 w-4 mr-2" />
+                        <FileText className="w-4 h-4 mr-2" />
                         Lihat Log Armada
                       </Button>
                     </Link>
                     <Link to={`/armada/${id}/edit`} className="w-full">
                       <Button
                         variant="outline"
-                        className="w-full justify-start text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                        className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
                       >
-                        <Edit className="h-4 w-4 mr-2" />
+                        <Edit className="w-4 h-4 mr-2" />
                         Edit Armada
                       </Button>
                     </Link>
                     <Button
                       variant="outline"
-                      className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                      className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
                       onClick={handleDeleteArmada}
                       disabled={deleteArmadaMutation.isPending}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <Trash2 className="w-4 h-4 mr-2" />
                       {deleteArmadaMutation.isPending
                         ? "Menghapus..."
                         : "Hapus Armada"}

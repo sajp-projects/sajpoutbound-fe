@@ -1,5 +1,3 @@
-// hooks untuk pelanggan
-
 import { ApiResponse, ApiErrorResult } from "@/types/api";
 import {
   Customer,

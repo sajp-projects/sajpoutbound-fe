@@ -1,5 +1,3 @@
-// Type untuk data armada
-
 import { Pagination } from "./user";
 
 export interface Armada {
@@ -19,7 +17,7 @@ export interface ArmadasResponse {
 
 export interface CreateArmadaInput {
   model: string;
-  id_sl: string;
+  id_sl?: string;
   plateNumber: string;
   description: string;
 }

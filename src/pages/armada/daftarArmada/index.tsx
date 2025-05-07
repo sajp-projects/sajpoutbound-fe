@@ -31,12 +31,10 @@ import { useEffect } from "react";
 
 export default function DaftarArmada() {
   const [searchParams] = useSearchParams();
-
-  // Parameter paginasi
+    
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  // Mengambil data armada
   const {
     data,
     isLoading,
@@ -64,7 +62,6 @@ export default function DaftarArmada() {
     console.log(armadaError);
   }, [armadas, armadaError]);
 
-  // Mutation untuk menghapus armada
   const deleteArmadaMutation = useDeleteArmada({
     onSuccess: () => {
       showSuccessAlert("Sukses!", "Armada berhasil dihapus");
@@ -72,7 +69,6 @@ export default function DaftarArmada() {
     },
     onError: (error) => {
       try {
-        // Check for forbidden error
         if (error.message && error.message.includes("Forbidden")) {
           showForbiddenAlert(
             "Akses Ditolak",
@@ -94,7 +90,6 @@ export default function DaftarArmada() {
     },
   });
 
-  // Handler untuk menghapus armada
   const handleDeleteArmada = (id: string, model: string) => {
     showDeleteConfirmationAlert(
       "Armada",
@@ -106,7 +101,6 @@ export default function DaftarArmada() {
     });
   };
 
-  // Konfigurasi tombol aksi untuk setiap armada
   const getArmadaActions = (armada: Armada) => [
     { type: ActionType.VIEW },
     { type: ActionType.EDIT },

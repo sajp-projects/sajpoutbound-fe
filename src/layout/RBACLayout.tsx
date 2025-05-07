@@ -12,37 +12,42 @@ interface RBACLayoutProps {
   children?: React.ReactNode;
 }
 
-export default function RBACLayout({ resource, action, redirectTo = "/", children }: RBACLayoutProps) {
+export default function RBACLayout({
+  resource,
+  action,
+  redirectTo = "/",
+  children,
+}: RBACLayoutProps) {
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
 
-  
   const { data: permissions, isLoading } = useRolePermissions(roleId, {
     enabled: roleId !== "",
   });
 
-  
   if (isLoading) return null;
 
-  
   if (!isAuthenticated) {
     showErrorAlert("Akses Ditolak", "Anda harus login terlebih dahulu");
     return <Navigate to="/login" replace />;
   }
 
-  
   if (!roleId) {
     console.error("User is authenticated but has no roleId assigned");
-    showErrorAlert("Kesalahan Konfigurasi", "Akun Anda tidak memiliki peran. Silakan hubungi administrator.");
+    showErrorAlert(
+      "Kesalahan Konfigurasi",
+      "Akun Anda tidak memiliki peran. Silakan hubungi administrator."
+    );
     return <Navigate to={redirectTo} replace />;
   }
 
-  
   if (!hasPermission(permissions, resource, action)) {
-    showErrorAlert("Akses Ditolak", "Anda tidak memiliki izin untuk mengakses halaman ini");
+    showErrorAlert(
+      "Akses Ditolak",
+      "Anda tidak memiliki izin untuk mengakses halaman ini"
+    );
     return <Navigate to={redirectTo} replace />;
   }
 
-  
   return children || <Outlet />;
 }

@@ -24,22 +24,18 @@ export default function LogArmada() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
 
-  // Parameter paginasi
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  // ID armada
   const armadaId = id || "";
 
-  // Fetch data armada
   const { data: armadaData, isLoading: armadaLoading } = useArmada(
     { id: armadaId },
     {
       enabled: !!armadaId,
     }
   );
-
-  // Fetch log armada
+      
   const { data, isLoading } = useArmadaLogsByArmadaId(armadaId, {
     enabled: !!armadaId,
     staleTime: 0,
@@ -57,7 +53,6 @@ export default function LogArmada() {
     hasPrev: false,
   };
 
-  // Label untuk jenis aksi
   const getActionLabel = (action: string) => {
     const labels = {
       CREATE: {
@@ -85,7 +80,6 @@ export default function LogArmada() {
     );
   };
 
-  // Label untuk jenis entitas
   const getEntityTypeLabel = (entityType: string) => {
     const labels = {
       ARMADA: {
@@ -101,14 +95,12 @@ export default function LogArmada() {
     );
   };
 
-  // Render perubahan data
   const renderChanges = (
     oldData: Record<string, unknown> | null,
     newData: Record<string, unknown> | null
   ) => {
     if (!oldData && !newData) return null;
 
-    // Untuk pembuatan data baru
     if (newData && !oldData) {
       return (
         <div>
@@ -281,7 +273,6 @@ export default function LogArmada() {
     return null;
   };
 
-  // Komponen untuk menampilkan daftar log
   const LogList = () => (
     <>
       {/* Tabel Desktop */}

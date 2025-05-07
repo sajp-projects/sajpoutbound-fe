@@ -1,5 +1,3 @@
-// Hook untuk mengambil data log armada
-
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 import { ArmadaLog } from "@/types/armadaLog";
@@ -7,13 +5,11 @@ import { fetchApi } from "@/utils/api";
 import { BASE_URL } from "@/constant/baseUrl";
 import { Pagination } from "@/types/user";
 
-// Definisikan tipe untuk hasil yang diharapkan komponen
 interface ArmadaLogsResult {
   logs: ArmadaLog[];
   pagination: Pagination;
 }
 
-// Query keys untuk log armada
 export const armadaLogKeys = {
   all: ["armadaLogs"] as const,
   lists: () => [...armadaLogKeys.all, "list"] as const,
@@ -23,7 +19,6 @@ export const armadaLogKeys = {
     [...armadaLogKeys.lists(), armadaId, { filters }] as const,
 };
 
-// Hook untuk mengambil semua log armada
 export function useArmadaLogs(
   options?: Omit<
     UseQueryOptions<
@@ -69,7 +64,6 @@ export function useArmadaLogs(
   });
 }
 
-// Hook untuk mengambil log armada berdasarkan ID armada
 export function useArmadaLogsByArmadaId(
   armadaId: string,
   options?: Omit<

@@ -31,16 +31,13 @@ export default function DaftarPelanggan() {
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
 
-  // Mendapatkan izin pengguna
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && roleId !== "",
-  });
-
-  // Parameter paginasi
+  }); 
+  
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  // Mengambil data pelanggan
   const { data, isLoading, isError, refetch } = useCustomers({
     staleTime: 0,
     refetchOnMount: true,
@@ -92,14 +89,12 @@ export default function DaftarPelanggan() {
     }
   };
 
-  // Cek izin user
   const hasCustomerDeleteAccess = hasPermission(
     permissions,
     PERMISSION.RESOURCES.CUSTOMER,
     PERMISSION.ACTIONS.DELETE
   );
 
-  // Konfigurasi tombol aksi
   const getCustomerActions = (customer: Customer) => {
     const actions: {
       type: ActionType;

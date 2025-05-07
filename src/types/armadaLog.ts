@@ -1,5 +1,3 @@
-// Type untuk data log armada
-
 import { Pagination } from "./user";
 import { UserMinimal } from "./gudang";
 import { Armada } from "./armada";

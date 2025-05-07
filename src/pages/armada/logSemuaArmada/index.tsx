@@ -28,12 +28,10 @@ interface ActionLabel {
 
 export default function LogSemuaArmada() {
   const [searchParams] = useSearchParams();
-
-  // Parameter paginasi
+  
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
-  // Fetch data log armada
   const { data, isLoading } = useArmadaLogs({
     staleTime: 0,
     refetchOnMount: true,
@@ -50,7 +48,6 @@ export default function LogSemuaArmada() {
     hasPrev: false,
   };
 
-  // Mendapatkan nama armada dari log
   const getArmadaName = (log: ArmadaLog) => {
     if (log.armada) {
       return log.armada.model;
@@ -62,7 +59,6 @@ export default function LogSemuaArmada() {
     return "Armada tidak diketahui";
   };
 
-  // Label untuk jenis aksi
   const getActionLabel = (action: string): ActionLabel => {
     const labels: Record<string, ActionLabel> = {
       CREATE: {
@@ -91,14 +87,12 @@ export default function LogSemuaArmada() {
     );
   };
 
-  // Render perubahan data
   const renderChanges = (
     oldData: Record<string, unknown> | null,
     newData: Record<string, unknown> | null
   ) => {
     if (!oldData && !newData) return null;
 
-    // Untuk pembuatan data baru
     if (newData && !oldData) {
       return (
         <div>
@@ -145,7 +139,6 @@ export default function LogSemuaArmada() {
       );
     }
 
-    // Untuk penghapusan data
     if (oldData && !newData) {
       return (
         <div>
@@ -192,7 +185,6 @@ export default function LogSemuaArmada() {
       );
     }
 
-    // Untuk pembaruan data
     if (oldData && newData) {
       const changes = [];
 
@@ -272,7 +264,6 @@ export default function LogSemuaArmada() {
     return null;
   };
 
-  // Render tabel log untuk desktop
   const renderLogTable = () => (
     <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
       <div className="overflow-x-auto">
@@ -390,7 +381,6 @@ export default function LogSemuaArmada() {
     </div>
   );
 
-  // Render cards untuk mobile
   const renderLogCards = () => (
     <div className="space-y-4 sm:hidden">
       {logs.length === 0 ? (
