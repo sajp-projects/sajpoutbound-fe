@@ -16,9 +16,9 @@ import {
   showConfirmationAlert,
   showSuccessAlert,
 } from '@/utils/sweetAlert';
-import { ArrowLeft, Loader2, Save } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Loader2, Save } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router";
 
 interface WarehouseFormData {
   name: string;
@@ -122,14 +122,8 @@ export default function TambahGudang() {
   const isSubmitting = createWarehouseMutation.isPending;
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
+    <div className="px-4 space-y-6 sm:px-0">
       <div className="flex items-center">
-        <Link to="/gudang">
-          <Button variant="ghost" size="sm" className="mr-2">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Kembali
-          </Button>
-        </Link>
         <h1 className="text-2xl font-bold text-gray-900">Tambah Gudang</h1>
       </div>
 
@@ -143,12 +137,12 @@ export default function TambahGudang() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {errors.general && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
+              <div className="p-3 mb-4 text-sm text-red-600 border border-red-200 rounded-md bg-red-50">
                 {errors.general}
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
                 <label
                   htmlFor="name"
@@ -185,7 +179,7 @@ export default function TambahGudang() {
                 >
                   Penanggung Jawab
                 </label>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center mt-1">
+                <div className="flex flex-col items-start mt-1 sm:flex-row sm:items-center">
                   <select
                     id="userId"
                     name="userId"
@@ -217,7 +211,7 @@ export default function TambahGudang() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="mt-2 sm:ml-2 sm:mt-0 text-red-600 hover:text-red-800 border-red-200 hover:border-red-300 hover:bg-red-50 w-full sm:w-auto"
+                      className="w-full mt-2 text-red-600 border-red-200 sm:ml-2 sm:mt-0 hover:text-red-800 hover:border-red-300 hover:bg-red-50 sm:w-auto"
                       onClick={() =>
                         setFormData((prev) => ({ ...prev, userId: '' }))
                       }
@@ -282,16 +276,16 @@ export default function TambahGudang() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="text-white bg-blue-600 hover:bg-blue-700"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Menyimpan...
                   </>
                 ) : (
                   <>
-                    <Save className="mr-2 h-4 w-4" />
+                    <Save className="w-4 h-4 mr-2" />
                     Simpan
                   </>
                 )}

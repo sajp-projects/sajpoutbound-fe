@@ -1,7 +1,7 @@
 import { useCreateCustomer } from "@/hooks/pelanggan";
 import { cn } from "@/lib/utils";
 import { CustomerInput } from "@/types/pelanggan";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { ReactNode, useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -20,7 +20,6 @@ import {
   showConfirmationAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
-import { Link } from "react-router";
 
 interface CustomerFormData {
   name: string;
@@ -182,14 +181,8 @@ export default function TambahPelanggan() {
     );
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
+    <div className="px-4 space-y-6 sm:px-0">
       <div className="flex items-center">
-        <Link to="/pelanggan">
-          <Button variant="ghost" size="sm" className="mr-2">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Kembali
-          </Button>
-        </Link>
         <h1 className="text-2xl font-bold text-gray-900">Tambah Pelanggan</h1>
       </div>
 
@@ -203,7 +196,7 @@ export default function TambahPelanggan() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {errors.general && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
+              <div className="p-3 mb-4 text-sm text-red-600 border border-red-200 rounded-md bg-red-50">
                 {errors.general}
               </div>
             )}
@@ -272,16 +265,16 @@ export default function TambahPelanggan() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="text-white bg-blue-600 hover:bg-blue-700"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Menyimpan...
                   </>
                 ) : (
                   <>
-                    <Save className="mr-2 h-4 w-4" />
+                    <Save className="w-4 h-4 mr-2" />
                     Simpan
                   </>
                 )}

@@ -1,24 +1,24 @@
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { useCreateProduct } from '@/hooks/barang';
-import { useWarehouses } from '@/hooks/gudang';
-import { cn } from '@/lib/utils';
-import { FormErrorData, FormErrors } from '@/utils/errorHandler';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { useCreateProduct } from "@/hooks/barang";
+import { useWarehouses } from "@/hooks/gudang";
+import { cn } from "@/lib/utils";
+import { FormErrorData, FormErrors } from "@/utils/errorHandler";
 import {
   isConfirmed,
   showConfirmationAlert,
   showSuccessAlert,
-} from '@/utils/sweetAlert';
-import { ArrowLeft, Loader2, Save } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+} from "@/utils/sweetAlert";
+import { Loader2, Save } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router";
 
 interface ProductFormData {
   name: string;
@@ -34,22 +34,21 @@ type ProductFormErrors = FormErrors<ProductFormData> & {
 export default function TambahBarang() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<ProductFormData>({
-    name: '',
-    id_sl: '',
-    description: '',
-    warehouseId: '',
+    name: "",
+    id_sl: "",
+    description: "",
+    warehouseId: "",
   });
   const [errors, setErrors] = useState<ProductFormErrors>({});
 
-  
   const { data: warehousesData } = useWarehouses({
-    staleTime: 300000, 
+    staleTime: 300000,
   });
   const warehouses = warehousesData?.warehouses || [];
 
   const createProductMutation = useCreateProduct({
     onSuccess: (data) => {
-      showSuccessAlert('Sukses!', 'Barang berhasil ditambahkan').then(() => {
+      showSuccessAlert("Sukses!", "Barang berhasil ditambahkan").then(() => {
         navigate(`/barang/${data.id}`);
       });
     },
@@ -58,20 +57,20 @@ export default function TambahBarang() {
         const errorObj = JSON.parse(error.message) as FormErrorData;
 
         if (
-          errorObj.errorType === 'joiValidationError' &&
+          errorObj.errorType === "joiValidationError" &&
           errorObj.details &&
           errorObj.details.length > 0
         ) {
           const newErrors: ProductFormErrors = {};
 
           errorObj.details.forEach((detail) => {
-            if (detail.path.includes('name')) {
+            if (detail.path.includes("name")) {
               newErrors.name = detail.message;
-            } else if (detail.path.includes('id_sl')) {
+            } else if (detail.path.includes("id_sl")) {
               newErrors.id_sl = detail.message;
-            } else if (detail.path.includes('description')) {
+            } else if (detail.path.includes("description")) {
               newErrors.description = detail.message;
-            } else if (detail.path.includes('warehouseId')) {
+            } else if (detail.path.includes("warehouseId")) {
               newErrors.warehouseId = detail.message;
             } else {
               newErrors.general = detail.message;
@@ -83,7 +82,7 @@ export default function TambahBarang() {
           setErrors({ general: errorObj.message });
         }
       } catch {
-        setErrors({ general: 'Terjadi kesalahan saat menambahkan barang' });
+        setErrors({ general: "Terjadi kesalahan saat menambahkan barang" });
       }
     },
   });
@@ -106,10 +105,10 @@ export default function TambahBarang() {
     setErrors({});
 
     showConfirmationAlert(
-      'Konfirmasi',
-      'Apakah Anda yakin ingin menambahkan barang baru ini?',
-      'Ya, Tambahkan!',
-      'Batal'
+      "Konfirmasi",
+      "Apakah Anda yakin ingin menambahkan barang baru ini?",
+      "Ya, Tambahkan!",
+      "Batal"
     ).then((result) => {
       if (isConfirmed(result)) {
         createProductMutation.mutate(formData);
@@ -120,14 +119,8 @@ export default function TambahBarang() {
   const isSubmitting = createProductMutation.isPending;
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
+    <div className="px-4 space-y-6 sm:px-0">
       <div className="flex items-center">
-        <Link to="/barang">
-          <Button variant="ghost" size="sm" className="mr-2">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Kembali
-          </Button>
-        </Link>
         <h1 className="text-2xl font-bold text-gray-900">Tambah Barang</h1>
       </div>
 
@@ -141,12 +134,12 @@ export default function TambahBarang() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {errors.general && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
+              <div className="p-3 mb-4 text-sm text-red-600 border border-red-200 rounded-md bg-red-50">
                 {errors.general}
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
                 <label
                   htmlFor="name"
@@ -161,10 +154,10 @@ export default function TambahBarang() {
                   onChange={handleInputChange}
                   placeholder="Masukkan nama barang"
                   className={cn(
-                    'mt-1 w-full border-gray-300',
+                    "mt-1 w-full border-gray-300",
                     errors.name
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                      : 'focus:border-blue-500 focus:ring-blue-500'
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                      : "focus:border-blue-500 focus:ring-blue-500"
                   )}
                 />
                 {errors.name ? (
@@ -190,10 +183,10 @@ export default function TambahBarang() {
                   onChange={handleInputChange}
                   placeholder="Masukkan ID SL barang"
                   className={cn(
-                    'mt-1 w-full border-gray-300',
+                    "mt-1 w-full border-gray-300",
                     errors.id_sl
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                      : 'focus:border-blue-500 focus:ring-blue-500'
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                      : "focus:border-blue-500 focus:ring-blue-500"
                   )}
                 />
                 {errors.id_sl ? (
@@ -218,9 +211,9 @@ export default function TambahBarang() {
                   value={formData.warehouseId}
                   onChange={(e) => handleInputChange(e)}
                   className={cn(
-                    'mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
+                    "mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
                     errors.warehouseId &&
-                      'border-red-300 focus:border-red-500 focus:ring-red-500'
+                      "border-red-300 focus:border-red-500 focus:ring-red-500"
                   )}
                 >
                   <option value="">Pilih gudang</option>
@@ -262,9 +255,9 @@ export default function TambahBarang() {
                   rows={4}
                   placeholder="Deskripsikan barang secara detail"
                   className={cn(
-                    'mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
+                    "mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
                     errors.description &&
-                      'border-red-300 focus:border-red-500 focus:ring-red-500'
+                      "border-red-300 focus:border-red-500 focus:ring-red-500"
                   )}
                 />
                 {errors.description ? (
@@ -282,7 +275,7 @@ export default function TambahBarang() {
             <div className="flex justify-end gap-3">
               <Button
                 variant="outline"
-                onClick={() => navigate('/barang')}
+                onClick={() => navigate("/barang")}
                 disabled={isSubmitting}
                 type="button"
               >
@@ -291,16 +284,16 @@ export default function TambahBarang() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="text-white bg-blue-600 hover:bg-blue-700"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Menyimpan...
                   </>
                 ) : (
                   <>
-                    <Save className="mr-2 h-4 w-4" />
+                    <Save className="w-4 h-4 mr-2" />
                     Simpan
                   </>
                 )}

@@ -15,9 +15,9 @@ import {
   showConfirmationAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 interface ArmadaFormData {
   model: string;
@@ -134,12 +134,6 @@ export default function TambahArmada() {
   return (
     <div className="px-4 space-y-6 sm:px-0">
       <div className="flex items-center">
-        <Link to="/armada">
-          <Button variant="ghost" size="sm" className="mr-2">
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Kembali
-          </Button>
-        </Link>
         <h1 className="text-2xl font-bold text-gray-900">Tambah Armada</h1>
       </div>
 
