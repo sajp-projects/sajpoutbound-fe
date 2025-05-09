@@ -149,12 +149,6 @@ export default function DetailGudang() {
                   </h3>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm text-gray-500">ID Gudang</p>
-                      <p className="p-1 font-mono font-medium text-gray-900 rounded bg-gray-50">
-                        {gudang?.id}
-                      </p>
-                    </div>
-                    <div>
                       <p className="text-sm text-gray-500">Nama Gudang</p>
                       <p className="font-medium text-blue-600">
                         {gudang?.name}
@@ -277,7 +271,7 @@ export default function DetailGudang() {
                           Nama Barang
                         </TableHead>
                         <TableHead className="py-4 font-semibold text-gray-700">
-                          ID SL
+                          ID
                         </TableHead>
                         <TableHead className="py-4 font-semibold text-gray-700">
                           Satuan
@@ -386,7 +380,7 @@ export default function DetailGudang() {
                           <p>
                             ID: <span className="font-mono">{product.id}</span>
                           </p>
-                          {product.id_sl && <p>ID SL: {product.id_sl}</p>}
+                          {product.id_sl && <p>ID: {product.id_sl}</p>}
                           <p>Dibuat: {formatDate(product.createdAt)}</p>
                         </div>
                       </div>

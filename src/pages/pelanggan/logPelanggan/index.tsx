@@ -23,7 +23,7 @@ import { EmptyState } from "@/components/EmptyState";
 export default function LogPelanggan() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  
+
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
@@ -94,7 +94,7 @@ export default function LogPelanggan() {
       }
     );
   };
-  
+
   const renderChanges = (
     oldData: Record<string, unknown> | null,
     newData: Record<string, unknown> | null
@@ -119,7 +119,7 @@ export default function LogPelanggan() {
               </tr>
               <tr>
                 <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID SL
+                  ID
                 </td>
                 <td className="px-2 py-1 border border-gray-200">
                   {newData.id_sl as string}
@@ -157,7 +157,7 @@ export default function LogPelanggan() {
               </tr>
               <tr>
                 <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID SL
+                  ID
                 </td>
                 <td className="px-2 py-1 border border-gray-200">
                   {oldData.id_sl as string}
@@ -190,7 +190,7 @@ export default function LogPelanggan() {
 
       if (oldData.id_sl !== newData.id_sl) {
         changes.push({
-          field: "ID SL",
+          field: "ID",
           oldValue: oldData.id_sl as string,
           newValue: newData.id_sl as string,
         });
@@ -460,7 +460,7 @@ export default function LogPelanggan() {
                 Log Aktivitas: {customerData.name}
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                ID SL: {customerData.id_sl}
+                ID: {customerData.id_sl}
               </p>
               <p className="mt-1 text-sm text-gray-600">
                 <span className="font-medium">Alamat:</span>{" "}

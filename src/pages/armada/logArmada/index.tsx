@@ -35,7 +35,7 @@ export default function LogArmada() {
       enabled: !!armadaId,
     }
   );
-      
+
   const { data, isLoading } = useArmadaLogsByArmadaId(armadaId, {
     enabled: !!armadaId,
     staleTime: 0,
@@ -119,7 +119,7 @@ export default function LogArmada() {
               </tr>
               <tr>
                 <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID SL
+                  ID
                 </td>
                 <td className="px-2 py-1 border border-gray-200">
                   {newData.id_sl as string}
@@ -166,7 +166,7 @@ export default function LogArmada() {
               </tr>
               <tr>
                 <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID SL
+                  ID
                 </td>
                 <td className="px-2 py-1 border border-gray-200">
                   {oldData.id_sl as string}
@@ -208,7 +208,7 @@ export default function LogArmada() {
 
       if (oldData.id_sl !== newData.id_sl) {
         changes.push({
-          field: "ID SL",
+          field: "ID",
           oldValue: oldData.id_sl as string,
           newValue: newData.id_sl as string,
         });
@@ -486,7 +486,7 @@ export default function LogArmada() {
                 Log Aktivitas: {armadaData.model}
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                ID SL: {armadaData.id_sl}
+                ID: {armadaData.id_sl}
               </p>
               <p className="mt-1 text-sm text-gray-600">
                 <span className="font-medium">Plat Nomor:</span>{" "}

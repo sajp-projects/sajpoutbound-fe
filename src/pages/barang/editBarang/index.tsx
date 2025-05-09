@@ -262,14 +262,14 @@ export default function EditBarang() {
                     htmlFor="id_sl"
                     className="block text-sm font-medium text-gray-700"
                   >
-                    ID SL
+                    ID
                   </label>
                   <Input
                     id="id_sl"
                     name="id_sl"
                     value={formData.id_sl}
                     onChange={handleInputChange}
-                    placeholder="Masukkan ID SL barang (opsional)"
+                    placeholder="Masukkan ID Barang (opsional)"
                     className={inputClassName("id_sl")}
                   />
                   {errors.id_sl ? (

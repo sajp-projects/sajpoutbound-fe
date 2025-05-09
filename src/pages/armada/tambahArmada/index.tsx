@@ -100,7 +100,7 @@ export default function TambahArmada() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
-    
+
     const validationErrors: ArmadaFormErrors = {};
     if (!formData.model.trim()) {
       validationErrors.model = "Model armada harus diisi";
@@ -194,14 +194,14 @@ export default function TambahArmada() {
                   htmlFor="id_sl"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  ID SL
+                  ID
                 </label>
                 <Input
                   id="id_sl"
                   name="id_sl"
                   value={formData.id_sl}
                   onChange={handleInputChange}
-                  placeholder="Masukkan ID SL"
+                  placeholder="Masukkan ID Armada"
                   className={cn(
                     "mt-1 w-full border-gray-300",
                     errors.id_sl
@@ -213,7 +213,7 @@ export default function TambahArmada() {
                   <p className="mt-1 text-sm text-red-500">{errors.id_sl}</p>
                 ) : (
                   <p className="mt-1 text-sm text-gray-500">
-                    ID SL untuk identifikasi armada (opsional)
+                    ID untuk identifikasi armada (opsional)
                   </p>
                 )}
               </div>

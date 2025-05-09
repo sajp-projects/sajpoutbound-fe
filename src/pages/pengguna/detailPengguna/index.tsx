@@ -63,12 +63,12 @@ export default function DetailPengguna() {
   };
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+    <div className="px-4 space-y-6 sm:px-0">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
         <div className="flex items-center">
           <Link to="/pengguna">
             <Button variant="ghost" size="sm" className="mr-2">
-              <ArrowLeft className="h-4 w-4 mr-1" />
+              <ArrowLeft className="w-4 h-4 mr-1" />
               Kembali
             </Button>
           </Link>
@@ -76,26 +76,26 @@ export default function DetailPengguna() {
         </div>
         <div className="flex gap-2">
           <Link to={`/pengguna/${id}/edit`}>
-            <Button className="flex items-center px-3 py-2 bg-amber-600 hover:bg-amber-700 rounded-md shadow-sm text-sm font-medium text-white">
-              <Pencil className="h-4 w-4 mr-2" />
+            <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
+              <Pencil className="w-4 h-4 mr-2" />
               Edit Pengguna
             </Button>
           </Link>
           {user && !user.deletedAt && (
             <Button
-              className="flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 rounded-md shadow-sm text-sm font-medium text-white"
+              className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
               onClick={handleArsipkan}
               disabled={deleteUser.isPending}
             >
-              <Archive className="h-4 w-4 mr-2" />
+              <Archive className="w-4 h-4 mr-2" />
               {deleteUser.isPending ? "Mengarsipkan..." : "Arsipkan"}
             </Button>
           )}
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div className="p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">
+        <div className="flex flex-col items-start justify-between gap-4 mb-6 sm:flex-row sm:items-center">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
               Informasi Pengguna
@@ -117,26 +117,17 @@ export default function DetailPengguna() {
           />
         ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-4">
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="p-4 border border-gray-200 rounded-lg">
+                  <h3 className="mb-4 text-lg font-medium text-gray-900">
                     Data Pengguna
                   </h3>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm text-gray-500">ID Pengguna</p>
-                      <p
-                        className="wrap-text font-medium text-gray-900"
-                        title={user?.id}
-                      >
-                        {user?.id}
-                      </p>
-                    </div>
-                    <div>
                       <p className="text-sm text-gray-500">Nama Lengkap</p>
                       <p
-                        className="wrap-text font-medium text-blue-600"
+                        className="font-medium text-blue-600 wrap-text"
                         title={user?.name}
                       >
                         {user?.name}
@@ -145,7 +136,7 @@ export default function DetailPengguna() {
                     <div>
                       <p className="text-sm text-gray-500">Email</p>
                       <p
-                        className="wrap-text font-medium text-gray-900"
+                        className="font-medium text-gray-900 wrap-text"
                         title={user?.email}
                       >
                         {user?.email}
@@ -170,8 +161,8 @@ export default function DetailPengguna() {
                   </div>
                 </div>
 
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="p-4 border border-gray-200 rounded-lg">
+                  <h3 className="mb-4 text-lg font-medium text-gray-900">
                     Deskripsi Peran
                   </h3>
                   <p className="text-gray-700">
@@ -181,8 +172,8 @@ export default function DetailPengguna() {
               </div>
 
               <div className="space-y-4">
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="p-4 border border-gray-200 rounded-lg">
+                  <h3 className="mb-4 text-lg font-medium text-gray-900">
                     Informasi Waktu
                   </h3>
                   <div className="space-y-3">
@@ -213,37 +204,37 @@ export default function DetailPengguna() {
                   </div>
                 </div>
 
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="p-4 border border-gray-200 rounded-lg">
+                  <h3 className="mb-4 text-lg font-medium text-gray-900">
                     Tindakan
                   </h3>
                   <div className="space-y-3">
                     <Link to={`/pengguna/${id}/log`} className="w-full">
                       <Button
                         variant="outline"
-                        className="w-full justify-start"
+                        className="justify-start w-full"
                       >
-                        <FileText className="h-4 w-4 mr-2" />
+                        <FileText className="w-4 h-4 mr-2" />
                         Lihat Log Aktivitas
                       </Button>
                     </Link>
                     <Link to={`/pengguna/${id}/edit`} className="w-full">
                       <Button
                         variant="outline"
-                        className="w-full justify-start text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                        className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
                       >
-                        <Pencil className="h-4 w-4 mr-2" />
+                        <Pencil className="w-4 h-4 mr-2" />
                         Edit Pengguna
                       </Button>
                     </Link>
                     {user && !user.deletedAt && (
                       <Button
                         variant="outline"
-                        className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                        className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
                         onClick={handleArsipkan}
                         disabled={deleteUser.isPending}
                       >
-                        <Archive className="h-4 w-4 mr-2" />
+                        <Archive className="w-4 h-4 mr-2" />
                         {deleteUser.isPending
                           ? "Mengarsipkan..."
                           : "Arsipkan Pengguna"}

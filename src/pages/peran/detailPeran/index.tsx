@@ -66,12 +66,12 @@ export default function DetailPeran() {
   );
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+    <div className="px-4 space-y-6 sm:px-0">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
         <div className="flex items-center">
           <Link to="/peran">
             <Button variant="ghost" size="sm" className="mr-2">
-              <ArrowLeft className="h-4 w-4 mr-1" />
+              <ArrowLeft className="w-4 h-4 mr-1" />
               Kembali
             </Button>
           </Link>
@@ -79,15 +79,15 @@ export default function DetailPeran() {
         </div>
         <div className="flex gap-2">
           <Link to={`/peran/${id}/edit`}>
-            <Button className="flex items-center px-3 py-2 bg-amber-600 hover:bg-amber-700 rounded-md shadow-sm text-sm font-medium text-white">
-              <Pencil className="h-4 w-4 mr-2" />
+            <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
+              <Pencil className="w-4 h-4 mr-2" />
               Edit Peran
             </Button>
           </Link>
           {hasPermissionAccess() && (
             <Link to={`/peran/${id}/izin`}>
-              <Button className="flex items-center px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-md shadow-sm text-sm font-medium text-white">
-                <Lock className="h-4 w-4 mr-2" />
+              <Button className="flex items-center px-3 py-2 text-sm font-medium text-white bg-purple-600 rounded-md shadow-sm hover:bg-purple-700">
+                <Lock className="w-4 h-4 mr-2" />
                 Kelola Izin
               </Button>
             </Link>
@@ -95,8 +95,8 @@ export default function DetailPeran() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div className="p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">
+        <div className="flex flex-col items-start justify-between gap-4 mb-6 sm:flex-row sm:items-center">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
               Informasi Peran
@@ -129,7 +129,7 @@ export default function DetailPeran() {
                 )}
                 onClick={() => setActiveTab("info")}
               >
-                <Info className="h-4 w-4 mr-2" />
+                <Info className="w-4 h-4 mr-2" />
                 Informasi Peran
               </button>
               <button
@@ -141,7 +141,7 @@ export default function DetailPeran() {
                 )}
                 onClick={() => setActiveTab("users")}
               >
-                <Users className="h-4 w-4 mr-2" />
+                <Users className="w-4 h-4 mr-2" />
                 Pengguna Terkait{" "}
                 {role?.users && role.users.length > 0 && (
                   <span className="ml-1 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
@@ -153,22 +153,13 @@ export default function DetailPeran() {
 
             {}
             {activeTab === "info" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-4">
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">
                       Data Peran
                     </h3>
                     <div className="space-y-3">
-                      <div>
-                        <p className="text-sm text-gray-500">ID Peran</p>
-                        <p
-                          className="font-medium text-gray-900 wrap-text"
-                          title={role?.id}
-                        >
-                          {role?.id}
-                        </p>
-                      </div>
                       <div>
                         <p className="text-sm text-gray-500">Nama Peran</p>
                         <p
@@ -192,8 +183,8 @@ export default function DetailPeran() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">
                       Informasi Waktu
                     </h3>
                     <div className="space-y-3">
@@ -220,17 +211,17 @@ export default function DetailPeran() {
                     </div>
                   </div>
 
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">
                       Tindakan
                     </h3>
                     <div className="space-y-3">
                       <Link to={`/peran/${id}/edit`} className="w-full">
                         <Button
                           variant="outline"
-                          className="w-full justify-start text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                          className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
                         >
-                          <Pencil className="h-4 w-4 mr-2" />
+                          <Pencil className="w-4 h-4 mr-2" />
                           Edit Peran
                         </Button>
                       </Link>
@@ -238,19 +229,19 @@ export default function DetailPeran() {
                         <Link to={`/peran/${id}/izin`} className="w-full">
                           <Button
                             variant="outline"
-                            className="w-full justify-start text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700"
+                            className="justify-start w-full text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700"
                           >
-                            <Lock className="h-4 w-4 mr-2" />
+                            <Lock className="w-4 h-4 mr-2" />
                             Kelola Izin Peran
                           </Button>
                         </Link>
                       )}
                       <Button
                         variant="outline"
-                        className="w-full justify-start"
+                        className="justify-start w-full"
                         onClick={() => setActiveTab("users")}
                       >
-                        <Users className="h-4 w-4 mr-2" />
+                        <Users className="w-4 h-4 mr-2" />
                         Lihat Pengguna Terkait
                         {role?.users && role.users.length > 0 && (
                           <span className="ml-2 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
@@ -266,8 +257,8 @@ export default function DetailPeran() {
 
             {activeTab === "users" && (
               <div className="space-y-4">
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-4">
+                <div className="p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium text-gray-900">
                       Pengguna dengan Peran {role?.name}
                     </h3>
@@ -284,12 +275,12 @@ export default function DetailPeran() {
 
                   {}
                   {!role?.users || role.users.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-gray-300 rounded-lg">
-                      <Users className="h-12 w-12 text-gray-400 mb-4" />
-                      <p className="text-gray-600 font-medium">
+                    <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-gray-300 border-dashed rounded-lg">
+                      <Users className="w-12 h-12 mb-4 text-gray-400" />
+                      <p className="font-medium text-gray-600">
                         Tidak ada pengguna yang memiliki peran ini
                       </p>
-                      <p className="text-sm text-gray-500 max-w-md mt-2">
+                      <p className="max-w-md mt-2 text-sm text-gray-500">
                         Belum ada pengguna yang ditetapkan dengan peran{" "}
                         {role?.name}
                       </p>
@@ -297,27 +288,27 @@ export default function DetailPeran() {
                   ) : (
                     <div>
                       {}
-                      <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
+                      <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
                         <div className="overflow-x-auto">
                           <Table>
                             <TableHeader>
-                              <TableRow className="bg-gray-50 border-b border-gray-200">
+                              <TableRow className="border-b border-gray-200 bg-gray-50">
                                 <TableHead className="w-[50px] font-semibold text-gray-700 py-4">
                                   ID
                                 </TableHead>
-                                <TableHead className="font-semibold text-gray-700 py-4">
+                                <TableHead className="py-4 font-semibold text-gray-700">
                                   Nama
                                 </TableHead>
-                                <TableHead className="font-semibold text-gray-700 py-4">
+                                <TableHead className="py-4 font-semibold text-gray-700">
                                   Email
                                 </TableHead>
-                                <TableHead className="hidden md:table-cell font-semibold text-gray-700 py-4">
+                                <TableHead className="hidden py-4 font-semibold text-gray-700 md:table-cell">
                                   Tgl. Bergabung
                                 </TableHead>
-                                <TableHead className="font-semibold text-gray-700 py-4 text-center">
+                                <TableHead className="py-4 font-semibold text-center text-gray-700">
                                   Status
                                 </TableHead>
-                                <TableHead className="font-semibold text-gray-700 py-4 text-center">
+                                <TableHead className="py-4 font-semibold text-center text-gray-700">
                                   Aksi
                                 </TableHead>
                               </TableRow>
@@ -338,7 +329,7 @@ export default function DetailPeran() {
                                   </TableCell>
                                   <TableCell className="text-gray-600">
                                     <div className="flex items-center text-sm text-gray-600">
-                                      <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                                      <Mail className="w-4 h-4 mr-2 text-gray-400" />
                                       <span
                                         className="truncate-text"
                                         title={user.email}
@@ -347,7 +338,7 @@ export default function DetailPeran() {
                                       </span>
                                     </div>
                                   </TableCell>
-                                  <TableCell className="hidden md:table-cell text-gray-500">
+                                  <TableCell className="hidden text-gray-500 md:table-cell">
                                     {formatDate(user.createdAt)}
                                   </TableCell>
                                   <TableCell className="text-center">
@@ -368,10 +359,10 @@ export default function DetailPeran() {
                                         <Button
                                           size="sm"
                                           variant="ghost"
-                                          className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                          className="w-8 h-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                           title="Lihat Detail"
                                         >
-                                          <Eye className="h-4 w-4" />
+                                          <Eye className="w-4 h-4" />
                                         </Button>
                                       </Link>
                                     </div>
@@ -384,14 +375,14 @@ export default function DetailPeran() {
                       </div>
 
                       {}
-                      <div className="sm:hidden space-y-4">
+                      <div className="space-y-4 sm:hidden">
                         {role.users.map((user) => (
                           <div
                             key={user.id}
-                            className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm"
+                            className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
                           >
                             <div className="p-4">
-                              <div className="flex justify-between items-start mb-2">
+                              <div className="flex items-start justify-between mb-2">
                                 <h3 className="font-medium text-blue-600">
                                   {user.name}
                                 </h3>
@@ -407,9 +398,9 @@ export default function DetailPeran() {
                                 </span>
                               </div>
 
-                              <div className="space-y-2 mt-3">
+                              <div className="mt-3 space-y-2">
                                 <div className="flex items-center text-sm text-gray-600">
-                                  <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                                  <Mail className="w-4 h-4 mr-2 text-gray-400" />
                                   <span
                                     className="truncate-text"
                                     title={user.email}
@@ -418,7 +409,7 @@ export default function DetailPeran() {
                                   </span>
                                 </div>
                                 <div className="flex items-center text-sm text-gray-600">
-                                  <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                                  <Calendar className="w-4 h-4 mr-2 text-gray-400" />
                                   <span
                                     className="truncate-text"
                                     title={`Bergabung: ${formatDate(
@@ -429,7 +420,7 @@ export default function DetailPeran() {
                                   </span>
                                 </div>
                                 <div className="flex items-center text-sm text-gray-600">
-                                  <User className="h-4 w-4 mr-2 text-gray-400" />
+                                  <User className="w-4 h-4 mr-2 text-gray-400" />
                                   <span
                                     className="truncate-text"
                                     title={`ID: ${user.id}`}
@@ -439,15 +430,15 @@ export default function DetailPeran() {
                                 </div>
                               </div>
 
-                              <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
+                              <div className="flex items-center justify-end gap-1 pt-2 mt-2 border-t">
                                 <Link to={`/pengguna/${user.id}`}>
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                    className="w-8 h-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                     title="Lihat Detail"
                                   >
-                                    <Eye className="h-4 w-4" />
+                                    <Eye className="w-4 h-4" />
                                   </Button>
                                 </Link>
                               </div>

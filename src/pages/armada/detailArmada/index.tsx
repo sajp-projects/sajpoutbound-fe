@@ -138,12 +138,12 @@ export default function DetailArmada() {
                   </h3>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm text-gray-500">ID Armada</p>
+                      <p className="text-sm text-gray-500">ID</p>
                       <p
                         className="p-1 font-mono font-medium text-gray-900 rounded bg-gray-50 wrap-text"
-                        title={armada?.id}
+                        title={armada?.id_sl}
                       >
-                        {armada?.id}
+                        {armada?.id_sl}
                       </p>
                     </div>
                     <div>
@@ -153,15 +153,6 @@ export default function DetailArmada() {
                         title={armada?.model}
                       >
                         {armada?.model}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">ID SL</p>
-                      <p
-                        className="font-medium text-gray-900 wrap-text"
-                        title={armada?.id_sl || "-"}
-                      >
-                        {armada?.id_sl || "-"}
                       </p>
                     </div>
                     <div>

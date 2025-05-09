@@ -138,12 +138,12 @@ export default function DetailBarang() {
                   </h3>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm text-gray-500">ID Barang</p>
+                      <p className="text-sm text-gray-500">ID</p>
                       <p
                         className="p-1 font-mono font-medium text-gray-900 rounded bg-gray-50 wrap-text"
-                        title={barang?.id}
+                        title={barang?.id_sl}
                       >
-                        {barang?.id}
+                        {barang?.id_sl}
                       </p>
                     </div>
                     <div>
@@ -153,15 +153,6 @@ export default function DetailBarang() {
                         title={barang?.name}
                       >
                         {barang?.name}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">ID SL</p>
-                      <p
-                        className="font-medium text-gray-900 wrap-text"
-                        title={barang?.id_sl || "-"}
-                      >
-                        {barang?.id_sl || "-"}
                       </p>
                     </div>
                     <div>

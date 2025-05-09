@@ -43,7 +43,7 @@ export default function EditArmada() {
     plateNumber: "",
     description: "",
   });
-  
+
   const [errors, setErrors] = useState<ArmadaFormErrors>({});
 
   const {
@@ -113,7 +113,7 @@ export default function EditArmada() {
       });
     }
   }, [armada]);
-  
+
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -246,21 +246,21 @@ export default function EditArmada() {
                     htmlFor="id_sl"
                     className="block text-sm font-medium text-gray-700"
                   >
-                    ID SL
+                    ID
                   </label>
                   <Input
                     id="id_sl"
                     name="id_sl"
                     value={formData.id_sl}
                     onChange={handleInputChange}
-                    placeholder="Masukkan ID SL"
+                    placeholder="Masukkan ID Armada"
                     className={inputClassName("id_sl")}
                   />
                   {errors.id_sl ? (
                     <p className="mt-1 text-sm text-red-500">{errors.id_sl}</p>
                   ) : (
                     <p className="mt-1 text-sm text-gray-500">
-                      ID SL untuk identifikasi armada (opsional)
+                      ID untuk identifikasi armada (opsional)
                     </p>
                   )}
                 </div>

@@ -211,16 +211,16 @@ export default function TambahPelanggan() {
 
             <FormField
               id="id_sl"
-              label="ID SL"
+              label="ID"
               error={errors.id_sl}
-              helpText="ID SL adalah kode pelanggan (opsional)"
+              helpText="ID adalah kode pelanggan (opsional)"
             >
               <Input
                 id="id_sl"
                 name="id_sl"
                 value={formData.id_sl}
                 onChange={handleInputChange}
-                placeholder="Masukkan ID SL"
+                placeholder="Masukkan ID pelanggan"
                 className={inputClassName("id_sl")}
               />
             </FormField>

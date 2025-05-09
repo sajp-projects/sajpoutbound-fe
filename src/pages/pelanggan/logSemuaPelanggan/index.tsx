@@ -128,7 +128,7 @@ export default function LogSemuaPelanggan() {
               </tr>
               <tr>
                 <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID SL
+                  ID
                 </td>
                 <td className="px-2 py-1 border border-gray-200">
                   {newData.id_sl as string}
@@ -166,7 +166,7 @@ export default function LogSemuaPelanggan() {
               </tr>
               <tr>
                 <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID SL
+                  ID
                 </td>
                 <td className="px-2 py-1 border border-gray-200">
                   {oldData.id_sl as string}
@@ -199,7 +199,7 @@ export default function LogSemuaPelanggan() {
 
       if (oldData.id_sl !== newData.id_sl) {
         changes.push({
-          field: "ID SL",
+          field: "ID",
           oldValue: oldData.id_sl as string,
           newValue: newData.id_sl as string,
         });

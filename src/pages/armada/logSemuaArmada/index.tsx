@@ -111,7 +111,7 @@ export default function LogSemuaArmada() {
               </tr>
               <tr>
                 <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID SL
+                  ID
                 </td>
                 <td className="px-2 py-1 border border-gray-200">
                   {newData.id_sl as string}
@@ -157,7 +157,7 @@ export default function LogSemuaArmada() {
               </tr>
               <tr>
                 <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID SL
+                  ID
                 </td>
                 <td className="px-2 py-1 border border-gray-200">
                   {oldData.id_sl as string}
@@ -198,7 +198,7 @@ export default function LogSemuaArmada() {
 
       if (oldData.id_sl !== newData.id_sl) {
         changes.push({
-          field: "ID SL",
+          field: "ID",
           oldValue: oldData.id_sl as string,
           newValue: newData.id_sl as string,
         });
@@ -310,7 +310,10 @@ export default function LogSemuaArmada() {
                     {index + 1 + (pagination.page - 1) * pagination.limit}
                   </TableCell>
                   <TableCell className="text-gray-700">
-                    <div className="truncate-text" title={formatDate(log.createdAt)}>
+                    <div
+                      className="truncate-text"
+                      title={formatDate(log.createdAt)}
+                    >
                       {formatDate(log.createdAt)}
                     </div>
                   </TableCell>
@@ -318,13 +321,16 @@ export default function LogSemuaArmada() {
                     {log.armada ? (
                       <Link
                         to={`/armada/${log.armada.id}`}
-                        className="font-medium text-blue-600 hover:underline truncate-text block"
+                        className="block font-medium text-blue-600 hover:underline truncate-text"
                         title={log.armada.model}
                       >
                         {log.armada.model}
                       </Link>
                     ) : (
-                      <span className="text-gray-700 truncate-text" title={getArmadaName(log)}>
+                      <span
+                        className="text-gray-700 truncate-text"
+                        title={getArmadaName(log)}
+                      >
                         {getArmadaName(log)}
                       </span>
                     )}
@@ -341,10 +347,16 @@ export default function LogSemuaArmada() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium text-blue-600 truncate-text" title={log.performedBy.name}>
+                      <span
+                        className="font-medium text-blue-600 truncate-text"
+                        title={log.performedBy.name}
+                      >
                         {log.performedBy.name}
                       </span>
-                      <span className="text-xs text-gray-500 truncate-text" title={log.performedBy.email}>
+                      <span
+                        className="text-xs text-gray-500 truncate-text"
+                        title={log.performedBy.email}
+                      >
                         {log.performedBy.email}
                       </span>
                     </div>
@@ -426,12 +438,18 @@ export default function LogSemuaArmada() {
                       {log.armada.model}
                     </Link>
                   ) : (
-                    <span className="text-sm text-gray-700 truncate-text" title={getArmadaName(log)}>
+                    <span
+                      className="text-sm text-gray-700 truncate-text"
+                      title={getArmadaName(log)}
+                    >
                       {getArmadaName(log)}
                     </span>
                   )}
                 </div>
-                <p className="mb-1 text-sm text-gray-700 truncate-text-2" title={log.description}>
+                <p
+                  className="mb-1 text-sm text-gray-700 truncate-text-2"
+                  title={log.description}
+                >
                   {log.description}
                 </p>
                 <div className="text-xs text-gray-500">

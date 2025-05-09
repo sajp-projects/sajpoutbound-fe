@@ -207,14 +207,14 @@ export default function TambahBarang() {
                   htmlFor="id_sl"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  ID SL
+                  ID
                 </label>
                 <Input
                   id="id_sl"
                   name="id_sl"
                   value={formData.id_sl}
                   onChange={handleInputChange}
-                  placeholder="Masukkan ID SL barang (opsional)"
+                  placeholder="Masukkan ID barang (opsional)"
                   className={cn(
                     "mt-1 w-full border-gray-300",
                     errors.id_sl
