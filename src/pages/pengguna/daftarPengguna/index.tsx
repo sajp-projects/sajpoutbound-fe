@@ -1,31 +1,31 @@
-import { useDeleteUser, useUsers } from "@/hooks/user";
-import { Download, Plus } from "lucide-react";
-import { Link, useSearchParams } from "react-router";
+import { useDeleteUser, useUsers } from '@/hooks/user';
+import { Download, Plus } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router';
 
-import { Pagination } from "@/components/Pagination";
-import { RoleFilter } from "@/components/RoleFilter";
-import { SearchInput } from "@/components/SearchInput";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { getRoleBadgeColor, getRoleBadgeVariant } from "@/utils/badges";
-import { formatDate, formatDateShort } from "@/utils/date";
-import { useAuth } from "@/hooks/auth";
-import { PERMISSION } from "@/constant/PERMISSION";
-import { useRolePermissions } from "@/hooks/izin";
+import { ActionButtons, ActionType } from '@/components/ActionButtons';
+import { EmptyState } from '@/components/EmptyState';
+import { ErrorState } from '@/components/ErrorState';
+import { LoadingState } from '@/components/LoadingState';
+import { Pagination } from '@/components/Pagination';
+import { RoleFilter } from '@/components/RoleFilter';
+import { SearchInput } from '@/components/SearchInput';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { PERMISSION } from '@/constant/PERMISSION';
+import { useAuth } from '@/hooks/auth';
+import { useRolePermissions } from '@/hooks/izin';
+import { cn } from '@/lib/utils';
+import { getRoleBadgeColor, getRoleBadgeVariant } from '@/utils/badges';
+import { formatDate, formatDateShort } from '@/utils/date';
+import { hasPermission } from '@/utils/permission';
+import { getRoleId } from '@/utils/storage';
 import {
-  showSuccessAlert,
+  isConfirmed,
+  showConfirmationAlert,
   showErrorAlert,
   showForbiddenAlert,
-  showConfirmationAlert,
-  isConfirmed,
-} from "@/utils/sweetAlert";
-import { getRoleId } from "@/utils/storage";
-import { hasPermission } from "@/utils/permission";
-import { LoadingState } from "@/components/LoadingState";
-import { ErrorState } from "@/components/ErrorState";
-import { EmptyState } from "@/components/EmptyState";
-import { ActionButtons, ActionType } from "@/components/ActionButtons";
+  showSuccessAlert,
+} from '@/utils/sweetAlert';
 
 interface User {
   id: string;
@@ -41,14 +41,14 @@ interface User {
 export default function Pengguna() {
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
-  const roleId = getRoleId() || "";
+  const roleId = getRoleId() || '';
 
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && roleId !== "",
+    enabled: isAuthenticated && roleId !== '',
   });
 
-  const currentPage = parseInt(searchParams.get("page") || "1");
-  const itemsPerPage = parseInt(searchParams.get("limit") || "10");
+  const currentPage = parseInt(searchParams.get('page') || '1');
+  const itemsPerPage = parseInt(searchParams.get('limit') || '10');
 
   const { data, isLoading, isError, refetch } = useUsers({
     staleTime: 0,
@@ -68,21 +68,20 @@ export default function Pengguna() {
 
   const deleteUser = useDeleteUser({
     onSuccess: () => {
-      showSuccessAlert("Berhasil!", "Pengguna berhasil diarsipkan");
+      showSuccessAlert('Berhasil!', 'Pengguna berhasil diarsipkan');
       refetch();
     },
     onError: (error) => {
-      if (error.message.includes("Forbidden")) {
+      console.log(error, 'error', error.message);
+      if (error.message && error.message.includes('Forbidden')) {
         showForbiddenAlert(
-          "Akses Ditolak",
-          "Anda tidak memiliki akses untuk mengarsipkan pengguna ini."
+          'Akses Ditolak',
+          'Anda tidak memiliki akses untuk mengarsipkan pengguna ini.'
         );
       } else {
         showErrorAlert(
-          "Gagal!",
-          `Gagal mengarsipkan pengguna: ${
-            error.message || "Terjadi kesalahan saat mengarsipkan pengguna."
-          }`
+          'Gagal Mengarsipkan Pengguna',
+          error.message || 'Terjadi kesalahan saat mengarsipkan pengguna.'
         );
       }
     },
@@ -90,10 +89,10 @@ export default function Pengguna() {
 
   const handleArsipkan = async (id: string) => {
     const result = await showConfirmationAlert(
-      "Konfirmasi Arsip",
-      "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.",
-      "Ya, Arsipkan!",
-      "Batal"
+      'Konfirmasi Arsip',
+      'Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.',
+      'Ya, Arsipkan!',
+      'Batal'
     );
 
     if (isConfirmed(result)) {
@@ -216,8 +215,8 @@ export default function Pengguna() {
                         <tr
                           key={user.id}
                           className={cn(
-                            idx % 2 === 0 ? "bg-white" : "bg-gray-50",
-                            "border-b border-gray-200 last:border-b-0"
+                            idx % 2 === 0 ? 'bg-white' : 'bg-gray-50',
+                            'border-b border-gray-200 last:border-b-0'
                           )}
                         >
                           <td className="py-2.5 px-3 font-medium text-center text-sm">
@@ -237,7 +236,7 @@ export default function Pengguna() {
                             <Badge
                               variant={getRoleBadgeVariant(user.role.name)}
                               className={cn(
-                                "px-2 py-0.5 rounded-md font-medium text-xs",
+                                'px-2 py-0.5 rounded-md font-medium text-xs',
                                 getRoleBadgeColor(user.role.name)
                               )}
                             >
@@ -292,7 +291,7 @@ export default function Pengguna() {
                         <Badge
                           variant={getRoleBadgeVariant(user.role.name)}
                           className={cn(
-                            "px-2 py-0.5 rounded-md font-medium text-xs shrink-0",
+                            'px-2 py-0.5 rounded-md font-medium text-xs shrink-0',
                             getRoleBadgeColor(user.role.name)
                           )}
                         >
@@ -302,13 +301,13 @@ export default function Pengguna() {
 
                       <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                         <p>
-                          Dibuat:{" "}
+                          Dibuat:{' '}
                           <span className="font-medium">
                             {formatDateShort(user.createdAt)}
                           </span>
                         </p>
                         <p>
-                          Diperbarui:{" "}
+                          Diperbarui:{' '}
                           <span className="font-medium">
                             {formatDateShort(user.updatedAt)}
                           </span>

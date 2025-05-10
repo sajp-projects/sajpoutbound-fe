@@ -1,27 +1,14 @@
-import { useDeleteRole, useRoles } from "@/hooks/role";
-import { Plus, Lock } from "lucide-react";
-import { Link, useSearchParams } from "react-router";
+import { useDeleteRole, useRoles } from '@/hooks/role';
+import { Lock, Plus } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router';
 
-import { Button } from "@/components/ui/button";
-import { Pagination } from "@/components/Pagination";
-import { SearchInput } from "@/components/SearchInput";
-import { useAuth } from "@/hooks/auth";
-import { PERMISSION } from "@/constant/PERMISSION";
-import { useRolePermissions } from "@/hooks/izin";
-import {
-  showSuccessAlert,
-  showErrorAlert,
-  showForbiddenAlert,
-  showDeleteConfirmationAlert,
-  isConfirmed,
-} from "@/utils/sweetAlert";
-import { LoadingState } from "@/components/LoadingState";
-import { ErrorState } from "@/components/ErrorState";
-import { EmptyState } from "@/components/EmptyState";
-import { ActionButtons, ActionType } from "@/components/ActionButtons";
-import { getRoleId } from "@/utils/storage";
-import { hasPermission } from "@/utils/permission";
-import { formatDate, formatDateShort } from "@/utils/date";
+import { ActionButtons, ActionType } from '@/components/ActionButtons';
+import { EmptyState } from '@/components/EmptyState';
+import { ErrorState } from '@/components/ErrorState';
+import { LoadingState } from '@/components/LoadingState';
+import { Pagination } from '@/components/Pagination';
+import { SearchInput } from '@/components/SearchInput';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -29,8 +16,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/table';
+import { PERMISSION } from '@/constant/PERMISSION';
+import { useAuth } from '@/hooks/auth';
+import { useRolePermissions } from '@/hooks/izin';
+import { cn } from '@/lib/utils';
+import { formatDate, formatDateShort } from '@/utils/date';
+import { hasPermission } from '@/utils/permission';
+import { getRoleId } from '@/utils/storage';
+import {
+  isConfirmed,
+  showDeleteConfirmationAlert,
+  showErrorAlert,
+  showForbiddenAlert,
+  showSuccessAlert,
+} from '@/utils/sweetAlert';
 
 interface Role {
   id: string;
@@ -43,18 +43,18 @@ interface Role {
 export default function Role() {
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
-  const roleId = getRoleId() || "";
+  const roleId = getRoleId() || '';
 
-  const currentPage = parseInt(searchParams.get("page") || "1");
-  const itemsPerPage = parseInt(searchParams.get("limit") || "10");
+  const currentPage = parseInt(searchParams.get('page') || '1');
+  const itemsPerPage = parseInt(searchParams.get('limit') || '10');
 
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && roleId !== "",
+    enabled: isAuthenticated && roleId !== '',
   });
 
   const { data, isLoading, isError, refetch } = useRoles({
     staleTime: 5000,
-    refetchOnMount: "always",
+    refetchOnMount: 'always',
     refetchOnWindowFocus: true,
   });
 
@@ -77,21 +77,22 @@ export default function Role() {
 
   const deleteRole = useDeleteRole({
     onError: (error) => {
-      if (error.message && error.message.includes("Forbidden")) {
+      console.log(error, 'error', error.message);
+      if (error.message && error.message.includes('Forbidden')) {
         showForbiddenAlert(
-          "Akses Ditolak",
-          "Anda tidak memiliki akses untuk menghapus peran ini."
+          'Akses Ditolak',
+          'Anda tidak memiliki akses untuk menghapus peran ini.'
         );
       } else {
         showErrorAlert(
-          "Gagal Menghapus Peran",
-          error.message || "Terjadi kesalahan saat menghapus peran"
+          'Gagal Menghapus Peran',
+          error.message || 'Terjadi kesalahan saat menghapus peran'
         );
       }
     },
     onSuccess: (data) => {
       showSuccessAlert(
-        "Peran Berhasil Dihapus",
+        'Peran Berhasil Dihapus',
         `Peran "${data.name}" telah berhasil dihapus`
       );
       refetch();
@@ -100,7 +101,7 @@ export default function Role() {
 
   const handleDeleteRole = (id: string, name: string) => {
     showDeleteConfirmationAlert(
-      "Peran",
+      'Peran',
       `Apakah Anda yakin ingin menghapus peran "${name}"?`
     ).then((result) => {
       if (isConfirmed(result)) {
@@ -116,8 +117,8 @@ export default function Role() {
       path: `/peran/${role.id}/izin`,
       disabled: !hasPermissionAccess(),
       icon: <Lock className="h-4 w-4" />,
-      title: "Kelola Izin Peran",
-      className: "text-purple-600 hover:text-purple-700 hover:bg-purple-50",
+      title: 'Kelola Izin Peran',
+      className: 'text-purple-600 hover:text-purple-700 hover:bg-purple-50',
     },
     { type: ActionType.EDIT },
     {
@@ -213,8 +214,8 @@ export default function Role() {
                         <TableRow
                           key={role.id}
                           className={cn(
-                            idx % 2 === 0 ? "bg-white" : "bg-gray-50",
-                            "border-b border-gray-200 last:border-b-0"
+                            idx % 2 === 0 ? 'bg-white' : 'bg-gray-50',
+                            'border-b border-gray-200 last:border-b-0'
                           )}
                         >
                           <TableCell className="py-2.5 px-3 font-medium text-center text-sm">
@@ -279,13 +280,13 @@ export default function Role() {
 
                       <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                         <p>
-                          Dibuat:{" "}
+                          Dibuat:{' '}
                           <span className="font-medium">
                             {formatDateShort(role.createdAt)}
                           </span>
                         </p>
                         <p>
-                          Diperbarui:{" "}
+                          Diperbarui:{' '}
                           <span className="font-medium">
                             {formatDateShort(role.updatedAt)}
                           </span>
