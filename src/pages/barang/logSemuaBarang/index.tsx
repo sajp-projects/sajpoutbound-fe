@@ -85,48 +85,48 @@ export default function LogSemuaBarang() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className="text-xs font-medium text-gray-700 mb-1">
+          <div className="mb-1 text-xs font-medium text-gray-700">
             Data barang yang dibuat:
           </div>
-          <table className="text-xs w-full border-collapse">
+          <table className="w-full text-xs border-collapse">
             <tbody>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   Nama
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {newData.name as string}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   ID
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {newData.id_sl as string}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   Satuan
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {newData.satuan as string}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   Deskripsi
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {newData.description as string}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   Gudang
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {(newData.warehouseName || newData.warehouseId) as string}
                 </td>
               </tr>
@@ -139,48 +139,48 @@ export default function LogSemuaBarang() {
     if (oldData && !newData) {
       return (
         <div>
-          <div className="text-xs font-medium text-gray-700 mb-1">
+          <div className="mb-1 text-xs font-medium text-gray-700">
             Data barang yang dihapus:
           </div>
-          <table className="text-xs w-full border-collapse">
+          <table className="w-full text-xs border-collapse">
             <tbody>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   Nama
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {oldData.name as string}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   ID
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {oldData.id_sl as string}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   Satuan
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {oldData.satuan as string}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   Deskripsi
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {oldData.description as string}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-200 px-2 py-1 bg-gray-50 font-medium">
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   Gudang
                 </td>
-                <td className="border border-gray-200 px-2 py-1">
+                <td className="px-2 py-1 border border-gray-200">
                   {(oldData.warehouseName || oldData.warehouseId) as string}
                 </td>
               </tr>
@@ -229,19 +229,19 @@ export default function LogSemuaBarang() {
 
       return (
         <div>
-          <div className="text-xs font-medium text-gray-700 mb-1">
+          <div className="mb-1 text-xs font-medium text-gray-700">
             Perubahan:
           </div>
-          <table className="text-xs w-full border-collapse">
+          <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="bg-gray-50">
-                <th className="border border-gray-200 px-2 py-1 text-left font-medium">
+                <th className="px-2 py-1 font-medium text-left border border-gray-200">
                   Field
                 </th>
-                <th className="border border-gray-200 px-2 py-1 text-left font-medium">
+                <th className="px-2 py-1 font-medium text-left border border-gray-200">
                   Nilai Lama
                 </th>
-                <th className="border border-gray-200 px-2 py-1 text-left font-medium">
+                <th className="px-2 py-1 font-medium text-left border border-gray-200">
                   Nilai Baru
                 </th>
               </tr>
@@ -249,13 +249,13 @@ export default function LogSemuaBarang() {
             <tbody>
               {changes.map((change, idx) => (
                 <tr key={idx}>
-                  <td className="border border-gray-200 px-2 py-1 font-medium">
+                  <td className="px-2 py-1 font-medium border border-gray-200">
                     {change.field}
                   </td>
-                  <td className="border border-gray-200 px-2 py-1">
+                  <td className="px-2 py-1 border border-gray-200">
                     {change.oldValue}
                   </td>
-                  <td className="border border-gray-200 px-2 py-1">
+                  <td className="px-2 py-1 border border-gray-200">
                     {change.newValue}
                   </td>
                 </tr>
@@ -281,27 +281,27 @@ export default function LogSemuaBarang() {
   };
 
   const renderLogTable = () => (
-    <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden">
+    <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50 border-b border-gray-200">
+            <TableRow className="border-b border-gray-200 bg-gray-50">
               <TableHead className="w-[50px] font-semibold text-gray-700 py-4">
                 No
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 py-4">
+              <TableHead className="py-4 font-semibold text-gray-700">
                 Waktu
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 py-4">
+              <TableHead className="py-4 font-semibold text-gray-700">
                 Barang
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 py-4">
+              <TableHead className="py-4 font-semibold text-gray-700">
                 Aksi
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 py-4">
+              <TableHead className="py-4 font-semibold text-gray-700">
                 Dilakukan Oleh
               </TableHead>
-              <TableHead className="font-semibold text-gray-700 py-4">
+              <TableHead className="py-4 font-semibold text-gray-700">
                 Deskripsi
               </TableHead>
             </TableRow>
@@ -372,7 +372,7 @@ export default function LogSemuaBarang() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="px-2 py-1 h-auto text-xs text-blue-600 hover:text-blue-800"
+                            className="h-auto px-2 py-1 text-xs text-blue-600 hover:text-blue-800"
                             onClick={(e) => {
                               e.currentTarget.nextElementSibling?.classList.toggle(
                                 "hidden"
@@ -398,19 +398,19 @@ export default function LogSemuaBarang() {
   );
 
   const renderLogCards = () => (
-    <div className="sm:hidden space-y-4">
+    <div className="space-y-4 sm:hidden">
       {logs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-8 border rounded-lg border-gray-200 bg-white">
+        <div className="flex flex-col items-center justify-center p-8 bg-white border border-gray-200 rounded-lg">
           <EmptyState title="Tidak ada data log yang ditemukan." message="" />
         </div>
       ) : (
         logs.map((log: ProductLog) => (
           <div
             key={log.id}
-            className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm"
+            className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
           >
             <div className="p-4">
-              <div className="flex justify-between items-start mb-3">
+              <div className="flex items-start justify-between mb-3">
                 <Badge
                   className={cn(
                     "rounded-md font-medium border",
@@ -441,11 +441,11 @@ export default function LogSemuaBarang() {
                   )}
                 </div>
                 {log.product && log.product.id_sl && (
-                  <div className="text-xs text-gray-500 mb-1">
+                  <div className="mb-1 text-xs text-gray-500">
                     ID: <span className="font-medium">{log.product.id_sl}</span>
                   </div>
                 )}
-                <p className="text-sm text-gray-700 mb-1">{log.description}</p>
+                <p className="mb-1 text-sm text-gray-700">{log.description}</p>
                 <div className="text-xs text-gray-500">
                   Dilakukan oleh:{" "}
                   <span className="font-medium text-blue-600">
@@ -455,7 +455,7 @@ export default function LogSemuaBarang() {
               </div>
 
               {(log.oldData || log.newData) && (
-                <div className="mt-3 border-t border-gray-100 pt-3">
+                <div className="pt-3 mt-3 border-t border-gray-100">
                   {renderChanges(log.oldData, log.newData)}
                 </div>
               )}
@@ -467,15 +467,15 @@ export default function LogSemuaBarang() {
   );
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+    <div className="px-4 space-y-6 sm:px-0">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
         <h1 className="text-2xl font-bold text-gray-900">
           Log Aktivitas Barang
         </h1>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-hidden">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div className="p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">
+        <div className="flex flex-col items-start justify-between gap-4 mb-6 sm:flex-row sm:items-center">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
               Semua Aktivitas Barang
@@ -484,13 +484,13 @@ export default function LogSemuaBarang() {
               Riwayat perubahan data barang di sistem
             </p>
           </div>
-          <div className="flex flex-wrap gap-3 w-full sm:w-auto items-center">
+          <div className="flex flex-wrap items-center w-full gap-3 sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               className="h-9 min-w-[100px] bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm flex items-center px-3"
             >
-              <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <Download className="w-3 h-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
               Export
             </Button>
           </div>

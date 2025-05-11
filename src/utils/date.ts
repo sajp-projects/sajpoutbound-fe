@@ -1,4 +1,3 @@
-
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
   return new Intl.DateTimeFormat("id-ID", {
@@ -9,7 +8,6 @@ export function formatDate(dateString: string): string {
     minute: "2-digit",
   }).format(date);
 }
-
 
 export function formatDateShort(dateString: string): string {
   const date = new Date(dateString);

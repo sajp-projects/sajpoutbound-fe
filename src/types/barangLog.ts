@@ -1,4 +1,3 @@
-
 import { Pagination } from "./user";
 import { UserMinimal } from "./gudang";
 import { Product } from "./barang";
@@ -16,7 +15,6 @@ export interface ProductLog {
   product: Partial<Product>;
   performedBy: UserMinimal;
 }
-
 
 export interface ProductLogsResponse {
   logs: ProductLog[];

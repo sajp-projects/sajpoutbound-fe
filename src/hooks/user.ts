@@ -49,7 +49,6 @@ export function useUser(
 
         if (!response.ok) {
           const errorResult = await response.json();
-          // Gunakan langsung pesan dari API
           throw new Error(
             errorResult.message || `Error fetching user: ${response.statusText}`
           );
@@ -58,7 +57,6 @@ export function useUser(
         const result: ApiResponse<UserWithRole> = await response.json();
 
         if (!result.success) {
-          // Gunakan langsung pesan dari API
           throw new Error(result.message || "An error occurred");
         }
 

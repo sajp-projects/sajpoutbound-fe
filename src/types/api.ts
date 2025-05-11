@@ -1,11 +1,9 @@
-
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
   message?: string;
   errorType?: string;
 }
-
 
 export interface JoiValidationError {
   message: string;
@@ -22,7 +20,6 @@ export interface CustomError {
   errorType: string;
 }
 
-
 export interface ApiErrorResult {
   success: boolean;
   message?: string;
@@ -30,7 +27,6 @@ export interface ApiErrorResult {
   details?: Record<string, unknown>;
   data?: unknown;
 }
-
 
 export interface ApiErrorResponse {
   message: string;

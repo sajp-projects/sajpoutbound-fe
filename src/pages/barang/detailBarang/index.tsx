@@ -44,7 +44,6 @@ export default function DetailBarang() {
     isLoading,
     isError,
     error,
-    refetch,
   } = useProduct(
     { id: id || "" },
     {

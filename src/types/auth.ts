@@ -1,4 +1,3 @@
-
 export interface User {
   id: number;
   email: string;
@@ -6,12 +5,10 @@ export interface User {
   roleId?: string;
 }
 
-
 export interface Tokens {
   accessToken: string;
   refreshToken: string;
 }
-
 
 export interface AuthState {
   user: User | null;
@@ -19,19 +16,16 @@ export interface AuthState {
   isLoading: boolean;
 }
 
-
 export interface LoginFormData {
   email: string;
   password: string;
-  general?: string; 
+  general?: string;
 }
-
 
 export interface LoginResponseData {
   user: User;
   tokens: Tokens;
 }
-
 
 export interface InputFieldProps {
   id: string;
@@ -45,7 +39,6 @@ export interface InputFieldProps {
   error?: string;
   rightElement?: React.ReactNode;
 }
-
 
 export interface PasswordFieldProps {
   value: string;

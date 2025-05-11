@@ -1,14 +1,10 @@
 import { User, Tokens } from "@/types/auth";
 
-
-
-
 const KEYS = {
   ACCESS_TOKEN: "accessToken",
   REFRESH_TOKEN: "refreshToken",
   USER: "user",
 };
-
 
 const storage = {
   get: (key: string) => localStorage.getItem(key),
@@ -17,13 +13,11 @@ const storage = {
   clear: () => localStorage.clear(),
 };
 
-
 export const saveAuthData = (user: User, tokens: Tokens): void => {
   storage.set(KEYS.ACCESS_TOKEN, tokens.accessToken);
   storage.set(KEYS.REFRESH_TOKEN, tokens.refreshToken);
   storage.set(KEYS.USER, JSON.stringify(user));
 };
-
 
 export const clearAuthData = (): void => {
   storage.remove(KEYS.ACCESS_TOKEN);
@@ -31,12 +25,11 @@ export const clearAuthData = (): void => {
   storage.remove(KEYS.USER);
 };
 
+export const getAccessToken = (): string | null =>
+  storage.get(KEYS.ACCESS_TOKEN);
 
-export const getAccessToken = (): string | null => storage.get(KEYS.ACCESS_TOKEN);
-
-
-export const getRefreshToken = (): string | null => storage.get(KEYS.REFRESH_TOKEN);
-
+export const getRefreshToken = (): string | null =>
+  storage.get(KEYS.REFRESH_TOKEN);
 
 export const getUser = (): User | null => {
   const userData = storage.get(KEYS.USER);
@@ -50,8 +43,6 @@ export const getUser = (): User | null => {
   }
 };
 
-
 export const isAuthenticated = (): boolean => !!(getAccessToken() && getUser());
-
 
 export const getRoleId = (): string | null => getUser()?.roleId || null;

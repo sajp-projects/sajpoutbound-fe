@@ -1,7 +1,7 @@
 import { useRole } from "@/hooks/role";
 import {
   ArrowLeft,
-  Pencil,
+  Edit,
   Users,
   Info,
   Mail,
@@ -9,6 +9,8 @@ import {
   User,
   Eye,
   Lock,
+  Trash2,
+  History,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -30,6 +32,13 @@ import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
 import { hasPermission } from "@/utils/permission";
 import { getRoleId } from "@/utils/storage";
+import {
+  isConfirmed,
+  showDeleteConfirmationAlert,
+  showErrorAlert,
+  showSuccessAlert,
+} from "@/utils/sweetAlert";
+import { useDeleteRole } from "@/hooks/role";
 
 export default function DetailPeran() {
   const { id } = useParams<{ id: string }>();
@@ -57,12 +66,17 @@ export default function DetailPeran() {
     PERMISSION.ACTIONS.UPDATE
   );
 
+  const hasRoleDeleteAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ROLE,
+    PERMISSION.ACTIONS.DELETE
+  );
+
   const {
     data: role,
     isLoading,
     isError,
     error,
-    refetch,
   } = useRole(
     { id: id || "" },
     {
@@ -71,6 +85,33 @@ export default function DetailPeran() {
       retry: 1,
     }
   );
+
+  const deleteRoleMutation = useDeleteRole({
+    onSuccess: () => {
+      showSuccessAlert("Sukses!", "Peran berhasil dihapus").then(() => {
+        navigate("/peran");
+      });
+    },
+    onError: (error) => {
+      showErrorAlert(
+        "Gagal Menghapus Peran",
+        error.message || "Terjadi kesalahan saat menghapus peran"
+      );
+    },
+  });
+
+  const handleDeleteRole = () => {
+    if (!role) return;
+
+    showDeleteConfirmationAlert(
+      "Peran",
+      `Apakah Anda yakin ingin menghapus peran "${role.name}"?`
+    ).then((result) => {
+      if (isConfirmed(result)) {
+        deleteRoleMutation.mutate({ id: id || "" });
+      }
+    });
+  };
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
@@ -88,7 +129,7 @@ export default function DetailPeran() {
           {hasRoleUpdateAccess && (
             <Link to={`/peran/${id}/edit`}>
               <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
-                <Pencil className="w-4 h-4 mr-2" />
+                <Edit className="w-4 h-4 mr-2" />
                 Edit Peran
               </Button>
             </Link>
@@ -100,6 +141,16 @@ export default function DetailPeran() {
                 Kelola Izin
               </Button>
             </Link>
+          )}
+          {hasRoleDeleteAccess && (
+            <Button
+              className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
+              onClick={handleDeleteRole}
+              disabled={deleteRoleMutation.isPending}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {deleteRoleMutation.isPending ? "Menghapus..." : "Hapus"}
+            </Button>
           )}
         </div>
       </div>
@@ -223,13 +274,22 @@ export default function DetailPeran() {
                       Tindakan
                     </h3>
                     <div className="space-y-3">
+                      <Link to={`/peran/${id}/log`} className="w-full">
+                        <Button
+                          variant="outline"
+                          className="justify-start w-full"
+                        >
+                          <History className="w-4 h-4 mr-2" />
+                          Lihat Log Peran
+                        </Button>
+                      </Link>
                       {hasRoleUpdateAccess && (
                         <Link to={`/peran/${id}/edit`} className="w-full">
                           <Button
                             variant="outline"
                             className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
                           >
-                            <Pencil className="w-4 h-4 mr-2" />
+                            <Edit className="w-4 h-4 mr-2" />
                             Edit Peran
                           </Button>
                         </Link>
@@ -245,19 +305,19 @@ export default function DetailPeran() {
                           </Button>
                         </Link>
                       )}
-                      <Button
-                        variant="outline"
-                        className="justify-start w-full"
-                        onClick={() => setActiveTab("users")}
-                      >
-                        <Users className="w-4 h-4 mr-2" />
-                        Lihat Pengguna Terkait
-                        {role?.users && role.users.length > 0 && (
-                          <span className="ml-2 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
-                            {role.users.length}
-                          </span>
-                        )}
-                      </Button>
+                      {hasRoleDeleteAccess && (
+                        <Button
+                          variant="outline"
+                          className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                          onClick={handleDeleteRole}
+                          disabled={deleteRoleMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          {deleteRoleMutation.isPending
+                            ? "Menghapus..."
+                            : "Hapus Peran"}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

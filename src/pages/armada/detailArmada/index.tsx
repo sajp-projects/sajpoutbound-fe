@@ -9,7 +9,7 @@ import {
   showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
-import { ArrowLeft, Edit, FileText, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit, History, Trash2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 
 export default function DetailArmada() {
@@ -189,7 +189,7 @@ export default function DetailArmada() {
                         variant="outline"
                         className="justify-start w-full"
                       >
-                        <FileText className="w-4 h-4 mr-2" />
+                        <History className="w-4 h-4 mr-2" />
                         Lihat Log Armada
                       </Button>
                     </Link>

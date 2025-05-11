@@ -1,7 +1,22 @@
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
-import { BarChart3, ChevronDown, FileText, Home, LogOut, Package, PackageCheck, ShieldCheck, Truck, UserCheck, Users, Warehouse, X, Lock } from "lucide-react";
+import {
+  BarChart3,
+  ChevronDown,
+  FileText,
+  Home,
+  LogOut,
+  Package,
+  PackageCheck,
+  ShieldCheck,
+  Truck,
+  UserCheck,
+  Users,
+  Warehouse,
+  X,
+  Lock,
+} from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { cn } from "../lib/utils";
@@ -39,19 +54,39 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
   });
 
   const toggleMenu = (menuName: string) => {
-    setOpenMenus((prev) => (prev.includes(menuName) ? prev.filter((item) => item !== menuName) : [...prev, menuName]));
+    setOpenMenus((prev) =>
+      prev.includes(menuName)
+        ? prev.filter((item) => item !== menuName)
+        : [...prev, menuName]
+    );
   };
 
   const shouldShowMenuItem = (item: MenuItem): boolean => {
     if (!item.resource) return true;
     if (item.subItems) {
-      return item.subItems.some((subItem) => hasPermission(permissions, item.resource!, subItem.action || PERMISSION.ACTIONS.READ));
+      return item.subItems.some((subItem) =>
+        hasPermission(
+          permissions,
+          item.resource!,
+          subItem.action || PERMISSION.ACTIONS.READ
+        )
+      );
     }
     return hasPermission(permissions, item.resource, PERMISSION.ACTIONS.READ);
   };
 
-  const shouldShowSubMenuItem = (item: MenuItem, subItem: SubMenuItem): boolean => {
-    return !item.resource || hasPermission(permissions, item.resource, subItem.action || PERMISSION.ACTIONS.READ);
+  const shouldShowSubMenuItem = (
+    item: MenuItem,
+    subItem: SubMenuItem
+  ): boolean => {
+    return (
+      !item.resource ||
+      hasPermission(
+        permissions,
+        item.resource,
+        subItem.action || PERMISSION.ACTIONS.READ
+      )
+    );
   };
 
   const menuItems: MenuItem[] = [
@@ -293,24 +328,42 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
   ];
 
   const isMenuActive = (menuName: string) => {
-    return menuItems.find((item) => item.name === menuName)?.subItems?.some((subItem) => location.pathname === subItem.path);
+    return menuItems
+      .find((item) => item.name === menuName)
+      ?.subItems?.some((subItem) => location.pathname === subItem.path);
   };
 
   const isSubMenuActive = (path: string) => location.pathname === path;
 
   if (isLoading) {
     return (
-      <aside className={cn("h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-200 shadow-sm", isOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0")}>
+      <aside
+        className={cn(
+          "h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-200 shadow-sm",
+          isOpen
+            ? "w-64 translate-x-0"
+            : "w-0 -translate-x-full lg:translate-x-0 lg:w-0"
+        )}
+      >
         <div className="flex flex-col items-center justify-center h-full">
           <div className="w-6 h-6 border-b-2 border-blue-500 rounded-full animate-spin sm:h-8 sm:w-8"></div>
-          <span className="mt-2 text-xs text-gray-500 sm:text-sm">Loading...</span>
+          <span className="mt-2 text-xs text-gray-500 sm:text-sm">
+            Loading...
+          </span>
         </div>
       </aside>
     );
   }
 
   return (
-    <aside className={cn("h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-200 shadow-sm", isOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0 lg:w-0")}>
+    <aside
+      className={cn(
+        "h-screen fixed top-0 left-0 bg-white border-r border-gray-200 z-20 transition-transform duration-200 shadow-sm",
+        isOpen
+          ? "w-64 translate-x-0"
+          : "w-0 -translate-x-full lg:translate-x-0 lg:w-0"
+      )}
+    >
       <div className="flex flex-col h-full overflow-hidden">
         <div className="relative flex flex-col items-center justify-center px-3 py-3 border-b border-gray-200 sm:px-4 sm:py-5">
           {toggleSidebar && (
@@ -323,8 +376,12 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
             </button>
           )}
 
-          <span className="text-lg font-bold text-blue-600 sm:text-xl">OUTMANAGE</span>
-          <div className="mt-1 text-xs font-medium text-gray-500">Sistem Manajemen DO</div>
+          <span className="text-lg font-bold text-blue-600 sm:text-xl">
+            OUTMANAGE
+          </span>
+          <div className="mt-1 text-xs font-medium text-gray-500">
+            Sistem Manajemen DO
+          </div>
           <div className="w-12 h-1 mt-2 bg-blue-500 rounded-full sm:w-16 sm:mt-3"></div>
         </div>
 
@@ -345,7 +402,8 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
                         to={item.path}
                         className={cn(
                           "flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-gray-700 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors text-xs sm:text-sm",
-                          location.pathname === item.path && "bg-blue-50 text-blue-600 font-medium"
+                          location.pathname === item.path &&
+                            "bg-blue-50 text-blue-600 font-medium"
                         )}
                       >
                         {item.icon}
@@ -357,17 +415,30 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
                           onClick={() => toggleMenu(item.name)}
                           className={cn(
                             "flex items-center justify-between w-full px-2 sm:px-3 py-1.5 sm:py-2 text-gray-700 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors text-xs sm:text-sm",
-                            (openMenus.includes(item.name) || isMenuActive(item.name)) && "bg-blue-50 text-blue-600 font-medium"
+                            (openMenus.includes(item.name) ||
+                              isMenuActive(item.name)) &&
+                              "bg-blue-50 text-blue-600 font-medium"
                           )}
                         >
                           <div className="flex items-center">
                             {item.icon}
                             <span className="ml-2 sm:ml-3">{item.name}</span>
                           </div>
-                          <ChevronDown className={cn("w-3 h-3 sm:w-4 sm:h-4 transition-transform", openMenus.includes(item.name) && "transform rotate-180")} />
+                          <ChevronDown
+                            className={cn(
+                              "w-3 h-3 sm:w-4 sm:h-4 transition-transform",
+                              openMenus.includes(item.name) &&
+                                "transform rotate-180"
+                            )}
+                          />
                         </button>
                         {item.subItems && (
-                          <ul className={cn("mt-1 ml-6 sm:ml-8 space-y-0.5 sm:space-y-1 overflow-hidden transition-all max-h-0", openMenus.includes(item.name) && "max-h-96")}>
+                          <ul
+                            className={cn(
+                              "mt-1 ml-6 sm:ml-8 space-y-0.5 sm:space-y-1 overflow-hidden transition-all max-h-0",
+                              openMenus.includes(item.name) && "max-h-96"
+                            )}
+                          >
                             {item.subItems.map(
                               (subItem) =>
                                 shouldShowSubMenuItem(item, subItem) && (
@@ -376,7 +447,8 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
                                       to={subItem.path}
                                       className={cn(
                                         "block px-2 sm:px-3 py-1 sm:py-2 text-xs text-gray-600 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors",
-                                        isSubMenuActive(subItem.path) && "bg-blue-50 text-blue-600 font-medium"
+                                        isSubMenuActive(subItem.path) &&
+                                          "bg-blue-50 text-blue-600 font-medium"
                                       )}
                                     >
                                       {subItem.name}
@@ -400,7 +472,10 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
             <div className="flex-grow h-px bg-gray-200"></div>
           </div>
           <div className="px-2 pt-1 pb-4 sm:px-3 sm:pb-5">
-            <button onClick={logout} className="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-gray-700 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors group w-full text-left text-xs sm:text-sm">
+            <button
+              onClick={logout}
+              className="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-gray-700 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors group w-full text-left text-xs sm:text-sm"
+            >
               <LogOut className="w-4 h-4 text-gray-500 sm:w-5 sm:h-5 group-hover:text-red-500" />
               <span className="ml-2 sm:ml-3">Keluar</span>
             </button>

@@ -12,7 +12,7 @@ import {
   showConfirmationAlert,
   isConfirmed,
 } from "@/utils/sweetAlert";
-import { Archive, ArrowLeft, FileText, Pencil } from "lucide-react";
+import { Archive, ArrowLeft, FileText, Edit } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
@@ -94,7 +94,7 @@ export default function DetailPengguna() {
           {hasUserUpdateAccess && (
             <Link to={`/pengguna/${id}/edit`}>
               <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
-                <Pencil className="w-4 h-4 mr-2" />
+                <Edit className="w-4 h-4 mr-2" />
                 Edit Pengguna
               </Button>
             </Link>
@@ -242,7 +242,7 @@ export default function DetailPengguna() {
                           variant="outline"
                           className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
                         >
-                          <Pencil className="w-4 h-4 mr-2" />
+                          <Edit className="w-4 h-4 mr-2" />
                           Edit Pengguna
                         </Button>
                       </Link>

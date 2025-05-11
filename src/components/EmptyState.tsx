@@ -7,9 +7,14 @@ interface EmptyStateProps {
   action?: React.ReactNode;
 }
 
-export function EmptyState({ icon = <Search className="h-10 w-10 text-gray-300" />, title = "Tidak ada data yang ditemukan", message = "Coba gunakan kata kunci pencarian yang berbeda", action }: EmptyStateProps) {
+export function EmptyState({
+  icon = <Search className="w-10 h-10 text-gray-300" />,
+  title = "Tidak ada data yang ditemukan",
+  message = "Coba gunakan kata kunci pencarian yang berbeda",
+  action,
+}: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
+    <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
       <div className="mb-2">{icon}</div>
       <p className="text-gray-500">{title}</p>
       <p className="text-sm text-gray-400">{message}</p>

@@ -11,12 +11,17 @@ interface ResourceGroupProps {
   isPermissionChanged: (id: string) => boolean;
 }
 
-
-export const ResourceGroup = ({ resource, permissions, isPermissionSelected, togglePermission, isPermissionChanged }: ResourceGroupProps) => (
-  <div className="border border-gray-200 rounded-lg overflow-hidden">
-    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-      <h3 className="font-medium text-gray-700 flex items-center">
-        <ShieldCheck className="h-5 w-5 mr-2 text-blue-600" />
+export const ResourceGroup = ({
+  resource,
+  permissions,
+  isPermissionSelected,
+  togglePermission,
+  isPermissionChanged,
+}: ResourceGroupProps) => (
+  <div className="overflow-hidden border border-gray-200 rounded-lg">
+    <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+      <h3 className="flex items-center font-medium text-gray-700">
+        <ShieldCheck className="w-5 h-5 mr-2 text-blue-600" />
         <span className="capitalize">{resource}</span>
       </h3>
     </div>
@@ -25,15 +30,26 @@ export const ResourceGroup = ({ resource, permissions, isPermissionSelected, tog
     <div className="hidden sm:block">
       <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         <div className="min-w-[900px]">
-          <PermissionsTable permissions={permissions} isPermissionSelected={isPermissionSelected} togglePermission={togglePermission} isPermissionChanged={isPermissionChanged} />
+          <PermissionsTable
+            permissions={permissions}
+            isPermissionSelected={isPermissionSelected}
+            togglePermission={togglePermission}
+            isPermissionChanged={isPermissionChanged}
+          />
         </div>
       </div>
     </div>
 
     {}
-    <div className="sm:hidden space-y-4">
+    <div className="space-y-4 sm:hidden">
       {permissions.map((permission) => (
-        <PermissionCard key={permission.id} permission={permission} isSelected={isPermissionSelected(permission.id)} onToggle={togglePermission} isChanged={isPermissionChanged(permission.id)} />
+        <PermissionCard
+          key={permission.id}
+          permission={permission}
+          isSelected={isPermissionSelected(permission.id)}
+          onToggle={togglePermission}
+          isChanged={isPermissionChanged(permission.id)}
+        />
       ))}
     </div>
   </div>

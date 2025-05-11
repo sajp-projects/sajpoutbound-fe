@@ -6,16 +6,26 @@ import { fetchApi } from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
 import { BASE_URL } from "@/constant/baseUrl";
 
-
 export const warehouseLogKeys = {
   all: ["warehouseLogs"] as const,
   lists: () => [...warehouseLogKeys.all, "list"] as const,
-  list: (filters: Record<string, unknown>) => [...warehouseLogKeys.lists(), { filters }] as const,
-  warehouseLogs: (warehouseId: string, filters: Record<string, unknown>) => [...warehouseLogKeys.lists(), warehouseId, { filters }] as const,
+  list: (filters: Record<string, unknown>) =>
+    [...warehouseLogKeys.lists(), { filters }] as const,
+  warehouseLogs: (warehouseId: string, filters: Record<string, unknown>) =>
+    [...warehouseLogKeys.lists(), warehouseId, { filters }] as const,
 };
 
-
-export function useWarehouseLogs(options?: Omit<UseQueryOptions<WarehouseLogsResponse, Error, WarehouseLogsResponse, ReturnType<typeof warehouseLogKeys.list>>, "queryKey" | "queryFn">) {
+export function useWarehouseLogs(
+  options?: Omit<
+    UseQueryOptions<
+      WarehouseLogsResponse,
+      Error,
+      WarehouseLogsResponse,
+      ReturnType<typeof warehouseLogKeys.list>
+    >,
+    "queryKey" | "queryFn"
+  >
+) {
   const [searchParams] = useSearchParams();
   const filters = {
     page: searchParams.get("page") || "1",
@@ -28,7 +38,9 @@ export function useWarehouseLogs(options?: Omit<UseQueryOptions<WarehouseLogsRes
       const response = await fetchApi(`${BASE_URL}/warehouses/logs`, filters);
 
       if (!response.ok) {
-        throw new Error(`Error fetching warehouse logs: ${response.statusText}`);
+        throw new Error(
+          `Error fetching warehouse logs: ${response.statusText}`
+        );
       }
 
       const result: ApiResponse<WarehouseLogsResponse> = await response.json();
@@ -47,8 +59,18 @@ export function useWarehouseLogs(options?: Omit<UseQueryOptions<WarehouseLogsRes
   });
 }
 
-
-export function useWarehouseLogsByWarehouseId(warehouseId: string, options?: Omit<UseQueryOptions<WarehouseLogsResponse, Error, WarehouseLogsResponse, ReturnType<typeof warehouseLogKeys.warehouseLogs>>, "queryKey" | "queryFn">) {
+export function useWarehouseLogsByWarehouseId(
+  warehouseId: string,
+  options?: Omit<
+    UseQueryOptions<
+      WarehouseLogsResponse,
+      Error,
+      WarehouseLogsResponse,
+      ReturnType<typeof warehouseLogKeys.warehouseLogs>
+    >,
+    "queryKey" | "queryFn"
+  >
+) {
   const [searchParams] = useSearchParams();
   const filters = {
     page: searchParams.get("page") || "1",
@@ -58,10 +80,15 @@ export function useWarehouseLogsByWarehouseId(warehouseId: string, options?: Omi
   return useQuery({
     queryKey: warehouseLogKeys.warehouseLogs(warehouseId, filters),
     queryFn: async () => {
-      const response = await fetchApi(`${BASE_URL}/warehouses/logs/${warehouseId}`, filters);
+      const response = await fetchApi(
+        `${BASE_URL}/warehouses/logs/${warehouseId}`,
+        filters
+      );
 
       if (!response.ok) {
-        throw new Error(`Error fetching warehouse logs: ${response.statusText}`);
+        throw new Error(
+          `Error fetching warehouse logs: ${response.statusText}`
+        );
       }
 
       const result: ApiResponse<WarehouseLogsResponse> = await response.json();

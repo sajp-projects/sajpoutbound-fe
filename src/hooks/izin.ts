@@ -2,20 +2,36 @@ import { ApiResponse, ApiErrorResponse } from "@/types/api";
 import { Permission, PermissionsResponse, RolePermission } from "@/types/izin";
 import { fetchApi } from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
-import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationOptions,
+  type UseQueryOptions,
+} from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 import { BASE_URL } from "@/constant/baseUrl";
-
 
 export const permissionKeys = {
   all: ["permissions"] as const,
   lists: () => [...permissionKeys.all, "list"] as const,
-  list: (filters: Record<string, unknown>) => [...permissionKeys.lists(), { filters }] as const,
-  rolePermissions: (roleId: string) => [...permissionKeys.all, "role", roleId] as const,
+  list: (filters: Record<string, unknown>) =>
+    [...permissionKeys.lists(), { filters }] as const,
+  rolePermissions: (roleId: string) =>
+    [...permissionKeys.all, "role", roleId] as const,
 };
 
-
-export function usePermissions(options?: Omit<UseQueryOptions<PermissionsResponse, Error, PermissionsResponse, ReturnType<typeof permissionKeys.list>>, "queryKey" | "queryFn">) {
+export function usePermissions(
+  options?: Omit<
+    UseQueryOptions<
+      PermissionsResponse,
+      Error,
+      PermissionsResponse,
+      ReturnType<typeof permissionKeys.list>
+    >,
+    "queryKey" | "queryFn"
+  >
+) {
   const [searchParams] = useSearchParams();
   const filters = {
     page: searchParams.get("page") || "1",
@@ -48,8 +64,18 @@ export function usePermissions(options?: Omit<UseQueryOptions<PermissionsRespons
   });
 }
 
-
-export function useRolePermissions(roleId: string, options?: Omit<UseQueryOptions<Permission[], Error, Permission[], ReturnType<typeof permissionKeys.rolePermissions>>, "queryKey" | "queryFn">) {
+export function useRolePermissions(
+  roleId: string,
+  options?: Omit<
+    UseQueryOptions<
+      Permission[],
+      Error,
+      Permission[],
+      ReturnType<typeof permissionKeys.rolePermissions>
+    >,
+    "queryKey" | "queryFn"
+  >
+) {
   return useQuery({
     queryKey: permissionKeys.rolePermissions(roleId),
     queryFn: async () => {
@@ -58,7 +84,9 @@ export function useRolePermissions(roleId: string, options?: Omit<UseQueryOption
       const response = await fetchApi(`${BASE_URL}/role-permissions/${roleId}`);
 
       if (!response.ok) {
-        throw new Error(`Error fetching role permissions: ${response.statusText}`);
+        throw new Error(
+          `Error fetching role permissions: ${response.statusText}`
+        );
       }
 
       const result: ApiResponse<Permission[]> = await response.json();
@@ -74,8 +102,13 @@ export function useRolePermissions(roleId: string, options?: Omit<UseQueryOption
   });
 }
 
-
-export function useUpdateRolePermissions(options?: UseMutationOptions<RolePermission[], Error, { roleId: string; permissionIds: string[] }>) {
+export function useUpdateRolePermissions(
+  options?: UseMutationOptions<
+    RolePermission[],
+    Error,
+    { roleId: string; permissionIds: string[] }
+  >
+) {
   const queryClient = useQueryClient();
 
   return useMutation({

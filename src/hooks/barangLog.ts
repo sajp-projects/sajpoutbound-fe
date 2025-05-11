@@ -1,4 +1,3 @@
-
 import { ApiResponse } from "@/types/api";
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
@@ -7,16 +6,26 @@ import { fetchApi } from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
 import { BASE_URL } from "@/constant/baseUrl";
 
-
 export const productLogKeys = {
   all: ["productLogs"] as const,
   lists: () => [...productLogKeys.all, "list"] as const,
-  list: (filters: Record<string, unknown>) => [...productLogKeys.lists(), { filters }] as const,
-  productLogs: (productId: string, filters: Record<string, unknown>) => [...productLogKeys.lists(), productId, { filters }] as const,
+  list: (filters: Record<string, unknown>) =>
+    [...productLogKeys.lists(), { filters }] as const,
+  productLogs: (productId: string, filters: Record<string, unknown>) =>
+    [...productLogKeys.lists(), productId, { filters }] as const,
 };
 
-
-export function useProductLogs(options?: Omit<UseQueryOptions<ProductLogsResponse, Error, ProductLogsResponse, ReturnType<typeof productLogKeys.list>>, "queryKey" | "queryFn">) {
+export function useProductLogs(
+  options?: Omit<
+    UseQueryOptions<
+      ProductLogsResponse,
+      Error,
+      ProductLogsResponse,
+      ReturnType<typeof productLogKeys.list>
+    >,
+    "queryKey" | "queryFn"
+  >
+) {
   const [searchParams] = useSearchParams();
   const filters = {
     page: searchParams.get("page") || "1",
@@ -48,8 +57,18 @@ export function useProductLogs(options?: Omit<UseQueryOptions<ProductLogsRespons
   });
 }
 
-
-export function useProductLogsByProductId(productId: string, options?: Omit<UseQueryOptions<ProductLogsResponse, Error, ProductLogsResponse, ReturnType<typeof productLogKeys.productLogs>>, "queryKey" | "queryFn">) {
+export function useProductLogsByProductId(
+  productId: string,
+  options?: Omit<
+    UseQueryOptions<
+      ProductLogsResponse,
+      Error,
+      ProductLogsResponse,
+      ReturnType<typeof productLogKeys.productLogs>
+    >,
+    "queryKey" | "queryFn"
+  >
+) {
   const [searchParams] = useSearchParams();
   const filters = {
     page: searchParams.get("page") || "1",
@@ -59,7 +78,10 @@ export function useProductLogsByProductId(productId: string, options?: Omit<UseQ
   return useQuery({
     queryKey: productLogKeys.productLogs(productId, filters),
     queryFn: async () => {
-      const response = await fetchApi(`${BASE_URL}/products/logs/${productId}`, filters);
+      const response = await fetchApi(
+        `${BASE_URL}/products/logs/${productId}`,
+        filters
+      );
 
       if (!response.ok) {
         throw new Error(`Error fetching product logs: ${response.statusText}`);

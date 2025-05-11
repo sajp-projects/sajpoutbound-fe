@@ -9,7 +9,7 @@ import {
   showConfirmationAlert,
   isConfirmed,
 } from "@/utils/sweetAlert";
-import { ArrowLeft, FileText, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, History, Edit, Trash2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
@@ -43,7 +43,6 @@ export default function DetailPelanggan() {
     data: customer,
     isLoading,
     isError,
-    refetch,
     error,
   } = useCustomer(
     { id: id || "" },
@@ -95,7 +94,7 @@ export default function DetailPelanggan() {
           {hasCustomerUpdateAccess && (
             <Link to={`/pelanggan/${id}/edit`}>
               <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
-                <Pencil className="w-4 h-4 mr-2" />
+                <Edit className="w-4 h-4 mr-2" />
                 Edit Pelanggan
               </Button>
             </Link>
@@ -229,7 +228,7 @@ export default function DetailPelanggan() {
                         variant="outline"
                         className="justify-start w-full"
                       >
-                        <FileText className="w-4 h-4 mr-2" />
+                        <History className="w-4 h-4 mr-2" />
                         Lihat Log Aktivitas
                       </Button>
                     </Link>
@@ -239,7 +238,7 @@ export default function DetailPelanggan() {
                           variant="outline"
                           className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
                         >
-                          <Pencil className="w-4 h-4 mr-2" />
+                          <Edit className="w-4 h-4 mr-2" />
                           Edit Pelanggan
                         </Button>
                       </Link>

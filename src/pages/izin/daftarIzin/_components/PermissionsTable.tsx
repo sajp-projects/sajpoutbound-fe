@@ -27,7 +27,7 @@ export const PermissionsTable = ({
   return (
     <Table>
       <TableHeader>
-        <TableRow className="bg-gray-50 border-b border-gray-200">
+        <TableRow className="border-b border-gray-200 bg-gray-50">
           <TableHead className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
             Pilih
           </TableHead>
@@ -99,7 +99,7 @@ export const PermissionsTable = ({
               </TableCell>
               <TableCell className="py-2.5 px-3 text-center hidden md:table-cell">
                 {wasChanged && (
-                  <span className="text-xs text-blue-600 font-medium bg-blue-100 px-2 py-1 rounded-full">
+                  <span className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-full">
                     Diubah
                   </span>
                 )}
