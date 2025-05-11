@@ -9,7 +9,7 @@ import {
   showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
-import { ArrowLeft, Edit, History, Trash2, Package } from "lucide-react";
+import { ArrowLeft, Edit, History, Trash2, Package, User } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import {
   Table,
@@ -27,6 +27,32 @@ import { useRolePermissions } from "@/hooks/izin";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { hasPermission } from "@/utils/permission";
 import { getRoleId } from "@/utils/storage";
+
+// Definisi tipe untuk User
+interface WarehouseUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
+// Update tipe Product jika diperlukan
+// interface Product {
+//   id: string;
+//   name: string;
+//   id_sl?: string;
+//   description?: string;
+//   satuan: string;
+//   warehouseId: string;
+//   createdAt: string;
+//   updatedAt: string;
+// }
+
+// Update tipe Warehouse dengan properti users
+declare module "@/types/gudang" {
+  interface Warehouse {
+    users?: WarehouseUser[];
+  }
+}
 
 export default function DetailGudang() {
   const { id } = useParams<{ id: string }>();
@@ -255,6 +281,118 @@ export default function DetailGudang() {
                     )}
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Tabel Pengguna */}
+            <div className="p-4 mt-8 border border-gray-200 rounded-lg">
+              <div className="flex flex-col items-start justify-between mb-4 sm:flex-row sm:items-center">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Daftar Pengguna di Gudang
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Pengguna yang memiliki akses ke gudang ini
+                  </p>
+                </div>
+              </div>
+
+              <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-b border-gray-200 bg-gray-50">
+                        <TableHead className="w-[50px] font-semibold text-gray-700 py-4">
+                          No
+                        </TableHead>
+                        <TableHead className="py-4 font-semibold text-gray-700">
+                          Nama Pengguna
+                        </TableHead>
+                        <TableHead className="py-4 font-semibold text-gray-700">
+                          Email
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {!gudang?.users || gudang.users.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="h-24 text-center">
+                            <EmptyState
+                              title="Tidak ada pengguna di gudang ini"
+                              message="Belum ada pengguna yang memiliki akses ke gudang ini"
+                              icon={
+                                <User className="w-10 h-10 text-gray-300" />
+                              }
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        gudang.users.map((user: WarehouseUser, idx: number) => (
+                          <TableRow
+                            key={user.id}
+                            className={cn(
+                              idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                            )}
+                          >
+                            <TableCell className="font-medium text-center">
+                              {idx + 1}
+                            </TableCell>
+                            <TableCell className="font-medium text-blue-600">
+                              <Link
+                                to={`/pengguna/${user.id}`}
+                                className="hover:underline"
+                              >
+                                {user.name}
+                              </Link>
+                            </TableCell>
+                            <TableCell>{user.email}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Mobile view for users */}
+              <div className="w-full space-y-3 sm:hidden">
+                {!gudang?.users || gudang.users.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center w-full p-6 bg-white border border-gray-200 rounded-lg">
+                    <EmptyState
+                      title="Tidak ada pengguna di gudang ini"
+                      message="Belum ada pengguna yang memiliki akses ke gudang ini"
+                      icon={<User className="w-10 h-10 text-gray-300" />}
+                    />
+                  </div>
+                ) : (
+                  gudang.users.map((user: WarehouseUser) => (
+                    <div
+                      key={user.id}
+                      className="w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
+                    >
+                      <div className="w-full p-3">
+                        <div className="flex items-start justify-between w-full mb-2">
+                          <div className="max-w-[80%]">
+                            <Link to={`/pengguna/${user.id}`}>
+                              <h3 className="text-sm font-medium text-blue-600 break-words hover:underline">
+                                {user.name}
+                              </h3>
+                            </Link>
+                            <p className="mt-1 text-xs text-gray-600 break-all">
+                              {user.email}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-xs text-gray-500">
+                          <p>
+                            ID: <span className="font-mono">{user.id}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 

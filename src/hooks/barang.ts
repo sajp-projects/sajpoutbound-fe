@@ -1,24 +1,43 @@
-
 import { ApiResponse, ApiErrorResult } from "@/types/api";
-import { CreateProductInput, Product, ProductsResponse, UpdateProductInput } from "@/types/barang";
-import { useMutation, useQuery, useQueryClient, type UseMutationOptions, type UseQueryOptions } from "@tanstack/react-query";
+import {
+  CreateProductInput,
+  Product,
+  ProductsResponse,
+  UpdateProductInput,
+} from "@/types/barang";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationOptions,
+  type UseQueryOptions,
+} from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 import { fetchApi } from "@/utils/api";
 import { handleApiError, createErrorResponse } from "@/utils/errorHandler";
 import { BASE_URL } from "@/constant/baseUrl";
 
-
 export const productKeys = {
   all: ["products"] as const,
   lists: () => [...productKeys.all, "list"] as const,
-  list: (filters: Record<string, unknown>) => [...productKeys.lists(), { filters }] as const,
+  list: (filters: Record<string, unknown>) =>
+    [...productKeys.lists(), { filters }] as const,
   details: () => [...productKeys.all, "detail"] as const,
   detail: (id: string) => [...productKeys.details(), id] as const,
   logs: () => [...productKeys.all, "logs"] as const,
 };
 
-
-export function useProducts(options?: Omit<UseQueryOptions<ProductsResponse, Error, ProductsResponse, ReturnType<typeof productKeys.list>>, "queryKey" | "queryFn">) {
+export function useProducts(
+  options?: Omit<
+    UseQueryOptions<
+      ProductsResponse,
+      Error,
+      ProductsResponse,
+      ReturnType<typeof productKeys.list>
+    >,
+    "queryKey" | "queryFn"
+  >
+) {
   const [searchParams] = useSearchParams();
   const filters = {
     page: searchParams.get("page") || "1",
@@ -52,8 +71,18 @@ export function useProducts(options?: Omit<UseQueryOptions<ProductsResponse, Err
   });
 }
 
-
-export function useProduct({ id }: { id: string }, options?: Omit<UseQueryOptions<Product, Error, Product, ReturnType<typeof productKeys.detail>>, "queryKey" | "queryFn">) {
+export function useProduct(
+  { id }: { id: string },
+  options?: Omit<
+    UseQueryOptions<
+      Product,
+      Error,
+      Product,
+      ReturnType<typeof productKeys.detail>
+    >,
+    "queryKey" | "queryFn"
+  >
+) {
   return useQuery({
     queryKey: productKeys.detail(id),
     queryFn: async () => {
@@ -66,7 +95,10 @@ export function useProduct({ id }: { id: string }, options?: Omit<UseQueryOption
       const result: ApiResponse<Product> = await response.json();
 
       if (!result.success) {
-        handleApiError(result, "Terjadi kesalahan saat mengambil detail barang");
+        handleApiError(
+          result,
+          "Terjadi kesalahan saat mengambil detail barang"
+        );
       }
 
       if (!result.data) {
@@ -79,8 +111,9 @@ export function useProduct({ id }: { id: string }, options?: Omit<UseQueryOption
   });
 }
 
-
-export function useCreateProduct(options?: UseMutationOptions<Product, Error, CreateProductInput>) {
+export function useCreateProduct(
+  options?: UseMutationOptions<Product, Error, CreateProductInput>
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -97,11 +130,15 @@ export function useCreateProduct(options?: UseMutationOptions<Product, Error, Cr
       const result = (await response.json()) as ApiErrorResult;
 
       if (!result.success) {
-        throw new Error(JSON.stringify(createErrorResponse(result, "Gagal membuat barang")));
+        throw new Error(
+          JSON.stringify(createErrorResponse(result, "Gagal membuat barang"))
+        );
       }
 
       if (!result.data) {
-        throw new Error(JSON.stringify({ message: "Data barang tidak ditemukan" }));
+        throw new Error(
+          JSON.stringify({ message: "Data barang tidak ditemukan" })
+        );
       }
 
       return result.data as Product;
@@ -114,14 +151,23 @@ export function useCreateProduct(options?: UseMutationOptions<Product, Error, Cr
   });
 }
 
-
-export function useUpdateProduct(options?: UseMutationOptions<Product, Error, { id: string } & UpdateProductInput>) {
+export function useUpdateProduct(
+  options?: UseMutationOptions<
+    Product,
+    Error,
+    { id: string } & UpdateProductInput
+  >
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, ...updateData }) => {
       if (Object.keys(updateData).length === 0) {
-        throw new Error(JSON.stringify({ message: "Setidaknya satu field harus diisi untuk pembaruan" }));
+        throw new Error(
+          JSON.stringify({
+            message: "Setidaknya satu field harus diisi untuk pembaruan",
+          })
+        );
       }
 
       const response = await fetchApi(
@@ -136,11 +182,19 @@ export function useUpdateProduct(options?: UseMutationOptions<Product, Error, { 
       const result = (await response.json()) as ApiErrorResult;
 
       if (!result.success) {
-        throw new Error(JSON.stringify(createErrorResponse(result, "Gagal memperbarui barang")));
+        throw new Error(
+          JSON.stringify(
+            createErrorResponse(result, "Gagal memperbarui barang")
+          )
+        );
       }
 
       if (!result.data) {
-        throw new Error(JSON.stringify({ message: "Data barang yang diperbarui tidak ditemukan" }));
+        throw new Error(
+          JSON.stringify({
+            message: "Data barang yang diperbarui tidak ditemukan",
+          })
+        );
       }
 
       return result.data as Product;
@@ -153,13 +207,18 @@ export function useUpdateProduct(options?: UseMutationOptions<Product, Error, { 
   });
 }
 
-
-export function useDeleteProduct(options?: UseMutationOptions<void, Error, { id: string }>) {
+export function useDeleteProduct(
+  options?: UseMutationOptions<void, Error, { id: string }>
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id }) => {
-      const response = await fetchApi(`${BASE_URL}/products/${id}`, {}, { method: "DELETE" });
+      const response = await fetchApi(
+        `${BASE_URL}/products/${id}`,
+        {},
+        { method: "DELETE" }
+      );
       const result: ApiResponse<void> = await response.json();
 
       if (!response.ok || !result.success) {
