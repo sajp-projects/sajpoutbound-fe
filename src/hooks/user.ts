@@ -1,16 +1,16 @@
-import { BASE_URL } from '@/constant/baseUrl';
-import { ApiErrorResult, ApiResponse } from '@/types/api';
-import { CreateUserInput, UserWithRole, UsersResponse } from '@/types/user';
-import { fetchApi } from '@/utils/api';
-import { createErrorResponse, handleApiError } from '@/utils/errorHandler';
+import { BASE_URL } from "@/constant/baseUrl";
+import { ApiErrorResult, ApiResponse } from "@/types/api";
+import { CreateUserInput, UserWithRole, UsersResponse } from "@/types/user";
+import { fetchApi } from "@/utils/api";
+import { createErrorResponse, handleApiError } from "@/utils/errorHandler";
 import {
   useMutation,
   useQuery,
   useQueryClient,
   type UseMutationOptions,
   type UseQueryOptions,
-} from '@tanstack/react-query';
-import { useSearchParams } from 'react-router';
+} from "@tanstack/react-query";
+import { useSearchParams } from "react-router";
 
 export interface UserUpdateInput {
   name?: string;
@@ -19,13 +19,13 @@ export interface UserUpdateInput {
 }
 
 export const userKeys = {
-  all: ['users'] as const,
-  lists: () => [...userKeys.all, 'list'] as const,
+  all: ["users"] as const,
+  lists: () => [...userKeys.all, "list"] as const,
   list: (filters: Record<string, unknown>) =>
     [...userKeys.lists(), { filters }] as const,
-  details: () => [...userKeys.all, 'detail'] as const,
+  details: () => [...userKeys.all, "detail"] as const,
   detail: (id: string) => [...userKeys.details(), id] as const,
-  archived: () => [...userKeys.all, 'archived'] as const,
+  archived: () => [...userKeys.all, "archived"] as const,
 };
 
 export function useUser(
@@ -37,7 +37,7 @@ export function useUser(
       UserWithRole,
       ReturnType<typeof userKeys.detail>
     >,
-    'queryKey' | 'queryFn'
+    "queryKey" | "queryFn"
   >
 ) {
   return useQuery({
@@ -51,11 +51,11 @@ export function useUser(
       const result: ApiResponse<UserWithRole> = await response.json();
 
       if (!result.success) {
-        handleApiError(result, 'An error occurred');
+        handleApiError(result, "An error occurred");
       }
 
       if (!result.data) {
-        throw new Error('User data is missing');
+        throw new Error("User data is missing");
       }
 
       return result.data;
@@ -72,15 +72,15 @@ export function useUsers(
       UsersResponse,
       ReturnType<typeof userKeys.list>
     >,
-    'queryKey' | 'queryFn'
+    "queryKey" | "queryFn"
   >
 ) {
   const [searchParams] = useSearchParams();
   const filters = {
-    page: searchParams.get('page') || '1',
-    limit: searchParams.get('limit') || '10',
-    search: searchParams.get('search') || '',
-    roleId: searchParams.get('roleId') || '',
+    page: searchParams.get("page") || "1",
+    limit: searchParams.get("limit") || "10",
+    search: searchParams.get("search") || "",
+    roleId: searchParams.get("roleId") || "",
   };
 
   return useQuery({
@@ -95,11 +95,11 @@ export function useUsers(
       const result: ApiResponse<UsersResponse> = await response.json();
 
       if (!result.success) {
-        handleApiError(result, 'An error occurred');
+        handleApiError(result, "An error occurred");
       }
 
       if (!result.data) {
-        throw new Error('Users data is missing');
+        throw new Error("Users data is missing");
       }
 
       return result.data;
@@ -120,7 +120,7 @@ export function useCreateUser(
         `${BASE_URL}/users`,
         {},
         {
-          method: 'POST',
+          method: "POST",
           body: JSON.stringify(userData),
         }
       );
@@ -129,13 +129,13 @@ export function useCreateUser(
 
       if (!result.success) {
         throw new Error(
-          JSON.stringify(createErrorResponse(result, 'Gagal membuat pengguna'))
+          JSON.stringify(createErrorResponse(result, "Gagal membuat pengguna"))
         );
       }
 
       if (!result.data) {
         throw new Error(
-          JSON.stringify({ message: 'Data pengguna tidak ditemukan' })
+          JSON.stringify({ message: "Data pengguna tidak ditemukan" })
         );
       }
 
@@ -163,7 +163,7 @@ export function useUpdateUser(
       if (Object.keys(updateData).length === 0) {
         throw new Error(
           JSON.stringify({
-            message: 'At least one field must be provided for update',
+            message: "At least one field must be provided for update",
           })
         );
       }
@@ -172,7 +172,7 @@ export function useUpdateUser(
         `${BASE_URL}/users/${id}`,
         {},
         {
-          method: 'PUT',
+          method: "PUT",
           body: JSON.stringify(updateData),
         }
       );
@@ -182,7 +182,7 @@ export function useUpdateUser(
       if (!result.success) {
         throw new Error(
           JSON.stringify(
-            createErrorResponse(result, 'Gagal memperbarui pengguna')
+            createErrorResponse(result, "Gagal memperbarui pengguna")
           )
         );
       }
@@ -190,7 +190,7 @@ export function useUpdateUser(
       if (!result.data) {
         throw new Error(
           JSON.stringify({
-            message: 'Data pengguna yang diperbarui tidak ditemukan',
+            message: "Data pengguna yang diperbarui tidak ditemukan",
           })
         );
       }
@@ -215,13 +215,13 @@ export function useDeleteUser(
       const response = await fetchApi(
         `${BASE_URL}/users/${id}`,
         {},
-        { method: 'DELETE' }
+        { method: "DELETE" }
       );
 
       const result: ApiResponse<void> = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Gagal menghapus pengguna');
+        throw new Error(result.message || "Gagal menghapus pengguna");
       }
     },
     onSuccess: (_, { id }) => {
@@ -240,7 +240,7 @@ export function useArchivedUsers(
       UserWithRole[],
       ReturnType<typeof userKeys.archived>
     >,
-    'queryKey' | 'queryFn'
+    "queryKey" | "queryFn"
   >
 ) {
   return useQuery({
@@ -257,11 +257,11 @@ export function useArchivedUsers(
       const result: ApiResponse<UserWithRole[]> = await response.json();
 
       if (!result.success) {
-        handleApiError(result, 'An error occurred');
+        handleApiError(result, "An error occurred");
       }
 
       if (!result.data) {
-        throw new Error('Archived users data is missing');
+        throw new Error("Archived users data is missing");
       }
 
       return result.data;
@@ -280,21 +280,24 @@ export function useRestoreUser(
       const response = await fetchApi(
         `${BASE_URL}/users/${id}/unarchived`,
         {},
-        { method: 'PATCH' }
+        { method: "PATCH" }
       );
 
       if (!response.ok) {
+        console.log(response, "response");
         throw new Error(`Error restoring user: ${response.statusText}`);
       }
 
       const result: ApiResponse<UserWithRole> = await response.json();
 
       if (!result.success) {
-        handleApiError(result, 'Failed to restore user');
+        console.log(result, "result");
+
+        handleApiError(result, "Failed to restore user");
       }
 
       if (!result.data) {
-        throw new Error('Restored user data is missing');
+        throw new Error("Restored user data is missing");
       }
 
       return result.data;
