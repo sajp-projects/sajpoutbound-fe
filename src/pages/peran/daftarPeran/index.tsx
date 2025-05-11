@@ -215,14 +215,11 @@ export default function Role() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b border-gray-200 bg-gray-50">
-                      <TableHead className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
-                        ID
+                      <TableHead className="w-[5%] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
+                        No.
                       </TableHead>
-                      <TableHead className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                      <TableHead className="w-[40%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Nama Peran
-                      </TableHead>
-                      <TableHead className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
-                        Deskripsi
                       </TableHead>
                       <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
                         Tgl. Dibuat
@@ -257,11 +254,6 @@ export default function Role() {
                           <TableCell className="py-2.5 px-3 font-medium text-blue-600 text-sm">
                             <div className="wrap-text" title={role.name}>
                               {role.name}
-                            </div>
-                          </TableCell>
-                          <TableCell className="py-2.5 px-3 text-sm">
-                            <div className="wrap-text" title={role.description}>
-                              {role.description}
                             </div>
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
@@ -305,9 +297,6 @@ export default function Role() {
                           <h3 className="text-sm font-medium text-blue-600 break-words">
                             {role.name}
                           </h3>
-                          <p className="mt-1 text-xs text-gray-600 break-all">
-                            {role.description}
-                          </p>
                         </div>
                       </div>
 

@@ -158,20 +158,20 @@ export default function DaftarArmada() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b border-gray-200 bg-gray-50">
-                      <TableHead className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                      <TableHead className="w-[5%] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
                         No.
                       </TableHead>
-                      <TableHead className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                      <TableHead className="w-[25%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Model
                       </TableHead>
                       <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Plat Nomor
                       </TableHead>
-                      <TableHead className="w-[38%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
-                        Deskripsi
-                      </TableHead>
                       <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
                         Tgl. Dibuat
+                      </TableHead>
+                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
+                        Tgl. Diperbarui
                       </TableHead>
                       <TableHead className="w-[130px] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
                         Aksi
@@ -211,15 +211,10 @@ export default function DaftarArmada() {
                             </div>
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
-                            <div
-                              className="wrap-text"
-                              title={armada.description}
-                            >
-                              {armada.description}
-                            </div>
+                            {formatDate(armada.createdAt)}
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
-                            {formatDate(armada.createdAt)}
+                            {formatDate(armada.updatedAt)}
                           </TableCell>
                           <TableCell className="py-2.5 px-3">
                             <div className="flex items-center justify-center">
@@ -262,9 +257,7 @@ export default function DaftarArmada() {
                         </div>
                       </div>
 
-                      <div className="mb-2 text-xs text-gray-600">
-                        <p className="line-clamp-2">{armada.description}</p>
-                      </div>
+                      <div className="mb-2 text-xs text-gray-600"></div>
 
                       <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                         <p>

@@ -210,20 +210,17 @@ export default function DaftarGudang() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b border-gray-200 bg-gray-50">
-                      <TableHead className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                      <TableHead className="w-[5%] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
                         No.
                       </TableHead>
-                      <TableHead className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                      <TableHead className="w-[40%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Nama
-                      </TableHead>
-                      <TableHead className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
-                        Deskripsi
-                      </TableHead>
-                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
-                        Pengelola
                       </TableHead>
                       <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
                         Tgl. Dibuat
+                      </TableHead>
+                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
+                        Tgl. Diperbarui
                       </TableHead>
                       <TableHead className="w-[130px] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
                         Aksi
@@ -259,28 +256,11 @@ export default function DaftarGudang() {
                               </div>
                             </Link>
                           </TableCell>
-                          <TableCell className="py-2.5 px-3 text-sm">
-                            <div
-                              className="wrap-text"
-                              title={gudang.description}
-                            >
-                              {gudang.description}
-                            </div>
-                          </TableCell>
-                          <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
-                            {gudang.user ? (
-                              <Link
-                                to={`/pengguna/${gudang.user.id}`}
-                                className="text-blue-600 hover:underline"
-                              >
-                                {gudang.user.name}
-                              </Link>
-                            ) : (
-                              <span className="text-gray-500">-</span>
-                            )}
-                          </TableCell>
                           <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
                             {formatDate(gudang.createdAt)}
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
+                            {formatDate(gudang.updatedAt)}
                           </TableCell>
                           <TableCell className="py-2.5 px-3">
                             <div className="flex items-center justify-center">
@@ -317,9 +297,6 @@ export default function DaftarGudang() {
                           <h3 className="text-sm font-medium text-blue-600 break-words">
                             {gudang.name}
                           </h3>
-                          <p className="mt-1 text-xs text-gray-600 break-all">
-                            {gudang.description}
-                          </p>
                         </div>
                       </div>
 
@@ -330,17 +307,12 @@ export default function DaftarGudang() {
                             {formatDateShort(gudang.createdAt)}
                           </span>
                         </p>
-                        {gudang.user && (
-                          <p>
-                            Pengelola:{" "}
-                            <Link
-                              to={`/pengguna/${gudang.user.id}`}
-                              className="text-blue-600 hover:underline"
-                            >
-                              {gudang.user.name}
-                            </Link>
-                          </p>
-                        )}
+                        <p>
+                          Diperbarui:{" "}
+                          <span className="font-medium">
+                            {formatDateShort(gudang.updatedAt)}
+                          </span>
+                        </p>
                       </div>
 
                       <div className="flex items-center justify-end gap-1 pt-2 mt-2 border-t">

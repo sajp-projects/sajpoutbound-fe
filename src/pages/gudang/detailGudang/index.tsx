@@ -280,9 +280,6 @@ export default function DetailGudang() {
                           No
                         </TableHead>
                         <TableHead className="py-4 font-semibold text-gray-700">
-                          ID Barang
-                        </TableHead>
-                        <TableHead className="py-4 font-semibold text-gray-700">
                           Nama Barang
                         </TableHead>
                         <TableHead className="py-4 font-semibold text-gray-700">
@@ -322,9 +319,6 @@ export default function DetailGudang() {
                           >
                             <TableCell className="font-medium text-center">
                               {idx + 1}
-                            </TableCell>
-                            <TableCell className="font-mono text-xs font-medium text-gray-600">
-                              {product.id}
                             </TableCell>
                             <TableCell className="font-medium text-blue-600">
                               <Link

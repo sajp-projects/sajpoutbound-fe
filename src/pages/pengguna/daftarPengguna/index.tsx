@@ -212,7 +212,7 @@ export default function Pengguna() {
                   <thead className="border-b border-gray-200 bg-gray-50">
                     <tr>
                       <th className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
-                        ID
+                        No.
                       </th>
                       <th className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Nama

@@ -193,14 +193,11 @@ export default function DaftarPelanggan() {
                 <table className="w-full min-w-[650px] border-collapse">
                   <thead className="border-b border-gray-200 bg-gray-50">
                     <tr>
-                      <th className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
-                        ID
-                      </th>
-                      <th className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
-                        Nama
+                      <th className="w-[5%] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
+                        No.
                       </th>
                       <th className="w-[40%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
-                        Alamat
+                        Nama
                       </th>
                       <th className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
                         Tgl. Dibuat
@@ -235,11 +232,6 @@ export default function DaftarPelanggan() {
                           <td className="py-2.5 px-3 font-medium text-blue-600 text-sm">
                             <div className="wrap-text" title={customer.name}>
                               {customer.name}
-                            </div>
-                          </td>
-                          <td className="py-2.5 px-3 text-sm">
-                            <div className="wrap-text" title={customer.address}>
-                              {customer.address}
                             </div>
                           </td>
                           <td className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
@@ -289,9 +281,7 @@ export default function DaftarPelanggan() {
                         </Badge>
                       </div>
 
-                      <div className="mb-2 text-xs text-gray-600">
-                        <p className="truncate">{customer.address}</p>
-                      </div>
+                      <div className="mb-2 text-xs text-gray-600"></div>
 
                       <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                         <p>
