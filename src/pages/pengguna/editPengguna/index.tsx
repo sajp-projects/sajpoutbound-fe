@@ -1,5 +1,6 @@
 import { useUser, useUpdateUser } from "@/hooks/user";
 import { useAllRoles } from "@/hooks/role";
+import { useAllWarehouses } from "@/hooks/gudang";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { useParams, Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
@@ -30,6 +31,7 @@ interface UserFormData {
   name: string;
   email: string;
   roleId: string;
+  warehouseId: string;
 }
 
 type UserFormErrors = FormErrors<UserFormData> & {
@@ -45,6 +47,7 @@ export default function EditPengguna() {
     name: "",
     email: "",
     roleId: "",
+    warehouseId: "",
   });
 
   const [errors, setErrors] = useState<UserFormErrors>({});
@@ -71,6 +74,13 @@ export default function EditPengguna() {
     isError: isErrorRoles,
     refetch: refetchRoles,
   } = useAllRoles();
+
+  const {
+    data: warehouses,
+    isLoading: isLoadingWarehouses,
+    isError: isErrorWarehouses,
+    refetch: refetchWarehouses,
+  } = useAllWarehouses();
 
   const roles = rolesData?.roles || [];
 
@@ -103,6 +113,8 @@ export default function EditPengguna() {
                 newErrors.email = detail.message;
               } else if (detail.path.includes("roleId")) {
                 newErrors.roleId = detail.message;
+              } else if (detail.path.includes("warehouseId")) {
+                newErrors.warehouseId = detail.message;
               } else {
                 newErrors.general = detail.message;
               }
@@ -125,6 +137,7 @@ export default function EditPengguna() {
         name: user.name,
         email: user.email,
         roleId: user.role.id,
+        warehouseId: user.warehouseId || "",
       });
     }
   }, [user]);
@@ -156,18 +169,20 @@ export default function EditPengguna() {
           name: formData.name,
           email: formData.email,
           roleId: formData.roleId,
+          warehouseId: formData.warehouseId || null,
         });
       }
     });
   };
 
-  const isLoading = isLoadingUser || isLoadingRoles;
-  const isError = isErrorUser || isErrorRoles;
+  const isLoading = isLoadingUser || isLoadingRoles || isLoadingWarehouses;
+  const isError = isErrorUser || isErrorRoles || isErrorWarehouses;
   const isSubmitting = updateUserMutation.isPending;
 
   const handleRetry = () => {
     refetchUser();
     refetchRoles();
+    refetchWarehouses();
   };
 
   const inputClassName = (fieldName: keyof UserFormData) =>
@@ -313,6 +328,48 @@ export default function EditPengguna() {
                 ) : (
                   <p className="mt-1 text-sm text-gray-500">
                     Peran menentukan akses dan hak istimewa pengguna di sistem
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="warehouseId"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Gudang
+                </label>
+                <select
+                  id="warehouseId"
+                  name="warehouseId"
+                  value={formData.warehouseId}
+                  onChange={handleInputChange}
+                  className={cn(
+                    "mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+                    errors.warehouseId &&
+                      "border-red-300 focus:border-red-500 focus:ring-red-500"
+                  )}
+                >
+                  <option value="">Pilih gudang (opsional)</option>
+                  {warehouses && warehouses.length > 0 ? (
+                    warehouses.map((warehouse) => (
+                      <option key={warehouse.id} value={warehouse.id}>
+                        {warehouse.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>
+                      Tidak ada gudang tersedia
+                    </option>
+                  )}
+                </select>
+                {errors.warehouseId ? (
+                  <p className="mt-1 text-sm text-red-500">
+                    {errors.warehouseId}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-sm text-gray-500">
+                    Gudang tempat pengguna bertugas (opsional)
                   </p>
                 )}
               </div>

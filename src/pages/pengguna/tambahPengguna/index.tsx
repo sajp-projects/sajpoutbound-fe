@@ -1,5 +1,6 @@
 import { useAllRoles } from "@/hooks/role";
 import { useCreateUser } from "@/hooks/user";
+import { useAllWarehouses } from "@/hooks/gudang";
 import { cn } from "@/lib/utils";
 import { Role } from "@/types/role";
 import { CreateUserInput } from "@/types/user";
@@ -34,6 +35,7 @@ interface UserFormData {
   email: string;
   password: string;
   roleId: string;
+  warehouseId: string;
 }
 
 type UserFormErrors = FormErrors<UserFormData> & {
@@ -84,11 +86,21 @@ export default function TambahPengguna() {
     );
   };
 
+  const hasWarehouseReadPermission = (): boolean => {
+    if (!isAuthenticated || !permissions) return false;
+    return permissions.some(
+      (permission) =>
+        permission.resource === PERMISSION.RESOURCES.WAREHOUSE &&
+        permission.action === PERMISSION.ACTIONS.READ
+    );
+  };
+
   const [formData, setFormData] = useState<UserFormData>({
     name: "",
     email: "",
     password: "",
     roleId: "",
+    warehouseId: "",
   });
 
   const [errors, setErrors] = useState<UserFormErrors>({});
@@ -99,6 +111,14 @@ export default function TambahPengguna() {
     isError: isErrorRoles,
   } = useAllRoles({
     enabled: hasRoleReadPermission(),
+  });
+
+  const {
+    data: warehouses,
+    isLoading: isLoadingWarehouses,
+    isError: isErrorWarehouses,
+  } = useAllWarehouses({
+    enabled: hasWarehouseReadPermission(),
   });
 
   const roles = rolesData?.roles || [];
@@ -131,6 +151,8 @@ export default function TambahPengguna() {
               newErrors.password = detail.message;
             } else if (detail.path.includes("roleId")) {
               newErrors.roleId = detail.message;
+            } else if (detail.path.includes("warehouseId")) {
+              newErrors.warehouseId = detail.message;
             } else {
               newErrors.general = detail.message;
             }
@@ -169,6 +191,7 @@ export default function TambahPengguna() {
       email: formData.email,
       password: formData.password,
       roleId: formData.roleId,
+      warehouseId: formData.warehouseId || null,
     };
 
     showConfirmationAlert(
@@ -183,8 +206,12 @@ export default function TambahPengguna() {
     });
   };
 
-  const isLoading = isLoadingRoles && hasRoleReadPermission();
-  const isError = isErrorRoles && hasRoleReadPermission();
+  const isLoading =
+    (isLoadingRoles && hasRoleReadPermission()) ||
+    (isLoadingWarehouses && hasWarehouseReadPermission());
+  const isError =
+    (isErrorRoles && hasRoleReadPermission()) ||
+    (isErrorWarehouses && hasWarehouseReadPermission());
   const isSubmitting = createUserMutation.isPending;
 
   const inputClassName = (fieldName: keyof UserFormData) =>
@@ -324,6 +351,45 @@ export default function TambahPengguna() {
                 </select>
               </FormField>
 
+              <FormField
+                id="warehouseId"
+                label="Gudang"
+                error={errors.warehouseId}
+                helpText={
+                  !hasWarehouseReadPermission()
+                    ? "Anda memerlukan izin untuk akses ini"
+                    : "Gudang tempat pengguna bertugas (opsional)"
+                }
+              >
+                <select
+                  id="warehouseId"
+                  name="warehouseId"
+                  value={formData.warehouseId}
+                  onChange={handleInputChange}
+                  className={cn(
+                    "mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+                    errors.warehouseId &&
+                      "border-red-300 focus:border-red-500 focus:ring-red-500",
+                    !hasWarehouseReadPermission() &&
+                      "bg-gray-100 cursor-not-allowed"
+                  )}
+                  disabled={!hasWarehouseReadPermission()}
+                >
+                  <option value="">Pilih gudang (opsional)</option>
+                  {hasWarehouseReadPermission() &&
+                  warehouses &&
+                  warehouses.length > 0 ? (
+                    warehouses.map((warehouse) => (
+                      <option key={warehouse.id} value={warehouse.id}>
+                        {warehouse.name}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">Tidak ada gudang tersedia</option>
+                  )}
+                </select>
+              </FormField>
+
               <div className="flex justify-end gap-3">
                 <Button
                   variant="outline"
@@ -357,7 +423,7 @@ export default function TambahPengguna() {
             </form>
           )}
         </CardContent>
-        {!hasRoleReadPermission() && (
+        {(!hasRoleReadPermission() || !hasWarehouseReadPermission()) && (
           <CardFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50">
             <div className="flex items-center text-amber-600">
               <AlertTriangle className="w-5 h-5 mr-2" />

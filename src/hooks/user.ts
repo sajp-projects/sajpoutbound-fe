@@ -16,6 +16,7 @@ export interface UserUpdateInput {
   name?: string;
   email?: string;
   roleId?: string;
+  warehouseId?: string | null;
 }
 
 export const userKeys = {
