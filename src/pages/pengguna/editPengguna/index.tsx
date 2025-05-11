@@ -1,7 +1,7 @@
 import { useUser, useUpdateUser } from "@/hooks/user";
 import { useAllRoles } from "@/hooks/role";
 import { useAllWarehouses } from "@/hooks/gudang";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Trash2 } from "lucide-react";
 import { useParams, Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import { Role } from "@/types/role";
@@ -32,6 +32,14 @@ interface UserFormData {
   email: string;
   roleId: string;
   warehouseId: string;
+}
+
+interface UpdateUserPayload {
+  id: string;
+  name: string;
+  email: string;
+  roleId: string;
+  warehouseId?: string | null;
 }
 
 type UserFormErrors = FormErrors<UserFormData> & {
@@ -150,6 +158,13 @@ export default function EditPengguna() {
     }
   };
 
+  const handleClearWarehouse = () => {
+    setFormData((prev) => ({ ...prev, warehouseId: "" }));
+    if (errors.warehouseId) {
+      setErrors((prev) => ({ ...prev, warehouseId: undefined }));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
@@ -161,13 +176,20 @@ export default function EditPengguna() {
       "Batal"
     ).then((result) => {
       if (isConfirmed(result)) {
-        updateUserMutation.mutate({
+        const payload: UpdateUserPayload = {
           id: id || "",
           name: formData.name,
           email: formData.email,
           roleId: formData.roleId,
-          warehouseId: formData.warehouseId || null,
-        });
+        };
+
+        if (formData.warehouseId && formData.warehouseId.trim() !== "") {
+          payload.warehouseId = formData.warehouseId;
+        } else {
+          payload.warehouseId = null;
+        }
+
+        updateUserMutation.mutate(payload);
       }
     });
   };
@@ -330,30 +352,45 @@ export default function EditPengguna() {
                 >
                   Gudang
                 </label>
-                <select
-                  id="warehouseId"
-                  name="warehouseId"
-                  value={formData.warehouseId}
-                  onChange={handleInputChange}
-                  className={cn(
-                    "mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
-                    errors.warehouseId &&
-                      "border-red-300 focus:border-red-500 focus:ring-red-500"
+                <div className="flex items-center gap-2">
+                  <div className="relative w-full">
+                    <select
+                      id="warehouseId"
+                      name="warehouseId"
+                      value={formData.warehouseId}
+                      onChange={handleInputChange}
+                      className={cn(
+                        "mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+                        errors.warehouseId &&
+                          "border-red-300 focus:border-red-500 focus:ring-red-500"
+                      )}
+                    >
+                      <option value="">Pilih gudang (opsional)</option>
+                      {warehouses && warehouses.length > 0 ? (
+                        warehouses.map((warehouse) => (
+                          <option key={warehouse.id} value={warehouse.id}>
+                            {warehouse.name}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="" disabled>
+                          Tidak ada gudang tersedia
+                        </option>
+                      )}
+                    </select>
+                  </div>
+                  {formData.warehouseId && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="flex-shrink-0 text-red-500 border-red-200 hover:text-red-700 hover:bg-red-50"
+                      onClick={handleClearWarehouse}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   )}
-                >
-                  <option value="">Pilih gudang (opsional)</option>
-                  {warehouses && warehouses.length > 0 ? (
-                    warehouses.map((warehouse) => (
-                      <option key={warehouse.id} value={warehouse.id}>
-                        {warehouse.name}
-                      </option>
-                    ))
-                  ) : (
-                    <option value="" disabled>
-                      Tidak ada gudang tersedia
-                    </option>
-                  )}
-                </select>
+                </div>
                 {errors.warehouseId ? (
                   <p className="mt-1 text-sm text-red-500">
                     {errors.warehouseId}

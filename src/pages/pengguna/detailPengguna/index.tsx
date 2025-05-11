@@ -12,13 +12,25 @@ import {
   showConfirmationAlert,
   isConfirmed,
 } from "@/utils/sweetAlert";
-import { Archive, ArrowLeft, FileText, Edit } from "lucide-react";
+import { Archive, ArrowLeft, FileText, Edit, Warehouse } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { hasPermission } from "@/utils/permission";
 import { getRoleId } from "@/utils/storage";
+import { UserWithRole } from "@/types/user";
+
+// Interface tambahan untuk response user detail yang menyertakan data warehouse
+interface UserDetailResponse extends UserWithRole {
+  warehouse?: {
+    id: string;
+    name: string;
+    description?: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
+}
 
 export default function DetailPengguna() {
   const { id } = useParams<{ id: string }>();
@@ -42,12 +54,21 @@ export default function DetailPengguna() {
     PERMISSION.ACTIONS.DELETE
   );
 
+  const hasWarehouseReadAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.WAREHOUSE,
+    PERMISSION.ACTIONS.READ
+  );
+
   const {
-    data: user,
+    data: userData,
     isLoading,
     isError,
     error,
   } = useUser({ id: id || "" }, { staleTime: 5000, refetchOnMount: "always" });
+
+  // Cast data ke interface yang memiliki warehouse
+  const user = userData as UserDetailResponse | undefined;
 
   const deleteUser = useDeleteUser({
     onSuccess: () => {
@@ -173,6 +194,34 @@ export default function DetailPengguna() {
                           >
                             {user.role.name}
                           </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Gudang</p>
+                      <div className="mt-1">
+                        {user?.warehouse ? (
+                          hasWarehouseReadAccess ? (
+                            <Link to={`/gudang/${user.warehouse.id}`}>
+                              <div className="flex items-center text-blue-600 hover:text-blue-800">
+                                <Warehouse className="w-4 h-4 mr-1" />
+                                <span className="font-medium">
+                                  {user.warehouse.name}
+                                </span>
+                              </div>
+                            </Link>
+                          ) : (
+                            <div className="flex items-center text-gray-700">
+                              <Warehouse className="w-4 h-4 mr-1" />
+                              <span className="font-medium">
+                                {user.warehouse.name}
+                              </span>
+                            </div>
+                          )
+                        ) : (
+                          <span className="text-gray-500">
+                            Tidak ada gudang
+                          </span>
                         )}
                       </div>
                     </div>

@@ -3,8 +3,14 @@ import { useCreateUser } from "@/hooks/user";
 import { useAllWarehouses } from "@/hooks/gudang";
 import { cn } from "@/lib/utils";
 import { Role } from "@/types/role";
-import { CreateUserInput } from "@/types/user";
-import { AlertTriangle, Loader2, Save } from "lucide-react";
+import {
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  Loader2,
+  Save,
+  Trash2,
+} from "lucide-react";
 import { ReactNode, useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -36,6 +42,15 @@ interface UserFormData {
   password: string;
   roleId: string;
   warehouseId: string;
+}
+
+// Interface untuk payload yang dikirim ke API
+interface CreateUserPayload {
+  name: string;
+  email: string;
+  password: string;
+  roleId: string;
+  warehouseId?: string;
 }
 
 type UserFormErrors = FormErrors<UserFormData> & {
@@ -104,6 +119,7 @@ export default function TambahPengguna() {
   });
 
   const [errors, setErrors] = useState<UserFormErrors>({});
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     data: rolesData,
@@ -182,17 +198,29 @@ export default function TambahPengguna() {
     }
   };
 
+  const handleClearWarehouse = () => {
+    setFormData((prev) => ({ ...prev, warehouseId: "" }));
+    if (errors.warehouseId) {
+      setErrors((prev) => ({ ...prev, warehouseId: undefined }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
 
-    const userData: CreateUserInput = {
+    const payload: CreateUserPayload = {
       name: formData.name,
       email: formData.email,
       password: formData.password,
       roleId: formData.roleId,
-      warehouseId: formData.warehouseId || null,
     };
+
+    // Hanya sertakan warehouseId jika benar-benar ada nilainya
+    if (formData.warehouseId && formData.warehouseId.trim() !== "") {
+      payload.warehouseId = formData.warehouseId;
+    }
+    // Jika kosong, tidak perlu sertakan property warehouseId
 
     showConfirmationAlert(
       "Konfirmasi",
@@ -201,7 +229,7 @@ export default function TambahPengguna() {
       "Batal"
     ).then((result) => {
       if (isConfirmed(result)) {
-        createUserMutation.mutate(userData);
+        createUserMutation.mutate(payload);
       }
     });
   };
@@ -304,15 +332,28 @@ export default function TambahPengguna() {
                 error={errors.password}
                 helpText="Password minimal 8 karakter"
               >
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="Masukkan password"
-                  className={inputClassName("password")}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder="Masukkan password"
+                    className={inputClassName("password")}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
               </FormField>
 
               <FormField
@@ -361,33 +402,48 @@ export default function TambahPengguna() {
                     : "Gudang tempat pengguna bertugas (opsional)"
                 }
               >
-                <select
-                  id="warehouseId"
-                  name="warehouseId"
-                  value={formData.warehouseId}
-                  onChange={handleInputChange}
-                  className={cn(
-                    "mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
-                    errors.warehouseId &&
-                      "border-red-300 focus:border-red-500 focus:ring-red-500",
-                    !hasWarehouseReadPermission() &&
-                      "bg-gray-100 cursor-not-allowed"
+                <div className="flex items-center gap-2">
+                  <div className="relative w-full">
+                    <select
+                      id="warehouseId"
+                      name="warehouseId"
+                      value={formData.warehouseId}
+                      onChange={handleInputChange}
+                      className={cn(
+                        "mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+                        errors.warehouseId &&
+                          "border-red-300 focus:border-red-500 focus:ring-red-500",
+                        !hasWarehouseReadPermission() &&
+                          "bg-gray-100 cursor-not-allowed"
+                      )}
+                      disabled={!hasWarehouseReadPermission()}
+                    >
+                      <option value="">Pilih gudang (opsional)</option>
+                      {hasWarehouseReadPermission() &&
+                      warehouses &&
+                      warehouses.length > 0 ? (
+                        warehouses.map((warehouse) => (
+                          <option key={warehouse.id} value={warehouse.id}>
+                            {warehouse.name}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">Tidak ada gudang tersedia</option>
+                      )}
+                    </select>
+                  </div>
+                  {formData.warehouseId && hasWarehouseReadPermission() && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="flex-shrink-0 text-red-500 border-red-200 hover:text-red-700 hover:bg-red-50"
+                      onClick={handleClearWarehouse}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   )}
-                  disabled={!hasWarehouseReadPermission()}
-                >
-                  <option value="">Pilih gudang (opsional)</option>
-                  {hasWarehouseReadPermission() &&
-                  warehouses &&
-                  warehouses.length > 0 ? (
-                    warehouses.map((warehouse) => (
-                      <option key={warehouse.id} value={warehouse.id}>
-                        {warehouse.name}
-                      </option>
-                    ))
-                  ) : (
-                    <option value="">Tidak ada gudang tersedia</option>
-                  )}
-                </select>
+                </div>
               </FormField>
 
               <div className="flex justify-end gap-3">
