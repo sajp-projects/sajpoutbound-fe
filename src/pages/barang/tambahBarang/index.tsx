@@ -110,22 +110,6 @@ export default function TambahBarang() {
     e.preventDefault();
     setErrors({});
 
-    const validationErrors: ProductFormErrors = {};
-    if (!formData.name.trim()) {
-      validationErrors.name = "Nama barang harus diisi";
-    }
-    if (!formData.satuan.trim()) {
-      validationErrors.satuan = "Satuan harus dipilih";
-    }
-    if (!formData.warehouseId.trim()) {
-      validationErrors.warehouseId = "Gudang harus dipilih";
-    }
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
     showConfirmationAlert(
       "Konfirmasi",
       "Apakah Anda yakin ingin menambahkan barang baru ini?",

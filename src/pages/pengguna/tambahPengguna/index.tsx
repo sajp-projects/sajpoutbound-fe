@@ -1,15 +1,15 @@
-import { useAllRoles } from '@/hooks/role';
-import { useCreateUser } from '@/hooks/user';
-import { cn } from '@/lib/utils';
-import { Role } from '@/types/role';
-import { CreateUserInput } from '@/types/user';
-import { AlertTriangle, Loader2, Save } from 'lucide-react';
-import { ReactNode, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useAllRoles } from "@/hooks/role";
+import { useCreateUser } from "@/hooks/user";
+import { cn } from "@/lib/utils";
+import { Role } from "@/types/role";
+import { CreateUserInput } from "@/types/user";
+import { AlertTriangle, Loader2, Save } from "lucide-react";
+import { ReactNode, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 
-import { ErrorState } from '@/components/ErrorState';
-import { LoadingState } from '@/components/LoadingState';
-import { Button } from '@/components/ui/button';
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -17,19 +17,18 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { PERMISSION } from '@/constant/PERMISSION';
-import { useAuth } from '@/hooks/auth';
-import { useRolePermissions } from '@/hooks/izin';
-import { FormErrorData, FormErrors } from '@/utils/errorHandler';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/izin";
+import { FormErrorData, FormErrors } from "@/utils/errorHandler";
 import {
   isConfirmed,
   showConfirmationAlert,
   showErrorAlert,
   showSuccessAlert,
-} from '@/utils/sweetAlert';
-
+} from "@/utils/sweetAlert";
 
 interface UserFormData {
   name: string;
@@ -38,11 +37,9 @@ interface UserFormData {
   roleId: string;
 }
 
-
 type UserFormErrors = FormErrors<UserFormData> & {
   general?: string;
 };
-
 
 interface FormFieldProps {
   id: string;
@@ -72,16 +69,13 @@ export default function TambahPengguna() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  
-  const userData = localStorage.getItem('user');
+  const userData = localStorage.getItem("user");
   const currentUserRoleId = userData ? JSON.parse(userData)?.roleId : null;
 
-  
   const { data: permissions } = useRolePermissions(currentUserRoleId, {
-    enabled: isAuthenticated && !!currentUserRoleId && currentUserRoleId !== '',
+    enabled: isAuthenticated && !!currentUserRoleId && currentUserRoleId !== "",
   });
 
-  
   const hasRoleReadPermission = (): boolean => {
     if (!isAuthenticated || !permissions) return false;
     return permissions.some(
@@ -91,48 +85,39 @@ export default function TambahPengguna() {
     );
   };
 
-  
   const [formData, setFormData] = useState<UserFormData>({
-    name: '',
-    email: '',
-    password: '',
-    roleId: '',
+    name: "",
+    email: "",
+    password: "",
+    roleId: "",
   });
 
-  
   const [errors, setErrors] = useState<UserFormErrors>({});
 
-  
   const {
     data: rolesData,
     isLoading: isLoadingRoles,
     isError: isErrorRoles,
   } = useAllRoles({
-    enabled: hasRoleReadPermission(), 
+    enabled: hasRoleReadPermission(),
   });
 
-  
   const roles = rolesData?.roles || [];
 
-  
   useEffect(() => {
     if (!hasRoleReadPermission()) {
-      
       showErrorAlert(
-        'Akses Terbatas',
-        'Anda tidak memiliki izin untuk melihat daftar peran. Anda tidak akan dapat menambahkan pengguna baru tanpa menetapkan peran yang valid.'
+        "Akses Terbatas",
+        "Anda tidak memiliki izin untuk melihat daftar peran. Anda tidak akan dapat menambahkan pengguna baru tanpa menetapkan peran yang valid."
       );
     }
-    
   }, [permissions]);
 
-  
   const createUserMutation = useCreateUser({
     onSuccess: () => {
-      
-      showSuccessAlert('Berhasil!', 'Pengguna baru berhasil ditambahkan').then(
+      showSuccessAlert("Berhasil!", "Pengguna baru berhasil ditambahkan").then(
         () => {
-          navigate('/pengguna');
+          navigate("/pengguna");
         }
       );
     },
@@ -141,20 +126,20 @@ export default function TambahPengguna() {
         const errorObj = JSON.parse(error.message) as FormErrorData;
 
         if (
-          errorObj.errorType === 'joiValidationError' &&
+          errorObj.errorType === "joiValidationError" &&
           errorObj.details &&
           errorObj.details.length > 0
         ) {
           const newErrors: UserFormErrors = {};
 
           errorObj.details.forEach((detail) => {
-            if (detail.path.includes('name')) {
+            if (detail.path.includes("name")) {
               newErrors.name = detail.message;
-            } else if (detail.path.includes('email')) {
+            } else if (detail.path.includes("email")) {
               newErrors.email = detail.message;
-            } else if (detail.path.includes('password')) {
+            } else if (detail.path.includes("password")) {
               newErrors.password = detail.message;
-            } else if (detail.path.includes('roleId')) {
+            } else if (detail.path.includes("roleId")) {
               newErrors.roleId = detail.message;
             } else {
               newErrors.general = detail.message;
@@ -166,13 +151,12 @@ export default function TambahPengguna() {
           setErrors({ general: errorObj.message });
         }
       } catch (e) {
-        console.error('Error parsing error message:', e);
-        setErrors({ general: 'Terjadi kesalahan saat menambahkan pengguna' });
+        console.error("Error parsing error message:", e);
+        setErrors({ general: "Terjadi kesalahan saat menambahkan pengguna" });
       }
     },
   });
 
-  
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -187,26 +171,10 @@ export default function TambahPengguna() {
     }
   };
 
-  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrors({});
 
-    
-    if (!hasRoleReadPermission() || !formData.roleId) {
-      setErrors({
-        roleId: 'Anda harus memilih peran untuk pengguna ini',
-        general: 'Tidak dapat menambahkan pengguna tanpa peran',
-      });
-
-      showErrorAlert(
-        'Tidak Dapat Menambahkan Pengguna',
-        'Anda tidak memiliki izin untuk melihat daftar peran. Pengguna baru harus memiliki peran yang valid.'
-      );
-      return;
-    }
-
-    
     const userData: CreateUserInput = {
       name: formData.name,
       email: formData.email,
@@ -214,12 +182,11 @@ export default function TambahPengguna() {
       roleId: formData.roleId,
     };
 
-    
     showConfirmationAlert(
-      'Konfirmasi',
-      'Apakah Anda yakin ingin menambahkan pengguna baru ini?',
-      'Ya, Tambahkan!',
-      'Batal'
+      "Konfirmasi",
+      "Apakah Anda yakin ingin menambahkan pengguna baru ini?",
+      "Ya, Tambahkan!",
+      "Batal"
     ).then((result) => {
       if (isConfirmed(result)) {
         createUserMutation.mutate(userData);
@@ -233,14 +200,14 @@ export default function TambahPengguna() {
 
   const inputClassName = (fieldName: keyof UserFormData) =>
     cn(
-      'mt-1 w-full border-gray-300',
+      "mt-1 w-full border-gray-300",
       errors[fieldName]
-        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-        : 'focus:border-blue-500 focus:ring-blue-500'
+        ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+        : "focus:border-blue-500 focus:ring-blue-500"
     );
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
+    <div className="px-4 space-y-6 sm:px-0">
       <div className="flex items-center">
         <h1 className="text-2xl font-bold text-gray-900">Tambah Pengguna</h1>
       </div>
@@ -259,19 +226,19 @@ export default function TambahPengguna() {
             <ErrorState
               title="Gagal memuat data"
               message="Terjadi kesalahan pada server"
-              onRetry={() => navigate('/pengguna')}
+              onRetry={() => navigate("/pengguna")}
               retryButtonText="Kembali ke Daftar Pengguna"
             />
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               {errors.general && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
+                <div className="p-3 mb-4 text-sm text-red-600 border border-red-200 rounded-md bg-red-50">
                   {errors.general}
                 </div>
               )}
 
               {!hasRoleReadPermission() && (
-                <div className="mb-4 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-md flex items-start">
+                <div className="flex items-start p-4 mb-4 border rounded-md bg-amber-50 border-amber-200 text-amber-800">
                   <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0 text-amber-500 mt-0.5" />
                   <div>
                     <p className="font-medium">Akses Terbatas</p>
@@ -296,7 +263,7 @@ export default function TambahPengguna() {
                   value={formData.name}
                   onChange={handleInputChange}
                   placeholder="Masukkan nama lengkap"
-                  className={inputClassName('name')}
+                  className={inputClassName("name")}
                 />
               </FormField>
 
@@ -313,7 +280,7 @@ export default function TambahPengguna() {
                   value={formData.email}
                   onChange={handleInputChange}
                   placeholder="Masukkan alamat email"
-                  className={inputClassName('email')}
+                  className={inputClassName("email")}
                 />
               </FormField>
 
@@ -330,7 +297,7 @@ export default function TambahPengguna() {
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Masukkan password"
-                  className={inputClassName('password')}
+                  className={inputClassName("password")}
                 />
               </FormField>
 
@@ -340,8 +307,8 @@ export default function TambahPengguna() {
                 error={errors.roleId}
                 helpText={
                   !hasRoleReadPermission()
-                    ? 'Anda tidak memiliki izin untuk melihat dan memilih peran'
-                    : 'Peran menentukan akses dan hak istimewa pengguna di sistem'
+                    ? "Anda tidak memiliki izin untuk melihat dan memilih peran"
+                    : "Peran menentukan akses dan hak istimewa pengguna di sistem"
                 }
               >
                 <select
@@ -350,10 +317,10 @@ export default function TambahPengguna() {
                   value={formData.roleId}
                   onChange={handleInputChange}
                   className={cn(
-                    'mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
+                    "mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
                     errors.roleId &&
-                      'border-red-300 focus:border-red-500 focus:ring-red-500',
-                    !hasRoleReadPermission() && 'bg-gray-100 cursor-not-allowed'
+                      "border-red-300 focus:border-red-500 focus:ring-red-500",
+                    !hasRoleReadPermission() && "bg-gray-100 cursor-not-allowed"
                   )}
                   disabled={!hasRoleReadPermission()}
                 >
@@ -373,7 +340,7 @@ export default function TambahPengguna() {
               <div className="flex justify-end gap-3">
                 <Button
                   variant="outline"
-                  onClick={() => navigate('/pengguna')}
+                  onClick={() => navigate("/pengguna")}
                   disabled={isSubmitting}
                   type="button"
                 >
@@ -383,18 +350,18 @@ export default function TambahPengguna() {
                   type="submit"
                   disabled={isSubmitting || !hasRoleReadPermission()}
                   className={cn(
-                    'bg-blue-600 hover:bg-blue-700 text-white',
-                    !hasRoleReadPermission() && 'opacity-50 cursor-not-allowed'
+                    "bg-blue-600 hover:bg-blue-700 text-white",
+                    !hasRoleReadPermission() && "opacity-50 cursor-not-allowed"
                   )}
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Menyimpan...
                     </>
                   ) : (
                     <>
-                      <Save className="mr-2 h-4 w-4" />
+                      <Save className="w-4 h-4 mr-2" />
                       Simpan
                     </>
                   )}
@@ -404,9 +371,9 @@ export default function TambahPengguna() {
           )}
         </CardContent>
         {!hasRoleReadPermission() && (
-          <CardFooter className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          <CardFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50">
             <div className="flex items-center text-amber-600">
-              <AlertTriangle className="h-5 w-5 mr-2" />
+              <AlertTriangle className="w-5 h-5 mr-2" />
               <p className="text-sm">
                 Untuk menambahkan pengguna, Anda memerlukan izin untuk melihat
                 peran. Silakan hubungi administrator sistem.

@@ -128,19 +128,6 @@ export default function TambahPelanggan() {
     e.preventDefault();
     setErrors({});
 
-    const validationErrors: CustomerFormErrors = {};
-    if (!formData.name.trim()) {
-      validationErrors.name = "Nama pelanggan harus diisi";
-    }
-    if (!formData.address.trim()) {
-      validationErrors.address = "Alamat harus diisi";
-    }
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
     const customerData: CustomerInput = {
       name: formData.name,
       address: formData.address,

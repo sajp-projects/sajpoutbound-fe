@@ -155,19 +155,6 @@ export default function EditPelanggan() {
     e.preventDefault();
     setErrors({});
 
-    const validationErrors: CustomerFormErrors = {};
-    if (!formData.name.trim()) {
-      validationErrors.name = "Nama pelanggan harus diisi";
-    }
-    if (!formData.address.trim()) {
-      validationErrors.address = "Alamat harus diisi";
-    }
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
     showConfirmationAlert(
       "Konfirmasi",
       "Apakah Anda yakin ingin menyimpan perubahan data pelanggan ini?",

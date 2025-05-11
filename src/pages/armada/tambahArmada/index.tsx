@@ -101,19 +101,6 @@ export default function TambahArmada() {
     e.preventDefault();
     setErrors({});
 
-    const validationErrors: ArmadaFormErrors = {};
-    if (!formData.model.trim()) {
-      validationErrors.model = "Model armada harus diisi";
-    }
-    if (!formData.plateNumber.trim()) {
-      validationErrors.plateNumber = "Plat nomor harus diisi";
-    }
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
     showConfirmationAlert(
       "Konfirmasi",
       "Apakah Anda yakin ingin menambahkan armada baru ini?",
