@@ -41,6 +41,8 @@ import LogArmada from "./pages/armada/logArmada";
 import LogSemuaArmada from "./pages/armada/logSemuaArmada";
 import EditArmada from "./pages/armada/editArmada";
 import DetailArmada from "./pages/armada/detailArmada";
+import NotFound from "./pages/notFound";
+
 interface ProtectedRouteConfig {
   path: string;
   element: React.ReactNode;
@@ -393,6 +395,8 @@ export default function App() {
             {armadaRoutes.map((route) => createProtectedRoute(route))}
           </Route>
         </Route>
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

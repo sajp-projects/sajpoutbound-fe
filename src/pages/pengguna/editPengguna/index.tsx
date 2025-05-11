@@ -57,7 +57,6 @@ export default function EditPengguna() {
     isLoading: isLoadingUser,
     isError: isErrorUser,
     error: userError,
-    refetch: refetchUser,
   } = useUser(
     {
       id: id || "",
@@ -72,14 +71,12 @@ export default function EditPengguna() {
     data: rolesData,
     isLoading: isLoadingRoles,
     isError: isErrorRoles,
-    refetch: refetchRoles,
   } = useAllRoles();
 
   const {
     data: warehouses,
     isLoading: isLoadingWarehouses,
     isError: isErrorWarehouses,
-    refetch: refetchWarehouses,
   } = useAllWarehouses();
 
   const roles = rolesData?.roles || [];
@@ -179,12 +176,6 @@ export default function EditPengguna() {
   const isError = isErrorUser || isErrorRoles || isErrorWarehouses;
   const isSubmitting = updateUserMutation.isPending;
 
-  const handleRetry = () => {
-    refetchUser();
-    refetchRoles();
-    refetchWarehouses();
-  };
-
   const inputClassName = (fieldName: keyof UserFormData) =>
     cn(
       "mt-1 w-full border-gray-300",
@@ -228,10 +219,10 @@ export default function EditPengguna() {
             <LoadingState text="Memuat data pengguna..." />
           ) : isError ? (
             <ErrorState
-              title="Gagal memuat data"
-              message="Terjadi kesalahan pada server"
-              onRetry={handleRetry}
-              retryButtonText="Coba lagi"
+              title="Gagal Memuat Data Pengguna"
+              message={userError?.message || "Terjadi kesalahan pada server"}
+              onRetry={() => navigate("/pengguna")}
+              retryButtonText="Kembali ke Daftar Pengguna"
             />
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">

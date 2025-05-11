@@ -103,14 +103,10 @@ export default function DetailArmada() {
           <LoadingState text="Memuat data armada..." />
         ) : isError ? (
           <ErrorState
-            title="Gagal memuat data armada"
-            message={
-              error instanceof Error
-                ? error.message
-                : "Terjadi kesalahan pada server"
-            }
-            onRetry={refetch}
-            retryButtonText="Coba lagi"
+            title="Gagal Memuat Data Armada"
+            message={error?.message || "Terjadi kesalahan pada server"}
+            onRetry={() => navigate("/armada")}
+            retryButtonText="Kembali ke Daftar Armada"
           />
         ) : (
           <div className="space-y-6">

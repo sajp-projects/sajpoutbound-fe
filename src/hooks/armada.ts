@@ -84,23 +84,34 @@ export function useArmada(
   return useQuery({
     queryKey: armadaKeys.detail(id),
     queryFn: async () => {
-      const response = await fetchApi(`${BASE_URL}/armadas/${id}`);
+      try {
+        const response = await fetchApi(`${BASE_URL}/armadas/${id}`);
 
-      if (!response.ok) {
-        throw new Error(`Error fetching armada: ${response.statusText}`);
+        if (!response.ok) {
+          const errorResult = await response.json();
+          throw new Error(
+            errorResult.message ||
+              `Error fetching armada: ${response.statusText}`
+          );
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(
+            result.message || "Terjadi kesalahan saat mengambil detail armada"
+          );
+        }
+
+        if (!result.data) {
+          throw new Error("Detail armada tidak ditemukan");
+        }
+
+        return result.data;
+      } catch (error) {
+        console.error("Error in useArmada:", error);
+        throw error;
       }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error("Terjadi kesalahan saat mengambil detail armada");
-      }
-
-      if (!result.data) {
-        throw new Error("Detail armada tidak ditemukan");
-      }
-
-      return result.data;
     },
     ...options,
   });

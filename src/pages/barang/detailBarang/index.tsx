@@ -130,14 +130,10 @@ export default function DetailBarang() {
           <LoadingState text="Memuat data barang..." />
         ) : isError ? (
           <ErrorState
-            title="Gagal memuat data barang"
-            message={
-              error instanceof Error
-                ? error.message
-                : "Terjadi kesalahan pada server"
-            }
-            onRetry={refetch}
-            retryButtonText="Coba lagi"
+            title="Gagal Memuat Data Barang"
+            message={error?.message || "Terjadi kesalahan pada server"}
+            onRetry={() => navigate("/barang")}
+            retryButtonText="Kembali ke Daftar Barang"
           />
         ) : (
           <div className="space-y-6">

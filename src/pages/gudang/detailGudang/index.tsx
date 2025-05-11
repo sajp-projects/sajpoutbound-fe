@@ -167,14 +167,10 @@ export default function DetailGudang() {
           <LoadingState text="Memuat data gudang..." />
         ) : isError ? (
           <ErrorState
-            title="Gagal memuat data gudang"
-            message={
-              error instanceof Error
-                ? error.message
-                : "Terjadi kesalahan pada server"
-            }
-            onRetry={refetch}
-            retryButtonText="Coba lagi"
+            title="Gagal Memuat Data Gudang"
+            message={error?.message || "Terjadi kesalahan pada server"}
+            onRetry={() => navigate("/gudang")}
+            retryButtonText="Kembali ke Daftar Gudang"
           />
         ) : (
           <div className="space-y-6">

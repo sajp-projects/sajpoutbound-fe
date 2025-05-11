@@ -41,22 +41,34 @@ export function useCustomer(
   return useQuery({
     queryKey: customerKeys.detail(id),
     queryFn: async () => {
-      const response = await fetchApi(`${BASE_URL}/customers/${id}`);
-      if (!response.ok) {
-        throw new Error(`Error fetching customer: ${response.statusText}`);
+      try {
+        const response = await fetchApi(`${BASE_URL}/customers/${id}`);
+
+        if (!response.ok) {
+          const errorResult = await response.json();
+          throw new Error(
+            errorResult.message ||
+              `Error fetching customer: ${response.statusText}`
+          );
+        }
+
+        const result: ApiResponse<Customer> = await response.json();
+
+        if (!result.success) {
+          throw new Error(
+            result.message || "Terjadi kesalahan saat mengambil data pelanggan"
+          );
+        }
+
+        if (!result.data) {
+          throw new Error("Data pelanggan tidak ditemukan");
+        }
+
+        return result.data;
+      } catch (error) {
+        console.error("Error in useCustomer:", error);
+        throw error;
       }
-
-      const result: ApiResponse<Customer> = await response.json();
-
-      if (!result.success) {
-        handleApiError(result, "Terjadi kesalahan");
-      }
-
-      if (!result.data) {
-        throw new Error("Data pelanggan tidak ditemukan");
-      }
-
-      return result.data;
     },
     ...options,
   });

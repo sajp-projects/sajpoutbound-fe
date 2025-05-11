@@ -75,11 +75,8 @@ export default function EditPelanggan() {
     isLoading,
     isError,
     error,
-    refetch,
   } = useCustomer(
-    {
-      id: id || "",
-    },
+    { id: id || "" },
     {
       staleTime: 5000,
       refetchOnMount: "always",
@@ -179,10 +176,6 @@ export default function EditPelanggan() {
 
   const isSubmitting = updateCustomerMutation.isPending;
 
-  const handleRetry = () => {
-    refetch();
-  };
-
   const inputClassName = (fieldName: keyof CustomerFormData) =>
     cn(
       "mt-1 w-full border-gray-300",
@@ -224,10 +217,10 @@ export default function EditPelanggan() {
             <LoadingState text="Memuat data pelanggan..." />
           ) : isError ? (
             <ErrorState
-              title="Gagal memuat data"
-              message="Terjadi kesalahan pada server"
-              onRetry={handleRetry}
-              retryButtonText="Coba lagi"
+              title="Gagal Memuat Data Pelanggan"
+              message={error?.message || "Terjadi kesalahan pada server"}
+              onRetry={() => navigate("/pelanggan")}
+              retryButtonText="Kembali ke Daftar Pelanggan"
             />
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">

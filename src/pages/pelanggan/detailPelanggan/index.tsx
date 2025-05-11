@@ -44,6 +44,7 @@ export default function DetailPelanggan() {
     isLoading,
     isError,
     refetch,
+    error,
   } = useCustomer(
     { id: id || "" },
     { staleTime: 5000, refetchOnMount: "always" }
@@ -128,10 +129,10 @@ export default function DetailPelanggan() {
           <LoadingState text="Memuat data pelanggan..." />
         ) : isError ? (
           <ErrorState
-            title="Gagal memuat data pelanggan"
-            message="Terjadi kesalahan pada server"
-            onRetry={refetch}
-            retryButtonText="Coba lagi"
+            title="Gagal Memuat Data Pelanggan"
+            message={error?.message || "Terjadi kesalahan pada server"}
+            onRetry={() => navigate("/pelanggan")}
+            retryButtonText="Kembali ke Daftar Pelanggan"
           />
         ) : (
           <div className="space-y-6">

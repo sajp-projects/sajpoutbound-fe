@@ -10,7 +10,7 @@ import {
   Eye,
   Lock,
 } from "lucide-react";
-import { useParams, Link } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utils/date";
 import { cn } from "@/lib/utils";
@@ -35,6 +35,7 @@ export default function DetailPeran() {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<"info" | "users">("info");
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const roleId = getRoleId() || "";
 
@@ -117,12 +118,10 @@ export default function DetailPeran() {
           <LoadingState text="Memuat data peran..." />
         ) : isError ? (
           <ErrorState
-            title="Gagal memuat data peran"
-            message={
-              error?.message || "Terjadi kesalahan saat memuat data peran"
-            }
-            onRetry={refetch}
-            retryButtonText="Coba lagi"
+            title="Gagal Memuat Data Peran"
+            message={error?.message || "Terjadi kesalahan pada server"}
+            onRetry={() => navigate("/peran")}
+            retryButtonText="Kembali ke Daftar Peran"
           />
         ) : (
           <div className="space-y-6">

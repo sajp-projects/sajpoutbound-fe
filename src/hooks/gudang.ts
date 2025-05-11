@@ -87,26 +87,34 @@ export function useWarehouse(
   return useQuery({
     queryKey: warehouseKeys.detail(id),
     queryFn: async () => {
-      const response = await fetchApi(`${BASE_URL}/warehouses/${id}`);
+      try {
+        const response = await fetchApi(`${BASE_URL}/warehouses/${id}`);
 
-      if (!response.ok) {
-        throw new Error(`Error fetching warehouse: ${response.statusText}`);
+        if (!response.ok) {
+          const errorResult = await response.json();
+          throw new Error(
+            errorResult.message ||
+              `Error fetching warehouse: ${response.statusText}`
+          );
+        }
+
+        const result: ApiResponse<Warehouse> = await response.json();
+
+        if (!result.success) {
+          throw new Error(
+            result.message || "Terjadi kesalahan saat mengambil detail gudang"
+          );
+        }
+
+        if (!result.data) {
+          throw new Error("Detail gudang tidak ditemukan");
+        }
+
+        return result.data;
+      } catch (error) {
+        console.error("Error in useWarehouse:", error);
+        throw error;
       }
-
-      const result: ApiResponse<Warehouse> = await response.json();
-
-      if (!result.success) {
-        handleApiError(
-          result,
-          "Terjadi kesalahan saat mengambil detail gudang"
-        );
-      }
-
-      if (!result.data) {
-        throw new Error("Detail gudang tidak ditemukan");
-      }
-
-      return result.data;
     },
     ...options,
   });

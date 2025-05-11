@@ -86,26 +86,34 @@ export function useProduct(
   return useQuery({
     queryKey: productKeys.detail(id),
     queryFn: async () => {
-      const response = await fetchApi(`${BASE_URL}/products/${id}`);
+      try {
+        const response = await fetchApi(`${BASE_URL}/products/${id}`);
 
-      if (!response.ok) {
-        throw new Error(`Error fetching product: ${response.statusText}`);
+        if (!response.ok) {
+          const errorResult = await response.json();
+          throw new Error(
+            errorResult.message ||
+              `Error fetching product: ${response.statusText}`
+          );
+        }
+
+        const result: ApiResponse<Product> = await response.json();
+
+        if (!result.success) {
+          throw new Error(
+            result.message || "Terjadi kesalahan saat mengambil detail barang"
+          );
+        }
+
+        if (!result.data) {
+          throw new Error("Detail barang tidak ditemukan");
+        }
+
+        return result.data;
+      } catch (error) {
+        console.error("Error in useProduct:", error);
+        throw error;
       }
-
-      const result: ApiResponse<Product> = await response.json();
-
-      if (!result.success) {
-        handleApiError(
-          result,
-          "Terjadi kesalahan saat mengambil detail barang"
-        );
-      }
-
-      if (!result.data) {
-        throw new Error("Detail barang tidak ditemukan");
-      }
-
-      return result.data;
     },
     ...options,
   });

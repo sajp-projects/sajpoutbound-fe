@@ -46,7 +46,7 @@ export default function DetailPengguna() {
     data: user,
     isLoading,
     isError,
-    refetch,
+    error,
   } = useUser({ id: id || "" }, { staleTime: 5000, refetchOnMount: "always" });
 
   const deleteUser = useDeleteUser({
@@ -128,10 +128,10 @@ export default function DetailPengguna() {
           <LoadingState text="Memuat data pengguna..." />
         ) : isError ? (
           <ErrorState
-            title="Gagal memuat data pengguna"
-            message="Terjadi kesalahan pada server"
-            onRetry={refetch}
-            retryButtonText="Coba lagi"
+            title="Gagal Memuat Data Pengguna"
+            message={error?.message || "Terjadi kesalahan pada server"}
+            onRetry={() => navigate("/pengguna")}
+            retryButtonText="Kembali ke Daftar Pengguna"
           />
         ) : (
           <div className="space-y-6">

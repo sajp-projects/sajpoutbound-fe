@@ -44,22 +44,33 @@ export function useUser(
   return useQuery({
     queryKey: userKeys.detail(id),
     queryFn: async () => {
-      const response = await fetchApi(`${BASE_URL}/users/${id}`);
-      if (!response.ok) {
-        throw new Error(`Error fetching user: ${response.statusText}`);
+      try {
+        const response = await fetchApi(`${BASE_URL}/users/${id}`);
+
+        if (!response.ok) {
+          const errorResult = await response.json();
+          // Gunakan langsung pesan dari API
+          throw new Error(
+            errorResult.message || `Error fetching user: ${response.statusText}`
+          );
+        }
+
+        const result: ApiResponse<UserWithRole> = await response.json();
+
+        if (!result.success) {
+          // Gunakan langsung pesan dari API
+          throw new Error(result.message || "An error occurred");
+        }
+
+        if (!result.data) {
+          throw new Error("User data is missing");
+        }
+
+        return result.data;
+      } catch (error) {
+        console.error("Error in useUser:", error);
+        throw error;
       }
-
-      const result: ApiResponse<UserWithRole> = await response.json();
-
-      if (!result.success) {
-        handleApiError(result, "An error occurred");
-      }
-
-      if (!result.data) {
-        throw new Error("User data is missing");
-      }
-
-      return result.data;
     },
     ...options,
   });

@@ -54,20 +54,33 @@ export function useRole(
   return useQuery({
     queryKey: roleKeys.detail(id.toString()),
     queryFn: async () => {
-      const response = await fetchApi(`${BASE_URL}/roles/${id}`);
-      const result: ApiResponse<Role> = await response.json();
+      try {
+        const response = await fetchApi(`${BASE_URL}/roles/${id}`);
 
-      if (!result.success) {
-        handleApiError(result, "An error occurred", {
-          ROLE_NOT_FOUND: "Role not found",
-        });
+        if (!response.ok) {
+          const errorResult = await response.json();
+          throw new Error(
+            errorResult.message || `Error fetching role: ${response.statusText}`
+          );
+        }
+
+        const result: ApiResponse<Role> = await response.json();
+
+        if (!result.success) {
+          throw new Error(
+            result.message || "Terjadi kesalahan saat mengambil data peran"
+          );
+        }
+
+        if (!result.data) {
+          throw new Error("Data peran tidak ditemukan");
+        }
+
+        return result.data;
+      } catch (error) {
+        console.error("Error in useRole:", error);
+        throw error;
       }
-
-      if (!result.data) {
-        throw new Error("Role data is missing");
-      }
-
-      return result.data;
     },
     ...options,
   });
