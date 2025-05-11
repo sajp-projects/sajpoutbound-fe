@@ -35,6 +35,7 @@ import {
   showConfirmationAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
+import { hasPermission } from "@/utils/permission";
 
 interface UserFormData {
   name: string;
@@ -92,24 +93,6 @@ export default function TambahPengguna() {
     enabled: isAuthenticated && !!currentUserRoleId && currentUserRoleId !== "",
   });
 
-  const hasRoleReadPermission = (): boolean => {
-    if (!isAuthenticated || !permissions) return false;
-    return permissions.some(
-      (permission) =>
-        permission.resource === PERMISSION.RESOURCES.ROLE &&
-        permission.action === PERMISSION.ACTIONS.READ
-    );
-  };
-
-  const hasWarehouseReadPermission = (): boolean => {
-    if (!isAuthenticated || !permissions) return false;
-    return permissions.some(
-      (permission) =>
-        permission.resource === PERMISSION.RESOURCES.WAREHOUSE &&
-        permission.action === PERMISSION.ACTIONS.READ
-    );
-  };
-
   const [formData, setFormData] = useState<UserFormData>({
     name: "",
     email: "",
@@ -125,17 +108,13 @@ export default function TambahPengguna() {
     data: rolesData,
     isLoading: isLoadingRoles,
     isError: isErrorRoles,
-  } = useAllRoles({
-    enabled: hasRoleReadPermission(),
-  });
+  } = useAllRoles();
 
   const {
     data: warehouses,
     isLoading: isLoadingWarehouses,
     isError: isErrorWarehouses,
-  } = useAllWarehouses({
-    enabled: hasWarehouseReadPermission(),
-  });
+  } = useAllWarehouses();
 
   const roles = rolesData?.roles || [];
 
@@ -216,11 +195,9 @@ export default function TambahPengguna() {
       roleId: formData.roleId,
     };
 
-    // Hanya sertakan warehouseId jika benar-benar ada nilainya
     if (formData.warehouseId && formData.warehouseId.trim() !== "") {
       payload.warehouseId = formData.warehouseId;
     }
-    // Jika kosong, tidak perlu sertakan property warehouseId
 
     showConfirmationAlert(
       "Konfirmasi",
@@ -234,13 +211,14 @@ export default function TambahPengguna() {
     });
   };
 
-  const isLoading =
-    (isLoadingRoles && hasRoleReadPermission()) ||
-    (isLoadingWarehouses && hasWarehouseReadPermission());
-  const isError =
-    (isErrorRoles && hasRoleReadPermission()) ||
-    (isErrorWarehouses && hasWarehouseReadPermission());
+  const isLoading = isLoadingRoles || isLoadingWarehouses;
+  const isError = isErrorRoles || isErrorWarehouses;
   const isSubmitting = createUserMutation.isPending;
+  const canCreateUser = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.USER,
+    PERMISSION.ACTIONS.CREATE
+  );
 
   const inputClassName = (fieldName: keyof UserFormData) =>
     cn(
@@ -265,7 +243,7 @@ export default function TambahPengguna() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <LoadingState text="Memuat data peran..." />
+            <LoadingState text="Memuat data..." />
           ) : isError ? (
             <ErrorState
               title="Gagal memuat data"
@@ -281,13 +259,13 @@ export default function TambahPengguna() {
                 </div>
               )}
 
-              {!hasRoleReadPermission() && (
+              {!canCreateUser && (
                 <div className="flex items-start p-4 mb-4 border rounded-md bg-amber-50 border-amber-200 text-amber-800">
                   <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0 text-amber-500 mt-0.5" />
                   <div>
                     <p className="font-medium">Akses Terbatas</p>
                     <p className="text-sm">
-                      Anda memerlukan izin untuk melihat daftar peran
+                      Anda memerlukan izin untuk menambah pengguna
                     </p>
                   </div>
                 </div>
@@ -360,11 +338,7 @@ export default function TambahPengguna() {
                 id="roleId"
                 label="Peran"
                 error={errors.roleId}
-                helpText={
-                  !hasRoleReadPermission()
-                    ? "Anda memerlukan izin untuk akses ini"
-                    : "Peran menentukan akses dan hak istimewa pengguna di sistem"
-                }
+                helpText="Peran menentukan akses dan hak istimewa pengguna di sistem"
               >
                 <select
                   id="roleId"
@@ -374,13 +348,11 @@ export default function TambahPengguna() {
                   className={cn(
                     "mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
                     errors.roleId &&
-                      "border-red-300 focus:border-red-500 focus:ring-red-500",
-                    !hasRoleReadPermission() && "bg-gray-100 cursor-not-allowed"
+                      "border-red-300 focus:border-red-500 focus:ring-red-500"
                   )}
-                  disabled={!hasRoleReadPermission()}
                 >
                   <option value="">Pilih peran pengguna</option>
-                  {hasRoleReadPermission() && roles && roles.length > 0 ? (
+                  {roles && roles.length > 0 ? (
                     roles.map((role: Role) => (
                       <option key={role.id} value={role.id}>
                         {role.name}
@@ -396,11 +368,7 @@ export default function TambahPengguna() {
                 id="warehouseId"
                 label="Gudang"
                 error={errors.warehouseId}
-                helpText={
-                  !hasWarehouseReadPermission()
-                    ? "Anda memerlukan izin untuk akses ini"
-                    : "Gudang tempat pengguna bertugas (opsional)"
-                }
+                helpText="Gudang tempat pengguna bertugas (opsional)"
               >
                 <div className="flex items-center gap-2">
                   <div className="relative w-full">
@@ -412,16 +380,11 @@ export default function TambahPengguna() {
                       className={cn(
                         "mt-1 block w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
                         errors.warehouseId &&
-                          "border-red-300 focus:border-red-500 focus:ring-red-500",
-                        !hasWarehouseReadPermission() &&
-                          "bg-gray-100 cursor-not-allowed"
+                          "border-red-300 focus:border-red-500 focus:ring-red-500"
                       )}
-                      disabled={!hasWarehouseReadPermission()}
                     >
                       <option value="">Pilih gudang (opsional)</option>
-                      {hasWarehouseReadPermission() &&
-                      warehouses &&
-                      warehouses.length > 0 ? (
+                      {warehouses && warehouses.length > 0 ? (
                         warehouses.map((warehouse) => (
                           <option key={warehouse.id} value={warehouse.id}>
                             {warehouse.name}
@@ -432,7 +395,7 @@ export default function TambahPengguna() {
                       )}
                     </select>
                   </div>
-                  {formData.warehouseId && hasWarehouseReadPermission() && (
+                  {formData.warehouseId && (
                     <Button
                       type="button"
                       variant="outline"
@@ -457,10 +420,10 @@ export default function TambahPengguna() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isSubmitting || !hasRoleReadPermission()}
+                  disabled={isSubmitting || !canCreateUser}
                   className={cn(
                     "bg-blue-600 hover:bg-blue-700 text-white",
-                    !hasRoleReadPermission() && "opacity-50 cursor-not-allowed"
+                    !canCreateUser && "opacity-50 cursor-not-allowed"
                   )}
                 >
                   {isSubmitting ? (
@@ -479,7 +442,7 @@ export default function TambahPengguna() {
             </form>
           )}
         </CardContent>
-        {(!hasRoleReadPermission() || !hasWarehouseReadPermission()) && (
+        {!canCreateUser && (
           <CardFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50">
             <div className="flex items-center text-amber-600">
               <AlertTriangle className="w-5 h-5 mr-2" />

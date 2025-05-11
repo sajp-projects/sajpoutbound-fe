@@ -104,7 +104,7 @@ export function useAllRoles(
   return useQuery({
     queryKey: roleKeys.allRoles(),
     queryFn: async () => {
-      const response = await fetchApi(`${BASE_URL}/roles`, {});
+      const response = await fetchApi(`${BASE_URL}/roles/options`, {});
 
       if (!response.ok) {
         throw new Error(`Error fetching all roles: ${response.statusText}`);

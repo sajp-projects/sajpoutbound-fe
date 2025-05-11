@@ -256,7 +256,7 @@ export function useAllWarehouses(
   return useQuery({
     queryKey: warehouseKeys.allWarehouses(),
     queryFn: async () => {
-      const response = await fetchApi(`${BASE_URL}/warehouses`, { limit: 100 });
+      const response = await fetchApi(`${BASE_URL}/warehouses/options`, {});
 
       if (!response.ok) {
         throw new Error(
