@@ -28,7 +28,6 @@ import {
   isConfirmed,
   showDeleteConfirmationAlert,
   showErrorAlert,
-  showForbiddenAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
 
@@ -107,18 +106,10 @@ export default function Role() {
 
   const deleteRole = useDeleteRole({
     onError: (error) => {
-      console.log(error, "error", error.message);
-      if (error.message && error.message.includes("Forbidden")) {
-        showForbiddenAlert(
-          "Akses Ditolak",
-          "Anda tidak memiliki akses untuk menghapus peran ini."
-        );
-      } else {
-        showErrorAlert(
-          "Gagal Menghapus Peran",
-          error.message || "Terjadi kesalahan saat menghapus peran"
-        );
-      }
+      showErrorAlert(
+        "Gagal Menghapus Peran",
+        error.message || "Terjadi kesalahan saat menghapus peran"
+      );
     },
     onSuccess: (data) => {
       showSuccessAlert(

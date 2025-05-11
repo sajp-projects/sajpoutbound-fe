@@ -21,7 +21,6 @@ import {
   showErrorAlert,
   showConfirmationAlert,
   isConfirmed,
-  showForbiddenAlert,
 } from "@/utils/sweetAlert";
 import { LoadingState } from "@/components/LoadingState";
 import { EmptyState } from "@/components/EmptyState";
@@ -60,19 +59,12 @@ export default function ArsipPengguna() {
       refetch();
     },
     onError: (error) => {
-      if (error.message.includes("Forbidden")) {
-        showForbiddenAlert(
-          "Akses Ditolak",
-          "Anda tidak memiliki akses untuk memulihkan pengguna ini."
-        );
-      } else {
-        showErrorAlert(
-          "Gagal!",
-          `Gagal memulihkan pengguna: ${
-            error.message || "Terjadi kesalahan saat memulihkan pengguna."
-          }`
-        );
-      }
+      showErrorAlert(
+        "Gagal!",
+        `Gagal memulihkan pengguna: ${
+          error.message || "Terjadi kesalahan saat memulihkan pengguna."
+        }`
+      );
     },
   });
 

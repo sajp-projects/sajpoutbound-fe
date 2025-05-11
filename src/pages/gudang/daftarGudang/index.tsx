@@ -19,7 +19,6 @@ import {
   showSuccessAlert,
   showErrorAlert,
   isConfirmed,
-  showForbiddenAlert,
   showDeleteConfirmationAlert,
 } from "@/utils/sweetAlert";
 import { LoadingState } from "@/components/LoadingState";
@@ -48,10 +47,10 @@ interface ActionConfig {
 export default function DaftarGudang() {
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
-  const roleId = getRoleId() || '';
+  const roleId = getRoleId() || "";
 
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && roleId !== '',
+    enabled: isAuthenticated && roleId !== "",
   });
 
   const hasWarehouseCreateAccess = hasPermission(
@@ -103,25 +102,10 @@ export default function DaftarGudang() {
       refetch();
     },
     onError: (error) => {
-      try {
-        if (error.message && error.message.includes("Forbidden")) {
-          showForbiddenAlert(
-            "Akses Ditolak",
-            "Anda tidak memiliki akses untuk menghapus gudang ini."
-          );
-        } else {
-          const errorObj = JSON.parse(error.message);
-          showErrorAlert(
-            "Gagal Menghapus Gudang",
-            errorObj.message || "Terjadi kesalahan saat menghapus gudang"
-          );
-        }
-      } catch {
-        showErrorAlert(
-          "Gagal Menghapus Gudang",
-          error.message || "Terjadi kesalahan saat menghapus gudang"
-        );
-      }
+      showErrorAlert(
+        "Gagal Menghapus Gudang",
+        error.message || "Terjadi kesalahan saat menghapus gudang"
+      );
     },
   });
 
@@ -138,13 +122,13 @@ export default function DaftarGudang() {
 
   const getWarehouseActions = (warehouse: Warehouse) => {
     const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
-    
+
     if (hasWarehouseUpdateAccess) {
       actions.push({ type: ActionType.EDIT });
     }
-    
+
     actions.push({ type: ActionType.LOG });
-    
+
     if (hasWarehouseDeleteAccess) {
       actions.push({
         type: ActionType.DELETE,
@@ -155,20 +139,20 @@ export default function DaftarGudang() {
         disabled: deleteWarehouseMutation.isPending,
       });
     }
-    
+
     return actions;
   };
 
   return (
-    <div className="flex flex-col min-h-full w-full space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 w-full">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+    <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
+      <div className="flex flex-col items-start justify-between w-full gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
           Daftar Gudang
         </h1>
         {hasWarehouseCreateAccess && (
           <Link to="/gudang/tambah">
             <Button
-              leftIcon={<Plus className="h-4 w-4" />}
+              leftIcon={<Plus className="w-4 h-4" />}
               size="sm"
               className="w-full sm:w-auto"
             >
@@ -178,28 +162,28 @@ export default function DaftarGudang() {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 overflow-hidden w-full">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 w-full">
+      <div className="w-full p-3 overflow-hidden bg-white rounded-lg shadow sm:p-4 md:p-6">
+        <div className="flex flex-col items-start justify-between w-full gap-3 mb-4 sm:flex-row sm:items-center sm:mb-6">
           <div>
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
               Gudang
             </h2>
-            <p className="text-xs sm:text-sm text-gray-500">
+            <p className="text-xs text-gray-500 sm:text-sm">
               Manajemen data gudang penyimpanan
             </p>
           </div>
-          <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto items-center">
+          <div className="flex flex-wrap items-center w-full gap-2 sm:gap-3 sm:w-auto">
             <Button
               variant="outline"
               size="sm"
-              leftIcon={<Download className="h-3 w-3 sm:h-4 sm:w-4" />}
+              leftIcon={<Download className="w-3 h-3 sm:h-4 sm:w-4" />}
             >
               Export
             </Button>
           </div>
         </div>
 
-        <div className="mb-4 sm:mb-6 w-full">
+        <div className="w-full mb-4 sm:mb-6">
           <SearchInput
             placeholder="Cari gudang..."
             className="w-full sm:max-w-md"
@@ -221,11 +205,11 @@ export default function DaftarGudang() {
         ) : (
           <div className="w-full">
             {}
-            <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden w-full">
+            <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
               <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50 border-b border-gray-200">
+                    <TableRow className="border-b border-gray-200 bg-gray-50">
                       <TableHead className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         No.
                       </TableHead>
@@ -299,7 +283,7 @@ export default function DaftarGudang() {
                             {formatDate(gudang.createdAt)}
                           </TableCell>
                           <TableCell className="py-2.5 px-3">
-                            <div className="flex justify-center items-center">
+                            <div className="flex items-center justify-center">
                               <ActionButtons
                                 actions={getWarehouseActions(gudang)}
                                 entityId={gudang.id}
@@ -316,24 +300,24 @@ export default function DaftarGudang() {
             </div>
 
             {}
-            <div className="sm:hidden space-y-3 w-full">
+            <div className="w-full space-y-3 sm:hidden">
               {warehouses.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-6 border rounded-lg border-gray-200 bg-white w-full">
+                <div className="flex flex-col items-center justify-center w-full p-6 bg-white border border-gray-200 rounded-lg">
                   <EmptyState title="Tidak ada data gudang yang ditemukan" />
                 </div>
               ) : (
                 warehouses.map((gudang) => (
                   <div
                     key={gudang.id}
-                    className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm w-full"
+                    className="w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
                   >
-                    <div className="p-3 w-full">
-                      <div className="flex justify-between items-start mb-2 w-full">
+                    <div className="w-full p-3">
+                      <div className="flex items-start justify-between w-full mb-2">
                         <div className="max-w-[65%]">
-                          <h3 className="font-medium text-blue-600 break-words text-sm">
+                          <h3 className="text-sm font-medium text-blue-600 break-words">
                             {gudang.name}
                           </h3>
-                          <p className="text-xs text-gray-600 break-all mt-1">
+                          <p className="mt-1 text-xs text-gray-600 break-all">
                             {gudang.description}
                           </p>
                         </div>
@@ -359,7 +343,7 @@ export default function DaftarGudang() {
                         )}
                       </div>
 
-                      <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
+                      <div className="flex items-center justify-end gap-1 pt-2 mt-2 border-t">
                         <ActionButtons
                           actions={getWarehouseActions(gudang)}
                           entityId={gudang.id}

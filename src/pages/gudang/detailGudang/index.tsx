@@ -7,7 +7,6 @@ import {
   isConfirmed,
   showDeleteConfirmationAlert,
   showErrorAlert,
-  showForbiddenAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
 import { ArrowLeft, Edit, History, Trash2, Package } from "lucide-react";
@@ -72,25 +71,10 @@ export default function DetailGudang() {
       });
     },
     onError: (error) => {
-      try {
-        if (error.message && error.message.includes("Forbidden")) {
-          showForbiddenAlert(
-            "Akses Ditolak",
-            "Anda tidak memiliki akses untuk menghapus gudang ini."
-          );
-        } else {
-          const errorObj = JSON.parse(error.message);
-          showErrorAlert(
-            "Gagal Menghapus Gudang",
-            errorObj.message || "Terjadi kesalahan saat menghapus gudang"
-          );
-        }
-      } catch {
-        showErrorAlert(
-          "Gagal Menghapus Gudang",
-          error.message || "Terjadi kesalahan saat menghapus gudang"
-        );
-      }
+      showErrorAlert(
+        "Gagal Menghapus Gudang",
+        error.message || "Terjadi kesalahan saat menghapus gudang"
+      );
     },
   });
 

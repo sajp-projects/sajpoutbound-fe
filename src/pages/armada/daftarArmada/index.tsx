@@ -16,11 +16,10 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
 import {
-  showSuccessAlert,
-  showErrorAlert,
   isConfirmed,
-  showForbiddenAlert,
   showDeleteConfirmationAlert,
+  showErrorAlert,
+  showSuccessAlert,
 } from "@/utils/sweetAlert";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
@@ -62,25 +61,10 @@ export default function DaftarArmada() {
       refetch();
     },
     onError: (error) => {
-      try {
-        if (error.message && error.message.includes("Forbidden")) {
-          showForbiddenAlert(
-            "Akses Ditolak",
-            "Anda tidak memiliki akses untuk menghapus armada ini."
-          );
-        } else {
-          const errorObj = JSON.parse(error.message);
-          showErrorAlert(
-            "Gagal Menghapus Armada",
-            errorObj.message || "Terjadi kesalahan saat menghapus armada"
-          );
-        }
-      } catch {
-        showErrorAlert(
-          "Gagal Menghapus Armada",
-          error.message || "Terjadi kesalahan saat menghapus armada"
-        );
-      }
+      showErrorAlert(
+        "Gagal Menghapus Armada",
+        error.message || "Terjadi kesalahan saat menghapus armada"
+      );
     },
   });
 

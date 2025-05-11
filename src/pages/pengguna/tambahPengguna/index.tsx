@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Role } from "@/types/role";
 import { CreateUserInput } from "@/types/user";
 import { AlertTriangle, Loader2, Save } from "lucide-react";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { ErrorState } from "@/components/ErrorState";
@@ -26,7 +26,6 @@ import { FormErrorData, FormErrors } from "@/utils/errorHandler";
 import {
   isConfirmed,
   showConfirmationAlert,
-  showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
 
@@ -104,15 +103,6 @@ export default function TambahPengguna() {
 
   const roles = rolesData?.roles || [];
 
-  useEffect(() => {
-    if (!hasRoleReadPermission()) {
-      showErrorAlert(
-        "Akses Terbatas",
-        "Anda tidak memiliki izin untuk melihat daftar peran. Anda tidak akan dapat menambahkan pengguna baru tanpa menetapkan peran yang valid."
-      );
-    }
-  }, [permissions]);
-
   const createUserMutation = useCreateUser({
     onSuccess: () => {
       showSuccessAlert("Berhasil!", "Pengguna baru berhasil ditambahkan").then(
@@ -150,8 +140,7 @@ export default function TambahPengguna() {
         } else {
           setErrors({ general: errorObj.message });
         }
-      } catch (e) {
-        console.error("Error parsing error message:", e);
+      } catch {
         setErrors({ general: "Terjadi kesalahan saat menambahkan pengguna" });
       }
     },
@@ -243,9 +232,7 @@ export default function TambahPengguna() {
                   <div>
                     <p className="font-medium">Akses Terbatas</p>
                     <p className="text-sm">
-                      Anda tidak memiliki izin untuk melihat daftar peran. Anda
-                      tidak akan dapat menambahkan pengguna baru tanpa
-                      menetapkan peran yang valid.
+                      Anda memerlukan izin untuk melihat daftar peran
                     </p>
                   </div>
                 </div>
@@ -307,7 +294,7 @@ export default function TambahPengguna() {
                 error={errors.roleId}
                 helpText={
                   !hasRoleReadPermission()
-                    ? "Anda tidak memiliki izin untuk melihat dan memilih peran"
+                    ? "Anda memerlukan izin untuk akses ini"
                     : "Peran menentukan akses dan hak istimewa pengguna di sistem"
                 }
               >
@@ -375,8 +362,8 @@ export default function TambahPengguna() {
             <div className="flex items-center text-amber-600">
               <AlertTriangle className="w-5 h-5 mr-2" />
               <p className="text-sm">
-                Untuk menambahkan pengguna, Anda memerlukan izin untuk melihat
-                peran. Silakan hubungi administrator sistem.
+                Hubungi administrator sistem untuk mendapatkan izin yang
+                diperlukan
               </p>
             </div>
           </CardFooter>

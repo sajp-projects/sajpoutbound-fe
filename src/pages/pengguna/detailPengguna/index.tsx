@@ -9,7 +9,6 @@ import { formatDate } from "@/utils/date";
 import {
   showSuccessAlert,
   showErrorAlert,
-  showForbiddenAlert,
   showConfirmationAlert,
   isConfirmed,
 } from "@/utils/sweetAlert";
@@ -25,10 +24,10 @@ export default function DetailPengguna() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const roleId = getRoleId() || '';
+  const roleId = getRoleId() || "";
 
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && roleId !== '',
+    enabled: isAuthenticated && roleId !== "",
   });
 
   const hasUserUpdateAccess = hasPermission(
@@ -57,19 +56,12 @@ export default function DetailPengguna() {
       });
     },
     onError: (error) => {
-      if (error.message.includes("Forbidden")) {
-        showForbiddenAlert(
-          "Akses Ditolak",
-          "Anda tidak memiliki akses untuk mengarsipkan pengguna ini."
-        );
-      } else {
-        showErrorAlert(
-          "Gagal!",
-          `Gagal mengarsipkan pengguna: ${
-            error.message || "Terjadi kesalahan saat mengarsipkan pengguna."
-          }`
-        );
-      }
+      showErrorAlert(
+        "Gagal!",
+        `Gagal mengarsipkan pengguna: ${
+          error.message || "Terjadi kesalahan saat mengarsipkan pengguna."
+        }`
+      );
     },
   });
 

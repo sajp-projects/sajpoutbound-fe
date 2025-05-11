@@ -23,7 +23,6 @@ import {
   isConfirmed,
   showConfirmationAlert,
   showErrorAlert,
-  showForbiddenAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
 
@@ -83,18 +82,10 @@ export default function Pengguna() {
       refetch();
     },
     onError: (error) => {
-      console.log(error, "error", error.message);
-      if (error.message && error.message.includes("Forbidden")) {
-        showForbiddenAlert(
-          "Akses Ditolak",
-          "Anda tidak memiliki akses untuk mengarsipkan pengguna ini."
-        );
-      } else {
-        showErrorAlert(
-          "Gagal Mengarsipkan Pengguna",
-          error.message || "Terjadi kesalahan saat mengarsipkan pengguna."
-        );
-      }
+      showErrorAlert(
+        "Gagal Mengarsipkan Pengguna",
+        error.message || "Terjadi kesalahan saat mengarsipkan pengguna."
+      );
     },
   });
 

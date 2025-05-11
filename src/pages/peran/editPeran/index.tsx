@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 
 import {
   showSuccessAlert,
-  showForbiddenAlert,
   showConfirmationAlert,
   isConfirmed,
 } from "@/utils/sweetAlert";
@@ -70,14 +69,6 @@ export default function EditPeran() {
       });
     },
     onError: (error: Error) => {
-      if (error.message && error.message.includes("Forbidden")) {
-        showForbiddenAlert(
-          "Akses Ditolak",
-          "Anda tidak memiliki akses untuk mengubah peran ini."
-        );
-        return;
-      }
-
       try {
         const errorObj = JSON.parse(error.message);
 

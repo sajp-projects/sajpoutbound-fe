@@ -24,7 +24,6 @@ import {
   isConfirmed,
   showDeleteConfirmationAlert,
   showErrorAlert,
-  showForbiddenAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
 import { useAuth } from "@/hooks/auth";
@@ -48,10 +47,10 @@ interface ActionConfig {
 export default function DaftarBarang() {
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
-  const roleId = getRoleId() || '';
+  const roleId = getRoleId() || "";
 
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && roleId !== '',
+    enabled: isAuthenticated && roleId !== "",
   });
 
   const hasProductCreateAccess = hasPermission(
@@ -103,25 +102,10 @@ export default function DaftarBarang() {
       refetch();
     },
     onError: (error) => {
-      try {
-        if (error.message && error.message.includes("Forbidden")) {
-          showForbiddenAlert(
-            "Akses Ditolak",
-            "Anda tidak memiliki akses untuk menghapus barang ini."
-          );
-        } else {
-          const errorObj = JSON.parse(error.message);
-          showErrorAlert(
-            "Gagal Menghapus Barang",
-            errorObj.message || "Terjadi kesalahan saat menghapus barang"
-          );
-        }
-      } catch {
-        showErrorAlert(
-          "Gagal Menghapus Barang",
-          error.message || "Terjadi kesalahan saat menghapus barang"
-        );
-      }
+      showErrorAlert(
+        "Gagal Menghapus Barang",
+        error.message || "Terjadi kesalahan saat menghapus barang"
+      );
     },
   });
 
@@ -138,13 +122,13 @@ export default function DaftarBarang() {
 
   const getProductActions = (product: Product) => {
     const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
-    
+
     if (hasProductUpdateAccess) {
       actions.push({ type: ActionType.EDIT });
     }
-    
+
     actions.push({ type: ActionType.LOG });
-    
+
     if (hasProductDeleteAccess) {
       actions.push({
         type: ActionType.DELETE,
@@ -155,7 +139,7 @@ export default function DaftarBarang() {
         disabled: deleteProductMutation.isPending,
       });
     }
-    
+
     return actions;
   };
 

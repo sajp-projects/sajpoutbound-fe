@@ -1,6 +1,4 @@
-
 import Swal, { SweetAlertResult } from "sweetalert2";
-
 
 export const showSuccessAlert = (title: string, text?: string) => {
   return Swal.fire({
@@ -12,7 +10,6 @@ export const showSuccessAlert = (title: string, text?: string) => {
   });
 };
 
-
 export const showErrorAlert = (title: string, text?: string) => {
   return Swal.fire({
     icon: "error",
@@ -21,7 +18,6 @@ export const showErrorAlert = (title: string, text?: string) => {
     confirmButtonText: "Tutup",
   });
 };
-
 
 export const showWarningAlert = (title: string, text: string) => {
   return Swal.fire({
@@ -32,8 +28,12 @@ export const showWarningAlert = (title: string, text: string) => {
   });
 };
 
-
-export const showConfirmationAlert = (title: string, text: string, confirmButtonText = "Ya", cancelButtonText = "Batal") => {
+export const showConfirmationAlert = (
+  title: string,
+  text: string,
+  confirmButtonText = "Ya",
+  cancelButtonText = "Batal"
+) => {
   return Swal.fire({
     title,
     text,
@@ -46,8 +46,10 @@ export const showConfirmationAlert = (title: string, text: string, confirmButton
   });
 };
 
-
-export const showDeleteConfirmationAlert = (itemName: string, message?: string) => {
+export const showDeleteConfirmationAlert = (
+  itemName: string,
+  message?: string
+) => {
   return Swal.fire({
     title: `Konfirmasi Hapus ${itemName}`,
     text: message || `Apakah Anda yakin ingin menghapus ${itemName} ini?`,
@@ -60,20 +62,8 @@ export const showDeleteConfirmationAlert = (itemName: string, message?: string) 
   });
 };
 
-
-export const showForbiddenAlert = (title = "Akses Ditolak", text = "Anda tidak memiliki akses untuk melakukan tindakan ini.") => {
-  return Swal.fire({
-    title,
-    text,
-    icon: "error",
-    confirmButtonText: "Tutup",
-  });
-};
-
-
 export const isConfirmed = (result: SweetAlertResult) => {
   return result.isConfirmed;
 };
-
 
 export default Swal;

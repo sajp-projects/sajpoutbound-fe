@@ -14,7 +14,6 @@ import { useRolePermissions } from "@/hooks/izin";
 import {
   showSuccessAlert,
   showErrorAlert,
-  showForbiddenAlert,
   showConfirmationAlert,
   isConfirmed,
 } from "@/utils/sweetAlert";
@@ -72,19 +71,12 @@ export default function DaftarPelanggan() {
       refetch();
     },
     onError: (error) => {
-      if (error.message.includes("Forbidden")) {
-        showForbiddenAlert(
-          "Akses Ditolak",
-          "Anda tidak memiliki akses untuk menghapus pelanggan ini."
-        );
-      } else {
-        showErrorAlert(
-          "Gagal!",
-          `Gagal menghapus pelanggan: ${
-            error.message || "Terjadi kesalahan saat menghapus pelanggan."
-          }`
-        );
-      }
+      showErrorAlert(
+        "Gagal!",
+        `Gagal menghapus pelanggan: ${
+          error.message || "Terjadi kesalahan saat menghapus pelanggan."
+        }`
+      );
     },
   });
 

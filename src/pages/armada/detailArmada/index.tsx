@@ -7,7 +7,6 @@ import {
   isConfirmed,
   showDeleteConfirmationAlert,
   showErrorAlert,
-  showForbiddenAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
 import { ArrowLeft, Edit, FileText, Trash2 } from "lucide-react";
@@ -38,25 +37,10 @@ export default function DetailArmada() {
       });
     },
     onError: (error) => {
-      try {
-        if (error.message && error.message.includes("Forbidden")) {
-          showForbiddenAlert(
-            "Akses Ditolak",
-            "Anda tidak memiliki akses untuk menghapus armada ini."
-          );
-        } else {
-          const errorObj = JSON.parse(error.message);
-          showErrorAlert(
-            "Gagal Menghapus Armada",
-            errorObj.message || "Terjadi kesalahan saat menghapus armada"
-          );
-        }
-      } catch {
-        showErrorAlert(
-          "Gagal Menghapus Armada",
-          error.message || "Terjadi kesalahan saat menghapus armada"
-        );
-      }
+      showErrorAlert(
+        "Gagal Menghapus Armada",
+        error.message || "Terjadi kesalahan saat menghapus armada"
+      );
     },
   });
 
