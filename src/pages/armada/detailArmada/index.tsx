@@ -21,7 +21,6 @@ export default function DetailArmada() {
     isLoading,
     isError,
     error,
-    refetch,
   } = useArmada(
     { id: id || "" },
     {

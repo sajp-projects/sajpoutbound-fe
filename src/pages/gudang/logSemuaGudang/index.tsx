@@ -161,18 +161,6 @@ export default function LogSemuaGudang() {
         });
       }
 
-      type UserType = { name: string };
-      const oldUser = (oldData.user as UserType)?.name || "-";
-      const newUser = (newData.user as UserType)?.name || "-";
-
-      if (oldUser !== newUser) {
-        changes.push({
-          field: "Pengelola",
-          oldValue: oldUser,
-          newValue: newUser,
-        });
-      }
-
       if (changes.length === 0) return null;
 
       return (

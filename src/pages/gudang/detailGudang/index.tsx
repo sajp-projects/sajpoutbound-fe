@@ -169,8 +169,8 @@ export default function DetailGudang() {
           <ErrorState
             title="Gagal Memuat Data Gudang"
             message={error?.message || "Terjadi kesalahan pada server"}
-            onRetry={() => navigate("/gudang")}
-            retryButtonText="Kembali ke Daftar Gudang"
+            onRetry={refetch}
+            retryButtonText="Coba lagi"
           />
         ) : (
           <div className="space-y-6">
@@ -192,23 +192,6 @@ export default function DetailGudang() {
                       <p className="font-medium text-gray-900">
                         {gudang?.description || "-"}
                       </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Pengelola</p>
-                      <div className="mt-1">
-                        {gudang?.user ? (
-                          <Link
-                            to={`/pengguna/${gudang.user.id}`}
-                            className="text-blue-600 hover:underline"
-                          >
-                            {gudang.user.name}
-                          </Link>
-                        ) : (
-                          <p className="italic text-gray-500">
-                            Tidak ada pengelola
-                          </p>
-                        )}
-                      </div>
                     </div>
                   </div>
                 </div>

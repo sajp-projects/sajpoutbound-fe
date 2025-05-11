@@ -1,4 +1,4 @@
-import { Pagination } from './user';
+import { Pagination } from "./user";
 
 export interface UserMinimal {
   id: string;
@@ -13,7 +13,7 @@ export interface Warehouse {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
-  user: UserMinimal | null;
+  users?: UserMinimal[];
   products?: Product[];
 }
 
@@ -25,13 +25,11 @@ export interface WarehousesResponse {
 export interface CreateWarehouseInput {
   name: string;
   description: string;
-  userId?: string;
 }
 
 export interface UpdateWarehouseInput {
   name?: string;
   description?: string;
-  userId?: string | null;
 }
 
 // Interface untuk produk yang ada di gudang

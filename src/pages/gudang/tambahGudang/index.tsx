@@ -1,21 +1,19 @@
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { useCreateWarehouse } from '@/hooks/gudang';
-import { useUsers } from '@/hooks/user';
-import { cn } from '@/lib/utils';
-import { FormErrorData, FormErrors } from '@/utils/errorHandler';
+} from "@/components/ui/card";
+import { useCreateWarehouse } from "@/hooks/gudang";
+import { cn } from "@/lib/utils";
+import { FormErrorData, FormErrors } from "@/utils/errorHandler";
 import {
   isConfirmed,
   showConfirmationAlert,
   showSuccessAlert,
-} from '@/utils/sweetAlert';
+} from "@/utils/sweetAlert";
 import { Loader2, Save } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
@@ -23,7 +21,6 @@ import { useNavigate } from "react-router";
 interface WarehouseFormData {
   name: string;
   description: string;
-  userId?: string;
 }
 
 type WarehouseFormErrors = FormErrors<WarehouseFormData> & {
@@ -33,21 +30,14 @@ type WarehouseFormErrors = FormErrors<WarehouseFormData> & {
 export default function TambahGudang() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<WarehouseFormData>({
-    name: '',
-    description: '',
-    userId: '',
+    name: "",
+    description: "",
   });
   const [errors, setErrors] = useState<WarehouseFormErrors>({});
 
-  
-  const { data: usersData } = useUsers({
-    staleTime: 300000, 
-  });
-  const users = usersData?.users || [];
-
   const createWarehouseMutation = useCreateWarehouse({
     onSuccess: (data) => {
-      showSuccessAlert('Sukses!', 'Gudang berhasil ditambahkan').then(() => {
+      showSuccessAlert("Sukses!", "Gudang berhasil ditambahkan").then(() => {
         navigate(`/gudang/${data.id}`);
       });
     },
@@ -56,19 +46,17 @@ export default function TambahGudang() {
         const errorObj = JSON.parse(error.message) as FormErrorData;
 
         if (
-          errorObj.errorType === 'joiValidationError' &&
+          errorObj.errorType === "joiValidationError" &&
           errorObj.details &&
           errorObj.details.length > 0
         ) {
           const newErrors: WarehouseFormErrors = {};
 
           errorObj.details.forEach((detail) => {
-            if (detail.path.includes('name')) {
+            if (detail.path.includes("name")) {
               newErrors.name = detail.message;
-            } else if (detail.path.includes('description')) {
+            } else if (detail.path.includes("description")) {
               newErrors.description = detail.message;
-            } else if (detail.path.includes('userId')) {
-              newErrors.userId = detail.message;
             } else {
               newErrors.general = detail.message;
             }
@@ -79,7 +67,7 @@ export default function TambahGudang() {
           setErrors({ general: errorObj.message });
         }
       } catch {
-        setErrors({ general: 'Terjadi kesalahan saat menambahkan gudang' });
+        setErrors({ general: "Terjadi kesalahan saat menambahkan gudang" });
       }
     },
   });
@@ -101,20 +89,14 @@ export default function TambahGudang() {
     e.preventDefault();
     setErrors({});
 
-    
-    const submissionData = {
-      ...formData,
-      userId: formData.userId === '' ? undefined : formData.userId,
-    };
-
     showConfirmationAlert(
-      'Konfirmasi',
-      'Apakah Anda yakin ingin menambahkan gudang baru ini?',
-      'Ya, Tambahkan!',
-      'Batal'
+      "Konfirmasi",
+      "Apakah Anda yakin ingin menambahkan gudang baru ini?",
+      "Ya, Tambahkan!",
+      "Batal"
     ).then((result) => {
       if (isConfirmed(result)) {
-        createWarehouseMutation.mutate(submissionData);
+        createWarehouseMutation.mutate(formData);
       }
     });
   };
@@ -142,25 +124,26 @@ export default function TambahGudang() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div>
+            <div className="grid grid-cols-1 gap-6">
+              <div className="col-span-1">
                 <label
                   htmlFor="name"
                   className="block text-sm font-medium text-gray-700"
                 >
                   Nama Gudang
                 </label>
-                <Input
+                <input
                   id="name"
                   name="name"
+                  type="text"
                   value={formData.name}
                   onChange={handleInputChange}
                   placeholder="Masukkan nama gudang"
                   className={cn(
-                    'mt-1 w-full border-gray-300',
+                    "mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
                     errors.name
-                      ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                      : 'focus:border-blue-500 focus:ring-blue-500'
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                      : ""
                   )}
                 />
                 {errors.name ? (
@@ -172,67 +155,7 @@ export default function TambahGudang() {
                 )}
               </div>
 
-              <div>
-                <label
-                  htmlFor="userId"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Penanggung Jawab
-                </label>
-                <div className="flex flex-col items-start mt-1 sm:flex-row sm:items-center">
-                  <select
-                    id="userId"
-                    name="userId"
-                    value={formData.userId}
-                    onChange={handleInputChange}
-                    className={cn(
-                      'w-full py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm max-w-full overflow-hidden text-ellipsis',
-                      errors.userId &&
-                        'border-red-300 focus:border-red-500 focus:ring-red-500'
-                    )}
-                  >
-                    <option value="">
-                      -- Pilih Penanggung Jawab (Opsional) --
-                    </option>
-                    {users && users.length > 0 ? (
-                      users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.name} ({user.email})
-                        </option>
-                      ))
-                    ) : (
-                      <option value="" disabled>
-                        Tidak ada pengguna tersedia
-                      </option>
-                    )}
-                  </select>
-                  {formData.userId && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full mt-2 text-red-600 border-red-200 sm:ml-2 sm:mt-0 hover:text-red-800 hover:border-red-300 hover:bg-red-50 sm:w-auto"
-                      onClick={() =>
-                        setFormData((prev) => ({ ...prev, userId: '' }))
-                      }
-                      title="Hapus penanggung jawab"
-                    >
-                      Hapus
-                    </Button>
-                  )}
-                </div>
-                {formData.userId && <div className="mt-2 sm:hidden"></div>}
-                {errors.userId ? (
-                  <p className="mt-1 text-sm text-red-500">{errors.userId}</p>
-                ) : (
-                  <p className="mt-1 text-sm text-gray-500">
-                    Pilih pengguna yang bertanggung jawab untuk gudang ini
-                    (opsional)
-                  </p>
-                )}
-              </div>
-
-              <div className="md:col-span-2">
+              <div className="col-span-1">
                 <label
                   htmlFor="description"
                   className="block text-sm font-medium text-gray-700"
@@ -247,9 +170,9 @@ export default function TambahGudang() {
                   rows={4}
                   placeholder="Deskripsikan fungsi dan lokasi gudang"
                   className={cn(
-                    'mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
+                    "mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
                     errors.description &&
-                      'border-red-300 focus:border-red-500 focus:ring-red-500'
+                      "border-red-300 focus:border-red-500 focus:ring-red-500"
                   )}
                 />
                 {errors.description ? (
@@ -267,7 +190,7 @@ export default function TambahGudang() {
             <div className="flex justify-end gap-3">
               <Button
                 variant="outline"
-                onClick={() => navigate('/gudang')}
+                onClick={() => navigate("/gudang")}
                 disabled={isSubmitting}
                 type="button"
               >

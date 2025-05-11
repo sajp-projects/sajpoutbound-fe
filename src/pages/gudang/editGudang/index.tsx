@@ -1,32 +1,28 @@
-import { ErrorState } from '@/components/ErrorState';
-import { LoadingState } from '@/components/LoadingState';
-import { Button } from '@/components/ui/button';
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { useUpdateWarehouse, useWarehouse } from '@/hooks/gudang';
-import { useUsers } from '@/hooks/user';
-import { cn } from '@/lib/utils';
-import { FormErrors } from '@/utils/errorHandler';
+} from "@/components/ui/card";
+import { useUpdateWarehouse, useWarehouse } from "@/hooks/gudang";
+import { cn } from "@/lib/utils";
+import { FormErrors } from "@/utils/errorHandler";
 import {
   isConfirmed,
   showConfirmationAlert,
   showSuccessAlert,
-} from '@/utils/sweetAlert';
-import { ArrowLeft, Loader2, Save } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-
+} from "@/utils/sweetAlert";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router";
 
 interface WarehouseFormData {
   name: string;
   description: string;
-  userId?: string;
 }
 
 type WarehouseFormErrors = FormErrors<WarehouseFormData> & {
@@ -37,20 +33,13 @@ export default function EditGudang() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  
   const [formData, setFormData] = useState<WarehouseFormData>({
-    name: '',
-    description: '',
-    userId: '',
+    name: "",
+    description: "",
   });
 
-  
-  const [isChangingUser, setIsChangingUser] = useState(false);
-
-  
   const [errors, setErrors] = useState<WarehouseFormErrors>({});
 
-  
   const {
     data: gudang,
     isLoading,
@@ -58,35 +47,25 @@ export default function EditGudang() {
     error,
     refetch,
   } = useWarehouse(
-    { id: id || '' },
+    { id: id || "" },
     {
       staleTime: 5000,
-      refetchOnMount: 'always',
+      refetchOnMount: "always",
     }
   );
 
-  
-  const { data: usersData } = useUsers({
-    staleTime: 300000, 
-    enabled: isChangingUser, 
-  });
-  const users = usersData?.users || [];
-
-  
   useEffect(() => {
     if (gudang) {
       setFormData({
-        name: gudang.name || '',
-        description: gudang.description || '',
-        userId: gudang.user?.id || '',
+        name: gudang.name || "",
+        description: gudang.description || "",
       });
     }
   }, [gudang]);
 
-  
   const updateWarehouseMutation = useUpdateWarehouse({
     onSuccess: (data) => {
-      showSuccessAlert('Sukses!', 'Gudang berhasil diperbarui').then(() => {
+      showSuccessAlert("Sukses!", "Gudang berhasil diperbarui").then(() => {
         navigate(`/gudang/${data.id}`);
       });
     },
@@ -95,7 +74,7 @@ export default function EditGudang() {
         const errorObj = JSON.parse(error.message);
 
         if (
-          errorObj.errorType === 'joiValidationError' &&
+          errorObj.errorType === "joiValidationError" &&
           errorObj.details &&
           errorObj.details.length > 0
         ) {
@@ -103,12 +82,10 @@ export default function EditGudang() {
 
           errorObj.details.forEach(
             (detail: { message: string; path: string[] }) => {
-              if (detail.path.includes('name')) {
+              if (detail.path.includes("name")) {
                 newErrors.name = detail.message;
-              } else if (detail.path.includes('description')) {
+              } else if (detail.path.includes("description")) {
                 newErrors.description = detail.message;
-              } else if (detail.path.includes('userId')) {
-                newErrors.userId = detail.message;
               } else {
                 newErrors.general = detail.message;
               }
@@ -120,12 +97,11 @@ export default function EditGudang() {
           setErrors({ general: errorObj.message });
         }
       } catch {
-        setErrors({ general: 'Terjadi kesalahan saat memperbarui gudang' });
+        setErrors({ general: "Terjadi kesalahan saat memperbarui gudang" });
       }
     },
   });
 
-  
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -134,65 +110,31 @@ export default function EditGudang() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    
     if (errors[name as keyof WarehouseFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  
-  const handleChangeUser = () => {
-    setIsChangingUser(true);
-  };
-
-  
-  const handleCancelChangeUser = () => {
-    if (gudang?.user) {
-      setFormData((prev) => ({ ...prev, userId: gudang.user?.id || '' }));
-    }
-    setIsChangingUser(false);
-  };
-
-  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
-    
-    const submissionData = {
-      ...formData,
-      userId: formData.userId === '' ? null : formData.userId,
-    };
-
-    
     showConfirmationAlert(
-      'Konfirmasi',
-      'Apakah Anda yakin ingin menyimpan perubahan data gudang ini?',
-      'Ya, Simpan!',
-      'Batal'
+      "Konfirmasi",
+      "Apakah Anda yakin ingin menyimpan perubahan data gudang ini?",
+      "Ya, Simpan!",
+      "Batal"
     ).then((result) => {
       if (isConfirmed(result)) {
         updateWarehouseMutation.mutate({
-          id: id || '',
-          ...submissionData,
+          id: id || "",
+          ...formData,
         });
       }
     });
   };
 
   const isSubmitting = updateWarehouseMutation.isPending;
-
-  
-  const inputClassName = (fieldName: keyof WarehouseFormData) =>
-    cn(
-      'mt-1 w-full border-gray-300',
-      errors[fieldName]
-        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-        : 'focus:border-blue-500 focus:ring-blue-500'
-    );
-
-  
-  const hasAssignedUser = gudang?.user?.id && !isChangingUser;
 
   return (
     <div className="space-y-6 px-4 sm:px-0">
@@ -220,7 +162,7 @@ export default function EditGudang() {
               message={
                 error instanceof Error
                   ? error.message
-                  : 'Terjadi kesalahan pada server'
+                  : "Terjadi kesalahan pada server"
               }
               onRetry={refetch}
               retryButtonText="Coba lagi"
@@ -233,21 +175,27 @@ export default function EditGudang() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+              <div className="grid grid-cols-1 gap-6">
+                <div className="col-span-1">
                   <label
                     htmlFor="name"
                     className="block text-sm font-medium text-gray-700"
                   >
                     Nama Gudang
                   </label>
-                  <Input
+                  <input
                     id="name"
                     name="name"
+                    type="text"
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="Masukkan nama gudang"
-                    className={inputClassName('name')}
+                    className={cn(
+                      "mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+                      errors.name
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                        : ""
+                    )}
                   />
                   {errors.name ? (
                     <p className="mt-1 text-sm text-red-500">{errors.name}</p>
@@ -258,96 +206,7 @@ export default function EditGudang() {
                   )}
                 </div>
 
-                <div>
-                  <label
-                    htmlFor="userId"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Penanggung Jawab
-                  </label>
-                  {hasAssignedUser ? (
-                    <div className="mt-1 flex flex-col sm:flex-row items-start sm:items-center">
-                      <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-700 sm:w-auto break-words">
-                        {gudang.user?.name} ({gudang.user?.email})
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="mt-2 sm:mt-0 ml-0 sm:ml-2 text-blue-600 hover:text-blue-800 w-full sm:w-auto justify-center"
-                        onClick={handleChangeUser}
-                      >
-                        Ubah
-                      </Button>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="flex flex-col sm:flex-row">
-                        <select
-                          id="userId"
-                          name="userId"
-                          value={formData.userId}
-                          onChange={handleInputChange}
-                          className={cn(
-                            'w-full block py-2 px-3 rounded-md border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm max-w-full overflow-hidden text-ellipsis',
-                            errors.userId &&
-                              'border-red-300 focus:border-red-500 focus:ring-red-500'
-                          )}
-                        >
-                          <option value="">
-                            -- Pilih Penanggung Jawab (Opsional) --
-                          </option>
-                          {users && users.length > 0 ? (
-                            users.map((user) => (
-                              <option key={user.id} value={user.id}>
-                                {user.name} ({user.email})
-                              </option>
-                            ))
-                          ) : (
-                            <option value="" disabled>
-                              Tidak ada pengguna tersedia
-                            </option>
-                          )}
-                        </select>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="mt-2 sm:mt-0 sm:ml-2 text-red-600 hover:text-red-800 border-red-200 hover:border-red-300 hover:bg-red-50 w-full sm:w-auto"
-                          onClick={() =>
-                            setFormData((prev) => ({ ...prev, userId: '' }))
-                          }
-                          title="Hapus penanggung jawab"
-                        >
-                          Hapus
-                        </Button>
-                      </div>
-                      {isChangingUser && gudang?.user && (
-                        <div className="mt-1 text-right">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="text-blue-600 hover:text-blue-800"
-                            onClick={handleCancelChangeUser}
-                          >
-                            Batalkan Perubahan
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {errors.userId ? (
-                    <p className="mt-1 text-sm text-red-500">{errors.userId}</p>
-                  ) : (
-                    <p className="mt-1 text-sm text-gray-500">
-                      Pilih pengguna yang bertanggung jawab untuk gudang ini
-                      (opsional)
-                    </p>
-                  )}
-                </div>
-
-                <div className="md:col-span-2">
+                <div className="col-span-1">
                   <label
                     htmlFor="description"
                     className="block text-sm font-medium text-gray-700"
@@ -362,9 +221,9 @@ export default function EditGudang() {
                     rows={4}
                     placeholder="Deskripsikan fungsi dan lokasi gudang"
                     className={cn(
-                      'mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
+                      "mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
                       errors.description &&
-                        'border-red-300 focus:border-red-500 focus:ring-red-500'
+                        "border-red-300 focus:border-red-500 focus:ring-red-500"
                     )}
                   />
                   {errors.description ? (
