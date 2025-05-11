@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useCreateProduct } from "@/hooks/barang";
-import { useWarehouses } from "@/hooks/gudang";
+import { useAllWarehouses } from "@/hooks/gudang";
 import { cn } from "@/lib/utils";
 import { SATUAN_OPTIONS } from "@/utils/satuan";
 import { FormErrorData, FormErrors } from "@/utils/errorHandler";
@@ -45,10 +45,10 @@ export default function TambahBarang() {
   });
   const [errors, setErrors] = useState<ProductFormErrors>({});
 
-  const { data: warehousesData } = useWarehouses({
+  const { data: warehousesData } = useAllWarehouses({
     staleTime: 300000,
   });
-  const warehouses = warehousesData?.warehouses || [];
+  const warehouses = warehousesData || [];
 
   const createProductMutation = useCreateProduct({
     onSuccess: (data) => {

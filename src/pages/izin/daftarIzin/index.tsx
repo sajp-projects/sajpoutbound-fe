@@ -110,10 +110,18 @@ export default function IzinPeran() {
     },
     onError: (error) => {
       setIsSubmitting(false);
-      showErrorAlert(
-        "Gagal Memperbarui Izin Peran",
-        error.message || "Terjadi kesalahan saat memperbarui izin peran"
-      );
+      let errorMessage = "Terjadi kesalahan saat memperbarui izin peran";
+
+      if (error.message) {
+        try {
+          const errorData = JSON.parse(error.message);
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = error.message;
+        }
+      }
+
+      showErrorAlert("Gagal Memperbarui Izin Peran", errorMessage);
     },
   });
 
