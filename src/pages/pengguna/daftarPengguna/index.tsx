@@ -1,31 +1,31 @@
-import { useDeleteUser, useUsers } from '@/hooks/user';
-import { Download, Plus } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router';
+import { useDeleteUser, useUsers } from "@/hooks/user";
+import { Download, Plus } from "lucide-react";
+import { Link, useSearchParams } from "react-router";
 
-import { ActionButtons, ActionType } from '@/components/ActionButtons';
-import { EmptyState } from '@/components/EmptyState';
-import { ErrorState } from '@/components/ErrorState';
-import { LoadingState } from '@/components/LoadingState';
-import { Pagination } from '@/components/Pagination';
-import { RoleFilter } from '@/components/RoleFilter';
-import { SearchInput } from '@/components/SearchInput';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { PERMISSION } from '@/constant/PERMISSION';
-import { useAuth } from '@/hooks/auth';
-import { useRolePermissions } from '@/hooks/izin';
-import { cn } from '@/lib/utils';
-import { getRoleBadgeColor, getRoleBadgeVariant } from '@/utils/badges';
-import { formatDate, formatDateShort } from '@/utils/date';
-import { hasPermission } from '@/utils/permission';
-import { getRoleId } from '@/utils/storage';
+import { ActionButtons, ActionType } from "@/components/ActionButtons";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
+import { Pagination } from "@/components/Pagination";
+import { RoleFilter } from "@/components/RoleFilter";
+import { SearchInput } from "@/components/SearchInput";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/izin";
+import { cn } from "@/lib/utils";
+import { getRoleBadgeColor, getRoleBadgeVariant } from "@/utils/badges";
+import { formatDate, formatDateShort } from "@/utils/date";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
 import {
   isConfirmed,
   showConfirmationAlert,
   showErrorAlert,
   showForbiddenAlert,
   showSuccessAlert,
-} from '@/utils/sweetAlert';
+} from "@/utils/sweetAlert";
 
 interface User {
   id: string;
@@ -38,17 +38,28 @@ interface User {
   updatedAt: string;
 }
 
+interface ActionConfig {
+  type: ActionType;
+  onClick?: () => void;
+  isLoading?: boolean;
+  disabled?: boolean;
+  className?: string;
+  icon?: React.ReactNode;
+  title?: string;
+  path?: string;
+}
+
 export default function Pengguna() {
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
-  const roleId = getRoleId() || '';
+  const roleId = getRoleId() || "";
 
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && roleId !== '',
+    enabled: isAuthenticated && roleId !== "",
   });
 
-  const currentPage = parseInt(searchParams.get('page') || '1');
-  const itemsPerPage = parseInt(searchParams.get('limit') || '10');
+  const currentPage = parseInt(searchParams.get("page") || "1");
+  const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
   const { data, isLoading, isError, refetch } = useUsers({
     staleTime: 0,
@@ -68,20 +79,20 @@ export default function Pengguna() {
 
   const deleteUser = useDeleteUser({
     onSuccess: () => {
-      showSuccessAlert('Berhasil!', 'Pengguna berhasil diarsipkan');
+      showSuccessAlert("Berhasil!", "Pengguna berhasil diarsipkan");
       refetch();
     },
     onError: (error) => {
-      console.log(error, 'error', error.message);
-      if (error.message && error.message.includes('Forbidden')) {
+      console.log(error, "error", error.message);
+      if (error.message && error.message.includes("Forbidden")) {
         showForbiddenAlert(
-          'Akses Ditolak',
-          'Anda tidak memiliki akses untuk mengarsipkan pengguna ini.'
+          "Akses Ditolak",
+          "Anda tidak memiliki akses untuk mengarsipkan pengguna ini."
         );
       } else {
         showErrorAlert(
-          'Gagal Mengarsipkan Pengguna',
-          error.message || 'Terjadi kesalahan saat mengarsipkan pengguna.'
+          "Gagal Mengarsipkan Pengguna",
+          error.message || "Terjadi kesalahan saat mengarsipkan pengguna."
         );
       }
     },
@@ -89,10 +100,10 @@ export default function Pengguna() {
 
   const handleArsipkan = async (id: string) => {
     const result = await showConfirmationAlert(
-      'Konfirmasi Arsip',
-      'Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.',
-      'Ya, Arsipkan!',
-      'Batal'
+      "Konfirmasi Arsip",
+      "Apakah Anda yakin ingin mengarsipkan pengguna ini? Tindakan ini tidak dapat dibatalkan.",
+      "Ya, Arsipkan!",
+      "Batal"
     );
 
     if (isConfirmed(result)) {
@@ -106,58 +117,87 @@ export default function Pengguna() {
     PERMISSION.ACTIONS.READ
   );
 
-  const getUserActions = (user: User) => [
-    { type: ActionType.VIEW },
-    { type: ActionType.EDIT },
-    { type: ActionType.LOG },
-    {
-      type: ActionType.ARCHIVE,
-      onClick: () => handleArsipkan(user.id),
-      isLoading: deleteUser.isPending && deleteUser.variables?.id === user.id,
-      disabled: deleteUser.isPending,
-    },
-  ];
+  const hasUserCreateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.USER,
+    PERMISSION.ACTIONS.CREATE
+  );
+
+  const hasUserUpdateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.USER,
+    PERMISSION.ACTIONS.UPDATE
+  );
+
+  const hasUserDeleteAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.USER,
+    PERMISSION.ACTIONS.DELETE
+  );
+
+  const getUserActions = (user: User) => {
+    const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
+
+    if (hasUserUpdateAccess) {
+      actions.push({ type: ActionType.EDIT });
+    }
+
+    actions.push({ type: ActionType.LOG });
+
+    if (hasUserDeleteAccess) {
+      actions.push({
+        type: ActionType.ARCHIVE,
+        onClick: () => handleArsipkan(user.id),
+        isLoading: deleteUser.isPending && deleteUser.variables?.id === user.id,
+        disabled: deleteUser.isPending,
+      });
+    }
+
+    return actions;
+  };
 
   return (
-    <div className="flex flex-col min-h-full w-full space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 w-full">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+    <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
+      <div className="flex flex-col items-start justify-between w-full gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
           Daftar Pengguna
         </h1>
-        <Link to="/pengguna/tambah">
-          <Button
-            leftIcon={<Plus className="h-4 w-4" />}
-            size="sm"
-            className="w-full sm:w-auto"
-          >
-            Tambah Pengguna
-          </Button>
-        </Link>
+        {hasUserCreateAccess && (
+          <Link to="/pengguna/tambah">
+            <Button
+              leftIcon={<Plus className="w-4 h-4" />}
+              size="sm"
+              className="w-full sm:w-auto"
+            >
+              Tambah Pengguna
+            </Button>
+          </Link>
+        )}
       </div>
 
-      <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 overflow-hidden w-full">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 w-full">
+      <div className="w-full p-3 overflow-hidden bg-white rounded-lg shadow sm:p-4 md:p-6">
+        <div className="flex flex-col items-start justify-between w-full gap-3 mb-4 sm:flex-row sm:items-center sm:mb-6">
           <div>
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
               Pengguna
             </h2>
-            <p className="text-xs sm:text-sm text-gray-500">
+            <p className="text-xs text-gray-500 sm:text-sm">
               Manajemen data pengguna sistem
             </p>
           </div>
-          <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto items-center">
+          <div className="flex flex-wrap items-center w-full gap-2 sm:gap-3 sm:w-auto">
             {hasRoleReadAccess && <RoleFilter />}
             <Button
               variant="outline"
               size="sm"
-              leftIcon={<Download className="h-3 w-3 sm:h-4 sm:w-4" />}
+              leftIcon={<Download className="w-3 h-3 sm:h-4 sm:w-4" />}
             >
               Export
             </Button>
           </div>
         </div>
 
-        <div className="mb-4 sm:mb-6 w-full">
+        <div className="w-full mb-4 sm:mb-6">
           <SearchInput
             placeholder="Cari pengguna..."
             className="w-full sm:max-w-md"
@@ -175,10 +215,10 @@ export default function Pengguna() {
         ) : (
           <div className="w-full">
             {}
-            <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden w-full">
+            <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
               <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <table className="w-full min-w-[650px] border-collapse">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="border-b border-gray-200 bg-gray-50">
                     <tr>
                       <th className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         ID
@@ -215,8 +255,8 @@ export default function Pengguna() {
                         <tr
                           key={user.id}
                           className={cn(
-                            idx % 2 === 0 ? 'bg-white' : 'bg-gray-50',
-                            'border-b border-gray-200 last:border-b-0'
+                            idx % 2 === 0 ? "bg-white" : "bg-gray-50",
+                            "border-b border-gray-200 last:border-b-0"
                           )}
                         >
                           <td className="py-2.5 px-3 font-medium text-center text-sm">
@@ -236,7 +276,7 @@ export default function Pengguna() {
                             <Badge
                               variant={getRoleBadgeVariant(user.role.name)}
                               className={cn(
-                                'px-2 py-0.5 rounded-md font-medium text-xs',
+                                "px-2 py-0.5 rounded-md font-medium text-xs",
                                 getRoleBadgeColor(user.role.name)
                               )}
                             >
@@ -250,7 +290,7 @@ export default function Pengguna() {
                             {formatDate(user.updatedAt)}
                           </td>
                           <td className="py-2.5 px-3">
-                            <div className="flex justify-center items-center">
+                            <div className="flex items-center justify-center">
                               <ActionButtons
                                 actions={getUserActions(user)}
                                 entityId={user.id}
@@ -267,31 +307,31 @@ export default function Pengguna() {
             </div>
 
             {}
-            <div className="sm:hidden space-y-3 w-full">
+            <div className="w-full space-y-3 sm:hidden">
               {users.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-6 border rounded-lg border-gray-200 bg-white w-full">
+                <div className="flex flex-col items-center justify-center w-full p-6 bg-white border border-gray-200 rounded-lg">
                   <EmptyState title="Tidak ada data pengguna yang ditemukan" />
                 </div>
               ) : (
                 users.map((user) => (
                   <div
                     key={user.id}
-                    className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm w-full"
+                    className="w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
                   >
-                    <div className="p-3 w-full">
-                      <div className="flex justify-between items-start mb-2 w-full">
+                    <div className="w-full p-3">
+                      <div className="flex items-start justify-between w-full mb-2">
                         <div className="max-w-[65%]">
-                          <h3 className="font-medium text-blue-600 break-words text-sm">
+                          <h3 className="text-sm font-medium text-blue-600 break-words">
                             {user.name}
                           </h3>
-                          <p className="text-xs text-gray-600 break-all mt-1">
+                          <p className="mt-1 text-xs text-gray-600 break-all">
                             {user.email}
                           </p>
                         </div>
                         <Badge
                           variant={getRoleBadgeVariant(user.role.name)}
                           className={cn(
-                            'px-2 py-0.5 rounded-md font-medium text-xs shrink-0',
+                            "px-2 py-0.5 rounded-md font-medium text-xs shrink-0",
                             getRoleBadgeColor(user.role.name)
                           )}
                         >
@@ -301,20 +341,20 @@ export default function Pengguna() {
 
                       <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                         <p>
-                          Dibuat:{' '}
+                          Dibuat:{" "}
                           <span className="font-medium">
                             {formatDateShort(user.createdAt)}
                           </span>
                         </p>
                         <p>
-                          Diperbarui:{' '}
+                          Diperbarui:{" "}
                           <span className="font-medium">
                             {formatDateShort(user.updatedAt)}
                           </span>
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
+                      <div className="flex items-center justify-end gap-1 pt-2 mt-2 border-t">
                         <ActionButtons
                           actions={getUserActions(user)}
                           entityId={user.id}

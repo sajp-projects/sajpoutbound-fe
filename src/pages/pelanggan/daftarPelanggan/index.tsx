@@ -26,6 +26,18 @@ import { EmptyState } from "@/components/EmptyState";
 import { ActionButtons, ActionType } from "@/components/ActionButtons";
 import { Customer } from "@/types/pelanggan";
 
+// Tambahkan tipe ActionConfig
+interface ActionConfig {
+  type: ActionType;
+  onClick?: () => void;
+  isLoading?: boolean;
+  disabled?: boolean;
+  className?: string;
+  icon?: React.ReactNode;
+  title?: string;
+  path?: string;
+}
+
 export default function DaftarPelanggan() {
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
@@ -89,6 +101,18 @@ export default function DaftarPelanggan() {
     }
   };
 
+  const hasCustomerCreateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.CUSTOMER,
+    PERMISSION.ACTIONS.CREATE
+  );
+
+  const hasCustomerUpdateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.CUSTOMER,
+    PERMISSION.ACTIONS.UPDATE
+  );
+
   const hasCustomerDeleteAccess = hasPermission(
     permissions,
     PERMISSION.RESOURCES.CUSTOMER,
@@ -96,20 +120,13 @@ export default function DaftarPelanggan() {
   );
 
   const getCustomerActions = (customer: Customer) => {
-    const actions: {
-      type: ActionType;
-      icon?: React.ReactNode;
-      title?: string;
-      path?: string;
-      onClick?: () => void;
-      isLoading?: boolean;
-      disabled?: boolean;
-      className?: string;
-    }[] = [
-      { type: ActionType.VIEW },
-      { type: ActionType.EDIT },
-      { type: ActionType.LOG },
-    ];
+    const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
+
+    if (hasCustomerUpdateAccess) {
+      actions.push({ type: ActionType.EDIT });
+    }
+
+    actions.push({ type: ActionType.LOG });
 
     if (hasCustomerDeleteAccess) {
       actions.push({
@@ -127,15 +144,17 @@ export default function DaftarPelanggan() {
         <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
           Daftar Pelanggan
         </h1>
-        <Link to="/pelanggan/tambah">
-          <Button
-            leftIcon={<Plus className="w-4 h-4" />}
-            size="sm"
-            className="w-full sm:w-auto"
-          >
-            Tambah Pelanggan
-          </Button>
-        </Link>
+        {hasCustomerCreateAccess && (
+          <Link to="/pelanggan/tambah">
+            <Button
+              leftIcon={<Plus className="w-4 h-4" />}
+              size="sm"
+              className="w-full sm:w-auto"
+            >
+              Tambah Pelanggan
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="w-full p-3 overflow-hidden bg-white rounded-lg shadow sm:p-4 md:p-6">

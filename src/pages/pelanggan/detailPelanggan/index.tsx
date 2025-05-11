@@ -12,10 +12,34 @@ import {
 } from "@/utils/sweetAlert";
 import { ArrowLeft, FileText, Pencil, Trash2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/izin";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
 
 export default function DetailPelanggan() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const roleId = getRoleId() || "";
+
+  const { data: permissions } = useRolePermissions(roleId, {
+    enabled: isAuthenticated && roleId !== "",
+  });
+
+  const hasCustomerUpdateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.CUSTOMER,
+    PERMISSION.ACTIONS.UPDATE
+  );
+
+  const hasCustomerDeleteAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.CUSTOMER,
+    PERMISSION.ACTIONS.DELETE
+  );
+
   const {
     data: customer,
     isLoading,
@@ -75,20 +99,24 @@ export default function DetailPelanggan() {
           <h1 className="text-2xl font-bold text-gray-900">Detail Pelanggan</h1>
         </div>
         <div className="flex gap-2">
-          <Link to={`/pelanggan/${id}/edit`}>
-            <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
-              <Pencil className="w-4 h-4 mr-2" />
-              Edit Pelanggan
+          {hasCustomerUpdateAccess && (
+            <Link to={`/pelanggan/${id}/edit`}>
+              <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
+                <Pencil className="w-4 h-4 mr-2" />
+                Edit Pelanggan
+              </Button>
+            </Link>
+          )}
+          {hasCustomerDeleteAccess && (
+            <Button
+              className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
+              onClick={handleHapus}
+              disabled={deleteCustomer.isPending}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {deleteCustomer.isPending ? "Menghapus..." : "Hapus"}
             </Button>
-          </Link>
-          <Button
-            className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
-            onClick={handleHapus}
-            disabled={deleteCustomer.isPending}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            {deleteCustomer.isPending ? "Menghapus..." : "Hapus"}
-          </Button>
+          )}
         </div>
       </div>
 
@@ -212,26 +240,30 @@ export default function DetailPelanggan() {
                         Lihat Log Aktivitas
                       </Button>
                     </Link>
-                    <Link to={`/pelanggan/${id}/edit`} className="w-full">
+                    {hasCustomerUpdateAccess && (
+                      <Link to={`/pelanggan/${id}/edit`} className="w-full">
+                        <Button
+                          variant="outline"
+                          className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                        >
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Edit Pelanggan
+                        </Button>
+                      </Link>
+                    )}
+                    {hasCustomerDeleteAccess && (
                       <Button
                         variant="outline"
-                        className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                        className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                        onClick={handleHapus}
+                        disabled={deleteCustomer.isPending}
                       >
-                        <Pencil className="w-4 h-4 mr-2" />
-                        Edit Pelanggan
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {deleteCustomer.isPending
+                          ? "Menghapus..."
+                          : "Hapus Pelanggan"}
                       </Button>
-                    </Link>
-                    <Button
-                      variant="outline"
-                      className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                      onClick={handleHapus}
-                      disabled={deleteCustomer.isPending}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      {deleteCustomer.isPending
-                        ? "Menghapus..."
-                        : "Hapus Pelanggan"}
-                    </Button>
+                    )}
                   </div>
                 </div>
               </div>

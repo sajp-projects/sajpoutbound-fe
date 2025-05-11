@@ -1,14 +1,14 @@
-import { useDeleteRole, useRoles } from '@/hooks/role';
-import { Lock, Plus } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router';
+import { useDeleteRole, useRoles } from "@/hooks/role";
+import { Lock, Plus } from "lucide-react";
+import { Link, useSearchParams } from "react-router";
 
-import { ActionButtons, ActionType } from '@/components/ActionButtons';
-import { EmptyState } from '@/components/EmptyState';
-import { ErrorState } from '@/components/ErrorState';
-import { LoadingState } from '@/components/LoadingState';
-import { Pagination } from '@/components/Pagination';
-import { SearchInput } from '@/components/SearchInput';
-import { Button } from '@/components/ui/button';
+import { ActionButtons, ActionType } from "@/components/ActionButtons";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
+import { Pagination } from "@/components/Pagination";
+import { SearchInput } from "@/components/SearchInput";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -16,21 +16,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { PERMISSION } from '@/constant/PERMISSION';
-import { useAuth } from '@/hooks/auth';
-import { useRolePermissions } from '@/hooks/izin';
-import { cn } from '@/lib/utils';
-import { formatDate, formatDateShort } from '@/utils/date';
-import { hasPermission } from '@/utils/permission';
-import { getRoleId } from '@/utils/storage';
+} from "@/components/ui/table";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/izin";
+import { cn } from "@/lib/utils";
+import { formatDate, formatDateShort } from "@/utils/date";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
 import {
   isConfirmed,
   showDeleteConfirmationAlert,
   showErrorAlert,
   showForbiddenAlert,
   showSuccessAlert,
-} from '@/utils/sweetAlert';
+} from "@/utils/sweetAlert";
 
 interface Role {
   id: string;
@@ -40,21 +40,33 @@ interface Role {
   updatedAt: string;
 }
 
+// Tambahkan tipe ActionConfig
+interface ActionConfig {
+  type: ActionType;
+  onClick?: () => void;
+  isLoading?: boolean;
+  disabled?: boolean;
+  className?: string;
+  icon?: React.ReactNode;
+  title?: string;
+  path?: string;
+}
+
 export default function Role() {
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
-  const roleId = getRoleId() || '';
+  const roleId = getRoleId() || "";
 
-  const currentPage = parseInt(searchParams.get('page') || '1');
-  const itemsPerPage = parseInt(searchParams.get('limit') || '10');
+  const currentPage = parseInt(searchParams.get("page") || "1");
+  const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && roleId !== '',
+    enabled: isAuthenticated && roleId !== "",
   });
 
   const { data, isLoading, isError, refetch } = useRoles({
     staleTime: 5000,
-    refetchOnMount: 'always',
+    refetchOnMount: "always",
     refetchOnWindowFocus: true,
   });
 
@@ -75,24 +87,42 @@ export default function Role() {
       PERMISSION.ACTIONS.READ
     );
 
+  const hasRoleCreateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ROLE,
+    PERMISSION.ACTIONS.CREATE
+  );
+
+  const hasRoleUpdateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ROLE,
+    PERMISSION.ACTIONS.UPDATE
+  );
+
+  const hasRoleDeleteAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ROLE,
+    PERMISSION.ACTIONS.DELETE
+  );
+
   const deleteRole = useDeleteRole({
     onError: (error) => {
-      console.log(error, 'error', error.message);
-      if (error.message && error.message.includes('Forbidden')) {
+      console.log(error, "error", error.message);
+      if (error.message && error.message.includes("Forbidden")) {
         showForbiddenAlert(
-          'Akses Ditolak',
-          'Anda tidak memiliki akses untuk menghapus peran ini.'
+          "Akses Ditolak",
+          "Anda tidak memiliki akses untuk menghapus peran ini."
         );
       } else {
         showErrorAlert(
-          'Gagal Menghapus Peran',
-          error.message || 'Terjadi kesalahan saat menghapus peran'
+          "Gagal Menghapus Peran",
+          error.message || "Terjadi kesalahan saat menghapus peran"
         );
       }
     },
     onSuccess: (data) => {
       showSuccessAlert(
-        'Peran Berhasil Dihapus',
+        "Peran Berhasil Dihapus",
         `Peran "${data.name}" telah berhasil dihapus`
       );
       refetch();
@@ -101,7 +131,7 @@ export default function Role() {
 
   const handleDeleteRole = (id: string, name: string) => {
     showDeleteConfirmationAlert(
-      'Peran',
+      "Peran",
       `Apakah Anda yakin ingin menghapus peran "${name}"?`
     ).then((result) => {
       if (isConfirmed(result)) {
@@ -110,55 +140,67 @@ export default function Role() {
     });
   };
 
-  const getRoleActions = (role: Role) => [
-    { type: ActionType.VIEW },
-    {
-      type: ActionType.CONFIG,
-      path: `/peran/${role.id}/izin`,
-      disabled: !hasPermissionAccess(),
-      icon: <Lock className="h-4 w-4" />,
-      title: 'Kelola Izin Peran',
-      className: 'text-purple-600 hover:text-purple-700 hover:bg-purple-50',
-    },
-    { type: ActionType.EDIT },
-    {
-      type: ActionType.DELETE,
-      onClick: () => handleDeleteRole(role.id, role.name),
-      isLoading: deleteRole.isPending && deleteRole.variables?.id === role.id,
-      disabled: deleteRole.isPending,
-    },
-  ];
+  const getRoleActions = (role: Role) => {
+    const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
+
+    if (hasPermissionAccess()) {
+      actions.push({
+        type: ActionType.CONFIG,
+        path: `/peran/${role.id}/izin`,
+        icon: <Lock className="w-4 h-4" />,
+        title: "Kelola Izin Peran",
+        className: "text-purple-600 hover:text-purple-700 hover:bg-purple-50",
+      });
+    }
+
+    if (hasRoleUpdateAccess) {
+      actions.push({ type: ActionType.EDIT });
+    }
+
+    if (hasRoleDeleteAccess) {
+      actions.push({
+        type: ActionType.DELETE,
+        onClick: () => handleDeleteRole(role.id, role.name),
+        isLoading: deleteRole.isPending && deleteRole.variables?.id === role.id,
+        disabled: deleteRole.isPending,
+      });
+    }
+
+    return actions;
+  };
 
   return (
-    <div className="flex flex-col min-h-full w-full space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-3 w-full">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+    <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
+      <div className="flex flex-col items-start justify-between w-full gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
           Daftar Peran
         </h1>
-        <Link to="/peran/tambah">
-          <Button
-            leftIcon={<Plus className="h-4 w-4" />}
-            size="sm"
-            className="w-full sm:w-auto"
-          >
-            Tambah Peran
-          </Button>
-        </Link>
+        {hasRoleCreateAccess && (
+          <Link to="/peran/tambah">
+            <Button
+              leftIcon={<Plus className="w-4 h-4" />}
+              size="sm"
+              className="w-full sm:w-auto"
+            >
+              Tambah Peran
+            </Button>
+          </Link>
+        )}
       </div>
 
-      <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 overflow-hidden w-full">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 w-full">
+      <div className="w-full p-3 overflow-hidden bg-white rounded-lg shadow sm:p-4 md:p-6">
+        <div className="flex flex-col items-start justify-between w-full gap-3 mb-4 sm:flex-row sm:items-center sm:mb-6">
           <div>
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
               Peran
             </h2>
-            <p className="text-xs sm:text-sm text-gray-500">
+            <p className="text-xs text-gray-500 sm:text-sm">
               Manajemen data peran dalam sistem
             </p>
           </div>
         </div>
 
-        <div className="mb-4 sm:mb-6 w-full">
+        <div className="w-full mb-4 sm:mb-6">
           <SearchInput
             placeholder="Cari peran..."
             className="w-full sm:max-w-md"
@@ -177,11 +219,11 @@ export default function Role() {
         ) : (
           <div className="w-full">
             {}
-            <div className="hidden sm:block rounded-lg border border-gray-200 overflow-hidden w-full">
+            <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
               <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50 border-b border-gray-200">
+                    <TableRow className="border-b border-gray-200 bg-gray-50">
                       <TableHead className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         ID
                       </TableHead>
@@ -214,8 +256,8 @@ export default function Role() {
                         <TableRow
                           key={role.id}
                           className={cn(
-                            idx % 2 === 0 ? 'bg-white' : 'bg-gray-50',
-                            'border-b border-gray-200 last:border-b-0'
+                            idx % 2 === 0 ? "bg-white" : "bg-gray-50",
+                            "border-b border-gray-200 last:border-b-0"
                           )}
                         >
                           <TableCell className="py-2.5 px-3 font-medium text-center text-sm">
@@ -238,7 +280,7 @@ export default function Role() {
                             {formatDate(role.updatedAt)}
                           </TableCell>
                           <TableCell className="py-2.5 px-3">
-                            <div className="flex justify-center items-center">
+                            <div className="flex items-center justify-center">
                               <ActionButtons
                                 actions={getRoleActions(role)}
                                 entityId={role.id}
@@ -255,24 +297,24 @@ export default function Role() {
             </div>
 
             {}
-            <div className="sm:hidden space-y-3 w-full">
+            <div className="w-full space-y-3 sm:hidden">
               {roles.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-6 border rounded-lg border-gray-200 bg-white w-full">
+                <div className="flex flex-col items-center justify-center w-full p-6 bg-white border border-gray-200 rounded-lg">
                   <EmptyState title="Tidak ada data peran yang ditemukan" />
                 </div>
               ) : (
                 roles.map((role) => (
                   <div
                     key={role.id}
-                    className="border border-gray-200 rounded-lg bg-white overflow-hidden shadow-sm w-full"
+                    className="w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
                   >
-                    <div className="p-3 w-full">
-                      <div className="flex justify-between items-start mb-2 w-full">
+                    <div className="w-full p-3">
+                      <div className="flex items-start justify-between w-full mb-2">
                         <div className="max-w-[65%]">
-                          <h3 className="font-medium text-blue-600 break-words text-sm">
+                          <h3 className="text-sm font-medium text-blue-600 break-words">
                             {role.name}
                           </h3>
-                          <p className="text-xs text-gray-600 break-all mt-1">
+                          <p className="mt-1 text-xs text-gray-600 break-all">
                             {role.description}
                           </p>
                         </div>
@@ -280,20 +322,20 @@ export default function Role() {
 
                       <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                         <p>
-                          Dibuat:{' '}
+                          Dibuat:{" "}
                           <span className="font-medium">
                             {formatDateShort(role.createdAt)}
                           </span>
                         </p>
                         <p>
-                          Diperbarui:{' '}
+                          Diperbarui:{" "}
                           <span className="font-medium">
                             {formatDateShort(role.updatedAt)}
                           </span>
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-end gap-1 border-t pt-2 mt-2">
+                      <div className="flex items-center justify-end gap-1 pt-2 mt-2 border-t">
                         <ActionButtons
                           actions={getRoleActions(role)}
                           entityId={role.id}

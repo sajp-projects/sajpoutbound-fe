@@ -23,10 +23,33 @@ import {
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import { Product } from "@/types/gudang";
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/izin";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
 
 export default function DetailGudang() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const roleId = getRoleId() || "";
+
+  const { data: permissions } = useRolePermissions(roleId, {
+    enabled: isAuthenticated && roleId !== "",
+  });
+
+  const hasWarehouseUpdateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.WAREHOUSE,
+    PERMISSION.ACTIONS.UPDATE
+  );
+
+  const hasWarehouseDeleteAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.WAREHOUSE,
+    PERMISSION.ACTIONS.DELETE
+  );
 
   const {
     data: gudang,
@@ -97,20 +120,24 @@ export default function DetailGudang() {
           <h1 className="text-2xl font-bold text-gray-900">Detail Gudang</h1>
         </div>
         <div className="flex gap-2">
-          <Link to={`/gudang/${id}/edit`}>
-            <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Gudang
+          {hasWarehouseUpdateAccess && (
+            <Link to={`/gudang/${id}/edit`}>
+              <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Gudang
+              </Button>
+            </Link>
+          )}
+          {hasWarehouseDeleteAccess && (
+            <Button
+              className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
+              onClick={handleDeleteWarehouse}
+              disabled={deleteWarehouseMutation.isPending}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {deleteWarehouseMutation.isPending ? "Menghapus..." : "Hapus"}
             </Button>
-          </Link>
-          <Button
-            className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
-            onClick={handleDeleteWarehouse}
-            disabled={deleteWarehouseMutation.isPending}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            {deleteWarehouseMutation.isPending ? "Menghapus..." : "Hapus"}
-          </Button>
+          )}
         </div>
       </div>
 
@@ -218,26 +245,30 @@ export default function DetailGudang() {
                         Lihat Log Gudang
                       </Button>
                     </Link>
-                    <Link to={`/gudang/${id}/edit`} className="w-full">
+                    {hasWarehouseUpdateAccess && (
+                      <Link to={`/gudang/${id}/edit`} className="w-full">
+                        <Button
+                          variant="outline"
+                          className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit Gudang
+                        </Button>
+                      </Link>
+                    )}
+                    {hasWarehouseDeleteAccess && (
                       <Button
                         variant="outline"
-                        className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                        className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                        onClick={handleDeleteWarehouse}
+                        disabled={deleteWarehouseMutation.isPending}
                       >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit Gudang
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {deleteWarehouseMutation.isPending
+                          ? "Menghapus..."
+                          : "Hapus Gudang"}
                       </Button>
-                    </Link>
-                    <Button
-                      variant="outline"
-                      className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                      onClick={handleDeleteWarehouse}
-                      disabled={deleteWarehouseMutation.isPending}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      {deleteWarehouseMutation.isPending
-                        ? "Menghapus..."
-                        : "Hapus Gudang"}
-                    </Button>
+                    )}
                   </div>
                 </div>
               </div>

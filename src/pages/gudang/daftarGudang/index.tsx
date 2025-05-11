@@ -27,9 +27,50 @@ import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
 import { ActionButtons, ActionType } from "@/components/ActionButtons";
 import { Warehouse } from "@/types/gudang";
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/izin";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
+
+// Tambahkan tipe ActionConfig
+interface ActionConfig {
+  type: ActionType;
+  onClick?: () => void;
+  isLoading?: boolean;
+  disabled?: boolean;
+  className?: string;
+  icon?: React.ReactNode;
+  title?: string;
+  path?: string;
+}
 
 export default function DaftarGudang() {
   const [searchParams] = useSearchParams();
+  const { isAuthenticated } = useAuth();
+  const roleId = getRoleId() || '';
+
+  const { data: permissions } = useRolePermissions(roleId, {
+    enabled: isAuthenticated && roleId !== '',
+  });
+
+  const hasWarehouseCreateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.WAREHOUSE,
+    PERMISSION.ACTIONS.CREATE
+  );
+
+  const hasWarehouseUpdateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.WAREHOUSE,
+    PERMISSION.ACTIONS.UPDATE
+  );
+
+  const hasWarehouseDeleteAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.WAREHOUSE,
+    PERMISSION.ACTIONS.DELETE
+  );
 
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
@@ -95,19 +136,28 @@ export default function DaftarGudang() {
     });
   };
 
-  const getWarehouseActions = (warehouse: Warehouse) => [
-    { type: ActionType.VIEW },
-    { type: ActionType.EDIT },
-    { type: ActionType.LOG },
-    {
-      type: ActionType.DELETE,
-      onClick: () => handleDeleteWarehouse(warehouse.id, warehouse.name),
-      isLoading:
-        deleteWarehouseMutation.isPending &&
-        deleteWarehouseMutation.variables?.id === warehouse.id,
-      disabled: deleteWarehouseMutation.isPending,
-    },
-  ];
+  const getWarehouseActions = (warehouse: Warehouse) => {
+    const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
+    
+    if (hasWarehouseUpdateAccess) {
+      actions.push({ type: ActionType.EDIT });
+    }
+    
+    actions.push({ type: ActionType.LOG });
+    
+    if (hasWarehouseDeleteAccess) {
+      actions.push({
+        type: ActionType.DELETE,
+        onClick: () => handleDeleteWarehouse(warehouse.id, warehouse.name),
+        isLoading:
+          deleteWarehouseMutation.isPending &&
+          deleteWarehouseMutation.variables?.id === warehouse.id,
+        disabled: deleteWarehouseMutation.isPending,
+      });
+    }
+    
+    return actions;
+  };
 
   return (
     <div className="flex flex-col min-h-full w-full space-y-4 sm:space-y-6 px-2 sm:px-4 md:px-0">
@@ -115,15 +165,17 @@ export default function DaftarGudang() {
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
           Daftar Gudang
         </h1>
-        <Link to="/gudang/tambah">
-          <Button
-            leftIcon={<Plus className="h-4 w-4" />}
-            size="sm"
-            className="w-full sm:w-auto"
-          >
-            Tambah Gudang
-          </Button>
-        </Link>
+        {hasWarehouseCreateAccess && (
+          <Link to="/gudang/tambah">
+            <Button
+              leftIcon={<Plus className="h-4 w-4" />}
+              size="sm"
+              className="w-full sm:w-auto"
+            >
+              Tambah Gudang
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6 overflow-hidden w-full">

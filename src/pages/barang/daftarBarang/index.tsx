@@ -27,9 +27,50 @@ import {
   showForbiddenAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/izin";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
+
+// Tambahkan tipe ActionConfig
+interface ActionConfig {
+  type: ActionType;
+  onClick?: () => void;
+  isLoading?: boolean;
+  disabled?: boolean;
+  className?: string;
+  icon?: React.ReactNode;
+  title?: string;
+  path?: string;
+}
 
 export default function DaftarBarang() {
   const [searchParams] = useSearchParams();
+  const { isAuthenticated } = useAuth();
+  const roleId = getRoleId() || '';
+
+  const { data: permissions } = useRolePermissions(roleId, {
+    enabled: isAuthenticated && roleId !== '',
+  });
+
+  const hasProductCreateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PRODUCT,
+    PERMISSION.ACTIONS.CREATE
+  );
+
+  const hasProductUpdateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PRODUCT,
+    PERMISSION.ACTIONS.UPDATE
+  );
+
+  const hasProductDeleteAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PRODUCT,
+    PERMISSION.ACTIONS.DELETE
+  );
 
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
@@ -95,19 +136,28 @@ export default function DaftarBarang() {
     });
   };
 
-  const getProductActions = (product: Product) => [
-    { type: ActionType.VIEW },
-    { type: ActionType.EDIT },
-    { type: ActionType.LOG },
-    {
-      type: ActionType.DELETE,
-      onClick: () => handleDeleteProduct(product.id, product.name),
-      isLoading:
-        deleteProductMutation.isPending &&
-        deleteProductMutation.variables?.id === product.id,
-      disabled: deleteProductMutation.isPending,
-    },
-  ];
+  const getProductActions = (product: Product) => {
+    const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
+    
+    if (hasProductUpdateAccess) {
+      actions.push({ type: ActionType.EDIT });
+    }
+    
+    actions.push({ type: ActionType.LOG });
+    
+    if (hasProductDeleteAccess) {
+      actions.push({
+        type: ActionType.DELETE,
+        onClick: () => handleDeleteProduct(product.id, product.name),
+        isLoading:
+          deleteProductMutation.isPending &&
+          deleteProductMutation.variables?.id === product.id,
+        disabled: deleteProductMutation.isPending,
+      });
+    }
+    
+    return actions;
+  };
 
   return (
     <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
@@ -115,15 +165,17 @@ export default function DaftarBarang() {
         <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
           Daftar Barang
         </h1>
-        <Link to="/barang/tambah">
-          <Button
-            leftIcon={<Plus className="w-4 h-4" />}
-            size="sm"
-            className="w-full sm:w-auto"
-          >
-            Tambah Barang
-          </Button>
-        </Link>
+        {hasProductCreateAccess && (
+          <Link to="/barang/tambah">
+            <Button
+              leftIcon={<Plus className="w-4 h-4" />}
+              size="sm"
+              className="w-full sm:w-auto"
+            >
+              Tambah Barang
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="w-full p-3 overflow-hidden bg-white rounded-lg shadow sm:p-4 md:p-6">

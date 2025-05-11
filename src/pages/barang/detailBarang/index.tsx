@@ -12,10 +12,33 @@ import {
 } from "@/utils/sweetAlert";
 import { ArrowLeft, Edit, History, Trash2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/izin";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
 
 export default function DetailBarang() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const roleId = getRoleId() || '';
+
+  const { data: permissions } = useRolePermissions(roleId, {
+    enabled: isAuthenticated && roleId !== '',
+  });
+
+  const hasProductUpdateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PRODUCT,
+    PERMISSION.ACTIONS.UPDATE
+  );
+
+  const hasProductDeleteAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PRODUCT,
+    PERMISSION.ACTIONS.DELETE
+  );
 
   const {
     data: barang,
@@ -86,20 +109,24 @@ export default function DetailBarang() {
           <h1 className="text-2xl font-bold text-gray-900">Detail Barang</h1>
         </div>
         <div className="flex gap-2">
-          <Link to={`/barang/${id}/edit`}>
-            <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Barang
+          {hasProductUpdateAccess && (
+            <Link to={`/barang/${id}/edit`}>
+              <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Barang
+              </Button>
+            </Link>
+          )}
+          {hasProductDeleteAccess && (
+            <Button
+              className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
+              onClick={handleDeleteProduct}
+              disabled={deleteProductMutation.isPending}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {deleteProductMutation.isPending ? "Menghapus..." : "Hapus"}
             </Button>
-          </Link>
-          <Button
-            className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
-            onClick={handleDeleteProduct}
-            disabled={deleteProductMutation.isPending}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            {deleteProductMutation.isPending ? "Menghapus..." : "Hapus"}
-          </Button>
+          )}
         </div>
       </div>
 
@@ -231,26 +258,30 @@ export default function DetailBarang() {
                         Lihat Log Barang
                       </Button>
                     </Link>
-                    <Link to={`/barang/${id}/edit`} className="w-full">
+                    {hasProductUpdateAccess && (
+                      <Link to={`/barang/${id}/edit`} className="w-full">
+                        <Button
+                          variant="outline"
+                          className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                        >
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit Barang
+                        </Button>
+                      </Link>
+                    )}
+                    {hasProductDeleteAccess && (
                       <Button
                         variant="outline"
-                        className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                        className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                        onClick={handleDeleteProduct}
+                        disabled={deleteProductMutation.isPending}
                       >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit Barang
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {deleteProductMutation.isPending
+                          ? "Menghapus..."
+                          : "Hapus Barang"}
                       </Button>
-                    </Link>
-                    <Button
-                      variant="outline"
-                      className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                      onClick={handleDeleteProduct}
-                      disabled={deleteProductMutation.isPending}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      {deleteProductMutation.isPending
-                        ? "Menghapus..."
-                        : "Hapus Barang"}
-                    </Button>
+                    )}
                   </div>
                 </div>
               </div>

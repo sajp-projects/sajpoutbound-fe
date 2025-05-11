@@ -28,27 +28,33 @@ import { useRolePermissions } from "@/hooks/izin";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
 
 export default function DetailPeran() {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<"info" | "users">("info");
   const { isAuthenticated } = useAuth();
 
-  const userData = localStorage.getItem("user");
-  const roleId = userData ? JSON.parse(userData)?.roleId : null;
+  const roleId = getRoleId() || "";
 
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
   });
 
   const hasPermissionAccess = (): boolean => {
-    if (!isAuthenticated || !permissions) return false;
-    return permissions.some(
-      (permission) =>
-        permission.resource === PERMISSION.RESOURCES.PERMISSION &&
-        permission.action === PERMISSION.ACTIONS.READ
+    return hasPermission(
+      permissions,
+      PERMISSION.RESOURCES.PERMISSION,
+      PERMISSION.ACTIONS.READ
     );
   };
+
+  const hasRoleUpdateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ROLE,
+    PERMISSION.ACTIONS.UPDATE
+  );
 
   const {
     data: role,
@@ -78,12 +84,14 @@ export default function DetailPeran() {
           <h1 className="text-2xl font-bold text-gray-900">Detail Peran</h1>
         </div>
         <div className="flex gap-2">
-          <Link to={`/peran/${id}/edit`}>
-            <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
-              <Pencil className="w-4 h-4 mr-2" />
-              Edit Peran
-            </Button>
-          </Link>
+          {hasRoleUpdateAccess && (
+            <Link to={`/peran/${id}/edit`}>
+              <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
+                <Pencil className="w-4 h-4 mr-2" />
+                Edit Peran
+              </Button>
+            </Link>
+          )}
           {hasPermissionAccess() && (
             <Link to={`/peran/${id}/izin`}>
               <Button className="flex items-center px-3 py-2 text-sm font-medium text-white bg-purple-600 rounded-md shadow-sm hover:bg-purple-700">
@@ -216,15 +224,17 @@ export default function DetailPeran() {
                       Tindakan
                     </h3>
                     <div className="space-y-3">
-                      <Link to={`/peran/${id}/edit`} className="w-full">
-                        <Button
-                          variant="outline"
-                          className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
-                        >
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Edit Peran
-                        </Button>
-                      </Link>
+                      {hasRoleUpdateAccess && (
+                        <Link to={`/peran/${id}/edit`} className="w-full">
+                          <Button
+                            variant="outline"
+                            className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                          >
+                            <Pencil className="w-4 h-4 mr-2" />
+                            Edit Peran
+                          </Button>
+                        </Link>
+                      )}
                       {hasPermissionAccess() && (
                         <Link to={`/peran/${id}/izin`} className="w-full">
                           <Button
