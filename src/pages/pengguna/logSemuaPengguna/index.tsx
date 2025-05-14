@@ -19,7 +19,6 @@ import { Pagination } from "@/components/Pagination";
 import { Link } from "react-router";
 import { LoadingState } from "@/components/LoadingState";
 import { EmptyState } from "@/components/EmptyState";
-import { logStyles } from "@/styles/logStyles";
 
 interface UserLog {
   id: string;
@@ -102,27 +101,23 @@ export default function LogSemuaPengguna() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className={logStyles.detailFieldHeader}>
-            Data pengguna yang dibuat:
-          </div>
-          <div className={logStyles.detailContainer}>
-            <table className={logStyles.detailTable}>
+          <div className="log-detail-header">Data pengguna yang dibuat:</div>
+          <div className="log-detail-container">
+            <table className="w-full text-xs border-collapse">
               <tbody>
                 <tr>
-                  <td className={logStyles.detailLabelCell}>Nama</td>
-                  <td className={logStyles.detailValueCell}>
-                    {newData.name as string}
-                  </td>
+                  <td className="log-detail-label">Nama</td>
+                  <td className="log-detail-value">{newData.name as string}</td>
                 </tr>
                 <tr>
-                  <td className={logStyles.detailLabelCell}>Email</td>
-                  <td className={logStyles.detailValueCell}>
+                  <td className="log-detail-label">Email</td>
+                  <td className="log-detail-value">
                     {newData.email as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className={logStyles.detailLabelCell}>Peran</td>
-                  <td className={logStyles.detailValueCell}>
+                  <td className="log-detail-label">Peran</td>
+                  <td className="log-detail-value">
                     {newData.roleId as string}
                   </td>
                 </tr>
@@ -140,18 +135,18 @@ export default function LogSemuaPengguna() {
       const isRestore = newData?.deletedAt === null;
       return (
         <div>
-          <div className={logStyles.detailFieldHeader}>
+          <div className="log-detail-header">
             {isRestore
               ? "Pengguna dipulihkan:"
               : "Data pengguna yang diarsipkan:"}
           </div>
           {oldData && (
-            <div className={logStyles.detailContainer}>
-              <table className={logStyles.detailTable}>
+            <div className="log-detail-container">
+              <table className="w-full text-xs border-collapse">
                 <tbody>
                   <tr>
-                    <td className={logStyles.detailLabelCell}>Status</td>
-                    <td className={logStyles.detailValueCell}>
+                    <td className="log-detail-label">Status</td>
+                    <td className="log-detail-value">
                       {isRestore ? "Dipulihkan" : "Diarsipkan"}
                     </td>
                   </tr>
@@ -194,28 +189,26 @@ export default function LogSemuaPengguna() {
 
       return (
         <div>
-          <div className={logStyles.detailFieldHeader}>Perubahan:</div>
-          <div className={logStyles.detailContainer}>
-            <table className={logStyles.changeTable}>
+          <div className="log-detail-header">Perubahan:</div>
+          <div className="log-detail-container">
+            <table className="w-full text-xs border-collapse">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className={logStyles.changeFieldHeader}>Field</th>
-                  <th className={logStyles.changeValueHeader}>Nilai Lama</th>
-                  <th className={logStyles.changeValueHeader}>Nilai Baru</th>
+                  <th className="log-detail-label">Field</th>
+                  <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                    Nilai Lama
+                  </th>
+                  <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                    Nilai Baru
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {changes.map((change, idx) => (
                   <tr key={idx}>
-                    <td className={logStyles.changeFieldCell}>
-                      {change.field}
-                    </td>
-                    <td className={logStyles.changeValueCell}>
-                      {change.oldValue}
-                    </td>
-                    <td className={logStyles.changeValueCell}>
-                      {change.newValue}
-                    </td>
+                    <td className="log-detail-label">{change.field}</td>
+                    <td className="log-detail-value">{change.oldValue}</td>
+                    <td className="log-detail-value">{change.newValue}</td>
                   </tr>
                 ))}
               </tbody>
@@ -229,19 +222,29 @@ export default function LogSemuaPengguna() {
   };
 
   const renderLogTable = () => (
-    <div className={logStyles.tableContainer}>
-      <div className={logStyles.tableScroll}>
+    <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
+      <div className="log-table-container">
         <Table>
           <TableHeader>
-            <TableRow className={logStyles.tableRowHeader}>
-              <TableHead className={logStyles.tableHeaderNo}>No</TableHead>
-              <TableHead className={logStyles.tableHeader}>Waktu</TableHead>
-              <TableHead className={logStyles.tableHeader}>Pengguna</TableHead>
-              <TableHead className={logStyles.tableHeader}>Aksi</TableHead>
-              <TableHead className={logStyles.tableHeader}>
+            <TableRow className="border-b border-gray-200 bg-gray-50">
+              <TableHead className="w-[50px] font-semibold text-gray-700 py-4">
+                No
+              </TableHead>
+              <TableHead className="py-4 font-semibold text-gray-700">
+                Waktu
+              </TableHead>
+              <TableHead className="py-4 font-semibold text-gray-700">
+                Pengguna
+              </TableHead>
+              <TableHead className="py-4 font-semibold text-gray-700">
+                Aksi
+              </TableHead>
+              <TableHead className="py-4 font-semibold text-gray-700">
                 Dilakukan Oleh
               </TableHead>
-              <TableHead className={logStyles.tableHeader}>Deskripsi</TableHead>
+              <TableHead className="py-4 font-semibold text-gray-700">
+                Deskripsi
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -258,19 +261,19 @@ export default function LogSemuaPengguna() {
               logs.map((log: UserLog, index: number) => (
                 <TableRow
                   key={log.id}
-                  className={logStyles.tableRowData(index)}
+                  className={cn(index % 2 === 0 ? "bg-white" : "bg-gray-50")}
                 >
-                  <TableCell className={logStyles.tableCellNo}>
+                  <TableCell className="font-medium text-center">
                     {index + 1 + (pagination.page - 1) * pagination.limit}
                   </TableCell>
-                  <TableCell className={logStyles.tableCellDate}>
+                  <TableCell className="text-gray-700">
                     {formatDate(log.createdAt)}
                   </TableCell>
                   <TableCell>
                     {log.user && (
                       <Link
                         to={`/pengguna/${log.user.id}`}
-                        className={logStyles.tableCellUser}
+                        className="font-medium text-blue-600 hover:underline log-table-cell"
                       >
                         {log.user.name}
                       </Link>
@@ -287,17 +290,17 @@ export default function LogSemuaPengguna() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className={logStyles.tableCellPerformedBy}>
-                      <span className={logStyles.tableCellName}>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-blue-600 log-table-cell">
                         {log.performedBy.name}
                       </span>
-                      <span className={logStyles.tableCellEmail}>
+                      <span className="text-xs text-gray-500 log-table-cell">
                         {log.performedBy.email}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className={logStyles.tableCellDesc}>
-                    <p className={logStyles.tableCellDescText}>
+                  <TableCell className="max-w-xs">
+                    <p className="text-sm text-gray-700 truncate-text-2">
                       {log.description}
                     </p>
                     <div className="mt-2">
@@ -332,16 +335,19 @@ export default function LogSemuaPengguna() {
   );
 
   const renderLogCards = () => (
-    <div className={logStyles.cardsContainer}>
+    <div className="space-y-4 sm:hidden">
       {logs.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-8 bg-white border border-gray-200 rounded-lg">
           <EmptyState title="Tidak ada data log yang ditemukan." message="" />
         </div>
       ) : (
         logs.map((log: UserLog) => (
-          <div key={log.id} className={logStyles.cardItem}>
+          <div
+            key={log.id}
+            className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
+          >
             <div className="p-4">
-              <div className={logStyles.cardHeader}>
+              <div className="flex items-start justify-between mb-3">
                 <Badge
                   className={cn(
                     "rounded-md font-medium border",
@@ -350,7 +356,7 @@ export default function LogSemuaPengguna() {
                 >
                   {getActionLabel(log.action).label}
                 </Badge>
-                <span className={logStyles.cardDate}>
+                <span className="text-xs text-gray-500">
                   {formatDateShort(log.createdAt)}
                 </span>
               </div>
@@ -358,19 +364,21 @@ export default function LogSemuaPengguna() {
               <div className="mb-2">
                 {log.user && (
                   <div className="mb-1">
-                    <span className={logStyles.cardUserLabel}>Pengguna: </span>
+                    <span className="text-sm font-medium">Pengguna: </span>
                     <Link
                       to={`/pengguna/${log.user.id}`}
-                      className={logStyles.cardUserLink}
+                      className="text-sm text-blue-600 hover:underline truncate-text"
                     >
                       {log.user.name}
                     </Link>
                   </div>
                 )}
-                <p className={logStyles.cardDesc}>{log.description}</p>
-                <div className={logStyles.cardPerformedBy}>
+                <p className="mb-1 text-sm text-gray-700 truncate-text-2">
+                  {log.description}
+                </p>
+                <div className="text-xs text-gray-500">
                   Dilakukan oleh:{" "}
-                  <span className={logStyles.cardPerformedByName}>
+                  <span className="font-medium text-blue-600 truncate-text">
                     {log.performedBy.name}
                   </span>
                 </div>

@@ -35,6 +35,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .truncate-text-2 {
@@ -60,19 +61,52 @@
 }
 
 .wrap-text-table-cell {
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: keep-all;
+  max-width: 300px;
+}
+
+/* Untuk data tabel pada halaman log */
+.log-table-container {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.log-detail-container {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.log-table-cell {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 250px;
-  display: inline-block;
+  max-width: 200px;
 }
 
-/* Untuk tabel detail pada bagian "Lihat Detail" */
-.detail-table-cell {
+.log-detail-header {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #4b5563;
+  margin-bottom: 0.25rem;
+}
+
+.log-detail-label {
+  font-weight: 500;
+  background-color: #f9fafb;
+  width: 120px;
+  border: 1px solid #e5e7eb;
+  padding: 0.25rem 0.5rem;
+}
+
+.log-detail-value {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  border: 1px solid #e5e7eb;
+  padding: 0.25rem 0.5rem;
 }
 
 /* Improve mobile responsiveness */
