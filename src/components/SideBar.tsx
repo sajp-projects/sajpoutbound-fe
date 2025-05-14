@@ -328,14 +328,11 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     },
   ];
 
-  // Fungsi untuk mendapatkan nama menu yang aktif berdasarkan path saat ini
   const getActiveMenuName = () => {
     const currentPath = location.pathname;
 
     for (const item of menuItems) {
       if (item.subItems) {
-        // Cek apakah ada sub-item yang pathnya cocok dengan currentPath
-        // atau jika currentPath dimulai dengan path dari sub-item (untuk menangani sub-routes)
         const isActive = item.subItems.some((subItem) => {
           return (
             currentPath === subItem.path ||
@@ -347,15 +344,12 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
           return item.name;
         }
       } else if (item.path === currentPath) {
-        // Jika item utama (tanpa submenu) adalah path yang aktif
         return item.name;
       }
     }
     return null;
   };
 
-  // Secara otomatis membuka menu yang aktif saat pertama kali komponen dimuat
-  // atau saat URL berubah
   useEffect(() => {
     const activeMenu = getActiveMenuName();
     if (activeMenu) {

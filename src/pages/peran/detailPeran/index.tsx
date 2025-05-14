@@ -10,7 +10,6 @@ import {
   Eye,
   Lock,
   Trash2,
-  History,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -274,15 +273,6 @@ export default function DetailPeran() {
                       Tindakan
                     </h3>
                     <div className="space-y-3">
-                      <Link to={`/peran/${id}/log`} className="w-full">
-                        <Button
-                          variant="outline"
-                          className="justify-start w-full"
-                        >
-                          <History className="w-4 h-4 mr-2" />
-                          Lihat Log Peran
-                        </Button>
-                      </Link>
                       {hasRoleUpdateAccess && (
                         <Link to={`/peran/${id}/edit`} className="w-full">
                           <Button

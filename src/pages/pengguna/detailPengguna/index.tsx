@@ -12,7 +12,7 @@ import {
   showConfirmationAlert,
   isConfirmed,
 } from "@/utils/sweetAlert";
-import { Archive, ArrowLeft, FileText, Edit, Warehouse } from "lucide-react";
+import { Archive, ArrowLeft, History, Edit, Warehouse } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
@@ -281,7 +281,7 @@ export default function DetailPengguna() {
                         variant="outline"
                         className="justify-start w-full"
                       >
-                        <FileText className="w-4 h-4 mr-2" />
+                        <History className="w-4 h-4 mr-2" />
                         Lihat Log Aktivitas
                       </Button>
                     </Link>
