@@ -17,7 +17,7 @@ import {
   X,
   Lock,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router";
 import { cn } from "../lib/utils";
 import { getRoleId } from "@/utils/storage";
@@ -54,11 +54,12 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
   });
 
   const toggleMenu = (menuName: string) => {
-    setOpenMenus((prev) =>
-      prev.includes(menuName)
-        ? prev.filter((item) => item !== menuName)
-        : [...prev, menuName]
-    );
+    setOpenMenus((prev) => {
+      if (prev.includes(menuName)) {
+        return [];
+      }
+      return [menuName];
+    });
   };
 
   const shouldShowMenuItem = (item: MenuItem): boolean => {
@@ -326,6 +327,41 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
       ],
     },
   ];
+
+  // Fungsi untuk mendapatkan nama menu yang aktif berdasarkan path saat ini
+  const getActiveMenuName = () => {
+    const currentPath = location.pathname;
+
+    for (const item of menuItems) {
+      if (item.subItems) {
+        // Cek apakah ada sub-item yang pathnya cocok dengan currentPath
+        // atau jika currentPath dimulai dengan path dari sub-item (untuk menangani sub-routes)
+        const isActive = item.subItems.some((subItem) => {
+          return (
+            currentPath === subItem.path ||
+            (subItem.path !== "/" && currentPath.startsWith(subItem.path + "/"))
+          );
+        });
+
+        if (isActive) {
+          return item.name;
+        }
+      } else if (item.path === currentPath) {
+        // Jika item utama (tanpa submenu) adalah path yang aktif
+        return item.name;
+      }
+    }
+    return null;
+  };
+
+  // Secara otomatis membuka menu yang aktif saat pertama kali komponen dimuat
+  // atau saat URL berubah
+  useEffect(() => {
+    const activeMenu = getActiveMenuName();
+    if (activeMenu) {
+      setOpenMenus([activeMenu]);
+    }
+  }, [location.pathname]);
 
   const isMenuActive = (menuName: string) => {
     return menuItems
