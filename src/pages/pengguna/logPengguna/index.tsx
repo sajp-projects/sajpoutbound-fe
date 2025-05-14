@@ -139,6 +139,14 @@ export default function LogPengguna() {
                   </td>
                 </tr>
               )}
+              <tr>
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                  Gudang
+                </td>
+                <td className="px-2 py-1 border border-gray-200">
+                  {newData.warehouseId as string}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -179,6 +187,14 @@ export default function LogPengguna() {
                   </td>
                 </tr>
               )}
+              <tr>
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                  Gudang
+                </td>
+                <td className="px-2 py-1 border border-gray-200">
+                  {oldData.warehouseId ? (oldData.warehouseId as string) : "-"}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -218,6 +234,21 @@ export default function LogPengguna() {
           field: "Peran",
           oldValue: oldRoleName,
           newValue: newRoleName,
+        });
+      }
+
+      if (oldData.warehouseId !== newData.warehouseId) {
+        const oldWarehouseId = oldData.warehouseId
+          ? (oldData.warehouseId as string)
+          : "-";
+        const newWarehouseId = newData.warehouseId
+          ? (newData.warehouseId as string)
+          : "-";
+
+        changes.push({
+          field: "Gudang",
+          oldValue: oldWarehouseId,
+          newValue: newWarehouseId,
         });
       }
 

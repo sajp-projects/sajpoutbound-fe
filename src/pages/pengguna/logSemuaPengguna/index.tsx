@@ -121,6 +121,12 @@ export default function LogSemuaPengguna() {
                     {newData.roleId as string}
                   </td>
                 </tr>
+                <tr>
+                  <td className="log-detail-label">Gudang</td>
+                  <td className="log-detail-value">
+                    {newData.warehouseId as string}
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -182,6 +188,21 @@ export default function LogSemuaPengguna() {
           field: "Peran",
           oldValue: oldData.roleId as string,
           newValue: newData.roleId as string,
+        });
+      }
+
+      if (oldData.warehouseId !== newData.warehouseId) {
+        const oldWarehouseId = oldData.warehouseId
+          ? (oldData.warehouseId as string)
+          : "-";
+        const newWarehouseId = newData.warehouseId
+          ? (newData.warehouseId as string)
+          : "-";
+
+        changes.push({
+          field: "Gudang",
+          oldValue: oldWarehouseId,
+          newValue: newWarehouseId,
         });
       }
 
