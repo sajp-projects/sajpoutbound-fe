@@ -20,6 +20,7 @@ import { Pagination } from "@/components/Pagination";
 import { Link } from "react-router";
 import { LoadingState } from "@/components/LoadingState";
 import { EmptyState } from "@/components/EmptyState";
+import { logStyles } from "@/styles/logStyles";
 
 interface ActionLabel {
   label: string;
@@ -96,45 +97,39 @@ export default function LogSemuaArmada() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">
+          <div className={logStyles.detailFieldHeader}>
             Data armada yang dibuat:
           </div>
-          <table className="w-full text-xs border-collapse">
-            <tbody>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Model
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.model as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.id_sl as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Plat Nomor
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.plateNumber as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Deskripsi
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.description as string}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div className={logStyles.detailContainer}>
+            <table className={logStyles.detailTable}>
+              <tbody>
+                <tr>
+                  <td className={logStyles.detailLabelCell}>Model</td>
+                  <td className={logStyles.detailValueCell}>
+                    {newData.model as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className={logStyles.detailLabelCell}>ID</td>
+                  <td className={logStyles.detailValueCell}>
+                    {newData.id_sl as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className={logStyles.detailLabelCell}>Plat Nomor</td>
+                  <td className={logStyles.detailValueCell}>
+                    {newData.plateNumber as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className={logStyles.detailLabelCell}>Deskripsi</td>
+                  <td className={logStyles.detailValueCell}>
+                    {newData.description as string}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     }
@@ -142,45 +137,39 @@ export default function LogSemuaArmada() {
     if (oldData && !newData) {
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">
+          <div className={logStyles.detailFieldHeader}>
             Data armada yang dihapus:
           </div>
-          <table className="w-full text-xs border-collapse">
-            <tbody>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Model
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.model as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.id_sl as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Plat Nomor
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.plateNumber as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Deskripsi
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.description as string}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div className={logStyles.detailContainer}>
+            <table className={logStyles.detailTable}>
+              <tbody>
+                <tr>
+                  <td className={logStyles.detailLabelCell}>Model</td>
+                  <td className={logStyles.detailValueCell}>
+                    {oldData.model as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className={logStyles.detailLabelCell}>ID</td>
+                  <td className={logStyles.detailValueCell}>
+                    {oldData.id_sl as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className={logStyles.detailLabelCell}>Plat Nomor</td>
+                  <td className={logStyles.detailValueCell}>
+                    {oldData.plateNumber as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className={logStyles.detailLabelCell}>Deskripsi</td>
+                  <td className={logStyles.detailValueCell}>
+                    {oldData.description as string}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     }
@@ -224,39 +213,33 @@ export default function LogSemuaArmada() {
 
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">
-            Perubahan:
-          </div>
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Field
-                </th>
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Nilai Lama
-                </th>
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Nilai Baru
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {changes.map((change, idx) => (
-                <tr key={idx}>
-                  <td className="px-2 py-1 font-medium border border-gray-200">
-                    {change.field}
-                  </td>
-                  <td className="px-2 py-1 border border-gray-200">
-                    {change.oldValue}
-                  </td>
-                  <td className="px-2 py-1 border border-gray-200">
-                    {change.newValue}
-                  </td>
+          <div className={logStyles.detailFieldHeader}>Perubahan:</div>
+          <div className={logStyles.detailContainer}>
+            <table className={logStyles.changeTable}>
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className={logStyles.changeFieldHeader}>Field</th>
+                  <th className={logStyles.changeValueHeader}>Nilai Lama</th>
+                  <th className={logStyles.changeValueHeader}>Nilai Baru</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {changes.map((change, idx) => (
+                  <tr key={idx}>
+                    <td className={logStyles.changeFieldCell}>
+                      {change.field}
+                    </td>
+                    <td className={logStyles.changeValueCell}>
+                      {change.oldValue}
+                    </td>
+                    <td className={logStyles.changeValueCell}>
+                      {change.newValue}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     }
@@ -265,29 +248,19 @@ export default function LogSemuaArmada() {
   };
 
   const renderLogTable = () => (
-    <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
-      <div className="overflow-x-auto">
+    <div className={logStyles.tableContainer}>
+      <div className={logStyles.tableScroll}>
         <Table>
           <TableHeader>
-            <TableRow className="border-b border-gray-200 bg-gray-50">
-              <TableHead className="w-[50px] font-semibold text-gray-700 py-4">
-                No
-              </TableHead>
-              <TableHead className="py-4 font-semibold text-gray-700">
-                Waktu
-              </TableHead>
-              <TableHead className="py-4 font-semibold text-gray-700">
-                Armada
-              </TableHead>
-              <TableHead className="py-4 font-semibold text-gray-700">
-                Aksi
-              </TableHead>
-              <TableHead className="py-4 font-semibold text-gray-700">
+            <TableRow className={logStyles.tableRowHeader}>
+              <TableHead className={logStyles.tableHeaderNo}>No</TableHead>
+              <TableHead className={logStyles.tableHeader}>Waktu</TableHead>
+              <TableHead className={logStyles.tableHeader}>Armada</TableHead>
+              <TableHead className={logStyles.tableHeader}>Aksi</TableHead>
+              <TableHead className={logStyles.tableHeader}>
                 Dilakukan Oleh
               </TableHead>
-              <TableHead className="py-4 font-semibold text-gray-700">
-                Deskripsi
-              </TableHead>
+              <TableHead className={logStyles.tableHeader}>Deskripsi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -304,33 +277,25 @@ export default function LogSemuaArmada() {
               logs.map((log: ArmadaLog, index: number) => (
                 <TableRow
                   key={log.id}
-                  className={cn(index % 2 === 0 ? "bg-white" : "bg-gray-50")}
+                  className={logStyles.tableRowData(index)}
                 >
-                  <TableCell className="font-medium text-center">
+                  <TableCell className={logStyles.tableCellNo}>
                     {index + 1 + (pagination.page - 1) * pagination.limit}
                   </TableCell>
-                  <TableCell className="text-gray-700">
-                    <div
-                      className="truncate-text"
-                      title={formatDate(log.createdAt)}
-                    >
-                      {formatDate(log.createdAt)}
-                    </div>
+                  <TableCell className={logStyles.tableCellDate}>
+                    {formatDate(log.createdAt)}
                   </TableCell>
                   <TableCell>
-                    {log.armada ? (
+                    {log.armada && (
                       <Link
                         to={`/armada/${log.armada.id}`}
-                        className="block font-medium text-blue-600 hover:underline truncate-text"
-                        title={log.armada.model}
+                        className={logStyles.tableCellUser}
                       >
-                        {log.armada.model}
+                        {getArmadaName(log)}
                       </Link>
-                    ) : (
-                      <span
-                        className="text-gray-700 truncate-text"
-                        title={getArmadaName(log)}
-                      >
+                    )}
+                    {!log.armada && (
+                      <span className="truncate-text">
                         {getArmadaName(log)}
                       </span>
                     )}
@@ -346,26 +311,17 @@ export default function LogSemuaArmada() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-col">
-                      <span
-                        className="font-medium text-blue-600 truncate-text"
-                        title={log.performedBy.name}
-                      >
+                    <div className={logStyles.tableCellPerformedBy}>
+                      <span className={logStyles.tableCellName}>
                         {log.performedBy.name}
                       </span>
-                      <span
-                        className="text-xs text-gray-500 truncate-text"
-                        title={log.performedBy.email}
-                      >
+                      <span className={logStyles.tableCellEmail}>
                         {log.performedBy.email}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="max-w-xs">
-                    <p
-                      className="text-sm text-gray-700 truncate-text-2"
-                      title={log.description}
-                    >
+                  <TableCell className={logStyles.tableCellDesc}>
+                    <p className={logStyles.tableCellDescText}>
                       {log.description}
                     </p>
                     <div className="mt-2">
@@ -400,19 +356,16 @@ export default function LogSemuaArmada() {
   );
 
   const renderLogCards = () => (
-    <div className="space-y-4 sm:hidden">
+    <div className={logStyles.cardsContainer}>
       {logs.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-8 bg-white border border-gray-200 rounded-lg">
           <EmptyState title="Tidak ada data log yang ditemukan." message="" />
         </div>
       ) : (
         logs.map((log: ArmadaLog) => (
-          <div
-            key={log.id}
-            className="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
-          >
+          <div key={log.id} className={logStyles.cardItem}>
             <div className="p-4">
-              <div className="flex items-start justify-between mb-3">
+              <div className={logStyles.cardHeader}>
                 <Badge
                   className={cn(
                     "rounded-md font-medium border",
@@ -421,40 +374,29 @@ export default function LogSemuaArmada() {
                 >
                   {getActionLabel(log.action).label}
                 </Badge>
-                <span className="text-xs text-gray-500">
+                <span className={logStyles.cardDate}>
                   {formatDateShort(log.createdAt)}
                 </span>
               </div>
 
               <div className="mb-2">
                 <div className="mb-1">
-                  <span className="text-sm font-medium">Armada: </span>
+                  <span className={logStyles.cardUserLabel}>Armada: </span>
                   {log.armada ? (
                     <Link
                       to={`/armada/${log.armada.id}`}
-                      className="text-sm text-blue-600 hover:underline truncate-text inline-block max-w-[150px] align-bottom"
-                      title={log.armada.model}
-                    >
-                      {log.armada.model}
-                    </Link>
-                  ) : (
-                    <span
-                      className="text-sm text-gray-700 truncate-text"
-                      title={getArmadaName(log)}
+                      className={logStyles.cardUserLink}
                     >
                       {getArmadaName(log)}
-                    </span>
+                    </Link>
+                  ) : (
+                    <span className="truncate-text">{getArmadaName(log)}</span>
                   )}
                 </div>
-                <p
-                  className="mb-1 text-sm text-gray-700 truncate-text-2"
-                  title={log.description}
-                >
-                  {log.description}
-                </p>
-                <div className="text-xs text-gray-500">
+                <p className={logStyles.cardDesc}>{log.description}</p>
+                <div className={logStyles.cardPerformedBy}>
                   Dilakukan oleh:{" "}
-                  <span className="font-medium text-blue-600">
+                  <span className={logStyles.cardPerformedByName}>
                     {log.performedBy.name}
                   </span>
                 </div>

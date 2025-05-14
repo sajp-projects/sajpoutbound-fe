@@ -60,10 +60,19 @@
 }
 
 .wrap-text-table-cell {
-  white-space: normal;
-  word-wrap: break-word;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   max-width: 250px;
+  display: inline-block;
+}
+
+/* Untuk tabel detail pada bagian "Lihat Detail" */
+.detail-table-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* Improve mobile responsiveness */
