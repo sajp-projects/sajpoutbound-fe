@@ -42,7 +42,13 @@ import LogSemuaArmada from "./pages/armada/logSemuaArmada";
 import EditArmada from "./pages/armada/editArmada";
 import DetailArmada from "./pages/armada/detailArmada";
 import NotFound from "./pages/notFound";
-
+import DaftarDo from "./pages/do/daftarDo";
+import TambahDo from "./pages/do/tambahDo";
+import LogDo from "./pages/do/logDo";
+import ArsipDo from "./pages/do/arsipDo";
+import EditDo from "./pages/do/editDo";
+import DetailDo from "./pages/do/detailDo";
+import LogSemuaDo from "./pages/do/logSemuaDo";
 interface ProtectedRouteConfig {
   path: string;
   element: React.ReactNode;
@@ -352,6 +358,57 @@ export default function App() {
     },
   ];
 
+  const doRoutes: ProtectedRouteConfig[] = [
+    {
+      path: "",
+      element: <DaftarDo />,
+      resource: PERMISSION.RESOURCES.DO,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/do",
+    },
+    {
+      path: "tambah",
+      element: <TambahDo />,
+      resource: PERMISSION.RESOURCES.DO,
+      action: PERMISSION.ACTIONS.CREATE,
+      redirectTo: "/do",
+    },
+    {
+      path: ":id/log",
+      element: <LogDo />,
+      resource: PERMISSION.RESOURCES.DO,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/do",
+    },
+    {
+      path: "arsip",
+      element: <ArsipDo />,
+      resource: PERMISSION.RESOURCES.DO,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/do",
+    },
+    {
+      path: ":id/edit",
+      element: <EditDo />,
+      resource: PERMISSION.RESOURCES.DO,
+      action: PERMISSION.ACTIONS.UPDATE,
+      redirectTo: "/do",
+    },
+    {
+      path: ":id",
+      element: <DetailDo />,
+      resource: PERMISSION.RESOURCES.DO,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/do",
+    },
+    {
+      path: "log",
+      element: <LogSemuaDo />,
+      resource: PERMISSION.RESOURCES.DO,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/do",
+    },
+  ];
   return (
     <BrowserRouter>
       <Routes>
@@ -393,6 +450,11 @@ export default function App() {
           {}
           <Route path="/armada">
             {armadaRoutes.map((route) => createProtectedRoute(route))}
+          </Route>
+
+          {}
+          <Route path="/do">
+            {doRoutes.map((route) => createProtectedRoute(route))}
           </Route>
         </Route>
 

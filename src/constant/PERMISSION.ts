@@ -13,7 +13,7 @@ export const PERMISSION = {
     PRODUCT: "product",
     CUSTOMER: "customer",
     WAREHOUSE: "warehouse",
-    DO: "do",
+    DO: "delivery_order",
     ARMADA: "armada",
     PENGIRIMAN: "pengiriman",
     LAPORAN: "laporan",
