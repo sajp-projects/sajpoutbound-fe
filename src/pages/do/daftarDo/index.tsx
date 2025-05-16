@@ -10,11 +10,19 @@ import { Pagination } from "@/components/Pagination";
 import { SearchInput } from "@/components/SearchInput";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
 import { cn } from "@/lib/utils";
-import { DeliveryOrder } from "@/types/do";
+import { DeliveryOrder, DeliveryOrderStatus } from "@/types/do";
 import { formatDate, formatDateShort } from "@/utils/date";
 import { hasPermission } from "@/utils/permission";
 import { getRoleId } from "@/utils/storage";
@@ -131,12 +139,27 @@ export default function DaftarDo() {
     return actions;
   };
 
+  const getStatusBadgeClass = (status: DeliveryOrderStatus | undefined) => {
+    switch (status || "PENDING") {
+      case "PENDING":
+        return "bg-yellow-50 text-yellow-600 border-yellow-200";
+      case "PROSES":
+        return "bg-blue-50 text-blue-600 border-blue-200";
+      case "SELESAI":
+        return "bg-green-50 text-green-600 border-green-200";
+      default:
+        return "bg-gray-50 text-gray-600 border-gray-200";
+    }
+  };
+
   return (
-    <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
-      <div className="flex flex-col items-start justify-between w-full gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
-          Daftar Delivery Order
-        </h1>
+    <div className="w-full px-4 space-y-6 overflow-x-hidden sm:px-0">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Daftar Delivery Order
+          </h1>
+        </div>
         {hasDoCreateAccess && (
           <Link to="/do/tambah">
             <Button
@@ -150,13 +173,13 @@ export default function DaftarDo() {
         )}
       </div>
 
-      <div className="w-full p-3 overflow-hidden bg-white rounded-lg shadow sm:p-4 md:p-6">
-        <div className="flex flex-col items-start justify-between w-full gap-3 mb-4 sm:flex-row sm:items-center sm:mb-6">
+      <div className="w-full p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">
+        <div className="flex flex-col items-start justify-between gap-4 mb-6 sm:flex-row sm:items-center">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+            <h2 className="text-xl font-semibold text-gray-900">
               Delivery Order
             </h2>
-            <p className="text-xs text-gray-500 sm:text-sm">
+            <p className="text-sm text-gray-500">
               Manajemen data delivery order
             </p>
           </div>
@@ -171,7 +194,7 @@ export default function DaftarDo() {
           </div>
         </div>
 
-        <div className="w-full mb-4 sm:mb-6">
+        <div className="w-full mb-6">
           <SearchInput
             placeholder="Cari delivery order..."
             className="w-full sm:max-w-md"
@@ -188,88 +211,80 @@ export default function DaftarDo() {
           />
         ) : (
           <div className="w-full">
-            {}
+            {/* Tabel Desktop */}
             <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
               <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                <table className="w-full min-w-[650px] border-collapse">
-                  <thead className="border-b border-gray-200 bg-gray-50">
-                    <tr>
-                      <th className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b border-gray-200 bg-gray-50">
+                      <TableHead className="w-[5%] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
                         No.
-                      </th>
-                      <th className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                      </TableHead>
+                      <TableHead className="w-[18%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                        ID
+                      </TableHead>
+                      <TableHead className="w-[25%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Pelanggan
-                      </th>
-                      <th className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
-                        Alamat
-                      </th>
-                      <th className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
-                        Item
-                      </th>
-                      <th className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
+                      </TableHead>
+                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                        Status
+                      </TableHead>
+                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Tgl. Dibuat
-                      </th>
-                      <th className="w-[130px] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
+                      </TableHead>
+                      <TableHead className="w-[130px] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
                         Aksi
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {deliveryOrders.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="py-6 text-center">
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center">
                           <EmptyState title="Tidak ada data delivery order yang ditemukan" />
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ) : (
                       deliveryOrders.map((deliveryOrder, idx) => (
-                        <tr
+                        <TableRow
                           key={deliveryOrder.id}
                           className={cn(
                             idx % 2 === 0 ? "bg-white" : "bg-gray-50",
                             "border-b border-gray-200 last:border-b-0"
                           )}
                         >
-                          <td className="py-2.5 px-3 font-medium text-center text-sm">
+                          <TableCell className="py-2.5 px-3 font-medium text-center text-sm">
                             {idx + 1 + (pagination.page - 1) * pagination.limit}
-                          </td>
-                          <td className="py-2.5 px-3 font-medium text-blue-600 text-sm">
-                            <div
-                              className="wrap-text"
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 text-gray-600 text-sm">
+                            <div className="wrap-text" title={deliveryOrder.id}>
+                              {deliveryOrder.id}
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 font-medium text-sm">
+                            <Link
+                              to={`/pelanggan/${deliveryOrder.customer.id}`}
+                              className="text-blue-600 hover:underline wrap-text"
                               title={deliveryOrder.customer.name}
                             >
                               {deliveryOrder.customer.name}
-                            </div>
-                          </td>
-                          <td className="py-2.5 px-3 text-gray-600 text-sm">
-                            <div
-                              className="wrap-text"
-                              title={deliveryOrder.address}
+                            </Link>
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 text-gray-600 text-sm">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "px-2 py-0.5 rounded-md font-medium text-xs",
+                                getStatusBadgeClass(deliveryOrder.status)
+                              )}
                             >
-                              {deliveryOrder.address}
-                            </div>
-                          </td>
-                          <td className="py-2.5 px-3 text-gray-600 text-sm">
-                            <div className="wrap-text">
-                              {deliveryOrder.items.map((item) => (
-                                <Badge
-                                  key={item.id}
-                                  variant="outline"
-                                  className={cn(
-                                    "px-2 py-0.5 mr-1 mb-1 rounded-md font-medium text-xs",
-                                    "bg-blue-50 text-blue-600 border-blue-200"
-                                  )}
-                                >
-                                  {item.product.name} ({item.quantity}{" "}
-                                  {item.product.satuan})
-                                </Badge>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
+                              {deliveryOrder.status || "PENDING"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm">
                             {formatDate(deliveryOrder.createdAt)}
-                          </td>
-                          <td className="py-2.5 px-3">
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3">
                             <div className="flex items-center justify-center">
                               <ActionButtons
                                 actions={getDeliveryOrderActions(deliveryOrder)}
@@ -277,16 +292,16 @@ export default function DaftarDo() {
                                 basePath="/do"
                               />
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))
                     )}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </div>
 
-            {}
+            {/* Mobile Cards */}
             <div className="w-full space-y-3 sm:hidden">
               {deliveryOrders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center w-full p-6 bg-white border border-gray-200 rounded-lg">
@@ -301,31 +316,25 @@ export default function DaftarDo() {
                     <div className="w-full p-3">
                       <div className="flex items-start justify-between w-full mb-2">
                         <div className="max-w-[65%]">
-                          <h3 className="text-sm font-medium text-blue-600 break-words">
+                          <Link
+                            to={`/pelanggan/${deliveryOrder.customer.id}`}
+                            className="text-sm font-medium text-blue-600 break-words hover:underline"
+                          >
                             {deliveryOrder.customer.name}
-                          </h3>
+                          </Link>
                           <p className="mt-1 text-xs text-gray-600 break-all">
-                            {deliveryOrder.address}
+                            ID: {deliveryOrder.id}
                           </p>
                         </div>
-                      </div>
-
-                      <div className="mb-2">
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {deliveryOrder.items.map((item) => (
-                            <Badge
-                              key={item.id}
-                              variant="outline"
-                              className={cn(
-                                "px-2 py-0.5 rounded-md font-medium text-xs",
-                                "bg-blue-50 text-blue-600 border-blue-200"
-                              )}
-                            >
-                              {item.product.name} ({item.quantity}{" "}
-                              {item.product.satuan})
-                            </Badge>
-                          ))}
-                        </div>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "px-2 py-0.5 rounded-md font-medium text-xs",
+                            getStatusBadgeClass(deliveryOrder.status)
+                          )}
+                        >
+                          {deliveryOrder.status || "PENDING"}
+                        </Badge>
                       </div>
 
                       <div className="text-xs text-gray-500 space-y-0.5 mb-2">
@@ -350,7 +359,6 @@ export default function DaftarDo() {
               )}
             </div>
 
-            {}
             <div className="w-full mt-4">
               <Pagination
                 totalItems={pagination.total}
