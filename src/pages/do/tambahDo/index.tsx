@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router";
-import { ArrowLeft, Plus, Save, Loader2, X } from "lucide-react";
+import { Plus, Save, Loader2, X } from "lucide-react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { joiResolver } from "@hookform/resolvers/joi";
 import Joi from "joi";
@@ -25,13 +25,11 @@ import {
 import { showSuccessAlert, showErrorAlert } from "@/utils/sweetAlert";
 import { cn } from "@/lib/utils";
 
-// Memperluas tipe CreateDeliveryOrderProduct untuk komponen ini
 interface ExtendedProduct extends CreateDeliveryOrderProduct {
   productName?: string;
   productSatuan?: string;
 }
 
-// Skema validasi dengan Joi
 const itemSchema = Joi.object({
   productId: Joi.string().required().messages({
     "string.empty": "Barang harus dipilih",
@@ -105,7 +103,6 @@ function FormField({
   );
 }
 
-// Komponen AutocompleteInput untuk pelanggan dan produk
 interface AutocompleteInputProps<T> {
   items: T[];
   displayValue: string;
@@ -144,13 +141,11 @@ function AutocompleteInput<T>({
   const [searchQuery, setSearchQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Filter items berdasarkan query
   const filteredItems = items.filter((item) => {
     const itemValue = String(item[displayKey]).toLowerCase();
     return itemValue.includes(searchQuery.toLowerCase());
   });
 
-  // Tangani klik di luar dropdown untuk menutupnya
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -246,12 +241,12 @@ function AutocompleteInput<T>({
 
 export default function TambahDo() {
   const navigate = useNavigate();
-
-  // State UI
   const [showItems, setShowItems] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
+  const inputClassName = cn(
+    "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+  );
 
-  // Menggunakan react-hook-form dengan validasi Joi
   const {
     control,
     handleSubmit,
@@ -281,7 +276,6 @@ export default function TambahDo() {
     },
   });
 
-  // Menggunakan useFieldArray untuk mengelola array item produk
   const { append, remove, update } = useFieldArray({
     control,
     name: "items",
@@ -290,22 +284,36 @@ export default function TambahDo() {
   const watchItems = watch("items");
   const watchCustomerName = watch("customerName");
 
-  // Menggunakan hooks untuk mengambil data dari API
   const { data: customersData, isLoading: loadingCustomers } = useCustomers({
-    staleTime: 300000, // 5 menit cache
+    staleTime: 300000,
     refetchOnWindowFocus: false,
   });
 
   const { data: productsData, isLoading: loadingProducts } = useProducts({
-    staleTime: 300000, // 5 menit cache
+    staleTime: 300000,
     refetchOnWindowFocus: false,
   });
 
-  // Ekstrak data dari response API
   const customers = customersData?.customers || [];
   const products = productsData?.products || [];
 
-  // Efek untuk menampilkan daftar barang saat ada item
+  const createDeliveryOrder = useCreateDeliveryOrder({
+    onSuccess: (data) => {
+      showSuccessAlert("Berhasil!", "Delivery Order telah berhasil dibuat.");
+      navigate(`/do/${data.id}`);
+    },
+    onError: (error) => {
+      let errorMessage = "Terjadi kesalahan saat membuat Delivery Order.";
+      try {
+        const parsedError = JSON.parse(error.message);
+        errorMessage = parsedError.message || errorMessage;
+      } catch (error: unknown) {
+        errorMessage = error instanceof Error ? error.message : errorMessage;
+      }
+      showErrorAlert("Gagal Membuat DO", errorMessage);
+    },
+  });
+
   useEffect(() => {
     if (
       watchItems &&
@@ -318,34 +326,16 @@ export default function TambahDo() {
     }
   }, [watchItems]);
 
-  // Handle saat pelanggan dipilih
   const handleCustomerSelect = (customer: (typeof customers)[0]) => {
     setValue("customerId", customer.id, { shouldValidate: true });
     setValue("customerName", customer.name);
     setValue("address", customer.address || "", { shouldValidate: true });
   };
 
-  // Handle tambah barang
-  const handleAddItem = (product: (typeof products)[0], quantity: number) => {
-    if (!quantity || quantity < 1) {
-      showErrorAlert("Validasi Gagal", "Kuantitas minimal 1");
-      return;
-    }
-
-    // Tambahkan item baru ke array
-    append({
-      productId: product.id,
-      quantity: quantity,
-      productName: product.name,
-      productSatuan: product.satuan,
-    } as ExtendedProduct);
-
-    // Reset form input barang
+  const resetItemForm = () => {
     setValue("tempProduct", "");
     setValue("tempProductId", "");
     setValue("tempQuantity", undefined);
-
-    // Reset nilai input kuantitas di DOM
     const quantityInput = document.querySelector(
       'input[name="tempQuantity"]'
     ) as HTMLInputElement;
@@ -354,18 +344,30 @@ export default function TambahDo() {
     }
   };
 
-  // Handle edit barang
+  const handleAddItem = (product: (typeof products)[0], quantity: number) => {
+    if (!quantity || quantity < 1) {
+      showErrorAlert("Validasi Gagal", "Kuantitas minimal 1");
+      return;
+    }
+
+    append({
+      productId: product.id,
+      quantity: quantity,
+      productName: product.name,
+      productSatuan: product.satuan,
+    } as ExtendedProduct);
+
+    resetItemForm();
+  };
+
   const handleEditItem = (index: number) => {
     setEditingItemIndex(index);
-
-    // Pindahkan nilai dari item yang diedit ke form input
     const item = watchItems[index];
     setValue("tempProduct", item.productName || "");
     setValue("tempProductId", item.productId);
     setValue("tempQuantity", item.quantity);
   };
 
-  // Handle update barang
   const handleUpdateItem = (
     product: (typeof products)[0],
     quantity: number
@@ -383,50 +385,17 @@ export default function TambahDo() {
         productSatuan: product.satuan,
       } as ExtendedProduct);
 
-      // Reset form dan status edit
       setEditingItemIndex(null);
-      setValue("tempProduct", "");
-      setValue("tempProductId", "");
-      setValue("tempQuantity", undefined);
-
-      // Reset nilai input kuantitas di DOM
-      const quantityInput = document.querySelector(
-        'input[name="tempQuantity"]'
-      ) as HTMLInputElement;
-      if (quantityInput) {
-        quantityInput.value = "";
-      }
+      resetItemForm();
     }
   };
 
-  // Gunakan hook untuk membuat DO
-  const createDeliveryOrder = useCreateDeliveryOrder({
-    onSuccess: (data) => {
-      showSuccessAlert("Berhasil!", "Delivery Order telah berhasil dibuat.");
-      navigate(`/do/${data.id}`);
-    },
-    onError: (error) => {
-      let errorMessage = "Terjadi kesalahan saat membuat Delivery Order.";
-
-      try {
-        const parsedError = JSON.parse(error.message);
-        errorMessage = parsedError.message || errorMessage;
-      } catch (error: unknown) {
-        errorMessage = error instanceof Error ? error.message : errorMessage;
-      }
-
-      showErrorAlert("Gagal Membuat DO", errorMessage);
-    },
-  });
-
-  // Handle submit form
   const onSubmit = (
     data: CreateDeliveryOrderInput & {
       customerName?: string;
       items: ExtendedProduct[];
     }
   ) => {
-    // Periksa apakah ada item yang valid
     const validItems = data.items.filter((item) => item.productId);
 
     if (validItems.length === 0) {
@@ -434,13 +403,11 @@ export default function TambahDo() {
         type: "manual",
         message: "Tambahkan minimal satu barang",
       });
-
       showErrorAlert("Validasi Gagal", "Tambahkan minimal satu barang.");
       return;
     }
 
-    // Siapkan data untuk dikirim, hapus properti tambahan
-    const deliveryOrderData: CreateDeliveryOrderInput = {
+    createDeliveryOrder.mutate({
       customerId: data.customerId,
       address: data.address,
       internalNote: data.internalNote || "",
@@ -448,32 +415,32 @@ export default function TambahDo() {
         productId: item.productId,
         quantity: Number(item.quantity),
       })),
-    };
-
-    // Panggil API untuk membuat DO
-    createDeliveryOrder.mutate(deliveryOrderData);
+    });
   };
 
-  const inputClassName = cn(
-    "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-  );
+  const handleProductAction = () => {
+    const productId = watch("tempProductId");
+    const quantity = watch("tempQuantity");
+
+    if (productId) {
+      const selectedProduct = products.find((p) => p.id === productId);
+      if (selectedProduct) {
+        if (editingItemIndex !== null) {
+          handleUpdateItem(selectedProduct, quantity as number);
+        } else {
+          handleAddItem(selectedProduct, quantity as number);
+        }
+      }
+    }
+  };
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
       <div className="flex items-center">
-        <Link to="/do">
-          <Button variant="ghost" size="sm" className="mr-4 text-gray-700">
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Kembali
-          </Button>
-        </Link>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Tambah Delivery Order
           </h1>
-          <p className="text-sm text-gray-500">
-            Buat delivery order baru untuk pengiriman barang
-          </p>
         </div>
       </div>
 
@@ -492,7 +459,6 @@ export default function TambahDo() {
                   Informasi Dasar
                 </h3>
                 <div className="space-y-4">
-                  {/* Autocomplete Input untuk Pelanggan */}
                   <AutocompleteInput
                     items={customers}
                     displayValue={watchCustomerName || ""}
@@ -545,7 +511,6 @@ export default function TambahDo() {
                   Tambah Barang DO
                 </h3>
 
-                {/* Form Input Barang Baru */}
                 <div
                   className={cn(
                     "grid grid-cols-12 gap-2 mb-4",
@@ -624,29 +589,7 @@ export default function TambahDo() {
                       type="button"
                       variant="outline"
                       size="icon"
-                      onClick={() => {
-                        const productId = watch("tempProductId");
-                        const quantity = watch("tempQuantity");
-
-                        if (productId) {
-                          const selectedProduct = products.find(
-                            (p) => p.id === productId
-                          );
-                          if (selectedProduct) {
-                            if (editingItemIndex !== null) {
-                              handleUpdateItem(
-                                selectedProduct,
-                                quantity as number
-                              );
-                            } else {
-                              handleAddItem(
-                                selectedProduct,
-                                quantity as number
-                              );
-                            }
-                          }
-                        }
-                      }}
+                      onClick={handleProductAction}
                       className="w-10 h-10 text-blue-600 bg-white border border-blue-600 hover:bg-blue-50"
                     >
                       <Plus className="w-5 h-5" />
@@ -654,7 +597,6 @@ export default function TambahDo() {
                   </div>
                 </div>
 
-                {/* Tampilkan pesan error jika ada kesalahan validasi items */}
                 {errors.items && (
                   <div className="mt-2 mb-4">
                     <p className="text-sm font-medium text-red-500">
@@ -663,7 +605,6 @@ export default function TambahDo() {
                   </div>
                 )}
 
-                {/* Daftar Barang dalam Tabel */}
                 {showItems && (
                   <div className="mt-4 overflow-hidden border border-gray-200 rounded-md">
                     <table className="min-w-full divide-y divide-gray-200">

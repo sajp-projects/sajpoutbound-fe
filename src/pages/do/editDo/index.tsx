@@ -26,13 +26,11 @@ import { showSuccessAlert, showErrorAlert } from "@/utils/sweetAlert";
 import { LoadingState } from "@/components/LoadingState";
 import { cn } from "@/lib/utils";
 
-// Memperluas tipe CreateDeliveryOrderProduct untuk komponen ini
 interface ExtendedProduct extends CreateDeliveryOrderProduct {
   productName?: string;
   productSatuan?: string;
 }
 
-// Skema validasi dengan Joi
 const itemSchema = Joi.object({
   productId: Joi.string().required().messages({
     "string.empty": "Barang harus dipilih",
@@ -63,7 +61,6 @@ const schema = Joi.object({
     "array.min": "Minimal harus ada 1 barang",
     "any.required": "Daftar barang harus diisi",
   }),
-  // Tambahkan validasi untuk field temporary input
   tempProduct: Joi.string().allow("").optional(),
   tempProductId: Joi.string().allow("").optional(),
   tempQuantity: Joi.number()
@@ -107,7 +104,6 @@ function FormField({
   );
 }
 
-// Komponen AutocompleteInput untuk pelanggan dan produk
 interface AutocompleteInputProps<T> {
   items: T[];
   displayValue: string;
@@ -145,13 +141,11 @@ function AutocompleteInput<T>({
   const [searchQuery, setSearchQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Filter items berdasarkan query
   const filteredItems = items.filter((item) => {
     const itemValue = String(item[displayKey]).toLowerCase();
     return itemValue.includes(searchQuery.toLowerCase());
   });
 
-  // Tangani klik di luar dropdown untuk menutupnya
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -249,12 +243,12 @@ export default function EditDo() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const deliveryOrderId = id || "";
-
-  // State UI
   const [showItems, setShowItems] = useState(true);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
+  const inputClassName = cn(
+    "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+  );
 
-  // Menggunakan react-hook-form dengan validasi Joi
   const {
     control,
     handleSubmit,
@@ -285,7 +279,6 @@ export default function EditDo() {
     },
   });
 
-  // Menggunakan useFieldArray untuk mengelola array item produk
   const { append, remove, update, replace } = useFieldArray({
     control,
     name: "items",
@@ -294,35 +287,19 @@ export default function EditDo() {
   const watchItems = watch("items");
   const watchCustomerName = watch("customerName");
 
-  // Menggunakan hooks untuk mengambil data dari API
   const { data: customersData, isLoading: loadingCustomers } = useCustomers({
-    staleTime: 300000, // 5 menit cache
+    staleTime: 300000,
     refetchOnWindowFocus: false,
   });
 
   const { data: productsData, isLoading: loadingProducts } = useProducts({
-    staleTime: 300000, // 5 menit cache
+    staleTime: 300000,
     refetchOnWindowFocus: false,
   });
 
-  // Ekstrak data dari response API
   const customers = customersData?.customers || [];
   const products = productsData?.products || [];
 
-  // Efek untuk menampilkan daftar barang saat ada item
-  useEffect(() => {
-    if (
-      watchItems &&
-      watchItems.length > 0 &&
-      watchItems.some((item) => item.productId)
-    ) {
-      setShowItems(true);
-    } else {
-      setShowItems(false);
-    }
-  }, [watchItems]);
-
-  // Ambil data DO yang akan diedit
   const {
     data: deliveryOrder,
     isLoading: isLoadingDeliveryOrder,
@@ -335,10 +312,40 @@ export default function EditDo() {
     }
   );
 
-  // Isi form dengan data DO yang ada setelah diambil dari API
+  const updateDeliveryOrder = useUpdateDeliveryOrder({
+    onSuccess: (data) => {
+      showSuccessAlert(
+        "Berhasil!",
+        "Delivery Order telah berhasil diperbarui."
+      );
+      navigate(`/do/${data.id}`);
+    },
+    onError: (error) => {
+      let errorMessage = "Terjadi kesalahan saat memperbarui Delivery Order.";
+      try {
+        const parsedError = JSON.parse(error.message);
+        errorMessage = parsedError.message || errorMessage;
+      } catch (error: unknown) {
+        errorMessage = error instanceof Error ? error.message : errorMessage;
+      }
+      showErrorAlert("Gagal Memperbarui DO", errorMessage);
+    },
+  });
+
+  useEffect(() => {
+    if (
+      watchItems &&
+      watchItems.length > 0 &&
+      watchItems.some((item) => item.productId)
+    ) {
+      setShowItems(true);
+    } else {
+      setShowItems(false);
+    }
+  }, [watchItems]);
+
   useEffect(() => {
     if (deliveryOrder) {
-      // Reset form dengan data yang ada
       reset({
         customerId: deliveryOrder.customerId,
         customerName: deliveryOrder.customer.name,
@@ -346,7 +353,6 @@ export default function EditDo() {
         internalNote: deliveryOrder.internalNote,
       });
 
-      // Isi data item produk
       if (deliveryOrder.items && deliveryOrder.items.length > 0) {
         const mappedItems = deliveryOrder.items.map((item) => ({
           productId: item.productId,
@@ -360,34 +366,16 @@ export default function EditDo() {
     }
   }, [deliveryOrder, reset, replace]);
 
-  // Handle saat pelanggan dipilih
   const handleCustomerSelect = (customer: (typeof customers)[0]) => {
     setValue("customerId", customer.id, { shouldValidate: true });
     setValue("customerName", customer.name);
     setValue("address", customer.address || "", { shouldValidate: true });
   };
 
-  // Handle tambah barang
-  const handleAddItem = (product: (typeof products)[0], quantity: number) => {
-    if (!quantity || quantity < 1) {
-      showErrorAlert("Validasi Gagal", "Kuantitas minimal 1");
-      return;
-    }
-
-    // Tambahkan item baru ke array
-    append({
-      productId: product.id,
-      quantity: quantity,
-      productName: product.name,
-      productSatuan: product.satuan,
-    } as ExtendedProduct);
-
-    // Reset form input barang
+  const resetItemForm = () => {
     setValue("tempProduct", "");
     setValue("tempProductId", "");
     setValue("tempQuantity", undefined);
-
-    // Reset nilai input kuantitas di DOM
     const quantityInput = document.querySelector(
       'input[name="tempQuantity"]'
     ) as HTMLInputElement;
@@ -396,17 +384,29 @@ export default function EditDo() {
     }
   };
 
-  // Handle edit barang
+  const handleAddItem = (product: (typeof products)[0], quantity: number) => {
+    if (!quantity || quantity < 1) {
+      showErrorAlert("Validasi Gagal", "Kuantitas minimal 1");
+      return;
+    }
+
+    append({
+      productId: product.id,
+      quantity: quantity,
+      productName: product.name,
+      productSatuan: product.satuan,
+    } as ExtendedProduct);
+
+    resetItemForm();
+  };
+
   const handleEditItem = (index: number) => {
     setEditingItemIndex(index);
-
-    // Pindahkan nilai dari item yang diedit ke form input
     setValue("tempProduct", watchItems[index].productName || "");
     setValue("tempProductId", watchItems[index].productId);
     setValue("tempQuantity", watchItems[index].quantity);
   };
 
-  // Handle update barang
   const handleUpdateItem = (
     product: (typeof products)[0],
     quantity: number
@@ -424,46 +424,11 @@ export default function EditDo() {
         productSatuan: product.satuan,
       } as ExtendedProduct);
 
-      // Reset form dan status edit
       setEditingItemIndex(null);
-      setValue("tempProduct", "");
-      setValue("tempProductId", "");
-      setValue("tempQuantity", undefined);
-
-      // Reset nilai input kuantitas di DOM
-      const quantityInput = document.querySelector(
-        'input[name="tempQuantity"]'
-      ) as HTMLInputElement;
-      if (quantityInput) {
-        quantityInput.value = "";
-      }
+      resetItemForm();
     }
   };
 
-  // Gunakan hook untuk mengupdate DO
-  const updateDeliveryOrder = useUpdateDeliveryOrder({
-    onSuccess: (data) => {
-      showSuccessAlert(
-        "Berhasil!",
-        "Delivery Order telah berhasil diperbarui."
-      );
-      navigate(`/do/${data.id}`);
-    },
-    onError: (error) => {
-      let errorMessage = "Terjadi kesalahan saat memperbarui Delivery Order.";
-
-      try {
-        const parsedError = JSON.parse(error.message);
-        errorMessage = parsedError.message || errorMessage;
-      } catch (error: unknown) {
-        errorMessage = error instanceof Error ? error.message : errorMessage;
-      }
-
-      showErrorAlert("Gagal Memperbarui DO", errorMessage);
-    },
-  });
-
-  // Handle submit form
   const onSubmit = (
     data: UpdateDeliveryOrderInput & {
       customerName?: string;
@@ -473,7 +438,6 @@ export default function EditDo() {
       tempQuantity?: number;
     }
   ) => {
-    // Periksa apakah ada item yang valid
     const validItems = data.items.filter((item) => item.productId);
 
     if (validItems.length === 0) {
@@ -481,13 +445,11 @@ export default function EditDo() {
         type: "manual",
         message: "Tambahkan minimal satu barang",
       });
-
       showErrorAlert("Validasi Gagal", "Tambahkan minimal satu barang.");
       return;
     }
 
-    // Siapkan data untuk dikirim
-    const updateData: UpdateDeliveryOrderInput & { id: string } = {
+    updateDeliveryOrder.mutate({
       id: deliveryOrderId,
       customerId: data.customerId,
       address: data.address,
@@ -496,15 +458,8 @@ export default function EditDo() {
         productId: item.productId,
         quantity: Number(item.quantity),
       })),
-    };
-
-    // Panggil API untuk mengupdate DO
-    updateDeliveryOrder.mutate(updateData);
+    });
   };
-
-  const inputClassName = cn(
-    "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-  );
 
   if (isLoadingDeliveryOrder) {
     return <LoadingState text="Memuat data delivery order..." />;
@@ -529,6 +484,22 @@ export default function EditDo() {
     );
   }
 
+  const handleProductAction = () => {
+    const productId = watch("tempProductId");
+    const quantity = watch("tempQuantity");
+
+    if (productId) {
+      const selectedProduct = products.find((p) => p.id === productId);
+      if (selectedProduct) {
+        if (editingItemIndex !== null) {
+          handleUpdateItem(selectedProduct, quantity as number);
+        } else {
+          handleAddItem(selectedProduct, quantity as number);
+        }
+      }
+    }
+  };
+
   return (
     <div className="px-4 space-y-6 sm:px-0">
       <div className="flex items-center">
@@ -542,9 +513,6 @@ export default function EditDo() {
           <h1 className="text-2xl font-bold text-gray-900">
             Edit Delivery Order
           </h1>
-          <p className="text-sm text-gray-500">
-            Perbarui data delivery order untuk {deliveryOrder.customer.name}
-          </p>
         </div>
       </div>
 
@@ -563,7 +531,6 @@ export default function EditDo() {
                   Informasi Dasar
                 </h3>
                 <div className="space-y-4">
-                  {/* Autocomplete Input untuk Pelanggan */}
                   <AutocompleteInput
                     items={customers}
                     displayValue={watchCustomerName || ""}
@@ -616,7 +583,6 @@ export default function EditDo() {
                   Tambah Barang DO
                 </h3>
 
-                {/* Form Input Barang Baru */}
                 <div
                   className={cn(
                     "grid grid-cols-12 gap-2 mb-4",
@@ -694,29 +660,7 @@ export default function EditDo() {
                       type="button"
                       variant="outline"
                       size="icon"
-                      onClick={() => {
-                        const productId = watch("tempProductId");
-                        const quantity = watch("tempQuantity");
-
-                        if (productId) {
-                          const selectedProduct = products.find(
-                            (p) => p.id === productId
-                          );
-                          if (selectedProduct) {
-                            if (editingItemIndex !== null) {
-                              handleUpdateItem(
-                                selectedProduct,
-                                quantity as number
-                              );
-                            } else {
-                              handleAddItem(
-                                selectedProduct,
-                                quantity as number
-                              );
-                            }
-                          }
-                        }
-                      }}
+                      onClick={handleProductAction}
                       className="w-10 h-10 text-blue-600 bg-white border border-blue-600 hover:bg-blue-50"
                     >
                       <Plus className="w-5 h-5" />
@@ -724,7 +668,6 @@ export default function EditDo() {
                   </div>
                 </div>
 
-                {/* Tampilkan pesan error jika ada kesalahan validasi items */}
                 {errors.items && (
                   <div className="mt-2 mb-4">
                     <p className="text-sm font-medium text-red-500">
@@ -733,7 +676,6 @@ export default function EditDo() {
                   </div>
                 )}
 
-                {/* Daftar Barang dalam Tabel */}
                 {showItems && (
                   <div className="mt-4 overflow-hidden border border-gray-200 rounded-md">
                     <table className="min-w-full divide-y divide-gray-200">

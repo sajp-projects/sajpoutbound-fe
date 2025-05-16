@@ -53,13 +53,7 @@ function StatusBadge({ status }: StatusBadgeProps) {
       variant="outline"
       className={cn("font-medium px-2.5 py-0.5", getStatusColor(status))}
     >
-      {status === "PENDING"
-        ? "Tertunda"
-        : status === "PROSES"
-        ? "Diproses"
-        : status === "SELESAI"
-        ? "Selesai"
-        : status}
+      {status}
     </Badge>
   );
 }
