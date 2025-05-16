@@ -312,7 +312,7 @@ export function useRestoreDeliveryOrder(
       const response = await fetchApi(
         `${BASE_URL}/delivery-orders/${id}/restore`,
         {},
-        { method: "POST" }
+        { method: "PATCH" }
       );
       const result: ApiResponse<void> = await response.json();
 

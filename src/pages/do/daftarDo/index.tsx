@@ -311,7 +311,7 @@ export default function DaftarDo() {
                       </div>
 
                       <div className="mb-2">
-                        <div className="flex flex-wrap mb-2 gap-1">
+                        <div className="flex flex-wrap gap-1 mb-2">
                           {deliveryOrder.items.map((item) => (
                             <Badge
                               key={item.id}
