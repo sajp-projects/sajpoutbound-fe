@@ -11,6 +11,14 @@ import { RoleFilter } from "@/components/RoleFilter";
 import { SearchInput } from "@/components/SearchInput";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
@@ -149,18 +157,18 @@ export default function Pengguna() {
 
   return (
     <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
-      <div className="flex flex-col items-start justify-between w-full gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+      <div className="flex flex-row items-center justify-between w-full gap-2">
+        <h1 className="text-2xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
           Daftar Pengguna
         </h1>
         {hasUserCreateAccess && (
           <Link to="/pengguna/tambah">
             <Button
-              leftIcon={<Plus className="w-4 h-4" />}
+              leftIcon={<Plus className="w-3 h-3 sm:w-4 sm:h-4" />}
               size="sm"
-              className="w-full sm:w-auto"
+              className="text-xs sm:text-sm"
             >
-              Tambah Pengguna
+              Tambah
             </Button>
           </Link>
         )}
@@ -205,65 +213,64 @@ export default function Pengguna() {
           />
         ) : (
           <div className="w-full">
-            {}
             <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
               <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                <table className="w-full min-w-[650px] border-collapse">
-                  <thead className="border-b border-gray-200 bg-gray-50">
-                    <tr>
-                      <th className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b border-gray-200 bg-gray-50">
+                      <TableHead className="w-[60px] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         No.
-                      </th>
-                      <th className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                      </TableHead>
+                      <TableHead className="w-[22%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Nama
-                      </th>
-                      <th className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                      </TableHead>
+                      <TableHead className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Email
-                      </th>
-                      <th className="w-[13%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                      </TableHead>
+                      <TableHead className="w-[13%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Peran
-                      </th>
-                      <th className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
+                      </TableHead>
+                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
                         Tgl. Dibuat
-                      </th>
-                      <th className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
+                      </TableHead>
+                      <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
                         Tgl. Diperbarui
-                      </th>
-                      <th className="w-[130px] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
+                      </TableHead>
+                      <TableHead className="w-[130px] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
                         Aksi
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {users.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="py-6 text-center">
+                      <TableRow>
+                        <TableCell colSpan={7} className="py-6 text-center">
                           <EmptyState title="Tidak ada data pengguna yang ditemukan" />
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ) : (
                       users.map((user, idx) => (
-                        <tr
+                        <TableRow
                           key={user.id}
                           className={cn(
                             idx % 2 === 0 ? "bg-white" : "bg-gray-50",
                             "border-b border-gray-200 last:border-b-0"
                           )}
                         >
-                          <td className="py-2.5 px-3 font-medium text-center text-sm">
+                          <TableCell className="py-2.5 px-3 font-medium text-center text-sm">
                             {idx + 1 + (pagination.page - 1) * pagination.limit}
-                          </td>
-                          <td className="py-2.5 px-3 font-medium text-blue-600 text-sm">
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 font-medium text-blue-600 text-sm">
                             <div className="wrap-text" title={user.name}>
                               {user.name}
                             </div>
-                          </td>
-                          <td className="py-2.5 px-3 text-gray-600 text-sm">
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 text-gray-600 text-sm">
                             <div className="wrap-text" title={user.email}>
                               {user.email}
                             </div>
-                          </td>
-                          <td className="py-2.5 px-3">
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3">
                             <Badge
                               variant={getRoleBadgeVariant(user.role.name)}
                               className={cn(
@@ -273,14 +280,14 @@ export default function Pengguna() {
                             >
                               {user.role.name}
                             </Badge>
-                          </td>
-                          <td className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
                             {formatDate(user.createdAt)}
-                          </td>
-                          <td className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
                             {formatDate(user.updatedAt)}
-                          </td>
-                          <td className="py-2.5 px-3">
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3">
                             <div className="flex items-center justify-center">
                               <ActionButtons
                                 actions={getUserActions(user)}
@@ -288,16 +295,15 @@ export default function Pengguna() {
                                 basePath="/pengguna"
                               />
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))
                     )}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </div>
 
-            {}
             <div className="w-full space-y-3 sm:hidden">
               {users.length === 0 ? (
                 <div className="flex flex-col items-center justify-center w-full p-6 bg-white border border-gray-200 rounded-lg">
@@ -358,7 +364,6 @@ export default function Pengguna() {
               )}
             </div>
 
-            {}
             <div className="w-full mt-4">
               <Pagination
                 totalItems={pagination.total}

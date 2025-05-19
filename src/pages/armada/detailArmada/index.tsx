@@ -9,18 +9,45 @@ import {
   showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
-import { ArrowLeft, Edit, History, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit, History, Trash2, Info } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/izin";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
 
 export default function DetailArmada() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"info">("info");
+  const { isAuthenticated } = useAuth();
+  const roleId = getRoleId() || "";
+
+  const { data: permissions } = useRolePermissions(roleId, {
+    enabled: isAuthenticated && !!roleId && roleId !== "",
+  });
+
+  const hasArmadaUpdateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ARMADA,
+    PERMISSION.ACTIONS.UPDATE
+  );
+
+  const hasArmadaDeleteAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ARMADA,
+    PERMISSION.ACTIONS.DELETE
+  );
 
   const {
     data: armada,
     isLoading,
     isError,
     error,
+    refetch,
   } = useArmada(
     { id: id || "" },
     {
@@ -68,22 +95,6 @@ export default function DetailArmada() {
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">Detail Armada</h1>
         </div>
-        <div className="flex gap-2">
-          <Link to={`/armada/${id}/edit`}>
-            <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Armada
-            </Button>
-          </Link>
-          <Button
-            className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
-            onClick={handleDeleteArmada}
-            disabled={deleteArmadaMutation.isPending}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            {deleteArmadaMutation.isPending ? "Menghapus..." : "Hapus"}
-          </Button>
-        </div>
       </div>
 
       <div className="p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">
@@ -93,7 +104,7 @@ export default function DetailArmada() {
               Informasi Armada
             </h2>
             <p className="text-sm text-gray-500">
-              Detail informasi armada kendaraan
+              Detail lengkap informasi armada kendaraan
             </p>
           </div>
         </div>
@@ -104,119 +115,155 @@ export default function DetailArmada() {
           <ErrorState
             title="Gagal Memuat Data Armada"
             message={error?.message || "Terjadi kesalahan pada server"}
-            onRetry={() => navigate("/armada")}
-            retryButtonText="Kembali ke Daftar Armada"
+            onRetry={refetch}
+            retryButtonText="Coba lagi"
           />
+        ) : !armada ? (
+          <div className="p-6 rounded-lg bg-red-50">
+            <div className="text-center">
+              <h2 className="mb-2 text-lg font-semibold text-red-700">
+                Armada tidak ditemukan
+              </h2>
+              <p className="mb-4 text-red-600">
+                Data armada dengan ID yang diberikan tidak ditemukan atau telah
+                dihapus.
+              </p>
+              <Link to="/armada">
+                <Button>Kembali ke Daftar Armada</Button>
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="space-y-4">
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <h3 className="mb-4 text-lg font-medium text-gray-900">
-                    Data Armada
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm text-gray-500">ID</p>
-                      <p
-                        className="p-1 font-mono font-medium text-gray-900 rounded bg-gray-50 wrap-text"
-                        title={armada?.id_sl}
-                      >
-                        {armada?.id_sl}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Model</p>
-                      <p
-                        className="font-medium text-blue-600 wrap-text"
-                        title={armada?.model}
-                      >
-                        {armada?.model}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Plat Nomor</p>
-                      <p
-                        className="font-medium text-gray-900 wrap-text"
-                        title={armada?.plateNumber}
-                      >
-                        {armada?.plateNumber}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Deskripsi</p>
-                      <p
-                        className="font-medium text-gray-900 wrap-text"
-                        title={armada?.description || "-"}
-                      >
-                        {armada?.description || "-"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <h3 className="mb-4 text-lg font-medium text-gray-900">
-                    Informasi Waktu
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm text-gray-500">Tanggal Dibuat</p>
-                      <p className="font-medium text-gray-900">
-                        {armada?.createdAt ? formatDate(armada.createdAt) : "-"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">
-                        Tanggal Diperbarui
-                      </p>
-                      <p className="font-medium text-gray-900">
-                        {armada?.updatedAt ? formatDate(armada.updatedAt) : "-"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <h3 className="mb-4 text-lg font-medium text-gray-900">
-                    Tindakan
-                  </h3>
-                  <div className="space-y-3">
-                    <Link to={`/armada/${id}/log`} className="w-full">
-                      <Button
-                        variant="outline"
-                        className="justify-start w-full"
-                      >
-                        <History className="w-4 h-4 mr-2" />
-                        Lihat Log Armada
-                      </Button>
-                    </Link>
-                    <Link to={`/armada/${id}/edit`} className="w-full">
-                      <Button
-                        variant="outline"
-                        className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit Armada
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="outline"
-                      className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                      onClick={handleDeleteArmada}
-                      disabled={deleteArmadaMutation.isPending}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      {deleteArmadaMutation.isPending
-                        ? "Menghapus..."
-                        : "Hapus Armada"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
+            <div className="flex overflow-x-auto border-b border-gray-200 scrollbar-none">
+              <button
+                className={cn(
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                  activeTab === "info"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                )}
+                onClick={() => setActiveTab("info")}
+              >
+                <Info className="flex-shrink-0 w-4 h-4 mr-2" />
+                Informasi Armada
+              </button>
             </div>
+
+            {activeTab === "info" && (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="space-y-4">
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">
+                      Data Armada
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm text-gray-500">ID</p>
+                        <p
+                          className="p-1 font-mono font-medium text-gray-900 break-all rounded bg-gray-50 wrap-text"
+                          title={armada?.id_sl}
+                        >
+                          {armada?.id_sl}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Model</p>
+                        <p
+                          className="font-medium text-blue-600 wrap-text"
+                          title={armada?.model}
+                        >
+                          {armada?.model}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Plat Nomor</p>
+                        <p
+                          className="font-medium text-gray-900 wrap-text"
+                          title={armada?.plateNumber}
+                        >
+                          {armada?.plateNumber}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Deskripsi</p>
+                        <p
+                          className="font-medium text-gray-900 wrap-text"
+                          title={armada?.description || "-"}
+                        >
+                          {armada?.description || "-"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">
+                      Informasi Waktu
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm text-gray-500">Tanggal Dibuat</p>
+                        <p className="font-medium text-gray-900">
+                          {formatDate(armada.createdAt)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">
+                          Tanggal Diperbarui
+                        </p>
+                        <p className="font-medium text-gray-900">
+                          {formatDate(armada.updatedAt)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">
+                      Tindakan
+                    </h3>
+                    <div className="space-y-3">
+                      <Link to={`/armada/${id}/log`} className="w-full">
+                        <Button
+                          variant="outline"
+                          className="justify-start w-full"
+                        >
+                          <History className="w-4 h-4 mr-2" />
+                          Lihat Log Aktivitas
+                        </Button>
+                      </Link>
+                      {hasArmadaUpdateAccess && (
+                        <Link to={`/armada/${id}/edit`} className="w-full">
+                          <Button
+                            variant="outline"
+                            className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit Armada
+                          </Button>
+                        </Link>
+                      )}
+                      {hasArmadaDeleteAccess && (
+                        <Button
+                          variant="outline"
+                          className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                          onClick={handleDeleteArmada}
+                          disabled={deleteArmadaMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          {deleteArmadaMutation.isPending
+                            ? "Menghapus..."
+                            : "Hapus Armada"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

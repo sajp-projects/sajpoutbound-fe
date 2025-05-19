@@ -2,6 +2,10 @@ import { useArmadas, useDeleteArmada } from "@/hooks/armada";
 import { Download, Plus } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 
+import { ActionButtons, ActionType } from "@/components/ActionButtons";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
 import { Pagination } from "@/components/Pagination";
 import { SearchInput } from "@/components/SearchInput";
 import { Button } from "@/components/ui/button";
@@ -14,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { Armada } from "@/types/armada";
 import { formatDate, formatDateShort } from "@/utils/date";
 import {
   isConfirmed,
@@ -21,14 +26,50 @@ import {
   showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
-import { LoadingState } from "@/components/LoadingState";
-import { ErrorState } from "@/components/ErrorState";
-import { EmptyState } from "@/components/EmptyState";
-import { ActionButtons, ActionType } from "@/components/ActionButtons";
-import { Armada } from "@/types/armada";
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/izin";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
+
+interface ActionConfig {
+  type: ActionType;
+  onClick?: () => void;
+  isLoading?: boolean;
+  disabled?: boolean;
+  className?: string;
+  icon?: React.ReactNode;
+  title?: string;
+  path?: string;
+}
 
 export default function DaftarArmada() {
   const [searchParams] = useSearchParams();
+  const { isAuthenticated } = useAuth();
+  const roleId = getRoleId() || "";
+
+  const { data: permissions } = useRolePermissions(roleId, {
+    enabled: isAuthenticated && roleId !== "",
+  });
+
+  // Cek izin akses
+  const hasArmadaCreateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ARMADA,
+    PERMISSION.ACTIONS.CREATE
+  );
+
+  const hasArmadaUpdateAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ARMADA,
+    PERMISSION.ACTIONS.UPDATE
+  );
+
+  const hasArmadaDeleteAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ARMADA,
+    PERMISSION.ACTIONS.DELETE
+  );
 
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
@@ -79,35 +120,46 @@ export default function DaftarArmada() {
     });
   };
 
-  const getArmadaActions = (armada: Armada) => [
-    { type: ActionType.VIEW },
-    { type: ActionType.EDIT },
-    { type: ActionType.LOG },
-    {
-      type: ActionType.DELETE,
-      onClick: () => handleDeleteArmada(armada.id, armada.model),
-      isLoading:
-        deleteArmadaMutation.isPending &&
-        deleteArmadaMutation.variables?.id === armada.id,
-      disabled: deleteArmadaMutation.isPending,
-    },
-  ];
+  const getArmadaActions = (armada: Armada) => {
+    const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
+
+    if (hasArmadaUpdateAccess) {
+      actions.push({ type: ActionType.EDIT });
+    }
+
+    actions.push({ type: ActionType.LOG });
+
+    if (hasArmadaDeleteAccess) {
+      actions.push({
+        type: ActionType.DELETE,
+        onClick: () => handleDeleteArmada(armada.id, armada.model),
+        isLoading:
+          deleteArmadaMutation.isPending &&
+          deleteArmadaMutation.variables?.id === armada.id,
+        disabled: deleteArmadaMutation.isPending,
+      });
+    }
+
+    return actions;
+  };
 
   return (
     <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
-      <div className="flex flex-col items-start justify-between w-full gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+      <div className="flex flex-row items-center justify-between w-full gap-2">
+        <h1 className="text-2xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
           Daftar Armada
         </h1>
-        <Link to="/armada/tambah">
-          <Button
-            leftIcon={<Plus className="w-4 h-4" />}
-            size="sm"
-            className="w-full sm:w-auto"
-          >
-            Tambah Armada
-          </Button>
-        </Link>
+        {hasArmadaCreateAccess && (
+          <Link to="/armada/tambah">
+            <Button
+              leftIcon={<Plus className="w-3 h-3 sm:w-4 sm:h-4" />}
+              size="sm"
+              className="text-xs sm:text-sm"
+            >
+              Tambah
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="w-full p-3 overflow-hidden bg-white rounded-lg shadow sm:p-4 md:p-6">
@@ -152,7 +204,6 @@ export default function DaftarArmada() {
           />
         ) : (
           <div className="w-full">
-            {/* Tabel Desktop */}
             <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
               <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <Table>
@@ -233,7 +284,6 @@ export default function DaftarArmada() {
               </div>
             </div>
 
-            {/* Mobile Card View */}
             <div className="w-full space-y-3 sm:hidden">
               {armadas.length === 0 ? (
                 <div className="flex flex-col items-center justify-center w-full p-6 bg-white border border-gray-200 rounded-lg">
@@ -256,8 +306,6 @@ export default function DaftarArmada() {
                           </p>
                         </div>
                       </div>
-
-                      <div className="mb-2 text-xs text-gray-600"></div>
 
                       <div className="text-xs text-gray-500 space-y-0.5 mb-2">
                         <p>
@@ -287,7 +335,6 @@ export default function DaftarArmada() {
               )}
             </div>
 
-            {/* Pagination */}
             <div className="w-full mt-4">
               <Pagination
                 totalItems={pagination.total}

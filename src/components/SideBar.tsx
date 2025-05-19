@@ -46,12 +46,27 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const { logout, isAuthenticated } = useAuth();
+  const [isMobileView, setIsMobileView] = useState(false);
 
   const roleId = getRoleId() || "";
 
   const { data: permissions, isLoading } = useRolePermissions(roleId, {
     enabled: isAuthenticated && roleId !== "",
   });
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobileView(window.innerWidth < 1024);
+    };
+
+    checkScreenSize();
+
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => {
+      window.removeEventListener("resize", checkScreenSize);
+    };
+  }, []);
 
   const toggleMenu = (menuName: string) => {
     setOpenMenus((prev) => {
@@ -63,7 +78,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
   };
 
   const handleLinkClick = () => {
-    if (toggleSidebar) {
+    if (toggleSidebar && isMobileView) {
       toggleSidebar();
     }
   };

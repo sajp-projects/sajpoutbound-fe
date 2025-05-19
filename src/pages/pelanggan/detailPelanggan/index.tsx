@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 import { useDeleteCustomer, useCustomer } from "@/hooks/pelanggan";
-import { formatDate } from "@/utils/date";
+import { formatDate, formatDateShort } from "@/utils/date";
 import {
   showSuccessAlert,
   showErrorAlert,
@@ -69,7 +69,7 @@ export default function DetailPelanggan() {
   const [activeTab, setActiveTab] = useState<"info" | "deliveryOrders">("info");
 
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && roleId !== "",
+    enabled: isAuthenticated && !!roleId && roleId !== "",
   });
 
   const hasCustomerUpdateAccess = hasPermission(
@@ -89,6 +89,7 @@ export default function DetailPelanggan() {
     isLoading,
     isError,
     error,
+    refetch,
   } = useCustomer(
     { id: id || "" },
     { staleTime: 5000, refetchOnMount: "always" }
@@ -150,26 +151,6 @@ export default function DetailPelanggan() {
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">Detail Pelanggan</h1>
         </div>
-        <div className="flex gap-2">
-          {hasCustomerUpdateAccess && (
-            <Link to={`/pelanggan/${id}/edit`}>
-              <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Pelanggan
-              </Button>
-            </Link>
-          )}
-          {hasCustomerDeleteAccess && (
-            <Button
-              className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
-              onClick={handleHapus}
-              disabled={deleteCustomer.isPending}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              {deleteCustomer.isPending ? "Menghapus..." : "Hapus"}
-            </Button>
-          )}
-        </div>
       </div>
 
       <div className="p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">
@@ -190,41 +171,55 @@ export default function DetailPelanggan() {
           <ErrorState
             title="Gagal Memuat Data Pelanggan"
             message={error?.message || "Terjadi kesalahan pada server"}
-            onRetry={() => navigate("/pelanggan")}
-            retryButtonText="Kembali ke Daftar Pelanggan"
+            onRetry={refetch}
+            retryButtonText="Coba lagi"
           />
+        ) : !customer ? (
+          <div className="p-6 rounded-lg bg-red-50">
+            <div className="text-center">
+              <h2 className="mb-2 text-lg font-semibold text-red-700">
+                Pelanggan tidak ditemukan
+              </h2>
+              <p className="mb-4 text-red-600">
+                Data pelanggan dengan ID yang diberikan tidak ditemukan atau
+                telah dihapus.
+              </p>
+              <Link to="/pelanggan">
+                <Button>Kembali ke Daftar Pelanggan</Button>
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex border-b border-gray-200">
+            <div className="flex overflow-x-auto border-b border-gray-200 scrollbar-none">
               <button
                 className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center",
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
                   activeTab === "info"
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
                 onClick={() => setActiveTab("info")}
               >
-                <Info className="w-4 h-4 mr-2" />
+                <Info className="flex-shrink-0 w-4 h-4 mr-2" />
                 Informasi Pelanggan
               </button>
               <button
                 className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center",
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
                   activeTab === "deliveryOrders"
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
                 onClick={() => setActiveTab("deliveryOrders")}
               >
-                <FileText className="w-4 h-4 mr-2" />
+                <FileText className="flex-shrink-0 w-4 h-4 mr-2" />
                 Delivery Order
-                {customer?.deliveryOrders &&
-                  activeDeliveryOrders.length > 0 && (
-                    <span className="ml-1 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
-                      {activeDeliveryOrders.length}
-                    </span>
-                  )}
+                {activeDeliveryOrders.length > 0 && (
+                  <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                    {activeDeliveryOrders.length}
+                  </span>
+                )}
               </button>
             </div>
 
@@ -239,7 +234,7 @@ export default function DetailPelanggan() {
                       <div>
                         <p className="text-sm text-gray-500">ID</p>
                         <p
-                          className="p-1 font-mono font-medium text-gray-900 rounded bg-gray-50 wrap-text"
+                          className="p-1 font-mono font-medium text-gray-900 rounded bg-gray-50 wrap-text break-all"
                           title={customer?.id_sl}
                         >
                           {customer?.id_sl}
@@ -298,9 +293,7 @@ export default function DetailPelanggan() {
                       <div>
                         <p className="text-sm text-gray-500">Tanggal Dibuat</p>
                         <p className="font-medium text-gray-900">
-                          {customer?.createdAt
-                            ? formatDate(customer.createdAt)
-                            : "-"}
+                          {formatDate(customer.createdAt)}
                         </p>
                       </div>
                       <div>
@@ -308,9 +301,7 @@ export default function DetailPelanggan() {
                           Tanggal Diperbarui
                         </p>
                         <p className="font-medium text-gray-900">
-                          {customer?.updatedAt
-                            ? formatDate(customer.updatedAt)
-                            : "-"}
+                          {formatDate(customer.updatedAt)}
                         </p>
                       </div>
                     </div>
@@ -363,11 +354,11 @@ export default function DetailPelanggan() {
             {activeTab === "deliveryOrders" && (
               <div className="space-y-4">
                 <div className="p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">
-                      Delivery Order {customer?.name}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
+                    <h3 className="text-lg font-medium text-gray-900 mb-2 sm:mb-0">
+                      Delivery Order {customer.name}
                     </h3>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
                       Total:{" "}
                       <span className="font-medium text-gray-700">
                         {activeDeliveryOrders.length}
@@ -388,25 +379,26 @@ export default function DetailPelanggan() {
                     </div>
                   ) : (
                     <div>
-                      <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
-                        <div className="overflow-x-auto">
+                      {/* Desktop View */}
+                      <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
+                        <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                           <Table>
                             <TableHeader>
                               <TableRow className="border-b border-gray-200 bg-gray-50">
-                                <TableHead className="w-[50px] font-semibold text-gray-700 py-4">
+                                <TableHead className="w-[5%] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
                                   No
                                 </TableHead>
-                                <TableHead className="py-4 font-semibold text-gray-700">
+                                <TableHead className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                                   ID DO
                                 </TableHead>
-                                <TableHead className="py-4 font-semibold text-gray-700">
+                                <TableHead className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                                   Alamat
                                 </TableHead>
-                                <TableHead className="py-4 font-semibold text-gray-700">
+                                <TableHead className="w-[20%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                                   Item
                                 </TableHead>
-                                <TableHead className="py-4 font-semibold text-gray-700">
-                                  Tanggal Dibuat
+                                <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                                  Tanggal
                                 </TableHead>
                               </TableRow>
                             </TableHeader>
@@ -415,13 +407,14 @@ export default function DetailPelanggan() {
                                 <TableRow
                                   key={do_.id}
                                   className={cn(
-                                    idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                    idx % 2 === 0 ? "bg-white" : "bg-gray-50",
+                                    "border-b border-gray-200 last:border-b-0"
                                   )}
                                 >
-                                  <TableCell className="font-medium text-center">
+                                  <TableCell className="py-2.5 px-3 font-medium text-center text-sm">
                                     {idx + 1}
                                   </TableCell>
-                                  <TableCell className="font-medium text-blue-600">
+                                  <TableCell className="py-2.5 px-3 font-medium text-blue-600 text-sm">
                                     <Link
                                       to={`/do/${do_.id}`}
                                       className="hover:underline"
@@ -429,15 +422,15 @@ export default function DetailPelanggan() {
                                       {do_.id.substring(0, 8)}...
                                     </Link>
                                   </TableCell>
-                                  <TableCell>
+                                  <TableCell className="py-2.5 px-3 text-gray-600 text-sm">
                                     <div
-                                      className="max-w-xs truncate"
+                                      className="overflow-hidden truncate max-w-[250px]"
                                       title={do_.address}
                                     >
                                       {do_.address}
                                     </div>
                                   </TableCell>
-                                  <TableCell>
+                                  <TableCell className="py-2.5 px-3 text-gray-600 text-sm">
                                     {do_.items.length} item (
                                     {do_.items.reduce(
                                       (acc, item) => acc + item.quantity,
@@ -445,8 +438,8 @@ export default function DetailPelanggan() {
                                     )}{" "}
                                     barang)
                                   </TableCell>
-                                  <TableCell>
-                                    {formatDate(do_.createdAt)}
+                                  <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm">
+                                    {formatDateShort(do_.createdAt)}
                                   </TableCell>
                                 </TableRow>
                               ))}
@@ -455,50 +448,42 @@ export default function DetailPelanggan() {
                         </div>
                       </div>
 
+                      {/* Mobile View */}
                       <div className="w-full space-y-3 sm:hidden">
-                        {activeDeliveryOrders.map((do_) => (
+                        {activeDeliveryOrders.map((do_, idx) => (
                           <div
                             key={do_.id}
                             className="w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
                           >
                             <div className="w-full p-3">
-                              <div className="flex items-start justify-between w-full mb-2">
-                                <div className="max-w-[80%]">
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex-1 mr-2 overflow-hidden">
                                   <Link to={`/do/${do_.id}`}>
-                                    <h3 className="text-sm font-medium text-blue-600 break-words hover:underline">
+                                    <h3 className="text-sm font-medium text-blue-600 hover:underline truncate">
                                       DO-{do_.id.substring(0, 8)}
                                     </h3>
                                   </Link>
-                                  <p className="mt-1 text-xs text-gray-600 break-all line-clamp-1">
+                                  <p className="mt-1 text-xs text-gray-600 line-clamp-1">
                                     {do_.address}
                                   </p>
                                 </div>
+                                <div className="bg-gray-100 text-xs text-gray-700 px-1.5 py-0.5 rounded flex-shrink-0">
+                                  #{idx + 1}
+                                </div>
                               </div>
 
-                              <div className="mb-2 text-xs text-gray-600">
-                                <p>
+                              <div className="flex justify-between items-center text-xs text-gray-600 mt-2">
+                                <div>
                                   {do_.items.length} item (
                                   {do_.items.reduce(
                                     (acc, item) => acc + item.quantity,
                                     0
                                   )}{" "}
                                   barang)
-                                </p>
-                                <p className="mt-1">
-                                  {do_.items.map((item) => (
-                                    <span
-                                      key={item.id}
-                                      className="inline-block px-2 py-1 mb-1 mr-1 text-xs bg-gray-100 rounded-full"
-                                    >
-                                      {item.quantity} {item.product.satuan}{" "}
-                                      {item.product.name}
-                                    </span>
-                                  ))}
-                                </p>
-                              </div>
-
-                              <div className="text-xs text-gray-500">
-                                <p>Tanggal: {formatDate(do_.createdAt)}</p>
+                                </div>
+                                <div className="text-gray-500">
+                                  {formatDateShort(do_.createdAt)}
+                                </div>
                               </div>
                             </div>
                           </div>

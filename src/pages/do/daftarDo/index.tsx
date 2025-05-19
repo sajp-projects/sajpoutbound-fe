@@ -153,33 +153,31 @@ export default function DaftarDo() {
   };
 
   return (
-    <div className="w-full px-4 space-y-6 overflow-x-hidden sm:px-0">
-      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Daftar Delivery Order
-          </h1>
-        </div>
+    <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
+      <div className="flex flex-row items-center justify-between w-full gap-2">
+        <h1 className="text-2xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
+          Daftar Delivery Order
+        </h1>
         {hasDoCreateAccess && (
           <Link to="/do/tambah">
             <Button
-              leftIcon={<Plus className="w-4 h-4" />}
+              leftIcon={<Plus className="w-3 h-3 sm:w-4 sm:h-4" />}
               size="sm"
-              className="w-full sm:w-auto"
+              className="text-xs sm:text-sm"
             >
-              Tambah DO
+              Tambah
             </Button>
           </Link>
         )}
       </div>
 
-      <div className="w-full p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">
-        <div className="flex flex-col items-start justify-between gap-4 mb-6 sm:flex-row sm:items-center">
+      <div className="w-full p-3 overflow-hidden bg-white rounded-lg shadow sm:p-4 md:p-6">
+        <div className="flex flex-col items-start justify-between w-full gap-3 mb-4 sm:flex-row sm:items-center sm:mb-6">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
               Delivery Order
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-xs text-gray-500 sm:text-sm">
               Manajemen data delivery order
             </p>
           </div>
@@ -195,7 +193,7 @@ export default function DaftarDo() {
           </div>
         </div>
 
-        <div className="w-full mb-6">
+        <div className="w-full mb-4 sm:mb-6">
           <SearchInput
             placeholder="Cari delivery order..."
             className="w-full sm:max-w-md"
@@ -212,7 +210,6 @@ export default function DaftarDo() {
           />
         ) : (
           <div className="w-full">
-            {/* Tabel Desktop */}
             <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
               <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 <Table>
@@ -302,7 +299,6 @@ export default function DaftarDo() {
               </div>
             </div>
 
-            {/* Mobile Cards */}
             <div className="w-full space-y-3 sm:hidden">
               {deliveryOrders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center w-full p-6 bg-white border border-gray-200 rounded-lg">

@@ -140,26 +140,6 @@ export default function DetailGudang() {
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">Detail Gudang</h1>
         </div>
-        <div className="flex gap-2">
-          {hasWarehouseUpdateAccess && (
-            <Link to={`/gudang/${id}/edit`}>
-              <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Gudang
-              </Button>
-            </Link>
-          )}
-          {hasWarehouseDeleteAccess && (
-            <Button
-              className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
-              onClick={handleDeleteWarehouse}
-              disabled={deleteWarehouseMutation.isPending}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              {deleteWarehouseMutation.isPending ? "Menghapus..." : "Hapus"}
-            </Button>
-          )}
-        </div>
       </div>
 
       <div className="p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">
@@ -185,49 +165,49 @@ export default function DetailGudang() {
           />
         ) : (
           <div className="space-y-6">
-            <div className="flex border-b border-gray-200">
+            <div className="flex overflow-x-auto border-b border-gray-200 scrollbar-none">
               <button
                 className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center",
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
                   activeTab === "info"
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
                 onClick={() => setActiveTab("info")}
               >
-                <Info className="w-4 h-4 mr-2" />
+                <Info className="flex-shrink-0 w-4 h-4 mr-2" />
                 Informasi Gudang
               </button>
               <button
                 className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center",
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
                   activeTab === "users"
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
                 onClick={() => setActiveTab("users")}
               >
-                <User className="w-4 h-4 mr-2" />
-                Pengguna Terkait{" "}
+                <User className="flex-shrink-0 w-4 h-4 mr-2" />
+                Pengguna Terkait
                 {gudang?.users && gudang.users.length > 0 && (
-                  <span className="ml-1 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                  <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
                     {gudang.users.length}
                   </span>
                 )}
               </button>
               <button
                 className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center",
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
                   activeTab === "products"
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
                 onClick={() => setActiveTab("products")}
               >
-                <Package className="w-4 h-4 mr-2" />
-                Barang Terkait{" "}
+                <Package className="flex-shrink-0 w-4 h-4 mr-2" />
+                Barang Terkait
                 {gudang?.products && gudang.products.length > 0 && (
-                  <span className="ml-1 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                  <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
                     {gudang.products.length}
                   </span>
                 )}

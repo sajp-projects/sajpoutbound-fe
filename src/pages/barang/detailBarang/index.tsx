@@ -9,22 +9,25 @@ import {
   showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
-import { ArrowLeft, Edit, History, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit, History, Trash2, Info } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { hasPermission } from "@/utils/permission";
 import { getRoleId } from "@/utils/storage";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 export default function DetailBarang() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
+  const [activeTab, setActiveTab] = useState<"info">("info");
 
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && roleId !== "",
+    enabled: isAuthenticated && !!roleId && roleId !== "",
   });
 
   const hasProductUpdateAccess = hasPermission(
@@ -44,6 +47,7 @@ export default function DetailBarang() {
     isLoading,
     isError,
     error,
+    refetch,
   } = useProduct(
     { id: id || "" },
     {
@@ -91,26 +95,6 @@ export default function DetailBarang() {
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">Detail Barang</h1>
         </div>
-        <div className="flex gap-2">
-          {hasProductUpdateAccess && (
-            <Link to={`/barang/${id}/edit`}>
-              <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Barang
-              </Button>
-            </Link>
-          )}
-          {hasProductDeleteAccess && (
-            <Button
-              className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
-              onClick={handleDeleteProduct}
-              disabled={deleteProductMutation.isPending}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              {deleteProductMutation.isPending ? "Menghapus..." : "Hapus"}
-            </Button>
-          )}
-        </div>
       </div>
 
       <div className="p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">
@@ -131,140 +115,172 @@ export default function DetailBarang() {
           <ErrorState
             title="Gagal Memuat Data Barang"
             message={error?.message || "Terjadi kesalahan pada server"}
-            onRetry={() => navigate("/barang")}
-            retryButtonText="Kembali ke Daftar Barang"
+            onRetry={refetch}
+            retryButtonText="Coba lagi"
           />
+        ) : !barang ? (
+          <div className="p-6 rounded-lg bg-red-50">
+            <div className="text-center">
+              <h2 className="mb-2 text-lg font-semibold text-red-700">
+                Barang tidak ditemukan
+              </h2>
+              <p className="mb-4 text-red-600">
+                Data barang dengan ID yang diberikan tidak ditemukan atau telah
+                dihapus.
+              </p>
+              <Link to="/barang">
+                <Button>Kembali ke Daftar Barang</Button>
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="space-y-4">
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <h3 className="mb-4 text-lg font-medium text-gray-900">
-                    Data Barang
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm text-gray-500">ID</p>
-                      <p
-                        className="p-1 font-mono font-medium text-gray-900 rounded bg-gray-50 wrap-text"
-                        title={barang?.id_sl}
-                      >
-                        {barang?.id_sl}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Nama Barang</p>
-                      <p
-                        className="font-medium text-blue-600 wrap-text"
-                        title={barang?.name}
-                      >
-                        {barang?.name}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Satuan</p>
-                      <p
-                        className="font-medium text-gray-900 wrap-text"
-                        title={barang?.satuan || "-"}
-                      >
-                        {barang?.satuan || "-"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Deskripsi</p>
-                      <p
-                        className="font-medium text-gray-900 wrap-text"
-                        title={barang?.description || "-"}
-                      >
-                        {barang?.description || "-"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Gudang</p>
-                      <div className="mt-1">
-                        {barang?.warehouse ? (
-                          <Link
-                            to={`/gudang/${barang.warehouse.id}`}
-                            className="text-blue-600 hover:underline"
-                          >
-                            {barang.warehouse.name}
-                          </Link>
-                        ) : (
-                          <p className="italic text-gray-500">
-                            Tidak ada gudang
-                          </p>
-                        )}
+            <div className="flex overflow-x-auto border-b border-gray-200 scrollbar-none">
+              <button
+                className={cn(
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                  activeTab === "info"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                )}
+                onClick={() => setActiveTab("info")}
+              >
+                <Info className="flex-shrink-0 w-4 h-4 mr-2" />
+                Informasi Barang
+              </button>
+            </div>
+
+            {activeTab === "info" && (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="space-y-4">
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">
+                      Data Barang
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm text-gray-500">ID</p>
+                        <p
+                          className="p-1 font-mono font-medium text-gray-900 rounded bg-gray-50 wrap-text break-all"
+                          title={barang?.id_sl}
+                        >
+                          {barang?.id_sl}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Nama Barang</p>
+                        <p
+                          className="font-medium text-blue-600 wrap-text"
+                          title={barang?.name}
+                        >
+                          {barang?.name}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Satuan</p>
+                        <p
+                          className="font-medium text-gray-900 wrap-text"
+                          title={barang?.satuan || "-"}
+                        >
+                          {barang?.satuan || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Deskripsi</p>
+                        <p
+                          className="font-medium text-gray-900 wrap-text"
+                          title={barang?.description || "-"}
+                        >
+                          {barang?.description || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Gudang</p>
+                        <div className="mt-1">
+                          {barang?.warehouse ? (
+                            <Link
+                              to={`/gudang/${barang.warehouse.id}`}
+                              className="text-blue-600 hover:underline"
+                            >
+                              {barang.warehouse.name}
+                            </Link>
+                          ) : (
+                            <p className="italic text-gray-500">
+                              Tidak ada gudang
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="space-y-4">
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <h3 className="mb-4 text-lg font-medium text-gray-900">
-                    Informasi Waktu
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm text-gray-500">Tanggal Dibuat</p>
-                      <p className="font-medium text-gray-900">
-                        {barang?.createdAt ? formatDate(barang.createdAt) : "-"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">
-                        Tanggal Diperbarui
-                      </p>
-                      <p className="font-medium text-gray-900">
-                        {barang?.updatedAt ? formatDate(barang.updatedAt) : "-"}
-                      </p>
+                <div className="space-y-4">
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">
+                      Informasi Waktu
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm text-gray-500">Tanggal Dibuat</p>
+                        <p className="font-medium text-gray-900">
+                          {formatDate(barang.createdAt)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">
+                          Tanggal Diperbarui
+                        </p>
+                        <p className="font-medium text-gray-900">
+                          {formatDate(barang.updatedAt)}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <h3 className="mb-4 text-lg font-medium text-gray-900">
-                    Tindakan
-                  </h3>
-                  <div className="space-y-3">
-                    <Link to={`/barang/${id}/log`} className="w-full">
-                      <Button
-                        variant="outline"
-                        className="justify-start w-full"
-                      >
-                        <History className="w-4 h-4 mr-2" />
-                        Lihat Log Barang
-                      </Button>
-                    </Link>
-                    {hasProductUpdateAccess && (
-                      <Link to={`/barang/${id}/edit`} className="w-full">
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">
+                      Tindakan
+                    </h3>
+                    <div className="space-y-3">
+                      <Link to={`/barang/${id}/log`} className="w-full">
                         <Button
                           variant="outline"
-                          className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                          className="justify-start w-full"
                         >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit Barang
+                          <History className="w-4 h-4 mr-2" />
+                          Lihat Log Aktivitas
                         </Button>
                       </Link>
-                    )}
-                    {hasProductDeleteAccess && (
-                      <Button
-                        variant="outline"
-                        className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                        onClick={handleDeleteProduct}
-                        disabled={deleteProductMutation.isPending}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        {deleteProductMutation.isPending
-                          ? "Menghapus..."
-                          : "Hapus Barang"}
-                      </Button>
-                    )}
+                      {hasProductUpdateAccess && (
+                        <Link to={`/barang/${id}/edit`} className="w-full">
+                          <Button
+                            variant="outline"
+                            className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit Barang
+                          </Button>
+                        </Link>
+                      )}
+                      {hasProductDeleteAccess && (
+                        <Button
+                          variant="outline"
+                          className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                          onClick={handleDeleteProduct}
+                          disabled={deleteProductMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          {deleteProductMutation.isPending
+                            ? "Menghapus..."
+                            : "Hapus Barang"}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>

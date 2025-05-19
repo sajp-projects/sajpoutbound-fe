@@ -111,26 +111,6 @@ export default function DetailPengguna() {
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">Detail Pengguna</h1>
         </div>
-        <div className="flex gap-2">
-          {hasUserUpdateAccess && (
-            <Link to={`/pengguna/${id}/edit`}>
-              <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Pengguna
-              </Button>
-            </Link>
-          )}
-          {hasUserDeleteAccess && user && !user.deletedAt && (
-            <Button
-              className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
-              onClick={handleArsipkan}
-              disabled={deleteUser.isPending}
-            >
-              <Archive className="w-4 h-4 mr-2" />
-              {deleteUser.isPending ? "Mengarsipkan..." : "Arsipkan"}
-            </Button>
-          )}
-        </div>
       </div>
 
       <div className="p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">

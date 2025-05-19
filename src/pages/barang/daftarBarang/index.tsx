@@ -145,18 +145,18 @@ export default function DaftarBarang() {
 
   return (
     <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
-      <div className="flex flex-col items-start justify-between w-full gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+      <div className="flex flex-row items-center justify-between w-full gap-2">
+        <h1 className="text-2xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
           Daftar Barang
         </h1>
         {hasProductCreateAccess && (
           <Link to="/barang/tambah">
             <Button
-              leftIcon={<Plus className="w-4 h-4" />}
+              leftIcon={<Plus className="w-3 h-3 sm:w-4 sm:h-4" />}
               size="sm"
-              className="w-full sm:w-auto"
+              className="text-xs sm:text-sm"
             >
-              Tambah Barang
+              Tambah
             </Button>
           </Link>
         )}

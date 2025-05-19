@@ -2,6 +2,10 @@ import { useWarehouses, useDeleteWarehouse } from "@/hooks/gudang";
 import { Download, Plus } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 
+import { ActionButtons, ActionType } from "@/components/ActionButtons";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
 import { Pagination } from "@/components/Pagination";
 import { SearchInput } from "@/components/SearchInput";
 import { Button } from "@/components/ui/button";
@@ -21,10 +25,6 @@ import {
   isConfirmed,
   showDeleteConfirmationAlert,
 } from "@/utils/sweetAlert";
-import { LoadingState } from "@/components/LoadingState";
-import { ErrorState } from "@/components/ErrorState";
-import { EmptyState } from "@/components/EmptyState";
-import { ActionButtons, ActionType } from "@/components/ActionButtons";
 import { Warehouse } from "@/types/gudang";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
@@ -145,18 +145,18 @@ export default function DaftarGudang() {
 
   return (
     <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
-      <div className="flex flex-col items-start justify-between w-full gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+      <div className="flex flex-row items-center justify-between w-full gap-2">
+        <h1 className="text-2xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
           Daftar Gudang
         </h1>
         {hasWarehouseCreateAccess && (
           <Link to="/gudang/tambah">
             <Button
-              leftIcon={<Plus className="w-4 h-4" />}
+              leftIcon={<Plus className="w-3 h-3 sm:w-4 sm:h-4" />}
               size="sm"
-              className="w-full sm:w-auto"
+              className="text-xs sm:text-sm"
             >
-              Tambah Gudang
+              Tambah
             </Button>
           </Link>
         )}
@@ -204,7 +204,6 @@ export default function DaftarGudang() {
           />
         ) : (
           <div className="w-full">
-            {}
             <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
               <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                 <Table>
@@ -279,7 +278,6 @@ export default function DaftarGudang() {
               </div>
             </div>
 
-            {}
             <div className="w-full space-y-3 sm:hidden">
               {warehouses.length === 0 ? (
                 <div className="flex flex-col items-center justify-center w-full p-6 bg-white border border-gray-200 rounded-lg">
@@ -328,7 +326,6 @@ export default function DaftarGudang() {
               )}
             </div>
 
-            {}
             <div className="w-full mt-4">
               <Pagination
                 totalItems={pagination.total}
