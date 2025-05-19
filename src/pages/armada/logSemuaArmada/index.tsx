@@ -20,11 +20,7 @@ import { Pagination } from "@/components/Pagination";
 import { Link } from "react-router";
 import { LoadingState } from "@/components/LoadingState";
 import { EmptyState } from "@/components/EmptyState";
-
-interface ActionLabel {
-  label: string;
-  color: string;
-}
+import { getActionLabel } from "@/utils/badges";
 
 export default function LogSemuaArmada() {
   const [searchParams] = useSearchParams();
@@ -59,34 +55,6 @@ export default function LogSemuaArmada() {
     return "Armada tidak diketahui";
   };
 
-  const getActionLabel = (action: string): ActionLabel => {
-    const labels: Record<string, ActionLabel> = {
-      CREATE: {
-        label: "Dibuat",
-        color: "bg-green-100 text-green-800 border-green-200",
-      },
-      UPDATE: {
-        label: "Diperbarui",
-        color: "bg-amber-100 text-amber-800 border-amber-200",
-      },
-      DELETE: {
-        label: "Dihapus",
-        color: "bg-red-100 text-red-800 border-red-200",
-      },
-      RESTORE: {
-        label: "Dipulihkan",
-        color: "bg-blue-100 text-blue-800 border-blue-200",
-      },
-    };
-
-    return (
-      labels[action] || {
-        label: action,
-        color: "bg-gray-100 text-gray-800 border-gray-200",
-      }
-    );
-  };
-
   const renderChanges = (
     oldData: Record<string, unknown> | null,
     newData: Record<string, unknown> | null
@@ -96,40 +64,30 @@ export default function LogSemuaArmada() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className="log-detail-header">
-            Data armada yang dibuat:
-          </div>
+          <div className="log-detail-header">Data armada yang dibuat:</div>
           <div className="log-detail-container">
             <table className="w-full text-xs border-collapse">
               <tbody>
                 <tr>
-                  <td className="log-detail-label">
-                    Model
-                  </td>
+                  <td className="log-detail-label">Model</td>
                   <td className="log-detail-value">
                     {newData.model as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
-                    ID
-                  </td>
+                  <td className="log-detail-label">ID</td>
                   <td className="log-detail-value">
                     {newData.id_sl as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
-                    Plat Nomor
-                  </td>
+                  <td className="log-detail-label">Plat Nomor</td>
                   <td className="log-detail-value">
                     {newData.plateNumber as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
-                    Deskripsi
-                  </td>
+                  <td className="log-detail-label">Deskripsi</td>
                   <td className="log-detail-value">
                     {newData.description as string}
                   </td>
@@ -144,40 +102,30 @@ export default function LogSemuaArmada() {
     if (oldData && !newData) {
       return (
         <div>
-          <div className="log-detail-header">
-            Data armada yang dihapus:
-          </div>
+          <div className="log-detail-header">Data armada yang dihapus:</div>
           <div className="log-detail-container">
             <table className="w-full text-xs border-collapse">
               <tbody>
                 <tr>
-                  <td className="log-detail-label">
-                    Model
-                  </td>
+                  <td className="log-detail-label">Model</td>
                   <td className="log-detail-value">
                     {oldData.model as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
-                    ID
-                  </td>
+                  <td className="log-detail-label">ID</td>
                   <td className="log-detail-value">
                     {oldData.id_sl as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
-                    Plat Nomor
-                  </td>
+                  <td className="log-detail-label">Plat Nomor</td>
                   <td className="log-detail-value">
                     {oldData.plateNumber as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
-                    Deskripsi
-                  </td>
+                  <td className="log-detail-label">Deskripsi</td>
                   <td className="log-detail-value">
                     {oldData.description as string}
                   </td>
@@ -228,16 +176,12 @@ export default function LogSemuaArmada() {
 
       return (
         <div>
-          <div className="log-detail-header">
-            Perubahan:
-          </div>
+          <div className="log-detail-header">Perubahan:</div>
           <div className="log-detail-container">
             <table className="w-full text-xs border-collapse">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="log-detail-label">
-                    Field
-                  </th>
+                  <th className="log-detail-label">Field</th>
                   <th className="px-2 py-1 font-medium text-left border border-gray-200">
                     Nilai Lama
                   </th>
@@ -249,15 +193,9 @@ export default function LogSemuaArmada() {
               <tbody>
                 {changes.map((change, idx) => (
                   <tr key={idx}>
-                    <td className="log-detail-label">
-                      {change.field}
-                    </td>
-                    <td className="log-detail-value">
-                      {change.oldValue}
-                    </td>
-                    <td className="log-detail-value">
-                      {change.newValue}
-                    </td>
+                    <td className="log-detail-label">{change.field}</td>
+                    <td className="log-detail-value">{change.oldValue}</td>
+                    <td className="log-detail-value">{change.newValue}</td>
                   </tr>
                 ))}
               </tbody>
@@ -429,7 +367,9 @@ export default function LogSemuaArmada() {
                     <span className="truncate-text">{getArmadaName(log)}</span>
                   )}
                 </div>
-                <p className="mb-1 text-sm text-gray-700 truncate-text-2">{log.description}</p>
+                <p className="mb-1 text-sm text-gray-700 truncate-text-2">
+                  {log.description}
+                </p>
                 <div className="text-xs text-gray-500">
                   Dilakukan oleh:{" "}
                   <span className="font-medium text-blue-600 truncate-text">

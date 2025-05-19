@@ -21,11 +21,7 @@ import { Link } from "react-router";
 import { LoadingState } from "@/components/LoadingState";
 import { EmptyState } from "@/components/EmptyState";
 import { DeliveryOrderLog } from "@/types/doLog";
-
-interface ActionLabel {
-  label: string;
-  color: string;
-}
+import { getActionLabel } from "@/utils/badges";
 
 export default function LogSemuaDo() {
   const [searchParams] = useSearchParams();
@@ -49,34 +45,6 @@ export default function LogSemuaDo() {
     hasPrev: false,
   };
 
-  const getActionLabel = (action: string): ActionLabel => {
-    const labels: Record<string, ActionLabel> = {
-      CREATE: {
-        label: "Dibuat",
-        color: "bg-green-100 text-green-800 border-green-200",
-      },
-      UPDATE: {
-        label: "Diperbarui",
-        color: "bg-amber-100 text-amber-800 border-amber-200",
-      },
-      DELETE: {
-        label: "Diarsipkan",
-        color: "bg-red-100 text-red-800 border-red-200",
-      },
-      RESTORE: {
-        label: "Dipulihkan",
-        color: "bg-blue-100 text-blue-800 border-blue-200",
-      },
-    };
-
-    return (
-      labels[action] || {
-        label: action,
-        color: "bg-gray-100 text-gray-800 border-gray-200",
-      }
-    );
-  };
-
   const renderChanges = (
     oldData: Record<string, unknown> | null,
     newData: Record<string, unknown> | null
@@ -86,59 +54,53 @@ export default function LogSemuaDo() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">
+          <div className="log-detail-header">
             Data delivery order yang dibuat:
           </div>
-          <table className="w-full text-xs border-collapse">
-            <tbody>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Pelanggan
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.customerName as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Alamat
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.address as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Catatan Internal
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.internalNote as string}
-                </td>
-              </tr>
-              {typeof newData.items !== "undefined" &&
-                Array.isArray(newData.items) && (
-                  <tr>
-                    <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                      Item
-                    </td>
-                    <td className="px-2 py-1 border border-gray-200">
-                      <ul className="pl-2 list-inside">
-                        {(
-                          newData.items as {
-                            productName: string;
-                            quantity: number;
-                          }[]
-                        ).map((item, idx) => (
-                          <li key={idx}>
-                            {item.productName}: {formatNumber(item.quantity)}
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
-                  </tr>
-                )}
-            </tbody>
-          </table>
+          <div className="log-detail-container">
+            <table className="w-full text-xs border-collapse">
+              <tbody>
+                <tr>
+                  <td className="log-detail-label">Pelanggan</td>
+                  <td className="log-detail-value">
+                    {newData.customerName as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">Alamat</td>
+                  <td className="log-detail-value">
+                    {newData.address as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">Catatan Internal</td>
+                  <td className="log-detail-value">
+                    {newData.internalNote as string}
+                  </td>
+                </tr>
+                {typeof newData.items !== "undefined" &&
+                  Array.isArray(newData.items) && (
+                    <tr>
+                      <td className="log-detail-label">Item</td>
+                      <td className="log-detail-value">
+                        <ul className="pl-2 list-inside">
+                          {(
+                            newData.items as {
+                              productName: string;
+                              quantity: number;
+                            }[]
+                          ).map((item, idx) => (
+                            <li key={idx}>
+                              {item.productName}: {formatNumber(item.quantity)}
+                            </li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  )}
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     }
@@ -150,24 +112,24 @@ export default function LogSemuaDo() {
       const isRestore = newData?.deletedAt === null;
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">
+          <div className="log-detail-header">
             {isRestore
               ? "Delivery Order dipulihkan:"
               : "Data delivery order yang diarsipkan:"}
           </div>
           {oldData && (
-            <table className="w-full text-xs border-collapse">
-              <tbody>
-                <tr>
-                  <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                    Status
-                  </td>
-                  <td className="px-2 py-1 border border-gray-200">
-                    {isRestore ? "Dipulihkan" : "Diarsipkan"}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <div className="log-detail-container">
+              <table className="w-full text-xs border-collapse">
+                <tbody>
+                  <tr>
+                    <td className="log-detail-label">Status</td>
+                    <td className="log-detail-value">
+                      {isRestore ? "Dipulihkan" : "Diarsipkan"}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       );
@@ -222,73 +184,69 @@ export default function LogSemuaDo() {
 
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">
-            Perubahan:
-          </div>
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Field
-                </th>
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Nilai Lama
-                </th>
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Nilai Baru
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {changes.map((change, idx) => (
-                <tr key={idx}>
-                  <td className="px-2 py-1 font-medium border border-gray-200">
-                    {change.field}
-                  </td>
-                  <td className="px-2 py-1 border border-gray-200">
-                    {change.field === "Item" &&
-                    "items" in change &&
-                    change.items ? (
-                      <ul className="pl-2 list-inside">
-                        {(
-                          change.items.old as {
-                            productName: string;
-                            quantity: number;
-                          }[]
-                        ).map((item, idx) => (
-                          <li key={idx}>
-                            {item.productName}: {formatNumber(item.quantity)}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      change.oldValue
-                    )}
-                  </td>
-                  <td className="px-2 py-1 border border-gray-200">
-                    {change.field === "Item" &&
-                    "items" in change &&
-                    change.items ? (
-                      <ul className="pl-2 list-inside">
-                        {(
-                          change.items.new as {
-                            productName: string;
-                            quantity: number;
-                          }[]
-                        ).map((item, idx) => (
-                          <li key={idx}>
-                            {item.productName}: {formatNumber(item.quantity)}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      change.newValue
-                    )}
-                  </td>
+          <div className="log-detail-header">Perubahan:</div>
+          <div className="log-detail-container">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="log-detail-label">Field</th>
+                  <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                    Nilai Lama
+                  </th>
+                  <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                    Nilai Baru
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {changes.map((change, idx) => (
+                  <tr key={idx}>
+                    <td className="log-detail-label">{change.field}</td>
+                    <td className="log-detail-value">
+                      {change.field === "Item" &&
+                      "items" in change &&
+                      change.items ? (
+                        <ul className="pl-2 list-inside">
+                          {(
+                            change.items.old as {
+                              productName: string;
+                              quantity: number;
+                            }[]
+                          ).map((item, idx) => (
+                            <li key={idx}>
+                              {item.productName}: {formatNumber(item.quantity)}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        change.oldValue
+                      )}
+                    </td>
+                    <td className="log-detail-value">
+                      {change.field === "Item" &&
+                      "items" in change &&
+                      change.items ? (
+                        <ul className="pl-2 list-inside">
+                          {(
+                            change.items.new as {
+                              productName: string;
+                              quantity: number;
+                            }[]
+                          ).map((item, idx) => (
+                            <li key={idx}>
+                              {item.productName}: {formatNumber(item.quantity)}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        change.newValue
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     }
@@ -298,7 +256,7 @@ export default function LogSemuaDo() {
 
   const renderLogTable = () => (
     <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
-      <div className="overflow-x-auto">
+      <div className="log-table-container">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-gray-200 bg-gray-50">
@@ -348,7 +306,7 @@ export default function LogSemuaDo() {
                     {log.deliveryOrder && (
                       <Link
                         to={`/do/${log.deliveryOrder.id}`}
-                        className="font-medium text-blue-600 hover:underline"
+                        className="font-medium text-blue-600 hover:underline log-table-cell"
                       >
                         {log.deliveryOrder.customer.name}
                       </Link>
@@ -366,16 +324,16 @@ export default function LogSemuaDo() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium text-blue-600">
+                      <span className="font-medium text-blue-600 log-table-cell">
                         {log.performedBy.name}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 log-table-cell">
                         {log.performedBy.email}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <p className="text-sm text-gray-700 line-clamp-2">
+                    <p className="text-sm text-gray-700 truncate-text-2">
                       {log.description}
                     </p>
                     <div className="mt-2">
@@ -444,18 +402,18 @@ export default function LogSemuaDo() {
                     </span>
                     <Link
                       to={`/do/${log.deliveryOrder.id}`}
-                      className="text-sm text-blue-600 hover:underline"
+                      className="text-sm text-blue-600 hover:underline truncate-text"
                     >
                       {log.deliveryOrder.customer.name}
                     </Link>
                   </div>
                 )}
-                <p className="mb-1 text-sm text-gray-700 line-clamp-2">
+                <p className="mb-1 text-sm text-gray-700 truncate-text-2">
                   {log.description}
                 </p>
                 <div className="text-xs text-gray-500">
                   Dilakukan oleh:{" "}
-                  <span className="font-medium text-blue-600">
+                  <span className="font-medium text-blue-600 truncate-text">
                     {log.performedBy.name}
                   </span>
                 </div>

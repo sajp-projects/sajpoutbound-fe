@@ -40,3 +40,36 @@ export function getActionBadgeClass(action: string): string {
       return "bg-gray-100 text-gray-800";
   }
 }
+
+export interface ActionLabel {
+  label: string;
+  color: string;
+}
+
+export function getActionLabel(action: string): ActionLabel {
+  const labels: Record<string, ActionLabel> = {
+    CREATE: {
+      label: "Dibuat",
+      color: "bg-green-100 text-green-800 border-green-200",
+    },
+    UPDATE: {
+      label: "Diperbarui",
+      color: "bg-amber-100 text-amber-800 border-amber-200",
+    },
+    DELETE: {
+      label: "Dihapus",
+      color: "bg-red-100 text-red-800 border-red-200",
+    },
+    RESTORE: {
+      label: "Dipulihkan",
+      color: "bg-blue-100 text-blue-800 border-blue-200",
+    },
+  };
+
+  return (
+    labels[action] || {
+      label: action,
+      color: "bg-gray-100 text-gray-800 border-gray-200",
+    }
+  );
+}

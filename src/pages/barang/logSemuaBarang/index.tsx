@@ -20,11 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
 import { Link } from "react-router";
-
-interface ActionLabel {
-  label: string;
-  color: string;
-}
+import { getActionLabel } from "@/utils/badges";
 
 export default function LogSemuaBarang() {
   const [searchParams] = useSearchParams();
@@ -48,34 +44,6 @@ export default function LogSemuaBarang() {
     hasPrev: false,
   };
 
-  const getActionLabel = (action: string): ActionLabel => {
-    const labels: Record<string, ActionLabel> = {
-      CREATE: {
-        label: "Dibuat",
-        color: "bg-green-100 text-green-800 border-green-200",
-      },
-      UPDATE: {
-        label: "Diperbarui",
-        color: "bg-amber-100 text-amber-800 border-amber-200",
-      },
-      DELETE: {
-        label: "Dihapus",
-        color: "bg-red-100 text-red-800 border-red-200",
-      },
-      RESTORE: {
-        label: "Dipulihkan",
-        color: "bg-blue-100 text-blue-800 border-blue-200",
-      },
-    };
-
-    return (
-      labels[action] || {
-        label: action,
-        color: "bg-gray-100 text-gray-800 border-gray-200",
-      }
-    );
-  };
-
   const renderChanges = (
     oldData: Record<string, unknown> | null,
     newData: Record<string, unknown> | null
@@ -85,53 +53,55 @@ export default function LogSemuaBarang() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">
+          <div className="log-detail-header">
             Data barang yang dibuat:
           </div>
-          <table className="w-full text-xs border-collapse">
-            <tbody>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Nama
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.name as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.id_sl as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Satuan
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.satuan as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Deskripsi
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.description as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Gudang
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {(newData.warehouseName || newData.warehouseId) as string}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="log-detail-container">
+            <table className="w-full text-xs border-collapse">
+              <tbody>
+                <tr>
+                  <td className="log-detail-label">
+                    Nama
+                  </td>
+                  <td className="log-detail-value">
+                    {newData.name as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">
+                    ID
+                  </td>
+                  <td className="log-detail-value">
+                    {newData.id_sl as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">
+                    Satuan
+                  </td>
+                  <td className="log-detail-value">
+                    {newData.satuan as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">
+                    Deskripsi
+                  </td>
+                  <td className="log-detail-value">
+                    {newData.description as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">
+                    Gudang
+                  </td>
+                  <td className="log-detail-value">
+                    {(newData.warehouseName || newData.warehouseId) as string}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     }
@@ -139,53 +109,55 @@ export default function LogSemuaBarang() {
     if (oldData && !newData) {
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">
+          <div className="log-detail-header">
             Data barang yang dihapus:
           </div>
-          <table className="w-full text-xs border-collapse">
-            <tbody>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Nama
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.name as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.id_sl as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Satuan
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.satuan as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Deskripsi
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.description as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Gudang
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {(oldData.warehouseName || oldData.warehouseId) as string}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="log-detail-container">
+            <table className="w-full text-xs border-collapse">
+              <tbody>
+                <tr>
+                  <td className="log-detail-label">
+                    Nama
+                  </td>
+                  <td className="log-detail-value">
+                    {oldData.name as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">
+                    ID
+                  </td>
+                  <td className="log-detail-value">
+                    {oldData.id_sl as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">
+                    Satuan
+                  </td>
+                  <td className="log-detail-value">
+                    {oldData.satuan as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">
+                    Deskripsi
+                  </td>
+                  <td className="log-detail-value">
+                    {oldData.description as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">
+                    Gudang
+                  </td>
+                  <td className="log-detail-value">
+                    {(oldData.warehouseName || oldData.warehouseId) as string}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     }
@@ -229,39 +201,41 @@ export default function LogSemuaBarang() {
 
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">
+          <div className="log-detail-header">
             Perubahan:
           </div>
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Field
-                </th>
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Nilai Lama
-                </th>
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Nilai Baru
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {changes.map((change, idx) => (
-                <tr key={idx}>
-                  <td className="px-2 py-1 font-medium border border-gray-200">
-                    {change.field}
-                  </td>
-                  <td className="px-2 py-1 border border-gray-200">
-                    {change.oldValue}
-                  </td>
-                  <td className="px-2 py-1 border border-gray-200">
-                    {change.newValue}
-                  </td>
+          <div className="log-detail-container">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="log-detail-label">
+                    Field
+                  </th>
+                  <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                    Nilai Lama
+                  </th>
+                  <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                    Nilai Baru
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {changes.map((change, idx) => (
+                  <tr key={idx}>
+                    <td className="log-detail-label">
+                      {change.field}
+                    </td>
+                    <td className="log-detail-value">
+                      {change.oldValue}
+                    </td>
+                    <td className="log-detail-value">
+                      {change.newValue}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     }
@@ -282,7 +256,7 @@ export default function LogSemuaBarang() {
 
   const renderLogTable = () => (
     <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
-      <div className="overflow-x-auto">
+      <div className="log-table-container">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-gray-200 bg-gray-50">
@@ -332,12 +306,12 @@ export default function LogSemuaBarang() {
                     {log.product ? (
                       <Link
                         to={`/barang/${log.product.id}`}
-                        className="font-medium text-blue-600 hover:underline"
+                        className="font-medium text-blue-600 hover:underline log-table-cell"
                       >
                         {log.product.name}
                       </Link>
                     ) : (
-                      <span className="text-gray-700">
+                      <span className="text-gray-700 log-table-cell">
                         {getProductName(log)}
                       </span>
                     )}
@@ -354,16 +328,16 @@ export default function LogSemuaBarang() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium text-blue-600">
+                      <span className="font-medium text-blue-600 log-table-cell">
                         {log.performedBy.name}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 log-table-cell">
                         {log.performedBy.email}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <p className="text-sm text-gray-700 line-clamp-2">
+                    <p className="text-sm text-gray-700 truncate-text-2">
                       {log.description}
                     </p>
                     <div className="mt-2">
@@ -430,12 +404,12 @@ export default function LogSemuaBarang() {
                   {log.product ? (
                     <Link
                       to={`/barang/${log.product.id}`}
-                      className="text-sm text-blue-600 hover:underline"
+                      className="text-sm text-blue-600 hover:underline truncate-text"
                     >
                       {log.product.name}
                     </Link>
                   ) : (
-                    <span className="text-sm text-gray-700">
+                    <span className="text-sm text-gray-700 truncate-text">
                       {getProductName(log)}
                     </span>
                   )}
@@ -445,10 +419,10 @@ export default function LogSemuaBarang() {
                     ID: <span className="font-medium">{log.product.id_sl}</span>
                   </div>
                 )}
-                <p className="mb-1 text-sm text-gray-700">{log.description}</p>
+                <p className="mb-1 text-sm text-gray-700 truncate-text-2">{log.description}</p>
                 <div className="text-xs text-gray-500">
                   Dilakukan oleh:{" "}
-                  <span className="font-medium text-blue-600">
+                  <span className="font-medium text-blue-600 truncate-text">
                     {log.performedBy.name}
                   </span>
                 </div>

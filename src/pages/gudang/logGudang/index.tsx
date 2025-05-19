@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
 import { Pagination } from "@/components/Pagination";
 import { LoadingState } from "@/components/LoadingState";
+import { EmptyState } from "@/components/EmptyState";
+import { getActionLabel } from "@/utils/badges";
 
 export default function LogGudang() {
   const { id } = useParams<{ id: string }>();
@@ -46,28 +48,16 @@ export default function LogGudang() {
     hasPrev: false,
   };
 
-  const getActionLabel = (action: string) => {
+  const getEntityTypeLabel = (entityType: string) => {
     const labels = {
-      CREATE: {
-        label: "Dibuat",
-        color: "bg-green-100 text-green-800 border-green-200",
-      },
-      UPDATE: {
-        label: "Diperbarui",
-        color: "bg-amber-100 text-amber-800 border-amber-200",
-      },
-      DELETE: {
-        label: "Dihapus",
-        color: "bg-red-100 text-red-800 border-red-200",
-      },
-      RESTORE: {
-        label: "Dipulihkan",
-        color: "bg-blue-100 text-blue-800 border-blue-200",
+      WAREHOUSE: {
+        label: "Gudang",
+        color: "bg-purple-100 text-purple-800 border-purple-200",
       },
     };
     return (
-      labels[action as keyof typeof labels] || {
-        label: action,
+      labels[entityType as keyof typeof labels] || {
+        label: entityType,
         color: "bg-gray-100 text-gray-800 border-gray-200",
       }
     );

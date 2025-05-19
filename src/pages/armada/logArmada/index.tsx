@@ -19,6 +19,7 @@ import { formatDate, formatDateShort } from "@/utils/date";
 import { Pagination } from "@/components/Pagination";
 import { LoadingState } from "@/components/LoadingState";
 import { EmptyState } from "@/components/EmptyState";
+import { getActionLabel } from "@/utils/badges";
 
 export default function LogArmada() {
   const { id } = useParams<{ id: string }>();
@@ -53,33 +54,6 @@ export default function LogArmada() {
     hasPrev: false,
   };
 
-  const getActionLabel = (action: string) => {
-    const labels = {
-      CREATE: {
-        label: "Dibuat",
-        color: "bg-green-100 text-green-800 border-green-200",
-      },
-      UPDATE: {
-        label: "Diperbarui",
-        color: "bg-amber-100 text-amber-800 border-amber-200",
-      },
-      DELETE: {
-        label: "Dihapus",
-        color: "bg-red-100 text-red-800 border-red-200",
-      },
-      RESTORE: {
-        label: "Dipulihkan",
-        color: "bg-blue-100 text-blue-800 border-blue-200",
-      },
-    };
-    return (
-      labels[action as keyof typeof labels] || {
-        label: action,
-        color: "bg-gray-100 text-gray-800 border-gray-200",
-      }
-    );
-  };
-
   const getEntityTypeLabel = (entityType: string) => {
     const labels = {
       ARMADA: {
@@ -104,45 +78,37 @@ export default function LogArmada() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">
-            Data armada yang dibuat:
+          <div className="log-detail-header">Data armada yang dibuat:</div>
+          <div className="log-detail-container">
+            <table className="w-full text-xs border-collapse">
+              <tbody>
+                <tr>
+                  <td className="log-detail-label">Model</td>
+                  <td className="log-detail-value">
+                    {newData.model as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">ID</td>
+                  <td className="log-detail-value">
+                    {newData.id_sl as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">Plat Nomor</td>
+                  <td className="log-detail-value">
+                    {newData.plateNumber as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">Deskripsi</td>
+                  <td className="log-detail-value">
+                    {newData.description as string}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <table className="w-full text-xs border-collapse">
-            <tbody>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Model
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.model as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.id_sl as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Plat Nomor
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.plateNumber as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Deskripsi
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.description as string}
-                </td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       );
     }
@@ -151,45 +117,37 @@ export default function LogArmada() {
     if (oldData && !newData) {
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">
-            Data armada yang dihapus:
+          <div className="log-detail-header">Data armada yang dihapus:</div>
+          <div className="log-detail-container">
+            <table className="w-full text-xs border-collapse">
+              <tbody>
+                <tr>
+                  <td className="log-detail-label">Model</td>
+                  <td className="log-detail-value">
+                    {oldData.model as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">ID</td>
+                  <td className="log-detail-value">
+                    {oldData.id_sl as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">Plat Nomor</td>
+                  <td className="log-detail-value">
+                    {oldData.plateNumber as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="log-detail-label">Deskripsi</td>
+                  <td className="log-detail-value">
+                    {oldData.description as string}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <table className="w-full text-xs border-collapse">
-            <tbody>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Model
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.model as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  ID
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.id_sl as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Plat Nomor
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.plateNumber as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Deskripsi
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.description as string}
-                </td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       );
     }
@@ -234,39 +192,31 @@ export default function LogArmada() {
 
       return (
         <div>
-          <div className="mb-1 text-xs font-medium text-gray-700">
-            Perubahan:
-          </div>
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Field
-                </th>
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Nilai Lama
-                </th>
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Nilai Baru
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {changes.map((change, idx) => (
-                <tr key={idx}>
-                  <td className="px-2 py-1 font-medium border border-gray-200">
-                    {change.field}
-                  </td>
-                  <td className="px-2 py-1 border border-gray-200">
-                    {change.oldValue}
-                  </td>
-                  <td className="px-2 py-1 border border-gray-200">
-                    {change.newValue}
-                  </td>
+          <div className="log-detail-header">Perubahan:</div>
+          <div className="log-detail-container">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="log-detail-label">Field</th>
+                  <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                    Nilai Lama
+                  </th>
+                  <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                    Nilai Baru
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {changes.map((change, idx) => (
+                  <tr key={idx}>
+                    <td className="log-detail-label">{change.field}</td>
+                    <td className="log-detail-value">{change.oldValue}</td>
+                    <td className="log-detail-value">{change.newValue}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     }
@@ -277,7 +227,7 @@ export default function LogArmada() {
     <>
       {/* Tabel Desktop */}
       <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
-        <div className="overflow-x-auto">
+        <div className="log-table-container">
           <Table>
             <TableHeader>
               <TableRow className="border-b border-gray-200 bg-gray-50">
@@ -342,37 +292,39 @@ export default function LogArmada() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-medium text-blue-600">
+                        <span className="font-medium text-blue-600 log-table-cell">
                           {log.performedBy.name}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 log-table-cell">
                           {log.performedBy.email}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell className="max-w-xs">
-                      <p className="text-sm text-gray-700 line-clamp-2">
+                      <p className="text-sm text-gray-700 truncate-text-2">
                         {log.description}
                       </p>
-                      {(log.oldData || log.newData) && (
-                        <div className="mt-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto px-2 py-1 text-xs text-blue-600 hover:text-blue-800"
-                            onClick={(e) =>
-                              e.currentTarget.nextElementSibling?.classList.toggle(
-                                "hidden"
-                              )
-                            }
-                          >
-                            Lihat Detail
-                          </Button>
-                          <div className="hidden mt-2">
-                            {renderChanges(log.oldData, log.newData)}
-                          </div>
-                        </div>
-                      )}
+                      <div className="mt-2">
+                        {(log.oldData || log.newData) && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-auto px-2 py-1 text-xs text-blue-600 hover:text-blue-800"
+                              onClick={(e) => {
+                                e.currentTarget.nextElementSibling?.classList.toggle(
+                                  "hidden"
+                                );
+                              }}
+                            >
+                              Lihat Detail
+                            </Button>
+                            <div className="hidden mt-2">
+                              {renderChanges(log.oldData, log.newData)}
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -419,13 +371,13 @@ export default function LogArmada() {
                   </span>
                 </div>
 
-                <div className="mb-3">
-                  <p className="mb-1 text-sm text-gray-700">
+                <div className="mb-2">
+                  <p className="mb-1 text-sm text-gray-700 truncate-text-2">
                     {log.description}
                   </p>
                   <div className="text-xs text-gray-500">
                     Dilakukan oleh:{" "}
-                    <span className="font-medium text-blue-600">
+                    <span className="font-medium text-blue-600 truncate-text">
                       {log.performedBy.name}
                     </span>
                   </div>
