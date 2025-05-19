@@ -18,7 +18,7 @@ import {
   Lock,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router";
+import { useLocation, Link } from "react-router";
 import { cn } from "../lib/utils";
 import { getRoleId } from "@/utils/storage";
 import { hasPermission } from "@/utils/permission";
@@ -60,6 +60,12 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
       }
       return [menuName];
     });
+  };
+
+  const handleLinkClick = () => {
+    if (toggleSidebar) {
+      toggleSidebar();
+    }
   };
 
   const shouldShowMenuItem = (item: MenuItem): boolean => {
@@ -430,6 +436,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
                     {item.path ? (
                       <Link
                         to={item.path}
+                        onClick={handleLinkClick}
                         className={cn(
                           "flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-gray-700 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors text-xs sm:text-sm",
                           location.pathname === item.path &&
@@ -475,6 +482,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
                                   <li key={subItem.name}>
                                     <Link
                                       to={subItem.path}
+                                      onClick={handleLinkClick}
                                       className={cn(
                                         "block px-2 sm:px-3 py-1 sm:py-2 text-xs text-gray-600 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors",
                                         isSubMenuActive(subItem.path) &&
