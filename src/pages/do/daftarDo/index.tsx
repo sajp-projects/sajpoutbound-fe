@@ -24,7 +24,6 @@ import { useRolePermissions } from "@/hooks/izin";
 import { cn } from "@/lib/utils";
 import { DeliveryOrder, DeliveryOrderStatus } from "@/types/do";
 import { formatDate, formatDateShort } from "@/utils/date";
-import { formatNumber } from "@/utils/formatNumber";
 import { hasPermission } from "@/utils/permission";
 import { getRoleId } from "@/utils/storage";
 import {
@@ -189,6 +188,7 @@ export default function DaftarDo() {
               variant="outline"
               size="sm"
               leftIcon={<Download className="w-3 h-3 sm:h-4 sm:w-4" />}
+              className="w-full sm:w-auto"
             >
               Export
             </Button>
@@ -214,7 +214,7 @@ export default function DaftarDo() {
           <div className="w-full">
             {/* Tabel Desktop */}
             <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
-              <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+              <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b border-gray-200 bg-gray-50">
@@ -314,7 +314,7 @@ export default function DaftarDo() {
                     key={deliveryOrder.id}
                     className="w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
                   >
-                    <div className="w-full p-3">
+                    <div className="w-full p-4">
                       <div className="flex items-start justify-between w-full mb-2">
                         <div className="max-w-[65%]">
                           <Link
@@ -347,7 +347,7 @@ export default function DaftarDo() {
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-end gap-1 pt-2 mt-2 border-t">
+                      <div className="flex items-center justify-end gap-2 pt-2 mt-2 border-t">
                         <ActionButtons
                           actions={getDeliveryOrderActions(deliveryOrder)}
                           entityId={deliveryOrder.id}

@@ -112,56 +112,58 @@ export default function LogDo() {
           <div className="mb-1 text-xs font-medium text-gray-700">
             Data delivery order yang dibuat:
           </div>
-          <table className="w-full text-xs border-collapse">
-            <tbody>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Pelanggan
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.customerName as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Alamat
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.address as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Catatan Internal
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {newData.internalNote as string}
-                </td>
-              </tr>
-              {typeof newData.items !== "undefined" &&
-                Array.isArray(newData.items) && (
-                  <tr>
-                    <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                      Item
-                    </td>
-                    <td className="px-2 py-1 border border-gray-200">
-                      <ul className="pl-2 list-inside">
-                        {(
-                          newData.items as {
-                            productName: string;
-                            quantity: number;
-                          }[]
-                        ).map((item, idx) => (
-                          <li key={idx}>
-                            {item.productName}: {formatNumber(item.quantity)}
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
-                  </tr>
-                )}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border-collapse">
+              <tbody>
+                <tr>
+                  <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                    Pelanggan
+                  </td>
+                  <td className="px-2 py-1 border border-gray-200">
+                    {newData.customerName as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                    Alamat
+                  </td>
+                  <td className="px-2 py-1 border border-gray-200">
+                    {newData.address as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                    Catatan Internal
+                  </td>
+                  <td className="px-2 py-1 border border-gray-200">
+                    {newData.internalNote as string}
+                  </td>
+                </tr>
+                {typeof newData.items !== "undefined" &&
+                  Array.isArray(newData.items) && (
+                    <tr>
+                      <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                        Item
+                      </td>
+                      <td className="px-2 py-1 border border-gray-200">
+                        <ul className="pl-2 list-inside">
+                          {(
+                            newData.items as {
+                              productName: string;
+                              quantity: number;
+                            }[]
+                          ).map((item, idx) => (
+                            <li key={idx}>
+                              {item.productName}: {formatNumber(item.quantity)}
+                            </li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  )}
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     }
@@ -172,26 +174,28 @@ export default function LogDo() {
           <div className="mb-1 text-xs font-medium text-gray-700">
             Data delivery order yang diarsipkan:
           </div>
-          <table className="w-full text-xs border-collapse">
-            <tbody>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Pelanggan
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.customerName as string}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
-                  Alamat
-                </td>
-                <td className="px-2 py-1 border border-gray-200">
-                  {oldData.address as string}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border-collapse">
+              <tbody>
+                <tr>
+                  <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                    Pelanggan
+                  </td>
+                  <td className="px-2 py-1 border border-gray-200">
+                    {oldData.customerName as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                    Alamat
+                  </td>
+                  <td className="px-2 py-1 border border-gray-200">
+                    {oldData.address as string}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     }
@@ -248,70 +252,72 @@ export default function LogDo() {
           <div className="mb-1 text-xs font-medium text-gray-700">
             Perubahan:
           </div>
-          <table className="w-full text-xs border-collapse">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Field
-                </th>
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Nilai Lama
-                </th>
-                <th className="px-2 py-1 font-medium text-left border border-gray-200">
-                  Nilai Baru
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {changes.map((change, idx) => (
-                <tr key={idx}>
-                  <td className="px-2 py-1 font-medium border border-gray-200">
-                    {change.field}
-                  </td>
-                  <td className="px-2 py-1 border border-gray-200">
-                    {change.field === "Item" &&
-                    "items" in change &&
-                    change.items ? (
-                      <ul className="pl-2 list-inside">
-                        {(
-                          change.items.old as {
-                            productName: string;
-                            quantity: number;
-                          }[]
-                        ).map((item, idx) => (
-                          <li key={idx}>
-                            {item.productName}: {formatNumber(item.quantity)}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      change.oldValue
-                    )}
-                  </td>
-                  <td className="px-2 py-1 border border-gray-200">
-                    {change.field === "Item" &&
-                    "items" in change &&
-                    change.items ? (
-                      <ul className="pl-2 list-inside">
-                        {(
-                          change.items.new as {
-                            productName: string;
-                            quantity: number;
-                          }[]
-                        ).map((item, idx) => (
-                          <li key={idx}>
-                            {item.productName}: {formatNumber(item.quantity)}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      change.newValue
-                    )}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                    Field
+                  </th>
+                  <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                    Nilai Lama
+                  </th>
+                  <th className="px-2 py-1 font-medium text-left border border-gray-200">
+                    Nilai Baru
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {changes.map((change, idx) => (
+                  <tr key={idx}>
+                    <td className="px-2 py-1 font-medium border border-gray-200">
+                      {change.field}
+                    </td>
+                    <td className="px-2 py-1 border border-gray-200">
+                      {change.field === "Item" &&
+                      "items" in change &&
+                      change.items ? (
+                        <ul className="pl-2 list-inside">
+                          {(
+                            change.items.old as {
+                              productName: string;
+                              quantity: number;
+                            }[]
+                          ).map((item, idx) => (
+                            <li key={idx}>
+                              {item.productName}: {formatNumber(item.quantity)}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        change.oldValue
+                      )}
+                    </td>
+                    <td className="px-2 py-1 border border-gray-200">
+                      {change.field === "Item" &&
+                      "items" in change &&
+                      change.items ? (
+                        <ul className="pl-2 list-inside">
+                          {(
+                            change.items.new as {
+                              productName: string;
+                              quantity: number;
+                            }[]
+                          ).map((item, idx) => (
+                            <li key={idx}>
+                              {item.productName}: {formatNumber(item.quantity)}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        change.newValue
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       );
     }
@@ -322,7 +328,7 @@ export default function LogDo() {
     <>
       {}
       <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           <Table>
             <TableHeader>
               <TableRow className="border-b border-gray-200 bg-gray-50">
@@ -503,7 +509,7 @@ export default function LogDo() {
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
-      <div className="flex items-center">
+      <div className="flex items-center mb-4">
         <Link to={`/do/${id}`}>
           <Button variant="ghost" size="sm" className="mr-2">
             <ArrowLeft className="w-4 h-4 mr-1" />

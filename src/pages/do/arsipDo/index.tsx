@@ -102,7 +102,7 @@ export default function ArsipDo() {
 
   const renderTable = () => (
     <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-gray-200 bg-gray-50">
@@ -293,7 +293,7 @@ export default function ArsipDo() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="w-8 h-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    className="p-0 text-blue-600 w-9 h-9 hover:text-blue-700 hover:bg-blue-50"
                     title="Lihat Detail"
                   >
                     <Eye className="w-4 h-4" />
@@ -303,7 +303,7 @@ export default function ArsipDo() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="w-8 h-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    className="p-0 text-blue-600 w-9 h-9 hover:text-blue-700 hover:bg-blue-50"
                     title="Pulihkan"
                     onClick={() => handleRestore(deliveryOrder.id)}
                     disabled={

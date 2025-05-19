@@ -127,7 +127,7 @@ export default function DetailDo() {
   return (
     <div className="w-full px-4 space-y-6 overflow-x-hidden sm:px-0">
       <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
-        <div className="flex items-center">
+        <div className="flex items-center mb-3 sm:mb-0">
           <Link to="/do">
             <Button variant="ghost" size="sm" className="mr-2">
               <ArrowLeft className="w-4 h-4 mr-1" />
@@ -138,16 +138,22 @@ export default function DetailDo() {
             Detail Delivery Order
           </h1>
         </div>
-        <div className="flex gap-2">
-          <Link to={`/do/${deliveryOrderId}/log`}>
-            <Button variant="outline" className="flex items-center gap-1">
+        <div className="flex flex-wrap w-full gap-2 sm:w-auto">
+          <Link to={`/do/${deliveryOrderId}/log`} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              className="flex items-center w-full gap-1 sm:w-auto"
+            >
               <History className="w-4 h-4 mr-2" />
               Log Aktivitas
             </Button>
           </Link>
           {hasDoUpdateAccess && deliveryOrder && !deliveryOrder.deletedAt && (
-            <Link to={`/do/${deliveryOrderId}/edit`}>
-              <Button className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700">
+            <Link
+              to={`/do/${deliveryOrderId}/edit`}
+              className="w-full sm:w-auto"
+            >
+              <Button className="flex items-center w-full px-3 py-2 text-sm font-medium text-white rounded-md shadow-sm bg-amber-600 hover:bg-amber-700 sm:w-auto">
                 <Edit className="w-4 h-4 mr-2" />
                 Edit DO
               </Button>
@@ -155,7 +161,7 @@ export default function DetailDo() {
           )}
           {hasDoDeleteAccess && deliveryOrder && !deliveryOrder.deletedAt && (
             <Button
-              className="flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700"
+              className="flex items-center w-full px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md shadow-sm hover:bg-red-700 sm:w-auto"
               onClick={() => handleDelete(deliveryOrderId)}
               disabled={deleteDeliveryOrder.isPending}
             >
@@ -229,12 +235,6 @@ export default function DetailDo() {
                       </Link>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">ID Pelanggan</p>
-                      <p className="font-mono text-sm text-gray-700">
-                        {deliveryOrder.customer.id}
-                      </p>
-                    </div>
-                    <div>
                       <p className="text-sm text-gray-500">Alamat Pengiriman</p>
                       <p className="text-gray-700 whitespace-pre-wrap">
                         {deliveryOrder.address}
@@ -264,7 +264,7 @@ export default function DetailDo() {
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm text-gray-500">ID Dokumen</p>
-                      <p className="p-1 font-mono text-sm font-medium text-gray-900 rounded bg-gray-50 wrap-text">
+                      <p className="p-1 font-mono text-sm font-medium text-gray-900 break-all rounded bg-gray-50">
                         {deliveryOrder.id}
                       </p>
                     </div>
@@ -298,54 +298,91 @@ export default function DetailDo() {
               </h3>
 
               <div className="overflow-hidden border border-gray-200 rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-b border-gray-200 bg-gray-50">
-                      <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
-                        No
-                      </TableHead>
-                      <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                        Nama Barang
-                      </TableHead>
-                      <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
-                        Kuantitas
-                      </TableHead>
-                      <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                        Satuan
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {deliveryOrder.items.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={4}
-                          className="px-4 py-6 text-sm text-center text-gray-500"
-                        >
-                          Tidak ada item dalam delivery order ini
-                        </TableCell>
+                <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-b border-gray-200 bg-gray-50">
+                        <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
+                          No
+                        </TableHead>
+                        <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                          Nama Barang
+                        </TableHead>
+                        <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                          Kuantitas
+                        </TableHead>
+                        <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                          Satuan
+                        </TableHead>
                       </TableRow>
-                    ) : (
-                      deliveryOrder.items.map((item, index) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">
-                            {index + 1}
-                          </TableCell>
-                          <TableCell className="px-4 py-3 font-medium text-blue-600">
-                            {item.product.name} ({formatNumber(item.quantity)}{" "}
-                            {item.product.satuan})
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                            {formatNumber(item.quantity)}
-                          </TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">
-                            {item.product.satuan}
+                    </TableHeader>
+                    <TableBody>
+                      {deliveryOrder.items.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={4}
+                            className="px-4 py-6 text-sm text-center text-gray-500"
+                          >
+                            Tidak ada item dalam delivery order ini
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                      ) : (
+                        deliveryOrder.items.map((item, index) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">
+                              {index + 1}
+                            </TableCell>
+                            <TableCell className="px-4 py-3 font-medium text-blue-600">
+                              {item.product.name}
+                            </TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                              {formatNumber(item.quantity)}
+                            </TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">
+                              {item.product.satuan}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Mobile view for Items */}
+              <div className="mt-4 sm:hidden">
+                <h4 className="mb-2 text-sm font-medium text-gray-700">
+                  Daftar Item:
+                </h4>
+                <div className="space-y-3">
+                  {deliveryOrder.items.length === 0 ? (
+                    <p className="text-sm text-gray-500">
+                      Tidak ada item dalam delivery order ini
+                    </p>
+                  ) : (
+                    deliveryOrder.items.map((item, index) => (
+                      <div
+                        key={item.id}
+                        className="p-3 border border-gray-200 rounded-md"
+                      >
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-800">
+                            #{index + 1}
+                          </span>
+                          <span className="font-medium text-blue-600">
+                            {item.product.name}
+                          </span>
+                        </div>
+                        <div className="flex justify-between mt-2 text-sm text-gray-600">
+                          <span>Kuantitas:</span>
+                          <span>
+                            {formatNumber(item.quantity)} {item.product.satuan}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>

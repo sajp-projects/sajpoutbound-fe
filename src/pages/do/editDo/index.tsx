@@ -622,7 +622,7 @@ export default function EditDo() {
                 </h3>
 
                 <div className="grid grid-cols-12 gap-2 mb-4">
-                  <div className="flex items-center col-span-7">
+                  <div className="flex items-center col-span-12 sm:col-span-7">
                     <div className="w-full">
                       <div className="min-h-[40px]">
                         <Controller
@@ -655,7 +655,7 @@ export default function EditDo() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center col-span-3">
+                  <div className="flex items-center col-span-8 sm:col-span-3">
                     <div className="w-full">
                       <div className="min-h-[40px]">
                         <Controller
@@ -695,7 +695,7 @@ export default function EditDo() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center col-span-2 pt-1">
+                  <div className="flex items-center col-span-4 sm:col-span-2 pt-1">
                     <Button
                       type="button"
                       variant="outline"
@@ -718,109 +718,111 @@ export default function EditDo() {
 
                 {showItems && (
                   <div className="mt-4 overflow-hidden border border-gray-200 rounded-md">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
-                          >
-                            Nama
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
-                          >
-                            Kuantitas
-                          </th>
-                          <th
-                            scope="col"
-                            className="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase"
-                          >
-                            Aksi
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {watchItems
-                          .filter((item) => item.productId)
-                          .map((item: ExtendedProduct, index) => (
-                            <tr
-                              key={index}
-                              className={
-                                index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                              }
+                    <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th
+                              scope="col"
+                              className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
                             >
-                              <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
-                                {item.productName}
-                                {item.productSatuan
-                                  ? ` (${item.productSatuan})`
-                                  : ""}
-                              </td>
-                              <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                {formatNumber(item.quantity)}
-                              </td>
-                              <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
-                                <div className="flex justify-end space-x-2">
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleEditItem(index)}
-                                    className="flex items-center justify-center w-8 h-8 p-1 text-white bg-yellow-500 rounded-md hover:bg-yellow-600"
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      className="w-4 h-4"
+                              Nama
+                            </th>
+                            <th
+                              scope="col"
+                              className="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase"
+                            >
+                              Kuantitas
+                            </th>
+                            <th
+                              scope="col"
+                              className="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase"
+                            >
+                              Aksi
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {watchItems
+                            .filter((item) => item.productId)
+                            .map((item: ExtendedProduct, index) => (
+                              <tr
+                                key={index}
+                                className={
+                                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                }
+                              >
+                                <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
+                                  {item.productName}
+                                  {item.productSatuan
+                                    ? ` (${item.productSatuan})`
+                                    : ""}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                                  {formatNumber(item.quantity)}
+                                </td>
+                                <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
+                                  <div className="flex justify-end space-x-2">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEditItem(index)}
+                                      className="flex items-center justify-center w-8 h-8 p-1 text-white bg-yellow-500 rounded-md hover:bg-yellow-600"
                                     >
-                                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                                    </svg>
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => remove(index)}
-                                    className="flex items-center justify-center w-8 h-8 p-1 text-white bg-red-500 rounded-md hover:bg-red-600"
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      className="w-4 h-4"
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="w-4 h-4"
+                                      >
+                                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                      </svg>
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => remove(index)}
+                                      className="flex items-center justify-center w-8 h-8 p-1 text-white bg-red-500 rounded-md hover:bg-red-600"
                                     >
-                                      <polyline points="3 6 5 6 21 6"></polyline>
-                                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                      <line
-                                        x1="10"
-                                        y1="11"
-                                        x2="10"
-                                        y2="17"
-                                      ></line>
-                                      <line
-                                        x1="14"
-                                        y1="11"
-                                        x2="14"
-                                        y2="17"
-                                      ></line>
-                                    </svg>
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="w-4 h-4"
+                                      >
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        <line
+                                          x1="10"
+                                          y1="11"
+                                          x2="10"
+                                          y2="17"
+                                        ></line>
+                                        <line
+                                          x1="14"
+                                          y1="11"
+                                          x2="14"
+                                          y2="17"
+                                        ></line>
+                                      </svg>
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
 
@@ -868,19 +870,19 @@ export default function EditDo() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-              <Link to={`/do/${deliveryOrderId}`}>
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
+              <Link to={`/do/${deliveryOrderId}`} className="w-full sm:w-auto">
                 <Button
                   type="button"
                   variant="outline"
-                  className="text-gray-700"
+                  className="w-full sm:w-auto text-gray-700"
                 >
                   Batal
                 </Button>
               </Link>
               <Button
                 type="submit"
-                className="text-white bg-blue-600 hover:bg-blue-700"
+                className="w-full sm:w-auto text-white bg-blue-600 hover:bg-blue-700 mb-2 sm:mb-0"
                 disabled={updateDeliveryOrder.isPending}
               >
                 {updateDeliveryOrder.isPending ? (
