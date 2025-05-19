@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/date";
+import { formatNumber } from "@/utils/formatNumber";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
 import { DeliveryOrderStatus } from "@/types/do";
@@ -331,10 +332,11 @@ export default function DetailDo() {
                             {index + 1}
                           </TableCell>
                           <TableCell className="px-4 py-3 font-medium text-blue-600">
-                            {item.product.name}
+                            {item.product.name} ({formatNumber(item.quantity)}{" "}
+                            {item.product.satuan})
                           </TableCell>
                           <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                            {item.quantity}
+                            {formatNumber(item.quantity)}
                           </TableCell>
                           <TableCell className="px-4 py-3 text-sm text-gray-600">
                             {item.product.satuan}

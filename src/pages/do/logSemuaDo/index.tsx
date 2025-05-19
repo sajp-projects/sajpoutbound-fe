@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
+import { formatNumber } from "@/utils/formatNumber";
 import { Pagination } from "@/components/Pagination";
 import { Link } from "react-router";
 import { LoadingState } from "@/components/LoadingState";
@@ -129,7 +130,7 @@ export default function LogSemuaDo() {
                           }[]
                         ).map((item, idx) => (
                           <li key={idx}>
-                            {item.productName}: {item.quantity}
+                            {item.productName}: {formatNumber(item.quantity)}
                           </li>
                         ))}
                       </ul>
@@ -256,7 +257,7 @@ export default function LogSemuaDo() {
                           }[]
                         ).map((item, idx) => (
                           <li key={idx}>
-                            {item.productName}: {item.quantity}
+                            {item.productName}: {formatNumber(item.quantity)}
                           </li>
                         ))}
                       </ul>
@@ -276,7 +277,7 @@ export default function LogSemuaDo() {
                           }[]
                         ).map((item, idx) => (
                           <li key={idx}>
-                            {item.productName}: {item.quantity}
+                            {item.productName}: {formatNumber(item.quantity)}
                           </li>
                         ))}
                       </ul>

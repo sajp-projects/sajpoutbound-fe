@@ -24,6 +24,7 @@ import {
 } from "@/types/do";
 import { showSuccessAlert, showErrorAlert } from "@/utils/sweetAlert";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "@/utils/formatNumber";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface ExtendedProduct extends CreateDeliveryOrderProduct {
@@ -593,8 +594,7 @@ export default function TambahDo() {
                             <div>
                               <Input
                                 {...field}
-                                type="number"
-                                min="1"
+                                type="text"
                                 placeholder="Masukkan jumlah"
                                 className={cn(
                                   inputClassName,
@@ -602,13 +602,17 @@ export default function TambahDo() {
                                     "border-red-500",
                                   "h-10"
                                 )}
-                                onChange={(e) =>
-                                  field.onChange(
-                                    e.target.value
-                                      ? parseInt(e.target.value)
-                                      : undefined
-                                  )
+                                value={
+                                  field.value ? formatNumber(field.value) : ""
                                 }
+                                onChange={(e) => {
+                                  // Konversi input ke angka dengan menghapus semua karakter kecuali digit
+                                  const numValue =
+                                    parseInt(
+                                      e.target.value.replace(/\D/g, "")
+                                    ) || undefined;
+                                  field.onChange(numValue);
+                                }}
                               />
                               {errors.tempQuantity && (
                                 <p className="mt-1 text-sm text-red-500">
@@ -684,7 +688,7 @@ export default function TambahDo() {
                                   : ""}
                               </td>
                               <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                {item.quantity}
+                                {formatNumber(item.quantity)}
                               </td>
                               <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                                 <div className="flex justify-end space-x-2">

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
+import { formatNumber } from "@/utils/formatNumber";
 import { Pagination } from "@/components/Pagination";
 import { LoadingState } from "@/components/LoadingState";
 import { EmptyState } from "@/components/EmptyState";
@@ -152,7 +153,7 @@ export default function LogDo() {
                           }[]
                         ).map((item, idx) => (
                           <li key={idx}>
-                            {item.productName}: {item.quantity}
+                            {item.productName}: {formatNumber(item.quantity)}
                           </li>
                         ))}
                       </ul>
@@ -279,7 +280,7 @@ export default function LogDo() {
                           }[]
                         ).map((item, idx) => (
                           <li key={idx}>
-                            {item.productName}: {item.quantity}
+                            {item.productName}: {formatNumber(item.quantity)}
                           </li>
                         ))}
                       </ul>
@@ -299,7 +300,7 @@ export default function LogDo() {
                           }[]
                         ).map((item, idx) => (
                           <li key={idx}>
-                            {item.productName}: {item.quantity}
+                            {item.productName}: {formatNumber(item.quantity)}
                           </li>
                         ))}
                       </ul>
@@ -543,7 +544,8 @@ export default function LogDo() {
                       "bg-blue-50 text-blue-600 border-blue-200"
                     )}
                   >
-                    {item.product.name} ({item.quantity} {item.product.satuan})
+                    {item.product.name} ({formatNumber(item.quantity)}{" "}
+                    {item.product.satuan})
                   </Badge>
                 ))}
               </div>
