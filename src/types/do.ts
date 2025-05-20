@@ -9,6 +9,9 @@ export interface DeliveryOrderProduct {
   deliveryOrderId: string;
   productId: string;
   quantity: number;
+  pendingQuantity: number;
+  processingQuantity: number;
+  completedQuantity: number;
   createdAt: string;
   updatedAt: string;
   product: {

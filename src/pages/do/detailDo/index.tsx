@@ -378,7 +378,37 @@ export default function DetailDo() {
                             Nama Barang
                           </TableHead>
                           <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
-                            Kuantitas
+                            Kuantitas Dipesan
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                            <div className="inline-block ml-1">
+                              <Badge
+                                variant="outline"
+                                className="font-medium px-2 py-0.5 bg-red-100 text-red-800 border-red-200"
+                              >
+                                Kuantitas Pending
+                              </Badge>
+                            </div>
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                            <div className="inline-block ml-1">
+                              <Badge
+                                variant="outline"
+                                className="font-medium px-2 py-0.5 bg-yellow-100 text-yellow-800 border-yellow-200"
+                              >
+                                Kuantitas Diproses
+                              </Badge>
+                            </div>
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                            <div className="inline-block ml-1">
+                              <Badge
+                                variant="outline"
+                                className="font-medium px-2 py-0.5 bg-green-100 text-green-800 border-green-200"
+                              >
+                                Kuantitas Selesai
+                              </Badge>
+                            </div>
                           </TableHead>
                           <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
                             Satuan
@@ -389,7 +419,7 @@ export default function DetailDo() {
                         {deliveryOrder.items.length === 0 ? (
                           <TableRow>
                             <TableCell
-                              colSpan={4}
+                              colSpan={7}
                               className="px-4 py-6 text-sm text-center text-gray-500"
                             >
                               Tidak ada item dalam delivery order ini
@@ -412,6 +442,15 @@ export default function DetailDo() {
                               </TableCell>
                               <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
                                 {formatNumber(item.quantity)}
+                              </TableCell>
+                              <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                {formatNumber(item.pendingQuantity)}
+                              </TableCell>
+                              <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                {formatNumber(item.processingQuantity)}
+                              </TableCell>
+                              <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                {formatNumber(item.completedQuantity)}
                               </TableCell>
                               <TableCell className="px-4 py-3 text-sm text-gray-600">
                                 {item.product.satuan}
@@ -449,11 +488,49 @@ export default function DetailDo() {
                             </span>
                           </div>
                           <div className="flex justify-between mt-2 text-sm text-gray-600">
-                            <span>Kuantitas:</span>
+                            <span>Kuantitas Dipesan:</span>
                             <span>
                               {formatNumber(item.quantity)}{" "}
                               {item.product.satuan}
                             </span>
+                          </div>
+                          <div className="flex justify-between mt-2 text-sm text-gray-600">
+                            <span>Status:</span>
+                            <div className="flex flex-wrap gap-1">
+                              {item.pendingQuantity > 0 && (
+                                <span className="text-gray-600">
+                                  <Badge
+                                    variant="outline"
+                                    className="mr-1 font-medium px-1.5 py-0.5 text-xs bg-red-100 text-red-800 border-red-200"
+                                  >
+                                    Pending
+                                  </Badge>
+                                  {formatNumber(item.pendingQuantity)}
+                                </span>
+                              )}
+                              {item.processingQuantity > 0 && (
+                                <span className="text-gray-600">
+                                  <Badge
+                                    variant="outline"
+                                    className="mr-1 font-medium px-1.5 py-0.5 text-xs bg-yellow-100 text-yellow-800 border-yellow-200"
+                                  >
+                                    Diproses
+                                  </Badge>
+                                  {formatNumber(item.processingQuantity)}
+                                </span>
+                              )}
+                              {item.completedQuantity > 0 && (
+                                <span className="text-gray-600">
+                                  <Badge
+                                    variant="outline"
+                                    className="mr-1 font-medium px-1.5 py-0.5 text-xs bg-green-100 text-green-800 border-green-200"
+                                  >
+                                    Selesai
+                                  </Badge>
+                                  {formatNumber(item.completedQuantity)}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ))
