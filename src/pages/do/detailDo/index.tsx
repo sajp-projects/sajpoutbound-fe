@@ -402,7 +402,13 @@ export default function DetailDo() {
                                 {index + 1}
                               </TableCell>
                               <TableCell className="px-4 py-3 font-medium text-blue-600">
-                                {item.product.name}
+                                <Link
+                                  to={`/barang/${item.productId}`}
+                                  className="text-blue-600 hover:underline"
+                                >
+                                  {" "}
+                                  {item.product.name}
+                                </Link>
                               </TableCell>
                               <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
                                 {formatNumber(item.quantity)}

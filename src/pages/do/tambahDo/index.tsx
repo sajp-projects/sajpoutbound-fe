@@ -372,6 +372,21 @@ export default function TambahDo() {
       return;
     }
 
+    const isDuplicate = watchItems.some(
+      (item) =>
+        item.productId === product.id &&
+        (editingItemIndex === null ||
+          watchItems.indexOf(item) !== editingItemIndex)
+    );
+
+    if (isDuplicate) {
+      showErrorAlert(
+        "Validasi Gagal",
+        "Barang ini sudah ada dalam daftar. Tidak dapat menambahkan barang yang sama."
+      );
+      return;
+    }
+
     append({
       productId: product.id,
       quantity: quantity,
@@ -400,6 +415,19 @@ export default function TambahDo() {
     }
 
     if (editingItemIndex !== null) {
+      const isDuplicate = watchItems.some(
+        (item, index) =>
+          item.productId === product.id && index !== editingItemIndex
+      );
+
+      if (isDuplicate) {
+        showErrorAlert(
+          "Validasi Gagal",
+          "Barang ini sudah ada dalam daftar. Tidak dapat menambahkan barang yang sama."
+        );
+        return;
+      }
+
       update(editingItemIndex, {
         productId: product.id,
         quantity: quantity,
@@ -426,6 +454,19 @@ export default function TambahDo() {
         message: "Tambahkan minimal satu barang",
       });
       showErrorAlert("Validasi Gagal", "Tambahkan minimal satu barang.");
+      return;
+    }
+
+    const productIds = validItems.map((item) => item.productId);
+    const hasDuplicates = productIds.some(
+      (id, index) => productIds.indexOf(id) !== index
+    );
+
+    if (hasDuplicates) {
+      showErrorAlert(
+        "Validasi Gagal",
+        "Terdapat barang duplikat dalam daftar. Hapus barang duplikat sebelum melanjutkan."
+      );
       return;
     }
 
@@ -624,7 +665,7 @@ export default function TambahDo() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center col-span-4 sm:col-span-2 pt-1">
+                  <div className="flex items-center col-span-4 pt-1 sm:col-span-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -682,10 +723,15 @@ export default function TambahDo() {
                                 }
                               >
                                 <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
-                                  {item.productName}
-                                  {item.productSatuan
-                                    ? ` (${item.productSatuan})`
-                                    : ""}
+                                  <Link
+                                    to={`/barang/${item.productId}`}
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    {item.productName}
+                                    {item.productSatuan
+                                      ? ` (${item.productSatuan})`
+                                      : ""}
+                                  </Link>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                                   {formatNumber(item.quantity)}
@@ -795,19 +841,19 @@ export default function TambahDo() {
               </div>
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
+            <div className="flex flex-col-reverse justify-end gap-3 pt-4 border-t border-gray-200 sm:flex-row">
               <Link to="/do" className="w-full sm:w-auto">
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full sm:w-auto text-gray-700"
+                  className="w-full text-gray-700 sm:w-auto"
                 >
                   Batal
                 </Button>
               </Link>
               <Button
                 type="submit"
-                className="w-full sm:w-auto text-white bg-blue-600 hover:bg-blue-700 mb-2 sm:mb-0"
+                className="w-full mb-2 text-white bg-blue-600 sm:w-auto hover:bg-blue-700 sm:mb-0"
                 disabled={createDeliveryOrder.isPending}
               >
                 {createDeliveryOrder.isPending ? (
