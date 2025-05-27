@@ -56,20 +56,20 @@ export default function BaseLayout() {
   }
 
   return (
-    <div className="flex w-full h-screen overflow-hidden bg-gray-50">
+    <div className="flex w-full min-h-screen bg-gray-50">
       {}
       <SideBar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
       {}
       <div
         ref={mainContentRef}
-        className={`flex flex-col flex-1 min-h-screen transition-all duration-200 ease-in-out w-full ${
+        className={`flex flex-col flex-1 w-full transition-all duration-200 ease-in-out ${
           isSidebarOpen ? "lg:ml-64" : ""
         }`}
       >
         <Navbar toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
-        <main className="flex-grow px-2 py-3 overflow-y-auto sm:px-4 sm:py-4 md:py-6 overflow-auto  ">
+        <main className="flex-grow px-2 py-3 sm:px-4 sm:py-4 md:py-6">
           <div className="w-full mx-auto max-w-7xl">
             <Outlet />
           </div>
