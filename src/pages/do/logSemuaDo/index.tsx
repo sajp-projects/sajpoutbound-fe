@@ -54,35 +54,35 @@ export default function LogSemuaDo() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className="log-detail-header">
+          <div className="text-xs font-medium text-gray-600 mb-1">
             Data delivery order yang dibuat:
           </div>
-          <div className="log-detail-container">
+          <div className="overflow-x-auto w-full">
             <table className="w-full text-xs border-collapse">
               <tbody>
                 <tr>
-                  <td className="log-detail-label">Pelanggan</td>
-                  <td className="log-detail-value">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Pelanggan</td>
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {newData.customerName as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">Alamat</td>
-                  <td className="log-detail-value">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Alamat</td>
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {newData.address as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">Catatan Internal</td>
-                  <td className="log-detail-value">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Catatan Internal</td>
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {newData.internalNote as string}
                   </td>
                 </tr>
                 {typeof newData.items !== "undefined" &&
                   Array.isArray(newData.items) && (
                     <tr>
-                      <td className="log-detail-label">Item</td>
-                      <td className="log-detail-value">
+                      <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Item</td>
+                      <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                         <ul className="pl-2 list-inside">
                           {(
                             newData.items as {
@@ -112,18 +112,18 @@ export default function LogSemuaDo() {
       const isRestore = newData?.deletedAt === null;
       return (
         <div>
-          <div className="log-detail-header">
+          <div className="text-xs font-medium text-gray-600 mb-1">
             {isRestore
               ? "Delivery Order dipulihkan:"
               : "Data delivery order yang diarsipkan:"}
           </div>
           {oldData && (
-            <div className="log-detail-container">
+            <div className="overflow-x-auto w-full">
               <table className="w-full text-xs border-collapse">
                 <tbody>
                   <tr>
-                    <td className="log-detail-label">Status</td>
-                    <td className="log-detail-value">
+                    <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Status</td>
+                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                       {isRestore ? "Dipulihkan" : "Diarsipkan"}
                     </td>
                   </tr>
@@ -184,12 +184,12 @@ export default function LogSemuaDo() {
 
       return (
         <div>
-          <div className="log-detail-header">Perubahan:</div>
-          <div className="log-detail-container">
+          <div className="text-xs font-medium text-gray-600 mb-1">Perubahan:</div>
+          <div className="overflow-x-auto w-full">
             <table className="w-full text-xs border-collapse">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="log-detail-label">Field</th>
+                  <th className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Field</th>
                   <th className="px-2 py-1 font-medium text-left border border-gray-200">
                     Nilai Lama
                   </th>
@@ -201,8 +201,8 @@ export default function LogSemuaDo() {
               <tbody>
                 {changes.map((change, idx) => (
                   <tr key={idx}>
-                    <td className="log-detail-label">{change.field}</td>
-                    <td className="log-detail-value">
+                    <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">{change.field}</td>
+                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                       {change.field === "Item" &&
                       "items" in change &&
                       change.items ? (
@@ -222,7 +222,7 @@ export default function LogSemuaDo() {
                         change.oldValue
                       )}
                     </td>
-                    <td className="log-detail-value">
+                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                       {change.field === "Item" &&
                       "items" in change &&
                       change.items ? (
@@ -256,7 +256,7 @@ export default function LogSemuaDo() {
 
   const renderLogTable = () => (
     <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
-      <div className="log-table-container">
+      <div className="overflow-x-auto w-full">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-gray-200 bg-gray-50">
@@ -306,7 +306,7 @@ export default function LogSemuaDo() {
                     {log.deliveryOrder && (
                       <Link
                         to={`/do/${log.deliveryOrder.id}`}
-                        className="font-medium text-blue-600 hover:underline log-table-cell"
+                        className="font-medium text-blue-600 hover:underline whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
                       >
                         {log.deliveryOrder.customer.name}
                       </Link>
@@ -324,16 +324,16 @@ export default function LogSemuaDo() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium text-blue-600 log-table-cell">
+                      <span className="font-medium text-blue-600 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
                         {log.performedBy.name}
                       </span>
-                      <span className="text-xs text-gray-500 log-table-cell">
+                      <span className="text-xs text-gray-500 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
                         {log.performedBy.email}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <p className="text-sm text-gray-700 truncate-text-2">
+                    <p className="text-sm text-gray-700 line-clamp-2 overflow-hidden">
                       {log.description}
                     </p>
                     <div className="mt-2">
@@ -402,18 +402,18 @@ export default function LogSemuaDo() {
                     </span>
                     <Link
                       to={`/do/${log.deliveryOrder.id}`}
-                      className="text-sm text-blue-600 hover:underline truncate-text"
+                      className="text-sm text-blue-600 hover:underline truncate max-w-full"
                     >
                       {log.deliveryOrder.customer.name}
                     </Link>
                   </div>
                 )}
-                <p className="mb-1 text-sm text-gray-700 truncate-text-2">
+                <p className="mb-1 text-sm text-gray-700 line-clamp-2 overflow-hidden">
                   {log.description}
                 </p>
                 <div className="text-xs text-gray-500">
                   Dilakukan oleh:{" "}
-                  <span className="font-medium text-blue-600 truncate-text">
+                  <span className="font-medium text-blue-600 truncate max-w-full">
                     {log.performedBy.name}
                   </span>
                 </div>

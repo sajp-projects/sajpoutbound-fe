@@ -5,13 +5,13 @@ export default function NotFound() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-16 bg-background">
+    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-16 bg-white">
       <div className="max-w-md space-y-6 text-center">
-        <h1 className="text-6xl font-bold text-destructive">404</h1>
-        <h2 className="text-2xl font-semibold text-foreground">
+        <h1 className="text-6xl font-bold text-red-600">404</h1>
+        <h2 className="text-2xl font-semibold text-gray-900">
           Halaman Tidak Ditemukan
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-gray-500-foreground">
           Maaf, halaman yang Anda cari tidak dapat ditemukan atau telah
           dipindahkan.
         </p>

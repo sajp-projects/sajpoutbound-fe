@@ -2,10 +2,10 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const alertVariants = cva("relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground", {
+const alertVariants = cva("relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-gray-900", {
   variants: {
     variant: {
-      default: "bg-background text-foreground",
+      default: "bg-white text-gray-900",
       destructive: "border-red-300 bg-red-50 text-red-800 dark:border-red-800 [&>svg]:text-red-600",
       warning: "border-yellow-300 bg-yellow-50 text-yellow-800 dark:border-yellow-800 [&>svg]:text-yellow-600",
       success: "border-green-300 bg-green-50 text-green-800 dark:border-green-800 [&>svg]:text-green-600",

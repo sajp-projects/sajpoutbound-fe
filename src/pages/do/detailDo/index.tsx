@@ -367,7 +367,7 @@ export default function DetailDo() {
                 </h3>
 
                 <div className="overflow-hidden border border-gray-200 rounded-lg">
-                  <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  <div className="overflow-x-auto overflow-auto  ">
                     <Table>
                       <TableHeader>
                         <TableRow className="border-b border-gray-200 bg-gray-50">

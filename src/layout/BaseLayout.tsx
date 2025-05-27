@@ -69,7 +69,7 @@ export default function BaseLayout() {
       >
         <Navbar toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
-        <main className="flex-grow px-2 py-3 overflow-y-auto sm:px-4 sm:py-4 md:py-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+        <main className="flex-grow px-2 py-3 overflow-y-auto sm:px-4 sm:py-4 md:py-6 overflow-auto  ">
           <div className="w-full mx-auto max-w-7xl">
             <Outlet />
           </div>

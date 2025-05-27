@@ -231,7 +231,7 @@ export default function LogGudang() {
             {logs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
-                  <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center py-8 text-gray-500-foreground">
                     <Search className="w-10 h-10 mb-2 text-gray-300" />
                     <p className="text-gray-500">
                       Tidak ada data log yang ditemukan.

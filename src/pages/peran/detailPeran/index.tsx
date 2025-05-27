@@ -362,7 +362,7 @@ export default function DetailPeran() {
                                     <div className="flex items-center text-sm text-gray-600">
                                       <Mail className="w-4 h-4 mr-2 text-gray-400" />
                                       <span
-                                        className="truncate-text"
+                                        className="truncate max-w-full"
                                         title={user.email}
                                       >
                                         {user.email}
@@ -433,7 +433,7 @@ export default function DetailPeran() {
                                 <div className="flex items-center text-sm text-gray-600">
                                   <Mail className="w-4 h-4 mr-2 text-gray-400" />
                                   <span
-                                    className="truncate-text"
+                                    className="truncate max-w-full"
                                     title={user.email}
                                   >
                                     {user.email}
@@ -442,7 +442,7 @@ export default function DetailPeran() {
                                 <div className="flex items-center text-sm text-gray-600">
                                   <Calendar className="w-4 h-4 mr-2 text-gray-400" />
                                   <span
-                                    className="truncate-text"
+                                    className="truncate max-w-full"
                                     title={`Bergabung: ${formatDate(
                                       user.createdAt
                                     )}`}
@@ -453,7 +453,7 @@ export default function DetailPeran() {
                                 <div className="flex items-center text-sm text-gray-600">
                                   <User className="w-4 h-4 mr-2 text-gray-400" />
                                   <span
-                                    className="truncate-text"
+                                    className="truncate max-w-full"
                                     title={`ID: ${user.id}`}
                                   >
                                     ID: {user.id}

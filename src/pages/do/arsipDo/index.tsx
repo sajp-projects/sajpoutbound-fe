@@ -102,7 +102,7 @@ export default function ArsipDo() {
 
   const renderTable = () => (
     <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
-      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+      <div className="overflow-x-auto overflow-auto  ">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-gray-200 bg-gray-50">

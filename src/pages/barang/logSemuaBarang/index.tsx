@@ -53,49 +53,49 @@ export default function LogSemuaBarang() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className="log-detail-header">
+          <div className="text-xs font-medium text-gray-600 mb-1">
             Data barang yang dibuat:
           </div>
-          <div className="log-detail-container">
+          <div className="overflow-x-auto w-full">
             <table className="w-full text-xs border-collapse">
               <tbody>
                 <tr>
-                  <td className="log-detail-label">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                     Nama
                   </td>
-                  <td className="log-detail-value">
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {newData.name as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                     ID
                   </td>
-                  <td className="log-detail-value">
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {newData.id_sl as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                     Satuan
                   </td>
-                  <td className="log-detail-value">
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {newData.satuan as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                     Deskripsi
                   </td>
-                  <td className="log-detail-value">
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {newData.description as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                     Gudang
                   </td>
-                  <td className="log-detail-value">
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {(newData.warehouseName || newData.warehouseId) as string}
                   </td>
                 </tr>
@@ -109,49 +109,49 @@ export default function LogSemuaBarang() {
     if (oldData && !newData) {
       return (
         <div>
-          <div className="log-detail-header">
+          <div className="text-xs font-medium text-gray-600 mb-1">
             Data barang yang dihapus:
           </div>
-          <div className="log-detail-container">
+          <div className="overflow-x-auto w-full">
             <table className="w-full text-xs border-collapse">
               <tbody>
                 <tr>
-                  <td className="log-detail-label">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                     Nama
                   </td>
-                  <td className="log-detail-value">
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {oldData.name as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                     ID
                   </td>
-                  <td className="log-detail-value">
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {oldData.id_sl as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                     Satuan
                   </td>
-                  <td className="log-detail-value">
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {oldData.satuan as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                     Deskripsi
                   </td>
-                  <td className="log-detail-value">
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {oldData.description as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="log-detail-label">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                     Gudang
                   </td>
-                  <td className="log-detail-value">
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {(oldData.warehouseName || oldData.warehouseId) as string}
                   </td>
                 </tr>
@@ -201,14 +201,14 @@ export default function LogSemuaBarang() {
 
       return (
         <div>
-          <div className="log-detail-header">
+          <div className="text-xs font-medium text-gray-600 mb-1">
             Perubahan:
           </div>
-          <div className="log-detail-container">
+          <div className="overflow-x-auto w-full">
             <table className="w-full text-xs border-collapse">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="log-detail-label">
+                  <th className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                     Field
                   </th>
                   <th className="px-2 py-1 font-medium text-left border border-gray-200">
@@ -222,13 +222,13 @@ export default function LogSemuaBarang() {
               <tbody>
                 {changes.map((change, idx) => (
                   <tr key={idx}>
-                    <td className="log-detail-label">
+                    <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                       {change.field}
                     </td>
-                    <td className="log-detail-value">
+                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                       {change.oldValue}
                     </td>
-                    <td className="log-detail-value">
+                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                       {change.newValue}
                     </td>
                   </tr>
@@ -256,7 +256,7 @@ export default function LogSemuaBarang() {
 
   const renderLogTable = () => (
     <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
-      <div className="log-table-container">
+      <div className="overflow-x-auto w-full">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-gray-200 bg-gray-50">
@@ -306,12 +306,12 @@ export default function LogSemuaBarang() {
                     {log.product ? (
                       <Link
                         to={`/barang/${log.product.id}`}
-                        className="font-medium text-blue-600 hover:underline log-table-cell"
+                        className="font-medium text-blue-600 hover:underline whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
                       >
                         {log.product.name}
                       </Link>
                     ) : (
-                      <span className="text-gray-700 log-table-cell">
+                      <span className="text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
                         {getProductName(log)}
                       </span>
                     )}
@@ -328,16 +328,16 @@ export default function LogSemuaBarang() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium text-blue-600 log-table-cell">
+                      <span className="font-medium text-blue-600 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
                         {log.performedBy.name}
                       </span>
-                      <span className="text-xs text-gray-500 log-table-cell">
+                      <span className="text-xs text-gray-500 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">
                         {log.performedBy.email}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <p className="text-sm text-gray-700 truncate-text-2">
+                    <p className="text-sm text-gray-700 line-clamp-2 overflow-hidden">
                       {log.description}
                     </p>
                     <div className="mt-2">
@@ -404,12 +404,12 @@ export default function LogSemuaBarang() {
                   {log.product ? (
                     <Link
                       to={`/barang/${log.product.id}`}
-                      className="text-sm text-blue-600 hover:underline truncate-text"
+                      className="text-sm text-blue-600 hover:underline truncate max-w-full"
                     >
                       {log.product.name}
                     </Link>
                   ) : (
-                    <span className="text-sm text-gray-700 truncate-text">
+                    <span className="text-sm text-gray-700 truncate max-w-full">
                       {getProductName(log)}
                     </span>
                   )}
@@ -419,10 +419,10 @@ export default function LogSemuaBarang() {
                     ID: <span className="font-medium">{log.product.id_sl}</span>
                   </div>
                 )}
-                <p className="mb-1 text-sm text-gray-700 truncate-text-2">{log.description}</p>
+                <p className="mb-1 text-sm text-gray-700 line-clamp-2 overflow-hidden">{log.description}</p>
                 <div className="text-xs text-gray-500">
                   Dilakukan oleh:{" "}
-                  <span className="font-medium text-blue-600 truncate-text">
+                  <span className="font-medium text-blue-600 truncate max-w-full">
                     {log.performedBy.name}
                   </span>
                 </div>

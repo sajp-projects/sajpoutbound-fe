@@ -28,7 +28,7 @@ export const ResourceGroup = ({
 
     {}
     <div className="hidden sm:block">
-      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      <div className="overflow-x-auto overflow-auto  ">
         <div className="min-w-[900px]">
           <PermissionsTable
             permissions={permissions}
