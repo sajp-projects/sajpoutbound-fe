@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router";
-import { Plus, Save, Loader2, X } from "lucide-react";
+import { Plus, Save, Loader2 } from "lucide-react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { joiResolver } from "@hookform/resolvers/joi";
 import Joi from "joi";
@@ -26,6 +26,7 @@ import { showSuccessAlert, showErrorAlert } from "@/utils/sweetAlert";
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/utils/formatNumber";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Combobox, ComboboxItem } from "@/components/ui/combobox";
 
 interface ExtendedProduct extends CreateDeliveryOrderProduct {
   productName?: string;
@@ -73,179 +74,13 @@ const schema = Joi.object({
     .optional(),
 });
 
-interface FormFieldProps {
-  id: string;
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-  helpText?: string;
-  required?: boolean;
-}
-
-function FormField({
-  id,
-  label,
-  error,
-  children,
-  helpText,
-  required,
-}: FormFieldProps) {
-  return (
-    <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      {children}
-      {error ? (
-        <p className="mt-1 text-sm text-red-500">{error}</p>
-      ) : helpText ? (
-        <p className="mt-1 text-sm text-gray-500">{helpText}</p>
-      ) : null}
-    </div>
-  );
-}
-
-interface AutocompleteInputProps<T> {
-  items: T[];
-  displayValue: string;
-  onSelect: (item: T) => void;
-  displayKey: keyof T;
-  idKey: keyof T;
-  placeholder: string;
-  isLoading?: boolean;
-  error?: string;
-  name: string;
-  required?: boolean;
-  label: string;
-  helpText?: string;
-  onClear?: () => void;
-  value?: string;
-  secondaryKey?: keyof T;
-}
-
-function AutocompleteInput<T>({
-  items,
-  displayValue,
-  onSelect,
-  displayKey,
-  idKey,
-  placeholder,
-  isLoading,
-  error,
-  name,
-  required,
-  label,
-  helpText,
-  onClear,
-  secondaryKey,
-}: AutocompleteInputProps<T>) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const filteredItems = items.filter((item) => {
-    const itemValue = String(item[displayKey]).toLowerCase();
-    return itemValue.includes(searchQuery.toLowerCase());
-  });
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const inputClassName = cn(
-    "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm h-10",
-    error ? "border-red-500" : ""
-  );
-
-  return (
-    <FormField
-      id={name}
-      label={label}
-      error={error}
-      helpText={helpText}
-      required={required}
-    >
-      <div className="relative" ref={dropdownRef}>
-        <Input
-          id={name}
-          name={name}
-          type="text"
-          placeholder={placeholder}
-          value={displayValue || searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setIsOpen(true);
-          }}
-          className={inputClassName}
-          onFocus={() => setIsOpen(true)}
-        />
-        {(displayValue || searchQuery) && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchQuery("");
-              if (onClear) onClear();
-            }}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-500"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
-        {isOpen && searchQuery && (
-          <div className="absolute z-10 w-full mt-1 overflow-auto bg-white border border-gray-300 rounded-md shadow-lg max-h-60">
-            {isLoading ? (
-              <div className="flex items-center justify-center p-4 text-sm text-gray-500">
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Memuat...
-              </div>
-            ) : filteredItems.length === 0 ? (
-              <div className="p-4 text-sm text-gray-500">
-                Tidak ada data yang cocok
-              </div>
-            ) : (
-              <ul className="py-1">
-                {filteredItems.map((item) => (
-                  <li
-                    key={String(item[idKey])}
-                    className="px-4 py-2 text-sm cursor-pointer hover:bg-gray-100"
-                    onClick={() => {
-                      onSelect(item);
-                      setIsOpen(false);
-                      setSearchQuery("");
-                    }}
-                  >
-                    {String(item[displayKey])}
-                    {secondaryKey && item[secondaryKey]
-                      ? ` (${String(item[secondaryKey])})`
-                      : ""}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-      </div>
-    </FormField>
-  );
-}
-
 export default function TambahDo() {
   const navigate = useNavigate();
   const [showItems, setShowItems] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [useCustomerAddress, setUseCustomerAddress] = useState(false);
+  const [customerSearchQuery, setCustomerSearchQuery] = useState("");
+  const [productSearchQuery, setProductSearchQuery] = useState("");
   const inputClassName = cn(
     "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
   );
@@ -285,20 +120,57 @@ export default function TambahDo() {
   });
 
   const watchItems = watch("items");
-  const watchCustomerName = watch("customerName");
+  const watchCustomerId = watch("customerId");
 
-  const { data: customersData, isLoading: loadingCustomers } = useCustomers({
+  const {
+    data: customersData,
+    isLoading: loadingCustomers,
+    refetch: refetchCustomers,
+  } = useCustomers({
     staleTime: 300000,
     refetchOnWindowFocus: false,
+    searchQuery: customerSearchQuery,
   });
 
-  const { data: productsData, isLoading: loadingProducts } = useProducts({
+  const {
+    data: productsData,
+    isLoading: loadingProducts,
+    refetch: refetchProducts,
+  } = useProducts({
     staleTime: 300000,
     refetchOnWindowFocus: false,
+    searchQuery: productSearchQuery,
   });
 
   const customers = customersData?.customers || [];
   const products = productsData?.products || [];
+
+  const customerOptions: ComboboxItem[] = customers.map((customer) => ({
+    label: customer.name,
+    value: customer.id,
+  }));
+
+  const productOptions: ComboboxItem[] = products.map((product) => ({
+    label: product.name,
+    value: product.id,
+    secondary: product.satuan,
+  }));
+
+  const handleCustomerSearch = useCallback(
+    (query: string) => {
+      setCustomerSearchQuery(query);
+      refetchCustomers();
+    },
+    [refetchCustomers]
+  );
+
+  const handleProductSearch = useCallback(
+    (query: string) => {
+      setProductSearchQuery(query);
+      refetchProducts();
+    },
+    [refetchProducts]
+  );
 
   const createDeliveryOrder = useCreateDeliveryOrder({
     onSuccess: (data) => {
@@ -329,12 +201,15 @@ export default function TambahDo() {
     }
   }, [watchItems]);
 
-  const handleCustomerSelect = (customer: (typeof customers)[0]) => {
-    setValue("customerId", customer.id, { shouldValidate: true });
-    setValue("customerName", customer.name);
+  const handleCustomerSelect = (item: ComboboxItem) => {
+    const customer = customers.find((c) => c.id === item.value);
+    if (customer) {
+      setValue("customerId", customer.id, { shouldValidate: true });
+      setValue("customerName", customer.name);
 
-    if (useCustomerAddress && customer.address) {
-      setValue("address", customer.address, { shouldValidate: true });
+      if (useCustomerAddress && customer.address) {
+        setValue("address", customer.address, { shouldValidate: true });
+      }
     }
   };
 
@@ -481,6 +356,14 @@ export default function TambahDo() {
     });
   };
 
+  const handleProductSelect = (item: ComboboxItem) => {
+    const product = products.find((p) => p.id === item.value);
+    if (product) {
+      setValue("tempProductId", product.id);
+      setValue("tempProduct", product.name);
+    }
+  };
+
   const handleProductAction = () => {
     const productId = watch("tempProductId");
     const quantity = watch("tempQuantity");
@@ -522,13 +405,15 @@ export default function TambahDo() {
                   Informasi Dasar
                 </h3>
                 <div className="space-y-4">
-                  <AutocompleteInput
-                    items={customers}
-                    displayValue={watchCustomerName || ""}
+                  <Combobox
+                    items={customerOptions}
+                    value={watchCustomerId}
+                    onValueChange={(value) => {
+                      setValue("customerId", value, { shouldValidate: true });
+                    }}
                     onSelect={handleCustomerSelect}
-                    displayKey="name"
-                    idKey="id"
                     placeholder="Masukkan nama pelanggan"
+                    searchPlaceholder="Cari pelanggan..."
                     isLoading={loadingCustomers}
                     error={errors.customerId?.message}
                     name="customerId"
@@ -540,16 +425,19 @@ export default function TambahDo() {
                       setValue("customerName", "");
                       setValue("address", "", { shouldValidate: true });
                     }}
+                    onSearch={handleCustomerSearch}
+                    useServerSearch
                   />
 
                   <div className="space-y-2">
-                    <FormField
-                      id="address"
-                      label="Alamat Pengiriman"
-                      required
-                      error={errors.address?.message}
-                      helpText="Alamat lengkap pengiriman barang"
-                    >
+                    <div>
+                      <label
+                        htmlFor="address"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Alamat Pengiriman{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
                       <Controller
                         name="address"
                         control={control}
@@ -566,7 +454,16 @@ export default function TambahDo() {
                           />
                         )}
                       />
-                    </FormField>
+                      {errors.address ? (
+                        <p className="mt-1 text-sm text-red-500">
+                          {errors.address.message}
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-sm text-gray-500">
+                          Alamat lengkap pengiriman barang
+                        </p>
+                      )}
+                    </div>
 
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -595,30 +492,27 @@ export default function TambahDo() {
                     <div className="w-full">
                       <div className="min-h-[40px]">
                         <Controller
-                          name="tempProduct"
+                          name="tempProductId"
                           control={control}
                           defaultValue=""
-                          render={({ field: { onChange, value, ...rest } }) => (
-                            <AutocompleteInput
-                              items={products}
-                              displayValue={value || ""}
-                              onSelect={(product) => {
-                                onChange(product.name);
-                                setValue("tempProductId", product.id);
-                              }}
-                              displayKey="name"
-                              idKey="id"
-                              secondaryKey="satuan"
+                          render={({ field: { value, onChange } }) => (
+                            <Combobox
+                              items={productOptions}
+                              value={value || ""}
+                              onValueChange={onChange}
+                              onSelect={handleProductSelect}
                               placeholder="Masukkan nama barang"
+                              searchPlaceholder="Cari barang..."
                               isLoading={loadingProducts}
-                              label=""
-                              helpText=""
+                              error={errors.items ? " " : ""}
+                              name="tempProductId"
                               onClear={() => {
                                 onChange("");
-                                setValue("tempProductId", "");
+                                setValue("tempProduct", "");
                               }}
-                              error={errors.items ? " " : ""}
-                              {...rest}
+                              onSearch={handleProductSearch}
+                              useServerSearch
+                              className="h-10"
                             />
                           )}
                         />
@@ -638,7 +532,6 @@ export default function TambahDo() {
                                 type="text"
                                 placeholder="Masukkan jumlah"
                                 className={cn(
-                                  inputClassName,
                                   (errors.tempQuantity || errors.items) &&
                                     "border-red-500",
                                   "h-10"
@@ -688,7 +581,7 @@ export default function TambahDo() {
 
                 {showItems && (
                   <div className="mt-4 overflow-hidden border border-gray-200 rounded-md">
-                    <div className="overflow-x-auto overflow-auto  ">
+                    <div className="overflow-auto overflow-x-auto ">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
@@ -819,11 +712,13 @@ export default function TambahDo() {
               </div>
 
               <div>
-                <FormField
-                  id="internalNote"
-                  label="Catatan Internal"
-                  helpText="Catatan tambahan untuk internal (opsional)"
-                >
+                <div>
+                  <label
+                    htmlFor="internalNote"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Catatan Internal
+                  </label>
                   <Controller
                     name="internalNote"
                     control={control}
@@ -837,23 +732,26 @@ export default function TambahDo() {
                       />
                     )}
                   />
-                </FormField>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Catatan tambahan untuk internal (opsional)
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col-reverse justify-end gap-3 pt-4 border-t border-gray-200 sm:flex-row">
-              <Link to="/do" className="w-full sm:w-auto">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <Link to="/do">
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full text-gray-700 sm:w-auto"
+                  className="text-gray-700"
                 >
                   Batal
                 </Button>
               </Link>
               <Button
                 type="submit"
-                className="w-full mb-2 text-white bg-blue-600 sm:w-auto hover:bg-blue-700 sm:mb-0"
+                className="text-white bg-blue-600 hover:bg-blue-700"
                 disabled={createDeliveryOrder.isPending}
               >
                 {createDeliveryOrder.isPending ? (

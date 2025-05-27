@@ -294,15 +294,12 @@ export function useRestoreUser(
       );
 
       if (!response.ok) {
-        console.log(response, "response");
         throw new Error(`Error restoring user: ${response.statusText}`);
       }
 
       const result: ApiResponse<UserWithRole> = await response.json();
 
       if (!result.success) {
-        console.log(result, "result");
-
         handleApiError(result, "Failed to restore user");
       }
 
