@@ -2,14 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { showSuccessAlert, showWarningAlert } from "@/utils/sweetAlert";
 import { fetchApi } from "@/utils/api";
-import { User, LoginFormData, LoginResponseData, Tokens } from "@/types/auth";
+import { User, LoginResponseData, Tokens } from "@/types/auth";
 import * as storage from "@/utils/storage";
 import { ApiResponse } from "@/types/api";
-import {
-  createErrorResponse,
-  handleFormErrors,
-  FormErrors,
-} from "@/utils/errorHandler";
+import { createErrorResponse } from "@/utils/errorHandler";
+import { useMutation } from "@tanstack/react-query";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -40,14 +37,14 @@ export function useAuth() {
     return true;
   };
 
-  const login = async (
-    email: string,
-    password: string,
-    setErrors?: (errors: FormErrors<LoginFormData>) => void
-  ) => {
-    setIsLoading(true);
-
-    try {
+  const loginMutation = useMutation({
+    mutationFn: async ({
+      email,
+      password,
+    }: {
+      email: string;
+      password: string;
+    }) => {
       const response = await fetchApi(
         "/auth/login",
         {},
@@ -60,34 +57,20 @@ export function useAuth() {
       const result = (await response.json()) as ApiResponse<LoginResponseData>;
 
       if (!result.success) {
-        if (setErrors) {
-          const errorResult = createErrorResponse(
-            result,
-            "Terjadi kesalahan saat login"
-          );
-          handleFormErrors<Record<string, unknown>>(
-            errorResult,
-            ["email", "password"],
-            setErrors
-          );
-        }
-        setIsLoading(false);
-        return false;
+        const errorResult = createErrorResponse(
+          result,
+          "Terjadi kesalahan saat login"
+        );
+        throw errorResult;
       }
 
-      const { user: userData, tokens } = result.data!;
-      return handleLoginSuccess(userData, tokens);
-    } catch (error) {
-      console.error("Login error:", error);
-      if (setErrors) {
-        setErrors({ general: "Terjadi kesalahan saat menghubungi server" });
-      }
-      setIsLoading(false);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return result.data!;
+    },
+    onSuccess: (data) => {
+      handleLoginSuccess(data.user, data.tokens);
+      navigate("/");
+    },
+  });
 
   const logout = () => {
     storage.clearAuthData();
@@ -118,7 +101,7 @@ export function useAuth() {
     user,
     isAuthenticated,
     isLoading,
-    login,
+    loginMutation,
     logout,
     checkAuthRedirect,
   };

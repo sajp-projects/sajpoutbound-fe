@@ -27,6 +27,16 @@ export interface LoginResponseData {
   tokens: Tokens;
 }
 
+export interface LoginError {
+  errorType: string;
+  message: string;
+  details?: Array<{
+    message: string;
+    path: string[];
+    type: string;
+  }>;
+}
+
 export interface InputFieldProps {
   id: string;
   name?: string;
