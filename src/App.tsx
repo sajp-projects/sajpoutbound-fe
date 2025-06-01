@@ -49,6 +49,14 @@ import ArsipDo from "./pages/do/arsipDo";
 import EditDo from "./pages/do/editDo";
 import DetailDo from "./pages/do/detailDo";
 import LogSemuaDo from "./pages/do/logSemuaDo";
+import DaftarPengiriman from "./pages/pengiriman/daftarPengiriman";
+import LogPengiriman from "./pages/pengiriman/logPengiriman";
+import DetailPengiriman from "./pages/pengiriman/detailPengiriman";
+import EditPengiriman from "./pages/pengiriman/editPengiriman";
+import TambahPengiriman from "./pages/pengiriman/tambahPengiriman";
+import LogSemuaPengiriman from "./pages/pengiriman/logSemuaPengiriman";
+import ArsipPengiriman from "./pages/pengiriman/arsipPengiriman";
+
 interface ProtectedRouteConfig {
   path: string;
   element: React.ReactNode;
@@ -409,6 +417,58 @@ export default function App() {
       redirectTo: "/do",
     },
   ];
+
+  const shipmentRoutes: ProtectedRouteConfig[] = [
+    {
+      path: "",
+      element: <DaftarPengiriman />,
+      resource: PERMISSION.RESOURCES.PENGIRIMAN,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pengiriman",
+    },
+    {
+      path: "tambah",
+      element: <TambahPengiriman />,
+      resource: PERMISSION.RESOURCES.PENGIRIMAN,
+      action: PERMISSION.ACTIONS.CREATE,
+      redirectTo: "/pengiriman",
+    },
+    {
+      path: ":id/log",
+      element: <LogPengiriman />,
+      resource: PERMISSION.RESOURCES.PENGIRIMAN,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pengiriman",
+    },
+    {
+      path: "arsip",
+      element: <ArsipPengiriman />,
+      resource: PERMISSION.RESOURCES.PENGIRIMAN,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pengiriman",
+    },
+    {
+      path: ":id/edit",
+      element: <EditPengiriman />,
+      resource: PERMISSION.RESOURCES.PENGIRIMAN,
+      action: PERMISSION.ACTIONS.UPDATE,
+      redirectTo: "/pengiriman",
+    },
+    {
+      path: ":id",
+      element: <DetailPengiriman />,
+      resource: PERMISSION.RESOURCES.PENGIRIMAN,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pengiriman",
+    },
+    {
+      path: "log",
+      element: <LogSemuaPengiriman />,
+      resource: PERMISSION.RESOURCES.PENGIRIMAN,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pengiriman",
+    },
+  ];
   return (
     <BrowserRouter>
       <Routes>
@@ -455,6 +515,11 @@ export default function App() {
           {}
           <Route path="/do">
             {doRoutes.map((route) => createProtectedRoute(route))}
+          </Route>
+
+          {}
+          <Route path="/pengiriman">
+            {shipmentRoutes.map((route) => createProtectedRoute(route))}
           </Route>
         </Route>
 

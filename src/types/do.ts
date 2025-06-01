@@ -1,5 +1,3 @@
-// do type
-
 import { Pagination } from "./user";
 
 export type DeliveryOrderStatus = "PENDING" | "PROSES" | "SELESAI";

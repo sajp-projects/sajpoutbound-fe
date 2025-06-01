@@ -1,5 +1,3 @@
-// do log type
-
 import { Pagination } from "./user";
 
 export interface DeliveryOrderLog {

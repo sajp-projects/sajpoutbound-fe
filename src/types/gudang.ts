@@ -32,7 +32,6 @@ export interface UpdateWarehouseInput {
   description?: string;
 }
 
-// Interface untuk produk yang ada di gudang
 export interface Product {
   id: string;
   name: string;

@@ -73,3 +73,20 @@ export function getActionLabel(action: string): ActionLabel {
     }
   );
 }
+
+export function getShipmentStatusBadgeClass(status: string): string {
+  switch (status) {
+    case "PENDING":
+      return "bg-yellow-50 text-yellow-600 border-yellow-200";
+    case "PROSES":
+      return "bg-blue-50 text-blue-600 border-blue-200";
+    case "SELESAI":
+      return "bg-green-50 text-green-600 border-green-200";
+    default:
+      return "bg-gray-50 text-gray-600 border-gray-200";
+  }
+}
+
+export function getShipmentTypeLabel(type: string): string {
+  return type === "ANTAR" ? "Antar" : "Jemput";
+}

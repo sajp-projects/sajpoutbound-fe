@@ -123,7 +123,6 @@ export default function LogArmada() {
       );
     }
 
-    // Untuk penghapusan data
     if (oldData && !newData) {
       return (
         <div>
@@ -258,7 +257,7 @@ export default function LogArmada() {
       {/* Tabel Desktop */}
       <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
         <div className="w-full overflow-x-auto">
-          <div className="overflow-x-auto w-full">
+          <div className="w-full overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-b border-gray-200 bg-gray-50">

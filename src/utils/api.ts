@@ -16,11 +16,16 @@ export const buildApiUrl = (
   path: string,
   params: Record<string, string | number | null | undefined> = {}
 ): string => {
-  const fullPath = path.startsWith(BASE_URL)
-    ? path
-    : path.startsWith("/")
-    ? `${BASE_URL}${path}`
-    : `${BASE_URL}/${path}`;
+  let apiPath = path;
+  if (path.startsWith("/api") && BASE_URL.endsWith("/api")) {
+    apiPath = path.substring(4);
+  }
+
+  const fullPath = apiPath.startsWith(BASE_URL)
+    ? apiPath
+    : apiPath.startsWith("/")
+    ? `${BASE_URL}${apiPath}`
+    : `${BASE_URL}/${apiPath}`;
 
   const validParams = Object.fromEntries(
     Object.entries(params)

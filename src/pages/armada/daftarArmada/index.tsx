@@ -52,7 +52,6 @@ export default function DaftarArmada() {
     enabled: isAuthenticated && roleId !== "",
   });
 
-  // Cek izin akses
   const hasArmadaCreateAccess = hasPermission(
     permissions,
     PERMISSION.RESOURCES.ARMADA,
@@ -205,7 +204,7 @@ export default function DaftarArmada() {
         ) : (
           <div className="w-full">
             <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
-              <div className="w-full overflow-x-auto overflow-auto  ">
+              <div className="w-full overflow-auto overflow-x-auto ">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b border-gray-200 bg-gray-50">

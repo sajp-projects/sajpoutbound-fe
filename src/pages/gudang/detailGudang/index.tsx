@@ -36,7 +36,6 @@ import { hasPermission } from "@/utils/permission";
 import { getRoleId } from "@/utils/storage";
 import { useState } from "react";
 
-// Definisi tipe untuk User
 interface WarehouseUser {
   id: string;
   name: string;
@@ -55,7 +54,6 @@ interface WarehouseUser {
 //   updatedAt: string;
 // }
 
-// Update tipe Warehouse dengan properti users
 declare module "@/types/gudang" {
   interface Warehouse {
     users?: WarehouseUser[];

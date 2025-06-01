@@ -15,7 +15,7 @@ export const PERMISSION = {
     WAREHOUSE: "warehouse",
     DO: "delivery_order",
     ARMADA: "armada",
-    PENGIRIMAN: "pengiriman",
+    PENGIRIMAN: "shipment",
     LAPORAN: "laporan",
   },
 };

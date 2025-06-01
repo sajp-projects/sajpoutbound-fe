@@ -1,0 +1,30 @@
+export const SHIPMENT_TYPE = {
+  ANTAR: "ANTAR",
+  JEMPUT: "JEMPUT",
+};
+
+export const LOCATION_TYPE = {
+  RUMAH: "RUMAH",
+  KANTOR: "KANTOR",
+  GUDANG: "GUDANG",
+  TOKO: "TOKO",
+  PABRIK: "PABRIK",
+  LAINNYA: "LAINNYA",
+};
+
+export const SHIPMENT_STATUS = {
+  PENDING: "PENDING",
+  PROSES: "PROSES",
+  SELESAI: "SELESAI",
+};
+
+export const SHIPMENT_TYPE_LABELS = {
+  [SHIPMENT_TYPE.ANTAR]: "Antar",
+  [SHIPMENT_TYPE.JEMPUT]: "Jemput",
+};
+
+export const SHIPMENT_STATUS_LABELS = {
+  [SHIPMENT_STATUS.PENDING]: "Pending",
+  [SHIPMENT_STATUS.PROSES]: "Proses",
+  [SHIPMENT_STATUS.SELESAI]: "Selesai",
+};

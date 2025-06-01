@@ -497,7 +497,9 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
                                   <li key={subItem.name}>
                                     <Link
                                       to={subItem.path}
-                                      onClick={handleLinkClick}
+                                      onClick={() => {
+                                        handleLinkClick();
+                                      }}
                                       className={cn(
                                         "block px-2 sm:px-3 py-1 sm:py-2 text-xs text-gray-600 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors",
                                         isSubMenuActive(subItem.path) &&

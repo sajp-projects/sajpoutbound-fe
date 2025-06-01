@@ -34,13 +34,20 @@ export function useArmadas(
       ReturnType<typeof armadaKeys.list>
     >,
     "queryKey" | "queryFn"
-  >
+  > & {
+    searchQuery?: string;
+  }
 ) {
   const [searchParams] = useSearchParams();
+  const searchQuery = options?.searchQuery;
+
   const filters = {
     page: searchParams.get("page") || "1",
     limit: searchParams.get("limit") || "10",
-    search: searchParams.get("search") || "",
+    search:
+      searchQuery !== undefined
+        ? searchQuery
+        : searchParams.get("search") || "",
   };
 
   return useQuery({
