@@ -171,7 +171,16 @@ export default function ArsipPengiriman() {
                     {shipment.id}
                   </TableCell>
                   <TableCell className="text-gray-600">
-                    {shipment.plateNumber}
+                    {shipment.type === "ANTAR" ? (
+                      <Link
+                        to={`/armada/${shipment.armadaId}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {shipment.armada?.plateNumber}
+                      </Link>
+                    ) : (
+                      shipment.plateNumber
+                    )}
                   </TableCell>
                   <TableCell className="text-gray-600">
                     {getTypeLabel(shipment.type)}
@@ -255,7 +264,16 @@ export default function ArsipPengiriman() {
               <div className="flex items-start justify-between mb-3">
                 <div className="max-w-[60%]">
                   <h3 className="font-medium text-gray-600 truncate">
-                    {shipment.plateNumber}
+                    {shipment.type === "ANTAR" ? (
+                      <Link
+                        to={`/armada/${shipment.armadaId}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {shipment.armada?.plateNumber}
+                      </Link>
+                    ) : (
+                      shipment.plateNumber
+                    )}
                   </h3>
                   <p className="text-sm text-gray-600 truncate">
                     ID: {shipment.id}

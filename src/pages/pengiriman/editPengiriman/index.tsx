@@ -29,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Combobox, ComboboxItem } from "@/components/ui/combobox";
+import { Combobox } from "@/components/ui/combobox";
 import { showSuccessAlert, showErrorAlert } from "@/utils/sweetAlert";
 import { cn } from "@/lib/utils";
 import { UpdateShipmentInput } from "@/types/pengiriman";
@@ -102,7 +102,7 @@ export default function EditPengiriman() {
   });
 
   // Convert data dari API ke format ComboboxItem
-  const armadas: ComboboxItem[] =
+  const armadas =
     armadasData?.armadas?.map((armada) => ({
       label: `${armada.model} - ${armada.plateNumber}`,
       value: armada.id,
@@ -162,6 +162,24 @@ export default function EditPengiriman() {
     },
     [refetchArmadas]
   );
+
+  // Handler untuk perubahan tipe pengiriman
+  const handleTypeChange = (value: "ANTAR" | "JEMPUT") => {
+    // Reset field terkait
+    form.resetField("plateNumber");
+    form.resetField("armadaId");
+
+    // Set nilai kosong secara eksplisit
+    form.setValue("plateNumber", "");
+    form.setValue("armadaId", "");
+
+    // Hapus error jika ada
+    form.clearErrors("plateNumber");
+    form.clearErrors("armadaId");
+
+    // Update tipe pengiriman
+    form.setValue("type", value);
+  };
 
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
@@ -225,21 +243,19 @@ export default function EditPengiriman() {
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
-      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
-        <div className="flex items-center">
-          <Link to={`/pengiriman/${id}`}>
-            <Button variant="ghost" size="sm" className="mr-2">
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              Kembali
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Edit Pengiriman</h1>
-        </div>
+      <div className="flex items-center">
+        <Link to={`/pengiriman/${id}`}>
+          <Button variant="ghost" size="sm" className="mr-2">
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Kembali
+          </Button>
+        </Link>
+        <h1 className="text-2xl font-bold text-gray-900">Edit Pengiriman</h1>
       </div>
 
       <Card className="border border-gray-200 shadow-sm">
         <CardHeader>
-          <CardTitle>Edit Informasi Pengiriman</CardTitle>
+          <CardTitle>Form Edit Pengiriman</CardTitle>
           <CardDescription>
             Perbarui detail pengiriman dengan ID:{" "}
             <code className="px-1 py-0.5 bg-gray-100 text-gray-800 rounded text-sm">
@@ -251,11 +267,13 @@ export default function EditPengiriman() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-6">
+                {/* Informasi Dasar */}
                 <div>
                   <h3 className="mb-4 text-lg font-medium text-gray-900">
                     Informasi Dasar
                   </h3>
                   <div className="space-y-4">
+                    {/* Tipe Pengiriman */}
                     <FormField
                       control={form.control}
                       name="type"
@@ -267,10 +285,9 @@ export default function EditPengiriman() {
                           </FormLabel>
                           <FormControl>
                             <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
+                              onValueChange={handleTypeChange}
+                              value={field.value}
                               className="flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0"
-                              disabled={isSubmitting}
                             >
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="ANTAR" id="antar" />
@@ -297,94 +314,98 @@ export default function EditPengiriman() {
                       )}
                     />
 
+                    {/* Field kondisional berdasarkan tipe */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       {watchType === "JEMPUT" ? (
-                        <FormField
-                          control={form.control}
-                          name="plateNumber"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>
-                                Plat Nomor Kendaraan{" "}
-                                <span className="text-red-500">*</span>
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  value={field.value || ""}
-                                  placeholder="Contoh: B 1234 ABC"
-                                  disabled={isSubmitting}
-                                  className={cn(
-                                    form.formState.errors.plateNumber &&
-                                      "border-red-500"
-                                  )}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <div className="sm:col-span-2">
+                          <FormField
+                            control={form.control}
+                            name="plateNumber"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  Plat Nomor Kendaraan{" "}
+                                  <span className="text-red-500">*</span>
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    placeholder="Contoh: B 1234 ABC"
+                                    disabled={isSubmitting}
+                                    className={cn(
+                                      form.formState.errors.plateNumber &&
+                                        "border-red-500"
+                                    )}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       ) : (
-                        <FormField
-                          control={form.control}
-                          name="armadaId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>
-                                Armada <span className="text-red-500">*</span>
-                              </FormLabel>
-                              <FormControl>
-                                <Combobox
-                                  items={armadas}
-                                  value={field.value || ""}
-                                  onValueChange={(value) => {
-                                    field.onChange(value);
-                                  }}
-                                  placeholder="Pilih armada"
-                                  searchPlaceholder="Cari armada..."
-                                  isLoading={loadingArmadas}
-                                  name="armadaId"
-                                  onClear={() => field.onChange("")}
-                                  onSearch={handleArmadaSearch}
-                                  useServerSearch
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <div className="sm:col-span-2">
+                          <FormField
+                            control={form.control}
+                            name="armadaId"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  Armada <span className="text-red-500">*</span>
+                                </FormLabel>
+                                <FormControl>
+                                  <Combobox
+                                    items={armadas}
+                                    value={field.value || ""}
+                                    onValueChange={(val) => {
+                                      field.onChange(val);
+                                    }}
+                                    placeholder="Pilih armada"
+                                    searchPlaceholder="Cari armada..."
+                                    isLoading={loadingArmadas}
+                                    name="armadaId"
+                                    onClear={() => field.onChange("")}
+                                    onSearch={handleArmadaSearch}
+                                    useServerSearch
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="internalNote"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Catatan Internal</FormLabel>
-                        <p className="mb-2 text-sm text-gray-500">
-                          Catatan tambahan untuk internal (opsional)
-                        </p>
-                        <FormControl>
-                          <Textarea
-                            {...field}
-                            value={field.value || ""}
-                            placeholder="Tambahkan catatan internal (opsional)"
-                            disabled={isSubmitting}
-                            rows={4}
-                            className="resize-none"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                {/* Catatan Internal */}
+                <FormField
+                  control={form.control}
+                  name="internalNote"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Catatan Internal</FormLabel>
+                      <p className="mb-2 text-sm text-gray-500">
+                        Catatan tambahan untuk internal (opsional)
+                      </p>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          value={field.value || ""}
+                          placeholder="Tambahkan catatan internal (opsional)"
+                          disabled={isSubmitting}
+                          rows={4}
+                          className="resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
+              {/* Tombol Aksi */}
               <div className="flex flex-col gap-3 pt-4 border-t border-gray-200 sm:flex-row sm:justify-end">
                 <Link to={`/pengiriman/${id}`} className="w-full sm:w-auto">
                   <Button

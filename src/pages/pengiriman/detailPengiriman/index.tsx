@@ -7,7 +7,7 @@ import {
   FileText,
   Info,
   Package,
-    Upload,
+  Upload,
   History,
   Archive,
 } from "lucide-react";
@@ -144,9 +144,9 @@ export default function DetailPengiriman() {
   };
 
   const handleUploadPlatePhoto = () => {
-      alert("Fitur pengunggahan foto plat nomor belum diimplementasikan");
+    alert("Fitur pengunggahan foto plat nomor belum diimplementasikan");
   };
-  
+
   return (
     <div className="px-4 space-y-6 sm:px-0">
       <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
@@ -278,7 +278,16 @@ export default function DetailPengiriman() {
                       <div>
                         <p className="text-sm text-gray-500">Plat Nomor</p>
                         <p className="font-medium text-gray-700">
-                          {shipment.plateNumber}
+                          {shipment.type === "ANTAR" ? (
+                            <Link
+                              to={`/armada/${shipment.armadaId}`}
+                              className="text-blue-600 hover:underline"
+                            >
+                              {shipment.armada?.plateNumber}
+                            </Link>
+                          ) : (
+                            shipment.plateNumber
+                          )}
                         </p>
                       </div>
                       {shipment.platePhoto ? (
@@ -309,7 +318,7 @@ export default function DetailPengiriman() {
                             >
                               <Upload className="w-4 h-4 mr-2" />
                               Unggah Foto
-                            </Button> 
+                            </Button>
                           )}
                         </div>
                       )}
@@ -388,7 +397,7 @@ export default function DetailPengiriman() {
                           Lihat Log Aktivitas
                         </Button>
                       </Link>
-                      {hasPengirimanUpdateAccess && 
+                      {hasPengirimanUpdateAccess &&
                         shipment &&
                         !shipment.deletedAt && (
                           <Link
@@ -544,7 +553,7 @@ export default function DetailPengiriman() {
                     </Table>
                   </div>
                 </div>
-                          
+
                 <div className="mt-4 sm:hidden">
                   <h4 className="mb-2 text-sm font-medium text-gray-700">
                     Daftar Item:

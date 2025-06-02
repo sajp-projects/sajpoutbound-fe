@@ -80,10 +80,10 @@ export default function LogSemuaPengiriman() {
     if (!oldData && newData) {
       return (
         <div>
-          <div className="text-xs font-medium text-gray-600 mb-1">
+          <div className="mb-1 text-xs font-medium text-gray-600">
             Data pengiriman yang dibuat:
           </div>
-          <div className="overflow-x-auto w-full">
+          <div className="w-full overflow-x-auto">
             <table className="w-full text-xs border-collapse">
               <tbody>
                 {Object.entries(newData).map(([key, value]) => {
@@ -94,7 +94,7 @@ export default function LogSemuaPengiriman() {
                       <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                         {key}
                       </td>
-                      <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                      <td className="max-w-full p-1 overflow-hidden border border-gray-200 whitespace-nowrap text-ellipsis">
                         {String(value)}
                       </td>
                     </tr>
@@ -110,10 +110,10 @@ export default function LogSemuaPengiriman() {
     if (oldData && !newData) {
       return (
         <div>
-          <div className="text-xs font-medium text-gray-600 mb-1">
+          <div className="mb-1 text-xs font-medium text-gray-600">
             Data pengiriman yang dihapus:
           </div>
-          <div className="overflow-x-auto w-full">
+          <div className="w-full overflow-x-auto">
             <table className="w-full text-xs border-collapse">
               <tbody>
                 {Object.entries(oldData).map(([key, value]) => {
@@ -124,7 +124,7 @@ export default function LogSemuaPengiriman() {
                       <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                         {key}
                       </td>
-                      <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                      <td className="max-w-full p-1 overflow-hidden border border-gray-200 whitespace-nowrap text-ellipsis">
                         {String(value)}
                       </td>
                     </tr>
@@ -154,10 +154,10 @@ export default function LogSemuaPengiriman() {
 
       return (
         <div>
-          <div className="text-xs font-medium text-gray-600 mb-1">
+          <div className="mb-1 text-xs font-medium text-gray-600">
             Perubahan:
           </div>
-          <div className="overflow-x-auto w-full">
+          <div className="w-full overflow-x-auto">
             <table className="w-full text-xs border-collapse">
               <thead>
                 <tr className="bg-gray-50">
@@ -178,12 +178,12 @@ export default function LogSemuaPengiriman() {
                     <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                       {change.field}
                     </td>
-                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                    <td className="max-w-full p-1 overflow-hidden border border-gray-200 whitespace-nowrap text-ellipsis">
                       {typeof change.oldValue === "object"
                         ? JSON.stringify(change.oldValue)
                         : String(change.oldValue || "")}
                     </td>
-                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                    <td className="max-w-full p-1 overflow-hidden border border-gray-200 whitespace-nowrap text-ellipsis">
                       {typeof change.newValue === "object"
                         ? JSON.stringify(change.newValue)
                         : String(change.newValue || "")}
@@ -202,7 +202,7 @@ export default function LogSemuaPengiriman() {
 
   const renderLogTable = () => (
     <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
-      <div className="overflow-x-auto w-full">
+      <div className="w-full overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-gray-200 bg-gray-50">
@@ -254,7 +254,8 @@ export default function LogSemuaPengiriman() {
                         to={`/pengiriman/${log.shipment.id}`}
                         className="font-medium text-blue-600 hover:underline whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
                       >
-                        {log.shipment.plateNumber} ({log.shipment.type})
+                        {log.shipment.type === "ANTAR" ? "Antar" : "Jemput"} -{" "}
+                        {log.shipment.id.substring(0, 8)}
                       </Link>
                     )}
                   </TableCell>
@@ -289,7 +290,7 @@ export default function LogSemuaPengiriman() {
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <p className="text-sm text-gray-700 line-clamp-2 overflow-hidden">
+                    <p className="overflow-hidden text-sm text-gray-700 line-clamp-2">
                       {log.description}
                     </p>
                     <div className="mt-2">
@@ -366,18 +367,19 @@ export default function LogSemuaPengiriman() {
                     <span className="text-sm font-medium">Pengiriman: </span>
                     <Link
                       to={`/pengiriman/${log.shipment.id}`}
-                      className="text-sm text-blue-600 hover:underline truncate max-w-full"
+                      className="max-w-full text-sm text-blue-600 truncate hover:underline"
                     >
-                      {log.shipment.plateNumber} ({log.shipment.type})
+                      {log.shipment.type === "ANTAR" ? "Antar" : "Jemput"} -{" "}
+                      {log.shipment.id.substring(0, 8)}
                     </Link>
                   </div>
                 )}
-                <p className="mb-1 text-sm text-gray-700 line-clamp-2 overflow-hidden">
+                <p className="mb-1 overflow-hidden text-sm text-gray-700 line-clamp-2">
                   {log.description}
                 </p>
                 <div className="text-xs text-gray-500">
                   Dilakukan oleh:{" "}
-                  <span className="font-medium text-blue-600 truncate max-w-full">
+                  <span className="max-w-full font-medium text-blue-600 truncate">
                     {log.performedBy.name}
                   </span>
                 </div>

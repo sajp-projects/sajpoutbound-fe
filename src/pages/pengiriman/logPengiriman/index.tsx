@@ -423,7 +423,18 @@ export default function LogPengiriman() {
           <div className="mb-6">
             <div className="flex flex-col">
               <h2 className="text-xl font-semibold text-gray-900">
-                Log Aktivitas: {shipmentData.plateNumber} ({shipmentData.type})
+                Log Aktivitas:{" "}
+                {shipmentData.type === "ANTAR" ? (
+                  <Link
+                    to={`/armada/${shipmentData.armadaId}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    {shipmentData.armada?.plateNumber || "N/A"}
+                  </Link>
+                ) : (
+                  shipmentData.plateNumber
+                )}
+                ({shipmentData.type === "ANTAR" ? "Antar" : "Jemput"})
               </h2>
               <p className="mt-1 text-sm text-gray-600">
                 <span className="font-medium">Status:</span>{" "}
@@ -441,8 +452,8 @@ export default function LogPengiriman() {
                           "bg-blue-50 text-blue-600 border-blue-200"
                         )}
                       >
-                        {item.product?.name || "Item"} (
-                        {item.requestedQuantity} {item.product?.satuan || "unit"})
+                        {item.product?.name || "Item"} ({item.requestedQuantity}{" "}
+                        {item.product?.satuan || "unit"})
                       </Badge>
                     ))}
                   </div>

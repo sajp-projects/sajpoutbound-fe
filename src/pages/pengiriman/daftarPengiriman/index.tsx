@@ -318,7 +318,16 @@ export default function DaftarPengiriman() {
                             </div>
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-gray-600 text-sm">
-                            {shipment.plateNumber}
+                            {shipment.type === "ANTAR" ? (
+                              <Link
+                                to={`/armada/${shipment.armadaId}`}
+                                className="text-blue-600 hover:underline"
+                              >
+                                {shipment.armada?.plateNumber}
+                              </Link>
+                            ) : (
+                              shipment.plateNumber
+                            )}
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-gray-600 text-sm">
                             {getShipmentTypeLabel(shipment.type)}
@@ -368,12 +377,23 @@ export default function DaftarPengiriman() {
                     <div className="w-full p-4">
                       <div className="flex items-start justify-between w-full mb-2">
                         <div className="max-w-[65%]">
-                          <div className="text-sm font-medium text-gray-600 break-words">
-                            {shipment.plateNumber}
+                          <div className="mb-2">
+                            <div className="text-sm font-medium text-gray-600 break-words">
+                              {shipment.type === "ANTAR" ? (
+                                <Link
+                                  to={`/armada/${shipment.armadaId}`}
+                                  className="text-blue-600 hover:underline"
+                                >
+                                  {shipment.armada?.plateNumber}
+                                </Link>
+                              ) : (
+                                shipment.plateNumber
+                              )}
+                            </div>
+                            <p className="mt-1 text-xs text-gray-600 break-all">
+                              ID: {shipment.id}
+                            </p>
                           </div>
-                          <p className="mt-1 text-xs text-gray-600 break-all">
-                            ID: {shipment.id}
-                          </p>
                         </div>
                         <div className="flex flex-col items-end gap-1">
                           <Badge

@@ -256,7 +256,6 @@ export default function TambahPengiriman() {
     refetchDeliveryOrders();
   }, [refetchArmadas, refetchDeliveryOrders]);
 
-  // Helper functions yang lebih sederhana
   const isDOLoading = useCallback(
     (doId: string) => loadingActiveDO && activeDOId === doId,
     [loadingActiveDO, activeDOId]
@@ -386,7 +385,6 @@ export default function TambahPengiriman() {
     createShipment.mutate(payload);
   };
 
-  // Simplified utility functions
   const addNewDeliveryOrder = () => {
     append({
       deliveryOrderId: "",
@@ -422,23 +420,16 @@ export default function TambahPengiriman() {
     [form, loadDOProducts]
   );
 
-  // Perbaiki handler RadioGroup untuk langsung memanipulasi form
   const handleTypeChange = (value: "ANTAR" | "JEMPUT") => {
-    // Kosongkan field dengan dua pendekatan
-
-    // 1. Gunakan resetField (untuk reset ke defaultValues)
     form.resetField("plateNumber");
     form.resetField("armadaId");
 
-    // 2. Set nilai kosong secara explisit
     form.setValue("plateNumber", "");
     form.setValue("armadaId", "");
 
-    // Hapus error jika ada
     form.clearErrors("plateNumber");
     form.clearErrors("armadaId");
 
-    // Update tipe pengiriman setelah field lain direset
     form.setValue("type", value);
   };
 
