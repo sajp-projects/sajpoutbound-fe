@@ -272,7 +272,9 @@ export default function DetailPengiriman() {
                       <div>
                         <p className="text-sm text-gray-500">Model Kendaraan</p>
                         <p className="font-medium text-gray-700">
-                          {shipment.armada.model}
+                          {shipment.type === "ANTAR"
+                            ? shipment.armada?.model
+                            : "Kendaraan Eksternal"}
                         </p>
                       </div>
                       <div>
