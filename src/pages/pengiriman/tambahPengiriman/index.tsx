@@ -38,14 +38,14 @@ import { LOCATION_TYPE } from "@/utils/constants";
 import { showSuccessAlert, showErrorAlert } from "@/utils/sweetAlert";
 import { CreateShipmentInput, Shipment } from "@/types/pengiriman";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Combobox, ComboboxItem } from "@/components/ui/combobox";
+import { Combobox } from "@/components/ui/combobox";
 import { formatNumber } from "@/utils/formatNumber";
 import { cn } from "@/lib/utils";
 
 // Validasi plat nomor Indonesia
 const plateNumberRegex = /^[A-Z]{1,2}\s?\d{1,4}\s?[A-Z]{1,3}$/;
 
-// Schema untuk masing-masing item DO
+// Schema untuk validasi
 const deliveryOrderItemSchema = Joi.object({
   deliveryOrderId: Joi.string().required().messages({
     "string.empty": "ID DO harus diisi",
@@ -60,14 +60,13 @@ const deliveryOrderItemSchema = Joi.object({
     "any.required": "Produk harus dipilih",
   }),
   requestedQuantity: Joi.number().integer().min(1).required().messages({
-    "number.base": "Kuantitas harus berupa angka",
-    "number.integer": "Kuantitas harus berupa bilangan bulat",
-    "number.min": "Kuantitas minimal 1",
-    "any.required": "Kuantitas harus diisi",
+    "number.base": "Harus berupa angka",
+    "number.integer": "Harus bilangan bulat",
+    "number.min": "Minimal 1",
+    "any.required": "Jumlah harus diisi",
   }),
 });
 
-// Schema untuk form
 const formSchema = Joi.object({
   type: Joi.string().valid("ANTAR", "JEMPUT").required().messages({
     "any.only": "Tipe harus ANTAR atau JEMPUT",
@@ -111,11 +110,10 @@ interface FormValues {
     deliveryOrderId: string;
     locationType: string;
     productId: string;
-    requestedQuantity: number;
+    requestedQuantity: number | undefined;
   }[];
 }
 
-// Interface untuk produk dari DO
 interface DOProduct {
   id: string;
   name: string;
@@ -133,7 +131,7 @@ export default function TambahPengiriman() {
   >({});
   const [activeDOId, setActiveDOId] = useState<string>("");
 
-  // Fetch data armada dan delivery orders dari API
+  // Fetch data armada dan delivery orders
   const {
     data: armadasData,
     isLoading: loadingArmadas,
@@ -170,8 +168,8 @@ export default function TambahPengiriman() {
 
   // Update products ketika data DO berhasil dimuat
   useEffect(() => {
-    if (activeDOData && activeDOId && activeDOData.items) {
-      const doProducts: DOProduct[] = activeDOData.items.map((item) => ({
+    if (activeDOData?.items && activeDOId) {
+      const doProducts = activeDOData.items.map((item) => ({
         id: item.product.id,
         name: item.product.name,
         satuan: item.product.satuan,
@@ -196,14 +194,14 @@ export default function TambahPengiriman() {
   }, [activeDOError, activeDOId]);
 
   // Convert data dari API ke format ComboboxItem
-  const armadas: ComboboxItem[] =
+  const armadas =
     armadasData?.armadas?.map((armada) => ({
       label: `${armada.model} - ${armada.plateNumber}`,
       value: armada.id,
       secondary: armada.description,
     })) || [];
 
-  const deliveryOrders: ComboboxItem[] =
+  const deliveryOrders =
     deliveryOrdersData?.deliveryOrders?.map((do_item) => ({
       label: `${do_item.id} - ${do_item.customer.name}`,
       value: do_item.id,
@@ -237,7 +235,7 @@ export default function TambahPengiriman() {
           deliveryOrderId: "",
           locationType: "",
           productId: "",
-          requestedQuantity: 1,
+          requestedQuantity: undefined,
         },
       ],
     },
@@ -258,15 +256,12 @@ export default function TambahPengiriman() {
     refetchDeliveryOrders();
   }, [refetchArmadas, refetchDeliveryOrders]);
 
-  // Helper function untuk mendapatkan loading state untuk DO tertentu
+  // Helper functions yang lebih sederhana
   const isDOLoading = useCallback(
-    (doId: string) => {
-      return loadingActiveDO && activeDOId === doId;
-    },
+    (doId: string) => loadingActiveDO && activeDOId === doId,
     [loadingActiveDO, activeDOId]
   );
 
-  // Helper function untuk trigger loading DO baru
   const loadDOProducts = useCallback(
     (doId: string) => {
       if (!doId || selectedDOProducts[doId]) return;
@@ -275,7 +270,7 @@ export default function TambahPengiriman() {
     [selectedDOProducts]
   );
 
-  // Watch untuk perubahan DO yang dipilih
+  // Watch perubahan DO yang dipilih
   useEffect(() => {
     watchDeliveryOrders.forEach((item) => {
       if (item.deliveryOrderId && !selectedDOProducts[item.deliveryOrderId]) {
@@ -284,16 +279,100 @@ export default function TambahPengiriman() {
     });
   }, [watchDeliveryOrders, selectedDOProducts, loadDOProducts]);
 
+  // Validasi realtime untuk kuantitas produk
+  useEffect(() => {
+    watchDeliveryOrders.forEach((item, index) => {
+      if (item.deliveryOrderId && item.productId && item.requestedQuantity) {
+        const doProducts = selectedDOProducts[item.deliveryOrderId];
+        const selectedProduct = doProducts?.find(
+          (p) => p.id === item.productId
+        );
+
+        if (
+          selectedProduct &&
+          item.requestedQuantity > selectedProduct.quantity
+        ) {
+          form.setError(`deliveryOrders.${index}.requestedQuantity`, {
+            type: "manual",
+            message: `Jumlah melebihi stok tersedia (${formatNumber(
+              selectedProduct.quantity
+            )} ${selectedProduct.satuan})`,
+          });
+        } else if (
+          form.formState.errors.deliveryOrders?.[index]?.requestedQuantity
+            ?.type === "manual"
+        ) {
+          form.clearErrors(`deliveryOrders.${index}.requestedQuantity`);
+        }
+      }
+    });
+  }, [watchDeliveryOrders, selectedDOProducts, form]);
+
+  // Validasi kuantitas terhadap stok tersedia
+  const validateQuantity = useCallback(
+    (item: FormValues["deliveryOrders"][0], index: number) => {
+      const doProducts = selectedDOProducts[item.deliveryOrderId];
+      const selectedProduct = doProducts?.find((p) => p.id === item.productId);
+
+      if (
+        selectedProduct &&
+        item.requestedQuantity! > selectedProduct.quantity
+      ) {
+        return `DO ${index + 1}: Jumlah yang diminta (${formatNumber(
+          item.requestedQuantity!
+        )}) melebihi kuantitas tersedia (${formatNumber(
+          selectedProduct.quantity
+        )} ${selectedProduct.satuan})`;
+      }
+      return null;
+    },
+    [selectedDOProducts]
+  );
+
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
 
+    // Filter DO yang valid
+    const validDeliveryOrders = values.deliveryOrders.filter(
+      (item) =>
+        item.deliveryOrderId &&
+        item.productId &&
+        item.requestedQuantity &&
+        item.requestedQuantity > 0
+    );
+
+    if (validDeliveryOrders.length === 0) {
+      setIsSubmitting(false);
+      showErrorAlert(
+        "Validasi Gagal",
+        "Minimal harus ada 1 Delivery Order yang lengkap dengan jumlah yang valid"
+      );
+      return;
+    }
+
+    // Validasi kuantitas
+    const validationErrors = validDeliveryOrders
+      .map((item, index) => validateQuantity(item, index))
+      .filter(Boolean);
+
+    if (validationErrors.length > 0) {
+      setIsSubmitting(false);
+      showErrorAlert("Validasi Gagal", validationErrors.join("\n"));
+      return;
+    }
+
+    // Persiapkan payload
     const payload: CreateShipmentInput = {
       type: values.type,
       plateNumber:
         values.type === "JEMPUT" && values.plateNumber
           ? values.plateNumber
           : "",
-      items: [],
+      items: validDeliveryOrders.map((item) => ({
+        deliveryOrderId: item.deliveryOrderId,
+        productId: item.productId,
+        requestedQuantity: item.requestedQuantity!,
+      })),
     };
 
     if (values.type === "ANTAR" && values.armadaId) {
@@ -304,22 +383,16 @@ export default function TambahPengiriman() {
       payload.internalNote = values.internalNote;
     }
 
-    // Konversi deliveryOrders ke format yang sesuai dengan API
-    payload.items = values.deliveryOrders.map((item) => ({
-      deliveryOrderId: item.deliveryOrderId,
-      productId: item.productId,
-      requestedQuantity: item.requestedQuantity,
-    }));
-
     createShipment.mutate(payload);
   };
 
+  // Simplified utility functions
   const addNewDeliveryOrder = () => {
     append({
       deliveryOrderId: "",
       locationType: "",
       productId: "",
-      requestedQuantity: 1,
+      requestedQuantity: undefined,
     });
   };
 
@@ -339,27 +412,40 @@ export default function TambahPengiriman() {
     [refetchArmadas]
   );
 
-  // Handle perubahan DO yang dipilih
   const handleDeliveryOrderChange = useCallback(
     (value: string, index: number) => {
       form.setValue(`deliveryOrders.${index}.deliveryOrderId`, value);
       form.setValue(`deliveryOrders.${index}.productId`, "");
-
-      if (value) {
-        loadDOProducts(value);
-      }
+      form.clearErrors(`deliveryOrders.${index}.deliveryOrderId`);
+      if (value) loadDOProducts(value);
     },
     [form, loadDOProducts]
   );
 
+  // Perbaiki handler RadioGroup untuk langsung memanipulasi form
+  const handleTypeChange = (value: "ANTAR" | "JEMPUT") => {
+    // Kosongkan field dengan dua pendekatan
+
+    // 1. Gunakan resetField (untuk reset ke defaultValues)
+    form.resetField("plateNumber");
+    form.resetField("armadaId");
+
+    // 2. Set nilai kosong secara explisit
+    form.setValue("plateNumber", "");
+    form.setValue("armadaId", "");
+
+    // Hapus error jika ada
+    form.clearErrors("plateNumber");
+    form.clearErrors("armadaId");
+
+    // Update tipe pengiriman setelah field lain direset
+    form.setValue("type", value);
+  };
+
   return (
     <div className="px-4 space-y-6 sm:px-0">
       <div className="flex items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Tambah Pengiriman
-          </h1>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900">Tambah Pengiriman</h1>
       </div>
 
       <Card className="border border-gray-200 shadow-sm">
@@ -373,11 +459,13 @@ export default function TambahPengiriman() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-6">
+                {/* Informasi Dasar */}
                 <div>
                   <h3 className="mb-4 text-lg font-medium text-gray-900">
                     Informasi Dasar
                   </h3>
                   <div className="space-y-4">
+                    {/* Tipe Pengiriman */}
                     <FormField
                       control={form.control}
                       name="type"
@@ -389,8 +477,8 @@ export default function TambahPengiriman() {
                           </FormLabel>
                           <FormControl>
                             <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
+                              onValueChange={handleTypeChange}
+                              value={field.value}
                               className="flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0"
                             >
                               <div className="flex items-center space-x-2">
@@ -418,66 +506,72 @@ export default function TambahPengiriman() {
                       )}
                     />
 
+                    {/* Field kondisional berdasarkan tipe */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       {watchType === "JEMPUT" ? (
-                        <FormField
-                          control={form.control}
-                          name="plateNumber"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>
-                                Plat Nomor Kendaraan{" "}
-                                <span className="text-red-500">*</span>
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  placeholder="Contoh: B 1234 ABC"
-                                  disabled={isSubmitting}
-                                  className={cn(
-                                    form.formState.errors.plateNumber &&
-                                      "border-red-500"
-                                  )}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <div className="sm:col-span-2">
+                          <FormField
+                            control={form.control}
+                            name="plateNumber"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  Plat Nomor Kendaraan{" "}
+                                  <span className="text-red-500">*</span>
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    placeholder="Contoh: B 1234 ABC"
+                                    disabled={isSubmitting}
+                                    className={cn(
+                                      form.formState.errors.plateNumber &&
+                                        "border-red-500"
+                                    )}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       ) : (
-                        <FormField
-                          control={form.control}
-                          name="armadaId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>
-                                Armada <span className="text-red-500">*</span>
-                              </FormLabel>
-                              <FormControl>
-                                <Combobox
-                                  items={armadas}
-                                  value={field.value || ""}
-                                  onValueChange={(value) => {
-                                    field.onChange(value);
-                                  }}
-                                  placeholder="Pilih armada"
-                                  searchPlaceholder="Cari armada..."
-                                  isLoading={loadingArmadas}
-                                  name="armadaId"
-                                  onClear={() => field.onChange("")}
-                                  onSearch={handleArmadaSearch}
-                                  useServerSearch
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <div className="sm:col-span-2">
+                          <FormField
+                            control={form.control}
+                            name="armadaId"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  Armada <span className="text-red-500">*</span>
+                                </FormLabel>
+                                <FormControl>
+                                  <Combobox
+                                    items={armadas}
+                                    value={field.value || ""}
+                                    onValueChange={(val) => {
+                                      field.onChange(val);
+                                    }}
+                                    placeholder="Pilih armada"
+                                    searchPlaceholder="Cari armada..."
+                                    isLoading={loadingArmadas}
+                                    name="armadaId"
+                                    onClear={() => field.onChange("")}
+                                    onSearch={handleArmadaSearch}
+                                    useServerSearch
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       )}
                     </div>
                   </div>
                 </div>
 
+                {/* Delivery Orders */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium text-gray-900">
@@ -510,6 +604,7 @@ export default function TambahPengiriman() {
                         key={field.id}
                         className="relative p-4 border border-gray-200 rounded-lg bg-gray-50"
                       >
+                        {/* Tombol hapus */}
                         {fields.length > 1 && (
                           <div className="flex justify-end mb-2">
                             <Button
@@ -525,12 +620,13 @@ export default function TambahPengiriman() {
                           </div>
                         )}
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          {/* DO Selector */}
                           <FormField
                             control={form.control}
                             name={`deliveryOrders.${index}.deliveryOrderId`}
                             render={({ field }) => (
-                              <FormItem>
+                              <FormItem className="h-[90px] flex flex-col">
                                 <FormLabel>
                                   Delivery Order{" "}
                                   <span className="text-red-500">*</span>
@@ -539,9 +635,9 @@ export default function TambahPengiriman() {
                                   <Combobox
                                     items={deliveryOrders}
                                     value={field.value}
-                                    onValueChange={(value) => {
-                                      handleDeliveryOrderChange(value, index);
-                                    }}
+                                    onValueChange={(value) =>
+                                      handleDeliveryOrderChange(value, index)
+                                    }
                                     placeholder="Pilih Delivery Order"
                                     searchPlaceholder="Cari DO..."
                                     isLoading={loadingDeliveryOrders}
@@ -557,105 +653,108 @@ export default function TambahPengiriman() {
                                     useServerSearch
                                   />
                                 </FormControl>
-                                <FormMessage />
+                                <div className="min-h-[18px] text-xs">
+                                  <FormMessage />
+                                </div>
                               </FormItem>
                             )}
                           />
 
+                          {/* Lokasi */}
                           <FormField
                             control={form.control}
                             name={`deliveryOrders.${index}.locationType`}
                             render={({ field }) => (
-                              <FormItem>
+                              <FormItem className="h-[90px] flex flex-col">
                                 <FormLabel>
                                   Tipe Lokasi{" "}
                                   <span className="text-red-500">*</span>
                                 </FormLabel>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  defaultValue={field.value}
-                                  disabled={isSubmitting}
-                                >
-                                  <FormControl>
+                                <FormControl>
+                                  <Select
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    disabled={isSubmitting}
+                                  >
                                     <SelectTrigger>
                                       <SelectValue placeholder="Pilih tipe lokasi" />
                                     </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value={LOCATION_TYPE.RUMAH}>
-                                      Rumah
-                                    </SelectItem>
-                                    <SelectItem value={LOCATION_TYPE.KANTOR}>
-                                      Kantor
-                                    </SelectItem>
-                                    <SelectItem value={LOCATION_TYPE.GUDANG}>
-                                      Gudang
-                                    </SelectItem>
-                                    <SelectItem value={LOCATION_TYPE.TOKO}>
-                                      Toko
-                                    </SelectItem>
-                                    <SelectItem value={LOCATION_TYPE.PABRIK}>
-                                      Pabrik
-                                    </SelectItem>
-                                    <SelectItem value={LOCATION_TYPE.LAINNYA}>
-                                      Lainnya
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
+                                    <SelectContent>
+                                      {Object.values(LOCATION_TYPE).map(
+                                        (type) => (
+                                          <SelectItem key={type} value={type}>
+                                            {type.charAt(0).toUpperCase() +
+                                              type.slice(1).toLowerCase()}
+                                          </SelectItem>
+                                        )
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                </FormControl>
+                                <div className="min-h-[18px] text-xs">
+                                  <FormMessage />
+                                </div>
                               </FormItem>
                             )}
                           />
 
+                          {/* Produk dan Jumlah - hanya tampil jika DO dipilih */}
                           {watchDeliveryOrders[index]?.deliveryOrderId && (
                             <>
                               <FormField
                                 control={form.control}
                                 name={`deliveryOrders.${index}.productId`}
                                 render={({ field }) => (
-                                  <FormItem>
+                                  <FormItem className="h-[90px] flex flex-col">
                                     <FormLabel>
                                       Produk{" "}
                                       <span className="text-red-500">*</span>
                                     </FormLabel>
-                                    {isDOLoading(
-                                      watchDeliveryOrders[index].deliveryOrderId
-                                    ) && (
-                                      <p className="text-sm text-blue-500">
-                                        Memuat produk...
-                                      </p>
-                                    )}
-                                    {!isDOLoading(
-                                      watchDeliveryOrders[index].deliveryOrderId
-                                    ) &&
-                                      (!selectedDOProducts[
+                                    <div>
+                                      {isDOLoading(
                                         watchDeliveryOrders[index]
                                           .deliveryOrderId
-                                      ] ||
-                                        selectedDOProducts[
-                                          watchDeliveryOrders[index]
-                                            .deliveryOrderId
-                                        ].length === 0) && (
-                                        <p className="text-sm text-red-500">
-                                          Tidak ada produk yang tersedia
+                                      ) && (
+                                        <p className="text-sm text-blue-500">
+                                          Memuat produk...
                                         </p>
                                       )}
-                                    <FormControl>
-                                      <Select
-                                        onValueChange={field.onChange}
-                                        value={field.value}
-                                        disabled={
-                                          isDOLoading(
+                                      {!isDOLoading(
+                                        watchDeliveryOrders[index]
+                                          .deliveryOrderId
+                                      ) &&
+                                        (!selectedDOProducts[
+                                          watchDeliveryOrders[index]
+                                            .deliveryOrderId
+                                        ] ||
+                                          selectedDOProducts[
                                             watchDeliveryOrders[index]
                                               .deliveryOrderId
-                                          ) ||
-                                          !selectedDOProducts[
-                                            watchDeliveryOrders[index]
-                                              .deliveryOrderId
-                                          ]
-                                        }
-                                      >
-                                        <FormControl>
+                                          ].length === 0) && (
+                                          <p className="text-sm text-red-500">
+                                            Tidak ada produk yang tersedia
+                                          </p>
+                                        )}
+                                      <FormControl>
+                                        <Select
+                                          onValueChange={(value) => {
+                                            field.onChange(value);
+                                            form.clearErrors(
+                                              `deliveryOrders.${index}.productId`
+                                            );
+                                          }}
+                                          value={field.value}
+                                          disabled={
+                                            isDOLoading(
+                                              watchDeliveryOrders[index]
+                                                .deliveryOrderId
+                                            ) ||
+                                            !selectedDOProducts[
+                                              watchDeliveryOrders[index]
+                                                .deliveryOrderId
+                                            ]
+                                          }
+                                        >
                                           <SelectTrigger>
                                             <SelectValue
                                               placeholder={
@@ -668,25 +767,27 @@ export default function TambahPengiriman() {
                                               }
                                             />
                                           </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                          {selectedDOProducts[
-                                            watchDeliveryOrders[index]
-                                              .deliveryOrderId
-                                          ]?.map((product) => (
-                                            <SelectItem
-                                              key={product.id}
-                                              value={product.id}
-                                            >
-                                              {product.name} -{" "}
-                                              {formatNumber(product.quantity)}{" "}
-                                              {product.satuan}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </FormControl>
-                                    <FormMessage />
+                                          <SelectContent>
+                                            {selectedDOProducts[
+                                              watchDeliveryOrders[index]
+                                                .deliveryOrderId
+                                            ]?.map((product) => (
+                                              <SelectItem
+                                                key={product.id}
+                                                value={product.id}
+                                              >
+                                                {product.name} -{" "}
+                                                {formatNumber(product.quantity)}{" "}
+                                                {product.satuan}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </FormControl>
+                                    </div>
+                                    <div className="min-h-[18px] text-xs">
+                                      <FormMessage />
+                                    </div>
                                   </FormItem>
                                 )}
                               />
@@ -694,41 +795,84 @@ export default function TambahPengiriman() {
                               <FormField
                                 control={form.control}
                                 name={`deliveryOrders.${index}.requestedQuantity`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>
-                                      Jumlah{" "}
-                                      <span className="text-red-500">*</span>
-                                    </FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        type="text"
-                                        placeholder="Masukkan jumlah"
-                                        value={
-                                          field.value
-                                            ? formatNumber(field.value)
-                                            : ""
-                                        }
-                                        onChange={(e) => {
-                                          const numValue =
-                                            parseInt(
-                                              e.target.value.replace(/\D/g, "")
-                                            ) || undefined;
-                                          field.onChange(numValue || 1);
-                                        }}
-                                        min={1}
-                                        disabled={isSubmitting}
-                                        className={cn(
-                                          form.formState.errors
-                                            .deliveryOrders?.[index]
-                                            ?.requestedQuantity &&
-                                            "border-red-500"
-                                        )}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
+                                render={({ field }) => {
+                                  const selectedProduct = selectedDOProducts[
+                                    watchDeliveryOrders[index]?.deliveryOrderId
+                                  ]?.find(
+                                    (p) =>
+                                      p.id ===
+                                      watchDeliveryOrders[index]?.productId
+                                  );
+
+                                  return (
+                                    <FormItem className="h-[90px] flex flex-col">
+                                      <FormLabel>
+                                        Jumlah{" "}
+                                        <span className="text-red-500">*</span>
+                                      </FormLabel>
+                                      <div>
+                                        <FormControl>
+                                          <Input
+                                            type="text"
+                                            placeholder="Masukkan jumlah"
+                                            value={
+                                              field.value && field.value > 0
+                                                ? formatNumber(field.value)
+                                                : ""
+                                            }
+                                            onChange={(e) => {
+                                              const numValue =
+                                                parseInt(
+                                                  e.target.value.replace(
+                                                    /\D/g,
+                                                    ""
+                                                  )
+                                                ) || 0;
+
+                                              // Hanya set nilai jika lebih dari 0, jika tidak set undefined
+                                              if (numValue > 0) {
+                                                field.onChange(numValue);
+                                                form.clearErrors(
+                                                  `deliveryOrders.${index}.requestedQuantity`
+                                                );
+                                              } else {
+                                                field.onChange(undefined);
+                                              }
+                                            }}
+                                            min={1}
+                                            disabled={isSubmitting}
+                                            className={cn(
+                                              form.formState.errors
+                                                .deliveryOrders?.[index]
+                                                ?.requestedQuantity &&
+                                                "border-red-500",
+                                              selectedProduct &&
+                                                field.value &&
+                                                field.value >
+                                                  selectedProduct.quantity &&
+                                                "border-orange-500"
+                                            )}
+                                          />
+                                        </FormControl>
+                                        {selectedProduct &&
+                                          field.value &&
+                                          field.value >
+                                            selectedProduct.quantity && (
+                                            <p className="mt-1 text-xs text-orange-500">
+                                              Nilai melebihi stok tersedia (
+                                              {formatNumber(
+                                                selectedProduct.quantity
+                                              )}{" "}
+                                              {selectedProduct.satuan})
+                                            </p>
+                                          )}
+                                      </div>
+                                      <div className="min-h-[18px] text-xs">
+                                        <FormMessage />
+                                      </div>
+                                    </FormItem>
+                                  );
+                                }}
                               />
                             </>
                           )}
@@ -738,33 +882,33 @@ export default function TambahPengiriman() {
                   </div>
                 </div>
 
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="internalNote"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Catatan Internal</FormLabel>
-                        <p className="mb-2 text-sm text-gray-500">
-                          Catatan tambahan untuk internal (opsional)
-                        </p>
-                        <FormControl>
-                          <Textarea
-                            {...field}
-                            value={field.value || ""}
-                            placeholder="Tambahkan catatan internal (opsional)"
-                            disabled={isSubmitting}
-                            rows={4}
-                            className="resize-none"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                {/* Catatan Internal */}
+                <FormField
+                  control={form.control}
+                  name="internalNote"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Catatan Internal</FormLabel>
+                      <p className="mb-2 text-sm text-gray-500">
+                        Catatan tambahan untuk internal (opsional)
+                      </p>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          value={field.value || ""}
+                          placeholder="Tambahkan catatan internal (opsional)"
+                          disabled={isSubmitting}
+                          rows={4}
+                          className="resize-none"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
+              {/* Tombol Aksi */}
               <div className="flex flex-col gap-3 pt-4 border-t border-gray-200 sm:flex-row sm:justify-end">
                 <Link to="/pengiriman" className="w-full sm:w-auto">
                   <Button
