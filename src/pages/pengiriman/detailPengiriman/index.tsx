@@ -1,4 +1,9 @@
-import { useShipment, useDeleteShipment } from "@/hooks/pengiriman";
+import {
+  useShipment,
+  useDeleteShipment,
+  useChooseProduct,
+  useShipmentChosenProducts,
+} from "@/hooks/pengiriman";
 import { useParams, useNavigate } from "react-router";
 import { Link } from "react-router";
 import {
@@ -10,6 +15,9 @@ import {
   Upload,
   History,
   Archive,
+  ShoppingCart,
+  Check,
+  Loader2,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +34,7 @@ import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/date";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
-import { ShipmentStatus } from "@/types/pengiriman";
+import { ShipmentStatus, ChosenProduct } from "@/types/pengiriman";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
@@ -73,12 +81,37 @@ function StatusBadge({ status }: StatusBadgeProps) {
   );
 }
 
+// Define interfaces for the grouped delivery orders
+interface ProductItem {
+  id: string;
+  name: string;
+  satuan: string;
+  quantity: number;
+  warehouseId: string;
+  warehouse: {
+    id: string;
+    name: string;
+  };
+}
+
+interface GroupedDeliveryOrder {
+  id: string;
+  customer: {
+    id: string;
+    name: string;
+    address?: string;
+  };
+  products: ProductItem[];
+}
+
 export default function DetailPengiriman() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
-  const [activeTab, setActiveTab] = useState<"info" | "items" | "spmb">("info");
+  const [activeTab, setActiveTab] = useState<"info" | "items" | "spmb" | "do">(
+    "info"
+  );
 
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
@@ -112,6 +145,29 @@ export default function DetailPengiriman() {
     }
   );
 
+  const {
+    data: chosenProducts = [] as ChosenProduct[],
+    isLoading: isLoadingChosenProducts,
+    error: chosenProductsError,
+    isError: isChosenProductsError,
+  } = useShipmentChosenProducts(shipmentId, {
+    enabled: !!shipmentId && activeTab === "items",
+  });
+
+  const chooseProduct = useChooseProduct({
+    onSuccess: () => {
+      showSuccessAlert("Berhasil!", "Produk berhasil dipilih untuk pengiriman");
+    },
+    onError: (error: Error) => {
+      showErrorAlert(
+        "Gagal Memilih Produk",
+        `Gagal memilih produk: ${
+          error.message || "Terjadi kesalahan saat memilih produk."
+        }`
+      );
+    },
+  });
+
   const deleteShipment = useDeleteShipment({
     onSuccess: () => {
       showSuccessAlert("Berhasil!", "Pengiriman berhasil diarsipkan").then(
@@ -129,6 +185,14 @@ export default function DetailPengiriman() {
       );
     },
   });
+
+  const handleChooseProduct = (deliveryOrderId: string, productId: string) => {
+    chooseProduct.mutate({
+      shipmentId,
+      deliveryOrderId,
+      productId,
+    });
+  };
 
   const handleDelete = (id: string) => {
     showConfirmationAlert(
@@ -218,6 +282,18 @@ export default function DetailPengiriman() {
               >
                 <Info className="flex-shrink-0 w-4 h-4 mr-2" />
                 Informasi Pengiriman
+              </button>
+              <button
+                className={cn(
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                  activeTab === "do"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                )}
+                onClick={() => setActiveTab("do")}
+              >
+                <ShoppingCart className="flex-shrink-0 w-4 h-4 mr-2" />
+                Delivery Orders & Produk
               </button>
               <button
                 className={cn(
@@ -436,6 +512,147 @@ export default function DetailPengiriman() {
               </div>
             )}
 
+            {activeTab === "do" && (
+              <div className="p-4 border border-gray-200 rounded-lg">
+                <h3 className="flex items-center mb-4 text-lg font-medium text-gray-900">
+                  <ShoppingCart className="w-5 h-5 mr-2 text-blue-600" />
+                  Delivery Orders & Produk
+                </h3>
+                <p className="mb-4 text-sm text-gray-500">
+                  Pilih produk dari delivery order yang akan dimasukkan ke dalam
+                  pengiriman ini
+                </p>
+
+                {/* Group items by delivery order */}
+                {(() => {
+                  // Group items by delivery order
+                  const doMap = new Map<string, GroupedDeliveryOrder>();
+
+                  shipment.shipmentItems.forEach((item) => {
+                    const doId = item.deliveryOrderId;
+                    if (!doMap.has(doId)) {
+                      doMap.set(doId, {
+                        id: doId,
+                        customer: item.deliveryOrder.customer,
+                        products: [],
+                      });
+                    }
+
+                    doMap.get(doId)?.products.push({
+                      id: item.productId,
+                      name: item.product.name,
+                      satuan: item.product.satuan,
+                      quantity: item.requestedQuantity,
+                      warehouseId: item.warehouseId,
+                      warehouse: item.warehouse,
+                    });
+                  });
+
+                  return Array.from(doMap.values()).map(
+                    (deliveryOrder: GroupedDeliveryOrder, doIndex: number) => (
+                      <div
+                        key={deliveryOrder.id}
+                        className="mb-6 overflow-hidden border border-gray-200 rounded-lg"
+                      >
+                        <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-medium text-gray-900">
+                                <Link
+                                  to={`/do/${deliveryOrder.id}`}
+                                  className="text-blue-600 hover:underline"
+                                >
+                                  Delivery Order #{doIndex + 1}
+                                </Link>
+                              </h4>
+                              <p className="text-sm text-gray-500">
+                                {deliveryOrder.customer.name}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="border-b border-gray-200 bg-gray-50">
+                                <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
+                                  No
+                                </TableHead>
+                                <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                                  Produk
+                                </TableHead>
+                                <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                                  Gudang
+                                </TableHead>
+                                <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                                  Kuantitas
+                                </TableHead>
+                                <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                                  Aksi
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {deliveryOrder.products.map(
+                                (product: ProductItem, index: number) => (
+                                  <TableRow
+                                    key={`${deliveryOrder.id}-${product.id}`}
+                                  >
+                                    <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                      {index + 1}
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                      <Link
+                                        to={`/barang/${product.id}`}
+                                        className="text-blue-600 hover:underline"
+                                      >
+                                        {product.name}
+                                      </Link>
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                      {product.warehouse.name}
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                      {formatNumber(product.quantity)}{" "}
+                                      {product.satuan}
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
+                                      {hasPengirimanUpdateAccess && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                          onClick={() =>
+                                            handleChooseProduct(
+                                              deliveryOrder.id,
+                                              product.id
+                                            )
+                                          }
+                                          disabled={chooseProduct.isPending}
+                                        >
+                                          {chooseProduct.isPending ? (
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                          ) : (
+                                            <Check className="w-4 h-4 mr-2" />
+                                          )}
+                                          Pilih Produk
+                                        </Button>
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                )
+                              )}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    )
+                  );
+                })()}
+              </div>
+            )}
+
             {activeTab === "items" && (
               <div className="p-4 border border-gray-200 rounded-lg">
                 <h3 className="flex items-center mb-4 text-lg font-medium text-gray-900">
@@ -443,200 +660,136 @@ export default function DetailPengiriman() {
                   Item Pengiriman
                 </h3>
 
-                <div className="overflow-hidden border border-gray-200 rounded-lg">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-b border-gray-200 bg-gray-50">
-                          <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
-                            No
-                          </TableHead>
-                          <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                            Pelanggan
-                          </TableHead>
-                          <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                            Barang
-                          </TableHead>
-                          <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                            Gudang
-                          </TableHead>
-                          <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
-                            Kuantitas Diminta
-                          </TableHead>
-                          <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
-                            Kuantitas Ditimbang
-                          </TableHead>
-                          <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                            Status
-                          </TableHead>
-                          <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
-                            Aksi
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {shipment.shipmentItems.length === 0 ? (
-                          <TableRow>
-                            <TableCell
-                              colSpan={8}
-                              className="px-4 py-6 text-sm text-center text-gray-500"
-                            >
-                              Tidak ada item dalam pengiriman ini
-                            </TableCell>
+                {isLoadingChosenProducts ? (
+                  <LoadingState text="Memuat data item pengiriman..." />
+                ) : isChosenProductsError ? (
+                  <ErrorState
+                    title="Gagal Memuat Data Item"
+                    message={
+                      chosenProductsError instanceof Error
+                        ? chosenProductsError.message
+                        : "Terjadi kesalahan pada server"
+                    }
+                    retryButtonText="Coba lagi"
+                  />
+                ) : (
+                  <div className="overflow-hidden border border-gray-200 rounded-lg">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-b border-gray-200 bg-gray-50">
+                            <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
+                              No
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                              Pelanggan
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                              Barang
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                              Gudang
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                              Kuantitas Diminta
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                              Kuantitas Ditimbang
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                              Status
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                              Aksi
+                            </TableHead>
                           </TableRow>
-                        ) : (
-                          shipment.shipmentItems.map((item, index) => (
-                            <TableRow key={item.id}>
-                              <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                {index + 1}
-                              </TableCell>
-                              <TableCell className="px-4 py-3 font-medium text-blue-600">
-                                <Link
-                                  to={`/pelanggan/${item.deliveryOrder.customer.id}`}
-                                  className="text-blue-600 hover:underline"
-                                >
-                                  {item.deliveryOrder.customer.name}
-                                </Link>
-                              </TableCell>
-                              <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                <Link
-                                  to={`/barang/${item.productId}`}
-                                  className="text-blue-600 hover:underline"
-                                >
-                                  {item.product.name}
-                                </Link>
-                              </TableCell>
-                              <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                {item.warehouse.name}
-                              </TableCell>
-                              <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                {formatNumber(item.requestedQuantity)}{" "}
-                                {item.product.satuan}
-                              </TableCell>
-                              <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                {item.weightedQuantity
-                                  ? formatNumber(item.weightedQuantity)
-                                  : "-"}{" "}
-                                {item.weightedQuantity
-                                  ? item.product.satuan
-                                  : ""}
-                              </TableCell>
-                              <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                <Badge
-                                  variant="outline"
-                                  className={cn(
-                                    "px-2 py-0.5 rounded-md font-medium text-xs",
-                                    item.status === "PENDING"
-                                      ? "bg-yellow-50 text-yellow-600 border-yellow-200"
-                                      : item.status === "PROSES"
-                                      ? "bg-blue-50 text-blue-600 border-blue-200"
-                                      : "bg-green-50 text-green-600 border-green-200"
-                                  )}
-                                >
-                                  {item.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                                {hasPengirimanUpdateAccess &&
-                                  item.status !== "SELESAI" && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                                    >
-                                      Muat Barang
-                                    </Button>
-                                  )}
+                        </TableHeader>
+                        <TableBody>
+                          {/* Display chosen products once API is ready */}
+                          {chosenProducts &&
+                          (chosenProducts as ChosenProduct[]).length === 0 ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={8}
+                                className="px-4 py-6 text-sm text-center text-gray-500"
+                              >
+                                Tidak ada item yang dipilih dalam pengiriman
+                                ini. Pilih produk di tab "Delivery Orders &
+                                Produk".
                               </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+                          ) : (
+                            shipment.shipmentItems.map((item, index) => (
+                              <TableRow key={item.id}>
+                                <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                  {index + 1}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 font-medium text-blue-600">
+                                  <Link
+                                    to={`/pelanggan/${item.deliveryOrder.customer.id}`}
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    {item.deliveryOrder.customer.name}
+                                  </Link>
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                  <Link
+                                    to={`/barang/${item.productId}`}
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    {item.product.name}
+                                  </Link>
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                  {item.warehouse.name}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                  {formatNumber(item.requestedQuantity)}{" "}
+                                  {item.product.satuan}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                  {item.weightedQuantity
+                                    ? formatNumber(item.weightedQuantity)
+                                    : "-"}{" "}
+                                  {item.weightedQuantity
+                                    ? item.product.satuan
+                                    : ""}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      "px-2 py-0.5 rounded-md font-medium text-xs",
+                                      item.status === "PENDING"
+                                        ? "bg-yellow-50 text-yellow-600 border-yellow-200"
+                                        : item.status === "PROSES"
+                                        ? "bg-blue-50 text-blue-600 border-blue-200"
+                                        : "bg-green-50 text-green-600 border-green-200"
+                                    )}
+                                  >
+                                    {item.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
+                                  {hasPengirimanUpdateAccess &&
+                                    item.status !== "SELESAI" && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                      >
+                                        Muat Barang
+                                      </Button>
+                                    )}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
-                </div>
-
-                <div className="mt-4 sm:hidden">
-                  <h4 className="mb-2 text-sm font-medium text-gray-700">
-                    Daftar Item:
-                  </h4>
-                  <div className="space-y-3">
-                    {shipment.shipmentItems.length === 0 ? (
-                      <p className="text-sm text-gray-500">
-                        Tidak ada item dalam pengiriman ini
-                      </p>
-                    ) : (
-                      shipment.shipmentItems.map((item, index) => (
-                        <div
-                          key={item.id}
-                          className="p-3 border border-gray-200 rounded-md"
-                        >
-                          <div className="flex justify-between">
-                            <span className="text-sm font-medium text-gray-800">
-                              #{index + 1}
-                            </span>
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "px-2 py-0.5 rounded-md font-medium text-xs",
-                                item.status === "PENDING"
-                                  ? "bg-yellow-50 text-yellow-600 border-yellow-200"
-                                  : item.status === "PROSES"
-                                  ? "bg-blue-50 text-blue-600 border-blue-200"
-                                  : "bg-green-50 text-green-600 border-green-200"
-                              )}
-                            >
-                              {item.status}
-                            </Badge>
-                          </div>
-                          <div className="mt-2">
-                            <p className="text-sm font-medium text-blue-600">
-                              {item.product.name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Pelanggan: {item.deliveryOrder.customer.name}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Gudang: {item.warehouse.name}
-                            </p>
-                          </div>
-                          <div className="flex justify-between mt-2 text-sm text-gray-600">
-                            <span>Diminta:</span>
-                            <span className="font-medium">
-                              {formatNumber(item.requestedQuantity)}{" "}
-                              {item.product.satuan}
-                            </span>
-                          </div>
-                          <div className="flex justify-between mt-1 text-sm text-gray-600">
-                            <span>Ditimbang:</span>
-                            <span className="font-medium">
-                              {item.weightedQuantity
-                                ? `${formatNumber(item.weightedQuantity)} ${
-                                    item.product.satuan
-                                  }`
-                                : "-"}
-                            </span>
-                          </div>
-                          {hasPengirimanUpdateAccess &&
-                            item.status !== "SELESAI" && (
-                              <div className="mt-3 text-center">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  // onClick={() =>
-                                  //   handleUpdateItemWeight(item.id)
-                                  // }
-                                  className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
-                                >
-                                  Muat Barang
-                                </Button>
-                              </div>
-                            )}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
             )}
 

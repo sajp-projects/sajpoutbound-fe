@@ -167,3 +167,48 @@ export function useUploadPlatePhoto(options = {}) {
     ...options,
   });
 }
+
+export function useChooseProduct(options = {}) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      shipmentId: string;
+      deliveryOrderId: string;
+      productId: string;
+    }) =>
+      fetchApiData(
+        `/api/shipment/${data.shipmentId}/choosen-product`,
+        {},
+        {
+          method: "POST",
+          body: JSON.stringify(data),
+        }
+      ),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["shipments", variables.shipmentId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["shipment-chosen-products", variables.shipmentId],
+      });
+    },
+    ...options,
+  });
+}
+
+export function useShipmentChosenProducts(shipmentId: string, options = {}) {
+  return useQuery({
+    queryKey: ["shipment-chosen-products", shipmentId],
+    queryFn: () =>
+      fetchApiData(
+        `/api/shipment/${shipmentId}/choosen-product`,
+        {},
+        {
+          method: "GET",
+        }
+      ),
+    enabled: !!shipmentId,
+    ...options,
+  });
+}

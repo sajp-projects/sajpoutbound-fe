@@ -110,3 +110,51 @@ export interface UploadPlatePhotoInput {
   shipmentId: string;
   platePhoto: File;
 }
+
+export interface ChosenProduct {
+  id: string;
+  shipmentId: string;
+  deliveryOrderId: string;
+  productId: string;
+  createdAt: string;
+  updatedAt: string;
+  product: {
+    id: string;
+    name: string;
+    satuan: string;
+    warehouseId?: string;
+    warehouse?: {
+      id: string;
+      name: string;
+    };
+  };
+  deliveryOrder: {
+    id: string;
+    customerId?: string;
+    customer: {
+      id: string;
+      name: string;
+      address?: string;
+    };
+  };
+}
+
+export interface DeliveryOrderProduct {
+  deliveryOrderId: string;
+  customer: {
+    id: string;
+    name: string;
+    address?: string;
+  };
+  products: {
+    id: string;
+    name: string;
+    satuan: string;
+    quantity: number;
+    warehouseId?: string;
+    warehouse?: {
+      id: string;
+      name: string;
+    };
+  }[];
+}
