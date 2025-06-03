@@ -333,6 +333,21 @@ export default function TambahPengiriman() {
   const onSubmit = (values: FormValues) => {
     setIsSubmitting(true);
 
+    // Validasi DO duplikat
+    const deliveryOrderIds = values.deliveryOrders.map(
+      (do_item) => do_item.deliveryOrderId
+    );
+    const uniqueDeliveryOrderIds = new Set(deliveryOrderIds);
+
+    if (deliveryOrderIds.length !== uniqueDeliveryOrderIds.size) {
+      setIsSubmitting(false);
+      showErrorAlert(
+        "Validasi Gagal",
+        "Terdapat Delivery Order duplikat. Setiap DO hanya dapat ditambahkan sekali."
+      );
+      return;
+    }
+
     // Persiapkan payload
     const items: {
       deliveryOrderId: string;
@@ -399,6 +414,19 @@ export default function TambahPengiriman() {
   };
 
   const addNewDeliveryOrder = () => {
+    // Validasi untuk memastikan DO yang sudah ada sudah diisi
+    const emptyDOIndex = watchDeliveryOrders.findIndex(
+      (item) => !item.deliveryOrderId
+    );
+
+    if (emptyDOIndex !== -1) {
+      showErrorAlert(
+        "Validasi DO Gagal",
+        "Harap isi DO yang kosong terlebih dahulu sebelum menambahkan DO baru."
+      );
+      return;
+    }
+
     append({
       deliveryOrderId: "",
       locationType: "",
@@ -424,6 +452,19 @@ export default function TambahPengiriman() {
 
   const handleDeliveryOrderChange = useCallback(
     (value: string, index: number) => {
+      // Cek apakah DO sudah dipilih di field lain
+      const isDuplicate = watchDeliveryOrders.some(
+        (item, idx) => idx !== index && item.deliveryOrderId === value
+      );
+
+      if (isDuplicate) {
+        showErrorAlert(
+          "Validasi DO Gagal",
+          "DO ini sudah ditambahkan. Setiap DO hanya dapat ditambahkan sekali."
+        );
+        return;
+      }
+
       form.setValue(`deliveryOrders.${index}.deliveryOrderId`, value);
       form.clearErrors(`deliveryOrders.${index}.deliveryOrderId`);
 
@@ -434,7 +475,7 @@ export default function TambahPengiriman() {
         loadDOProducts(value);
       }
     },
-    [form, loadDOProducts]
+    [form, loadDOProducts, watchDeliveryOrders]
   );
 
   const handleTypeChange = (value: "ANTAR" | "JEMPUT") => {
