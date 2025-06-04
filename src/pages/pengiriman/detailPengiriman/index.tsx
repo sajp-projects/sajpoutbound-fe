@@ -89,6 +89,7 @@ interface ProductItem {
   satuan: string;
   quantity: number;
   warehouseId: string;
+  chosenProduct?: boolean;
   warehouse: {
     id: string;
     name: string;
@@ -159,6 +160,8 @@ export default function DetailPengiriman() {
   const chooseProduct = useChooseProduct({
     onSuccess: () => {
       showSuccessAlert("Berhasil!", "Produk berhasil dipilih untuk pengiriman");
+      refetch();
+      refetchChosenProducts();
     },
     onError: (error: Error) => {
       try {
@@ -562,6 +565,7 @@ export default function DetailPengiriman() {
                       satuan: item.product.satuan,
                       quantity: item.requestedQuantity,
                       warehouseId: item.warehouseId,
+                      chosenProduct: item.chosenProduct,
                       warehouse: item.warehouse,
                     });
                   });
@@ -640,21 +644,32 @@ export default function DetailPengiriman() {
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                          className={
+                                            product.chosenProduct
+                                              ? "text-green-600 border-green-200 hover:bg-green-50"
+                                              : "text-blue-600 border-blue-200 hover:bg-blue-50"
+                                          }
                                           onClick={() =>
                                             handleChooseProduct(
                                               deliveryOrder.id,
                                               product.id
                                             )
                                           }
-                                          disabled={chooseProduct.isPending}
+                                          disabled={
+                                            chooseProduct.isPending ||
+                                            product.chosenProduct
+                                          }
                                         >
                                           {chooseProduct.isPending ? (
                                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                          ) : product.chosenProduct ? (
+                                            <Check className="w-4 h-4 mr-2" />
                                           ) : (
                                             <Check className="w-4 h-4 mr-2" />
                                           )}
-                                          Pilih Produk
+                                          {product.chosenProduct
+                                            ? "Produk Terpilih"
+                                            : "Pilih Produk"}
                                         </Button>
                                       )}
                                     </TableCell>

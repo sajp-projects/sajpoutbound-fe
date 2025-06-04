@@ -9,6 +9,7 @@ export interface ShipmentItem {
   requestedQuantity: number;
   weightedQuantity: number | null;
   status: "PENDING" | "PROSES" | "SELESAI";
+  chosenProduct?: boolean;
   warehouseId: string;
   weighedAt: string | null;
   createdAt: string;
