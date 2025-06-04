@@ -46,12 +46,13 @@ import {
   showConfirmationAlert,
   isConfirmed,
 } from "@/utils/sweetAlert";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   SHIPMENT_TYPE_LABELS,
   SHIPMENT_STATUS_LABELS,
 } from "@/utils/constants";
 import { formatNumber } from "@/utils/formatNumber";
+import { FormErrorData } from "@/utils/errorHandler";
 
 interface StatusBadgeProps {
   status: ShipmentStatus;
@@ -150,8 +151,9 @@ export default function DetailPengiriman() {
     isLoading: isLoadingChosenProducts,
     error: chosenProductsError,
     isError: isChosenProductsError,
+    refetch: refetchChosenProducts,
   } = useShipmentChosenProducts(shipmentId, {
-    enabled: !!shipmentId && activeTab === "items",
+    enabled: !!shipmentId,
   });
 
   const chooseProduct = useChooseProduct({
@@ -159,12 +161,15 @@ export default function DetailPengiriman() {
       showSuccessAlert("Berhasil!", "Produk berhasil dipilih untuk pengiriman");
     },
     onError: (error: Error) => {
-      showErrorAlert(
-        "Gagal Memilih Produk",
-        `Gagal memilih produk: ${
-          error.message || "Terjadi kesalahan saat memilih produk."
-        }`
-      );
+      try {
+        const errorObj = JSON.parse(error.message) as FormErrorData;
+        showErrorAlert("Gagal Memilih Produk", errorObj.message);
+      } catch {
+        showErrorAlert(
+          "Gagal Memilih Produk",
+          "Terjadi kesalahan saat memilih produk"
+        );
+      }
     },
   });
 
@@ -210,6 +215,19 @@ export default function DetailPengiriman() {
   const handleUploadPlatePhoto = () => {
     alert("Fitur pengunggahan foto plat nomor belum diimplementasikan");
   };
+
+  const handleTabChange = (tab: "info" | "items" | "spmb" | "do") => {
+    setActiveTab(tab);
+    if (tab === "items") {
+      refetchChosenProducts();
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "items" && shipmentId) {
+      refetchChosenProducts();
+    }
+  }, [activeTab, shipmentId, refetchChosenProducts]);
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
@@ -278,7 +296,7 @@ export default function DetailPengiriman() {
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => setActiveTab("info")}
+                onClick={() => handleTabChange("info")}
               >
                 <Info className="flex-shrink-0 w-4 h-4 mr-2" />
                 Informasi Pengiriman
@@ -290,7 +308,7 @@ export default function DetailPengiriman() {
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => setActiveTab("do")}
+                onClick={() => handleTabChange("do")}
               >
                 <ShoppingCart className="flex-shrink-0 w-4 h-4 mr-2" />
                 Delivery Orders & Produk
@@ -302,13 +320,13 @@ export default function DetailPengiriman() {
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => setActiveTab("items")}
+                onClick={() => handleTabChange("items")}
               >
                 <Package className="flex-shrink-0 w-4 h-4 mr-2" />
                 Item Pengiriman
-                {shipment.shipmentItems.length > 0 && (
+                {chosenProducts && chosenProducts.length > 0 && (
                   <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
-                    {shipment.shipmentItems.length}
+                    {chosenProducts.length}
                   </span>
                 )}
               </button>
@@ -319,7 +337,7 @@ export default function DetailPengiriman() {
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => setActiveTab("spmb")}
+                onClick={() => handleTabChange("spmb")}
               >
                 <FileText className="flex-shrink-0 w-4 h-4 mr-2" />
                 SPMB
@@ -671,6 +689,7 @@ export default function DetailPengiriman() {
                         : "Terjadi kesalahan pada server"
                     }
                     retryButtonText="Coba lagi"
+                    onRetry={refetchChosenProducts}
                   />
                 ) : (
                   <div className="overflow-hidden border border-gray-200 rounded-lg">
@@ -690,14 +709,8 @@ export default function DetailPengiriman() {
                             <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
                               Gudang
                             </TableHead>
-                            <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
-                              Kuantitas Diminta
-                            </TableHead>
-                            <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
-                              Kuantitas Ditimbang
-                            </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                              Status
+                              Satuan
                             </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
                               Aksi
@@ -705,12 +718,10 @@ export default function DetailPengiriman() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {/* Display chosen products once API is ready */}
-                          {chosenProducts &&
-                          (chosenProducts as ChosenProduct[]).length === 0 ? (
+                          {!chosenProducts || chosenProducts.length === 0 ? (
                             <TableRow>
                               <TableCell
-                                colSpan={8}
+                                colSpan={6}
                                 className="px-4 py-6 text-sm text-center text-gray-500"
                               >
                                 Tidak ada item yang dipilih dalam pengiriman
@@ -719,7 +730,7 @@ export default function DetailPengiriman() {
                               </TableCell>
                             </TableRow>
                           ) : (
-                            shipment.shipmentItems.map((item, index) => (
+                            chosenProducts.map((item, index) => (
                               <TableRow key={item.id}>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   {index + 1}
@@ -731,6 +742,11 @@ export default function DetailPengiriman() {
                                   >
                                     {item.deliveryOrder.customer.name}
                                   </Link>
+                                  {item.deliveryOrder.customer.address && (
+                                    <p className="mt-1 text-xs text-gray-500">
+                                      {item.deliveryOrder.customer.address}
+                                    </p>
+                                  )}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   <Link
@@ -741,46 +757,26 @@ export default function DetailPengiriman() {
                                   </Link>
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                  {item.warehouse.name}
-                                </TableCell>
-                                <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                  {formatNumber(item.requestedQuantity)}{" "}
-                                  {item.product.satuan}
-                                </TableCell>
-                                <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                  {item.weightedQuantity
-                                    ? formatNumber(item.weightedQuantity)
-                                    : "-"}{" "}
-                                  {item.weightedQuantity
-                                    ? item.product.satuan
-                                    : ""}
+                                  {item.product.warehouse.name}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                  <Badge
-                                    variant="outline"
-                                    className={cn(
-                                      "px-2 py-0.5 rounded-md font-medium text-xs",
-                                      item.status === "PENDING"
-                                        ? "bg-yellow-50 text-yellow-600 border-yellow-200"
-                                        : item.status === "PROSES"
-                                        ? "bg-blue-50 text-blue-600 border-blue-200"
-                                        : "bg-green-50 text-green-600 border-green-200"
-                                    )}
-                                  >
-                                    {item.status}
-                                  </Badge>
+                                  {item.product.satuan}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                                  {hasPengirimanUpdateAccess &&
-                                    item.status !== "SELESAI" && (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                                      >
-                                        Muat Barang
-                                      </Button>
-                                    )}
+                                  {hasPengirimanUpdateAccess && (
+                                    <div className="flex justify-center space-x-2">
+                                      <Link to={`/do/${item.deliveryOrderId}`}>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                        >
+                                          <FileText className="w-4 h-4 mr-2" />
+                                          Detail DO
+                                        </Button>
+                                      </Link>
+                                    </div>
+                                  )}
                                 </TableCell>
                               </TableRow>
                             ))
@@ -790,6 +786,71 @@ export default function DetailPengiriman() {
                     </div>
                   </div>
                 )}
+
+                {/* Tampilan mobile */}
+                <div className="mt-4 sm:hidden">
+                  <h4 className="mb-2 text-sm font-medium text-gray-700">
+                    Daftar Item Pengiriman:
+                  </h4>
+                  <div className="space-y-3">
+                    {isLoadingChosenProducts ? (
+                      <LoadingState text="Memuat data item..." />
+                    ) : isChosenProductsError ? (
+                      <ErrorState
+                        title="Gagal Memuat Data"
+                        message={
+                          chosenProductsError instanceof Error
+                            ? chosenProductsError.message
+                            : "Terjadi kesalahan pada server"
+                        }
+                        retryButtonText="Coba lagi"
+                      />
+                    ) : chosenProducts.length === 0 ? (
+                      <p className="text-sm text-gray-500">
+                        Tidak ada item yang dipilih dalam pengiriman ini
+                      </p>
+                    ) : (
+                      chosenProducts.map((item, index) => (
+                        <div
+                          key={item.id}
+                          className="p-3 border border-gray-200 rounded-md"
+                        >
+                          <div className="flex justify-between">
+                            <span className="text-sm font-medium text-gray-800">
+                              #{index + 1}
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <p className="text-sm font-medium text-blue-600">
+                              {item.product.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Gudang: {item.product.warehouse.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Satuan: {item.product.satuan}
+                            </p>
+                            <p className="mt-1 text-xs text-gray-500">
+                              Pelanggan: {item.deliveryOrder.customer.name}
+                            </p>
+                          </div>
+                          <div className="mt-3 text-center">
+                            <Link to={`/do/${item.deliveryOrderId}`}>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                              >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Detail DO
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 

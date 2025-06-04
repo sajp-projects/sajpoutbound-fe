@@ -122,15 +122,15 @@ export interface ChosenProduct {
     id: string;
     name: string;
     satuan: string;
-    warehouseId?: string;
-    warehouse?: {
+    warehouseId: string;
+    warehouse: {
       id: string;
       name: string;
     };
   };
   deliveryOrder: {
     id: string;
-    customerId?: string;
+    customerId: string;
     customer: {
       id: string;
       name: string;

@@ -1,6 +1,4 @@
 import { BASE_URL } from "@/constant/baseUrl";
-import { ApiResponse } from "@/types/api";
-import { handleApiError } from "./errorHandler";
 import { getAccessToken } from "./storage";
 
 export const getAuthHeaders = (): HeadersInit => {
@@ -59,28 +57,3 @@ export const fetchApi = async (
     },
   });
 };
-
-export async function fetchApiData<T>(
-  path: string,
-  params: Record<string, string | number | null | undefined> = {},
-  options: RequestInit = {},
-  errorMessage = "An error occurred"
-): Promise<T> {
-  const response = await fetchApi(path, params, options);
-
-  if (!response.ok) {
-    throw new Error(`Error fetching data: ${response.statusText}`);
-  }
-
-  const result: ApiResponse<T> = await response.json();
-
-  if (!result.success) {
-    handleApiError(result, errorMessage);
-  }
-
-  if (!result.data) {
-    throw new Error("Data is missing from response");
-  }
-
-  return result.data;
-}
