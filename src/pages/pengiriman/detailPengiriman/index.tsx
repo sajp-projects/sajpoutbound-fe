@@ -18,6 +18,7 @@ import {
   ShoppingCart,
   Check,
   Loader2,
+  MapPin,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +83,45 @@ function StatusBadge({ status }: StatusBadgeProps) {
   );
 }
 
+// Update untuk tipe ChosenProduct
+interface ChosenProductExtended extends ChosenProduct {
+  locationType?: string;
+}
+
+// Interface untuk ShipmentItem dengan locationType
+interface ShipmentItemExtended {
+  id: string;
+  deliveryOrderId: string;
+  productId: string;
+  requestedQuantity: number;
+  warehouseId: string;
+  chosenProduct: boolean;
+  locationType?: string;
+  product: {
+    id: string;
+    name: string;
+    satuan: string;
+    warehouseId: string;
+    warehouse: {
+      id: string;
+      name: string;
+    };
+  };
+  deliveryOrder: {
+    id: string;
+    customerId: string;
+    customer: {
+      id: string;
+      name: string;
+      address?: string;
+    };
+  };
+  warehouse: {
+    id: string;
+    name: string;
+  };
+}
+
 // Define interfaces for the grouped delivery orders
 interface ProductItem {
   id: string;
@@ -90,6 +130,7 @@ interface ProductItem {
   quantity: number;
   warehouseId: string;
   chosenProduct?: boolean;
+  locationType?: string;
   warehouse: {
     id: string;
     name: string;
@@ -148,7 +189,7 @@ export default function DetailPengiriman() {
   );
 
   const {
-    data: chosenProducts = [] as ChosenProduct[],
+    data: chosenProducts = [] as ChosenProductExtended[],
     isLoading: isLoadingChosenProducts,
     error: chosenProductsError,
     isError: isChosenProductsError,
@@ -566,6 +607,7 @@ export default function DetailPengiriman() {
                       quantity: item.requestedQuantity,
                       warehouseId: item.warehouseId,
                       chosenProduct: item.chosenProduct,
+                      locationType: (item as ShipmentItemExtended).locationType,
                       warehouse: item.warehouse,
                     });
                   });
@@ -607,6 +649,9 @@ export default function DetailPengiriman() {
                                 <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
                                   Gudang
                                 </TableHead>
+                                <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                                  Lokasi
+                                </TableHead>
                                 <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
                                   Kuantitas
                                 </TableHead>
@@ -634,6 +679,12 @@ export default function DetailPengiriman() {
                                     </TableCell>
                                     <TableCell className="px-4 py-3 text-sm text-gray-600">
                                       {product.warehouse.name}
+                                    </TableCell>
+                                    <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                      <span className="flex items-center">
+                                        <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
+                                        {product.locationType || "GUDANG"}
+                                      </span>
                                     </TableCell>
                                     <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
                                       {formatNumber(product.quantity)}{" "}
