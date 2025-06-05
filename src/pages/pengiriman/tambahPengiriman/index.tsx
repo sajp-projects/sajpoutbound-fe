@@ -351,6 +351,7 @@ export default function TambahPengiriman() {
     // Persiapkan payload
     const items: {
       deliveryOrderId: string;
+      locationType: string;
       productId: string;
       requestedQuantity: number;
     }[] = [];
@@ -365,6 +366,7 @@ export default function TambahPengiriman() {
             deliveryOrderId: do_item.deliveryOrderId,
             productId: product.productId,
             requestedQuantity: product.requestedQuantity,
+            locationType: do_item.locationType,
           });
         }
       });

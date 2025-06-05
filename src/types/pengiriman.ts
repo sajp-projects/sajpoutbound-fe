@@ -76,6 +76,7 @@ export interface Shipment {
 
 export interface CreateShipmentItem {
   deliveryOrderId: string;
+  locationType: string;
   productId: string;
   requestedQuantity: number;
 }
