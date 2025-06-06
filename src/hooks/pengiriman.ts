@@ -5,7 +5,6 @@ import {
   ShipmentPagination,
   CreateShipmentInput,
   UpdateShipmentInput,
-  UploadPlatePhotoInput,
   ChosenProduct,
 } from "@/types/pengiriman";
 import { useQueryClient } from "@tanstack/react-query";
@@ -291,54 +290,6 @@ export function useRestoreShipment(options = {}) {
       queryClient.invalidateQueries({ queryKey: shipmentKeys.archived() });
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.detail(variables.id),
-      });
-    },
-    ...options,
-  });
-}
-
-export function useUploadPlatePhoto(options = {}) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ shipmentId, platePhoto }: UploadPlatePhotoInput) => {
-      const formData = new FormData();
-      formData.append("platePhoto", platePhoto);
-
-      const response = await fetchApi(
-        `${BASE_URL}/shipments/${shipmentId}/upload-plate-photo`,
-        {},
-        {
-          method: "POST",
-          body: formData,
-          headers: {
-            // Don't set Content-Type here, it will be set automatically by the browser
-          },
-        }
-      );
-
-      const result = (await response.json()) as ApiErrorResult;
-
-      if (!result.success) {
-        throw new Error(
-          JSON.stringify(
-            createErrorResponse(result, "Gagal mengunggah foto plat")
-          )
-        );
-      }
-
-      if (!result.data) {
-        throw new Error(
-          JSON.stringify({ message: "Data pengiriman tidak ditemukan" })
-        );
-      }
-
-      return result.data as Shipment;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: shipmentKeys.lists() });
-      queryClient.invalidateQueries({
-        queryKey: shipmentKeys.detail(variables.shipmentId),
       });
     },
     ...options,

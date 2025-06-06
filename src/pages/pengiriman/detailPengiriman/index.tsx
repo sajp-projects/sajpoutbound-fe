@@ -4,6 +4,11 @@ import {
   useChooseProduct,
   useShipmentChosenProducts,
 } from "@/hooks/pengiriman";
+import {
+  useUploadPlatePhoto,
+  useVerifyPlateNumber,
+  useDeletePlatePhoto,
+} from "@/hooks/media";
 import { useParams, useNavigate } from "react-router";
 import { Link } from "react-router";
 import {
@@ -19,6 +24,10 @@ import {
   Check,
   Loader2,
   MapPin,
+  Eye,
+  CheckCircle,
+  Trash2,
+  RefreshCw,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +63,8 @@ import {
 } from "@/utils/constants";
 import { formatNumber } from "@/utils/formatNumber";
 import { FormErrorData } from "@/utils/errorHandler";
+import { FilePreviewModal } from "@/components/ui/file-preview-modal";
+import { FilePreview } from "@/types/media";
 
 interface StatusBadgeProps {
   status: ShipmentStatus;
@@ -155,6 +166,8 @@ export default function DetailPengiriman() {
   const [activeTab, setActiveTab] = useState<"info" | "items" | "spmb" | "do">(
     "info"
   );
+  const [previewFile, setPreviewFile] = useState<FilePreview | null>(null);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
 
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
@@ -196,41 +209,65 @@ export default function DetailPengiriman() {
     refetch: refetchChosenProducts,
   } = useShipmentChosenProducts(shipmentId, {
     enabled: !!shipmentId,
+    refetchOnWindowFocus: false,
   });
 
   const chooseProduct = useChooseProduct({
     onSuccess: () => {
-      showSuccessAlert("Berhasil!", "Produk berhasil dipilih untuk pengiriman");
+      showSuccessAlert("Berhasil", "Produk berhasil dipilih");
       refetch();
       refetchChosenProducts();
     },
-    onError: (error: Error) => {
-      try {
-        const errorObj = JSON.parse(error.message) as FormErrorData;
-        showErrorAlert("Gagal Memilih Produk", errorObj.message);
-      } catch {
-        showErrorAlert(
-          "Gagal Memilih Produk",
-          "Terjadi kesalahan saat memilih produk"
-        );
-      }
+    onError: (error: FormErrorData) => {
+      showErrorAlert("Gagal", error.message);
     },
   });
 
   const deleteShipment = useDeleteShipment({
     onSuccess: () => {
-      showSuccessAlert("Berhasil!", "Pengiriman berhasil diarsipkan").then(
-        () => {
-          navigate("/pengiriman");
-        }
-      );
+      showSuccessAlert("Berhasil", "Pengiriman berhasil diarsipkan");
+      navigate("/pengiriman");
+    },
+    onError: (error: FormErrorData) => {
+      showErrorAlert("Gagal", error.message);
+    },
+  });
+
+  const uploadPlatePhoto = useUploadPlatePhoto({
+    onSuccess: () => {
+      showSuccessAlert("Berhasil", "Foto plat nomor berhasil diunggah");
+      refetch();
     },
     onError: (error: Error) => {
       showErrorAlert(
-        "Gagal Mengarsipkan",
-        `Gagal mengarsipkan pengiriman: ${
-          error.message || "Terjadi kesalahan saat mengarsipkan pengiriman."
-        }`
+        "Gagal",
+        error.message || "Terjadi kesalahan saat mengupload foto plat nomor"
+      );
+    },
+  });
+
+  const deletePlatePhoto = useDeletePlatePhoto({
+    onSuccess: () => {
+      showSuccessAlert("Berhasil", "Foto plat nomor berhasil dihapus");
+      refetch();
+    },
+    onError: (error: Error) => {
+      showErrorAlert(
+        "Gagal",
+        error.message || "Terjadi kesalahan saat menghapus foto plat nomor"
+      );
+    },
+  });
+
+  const verifyPlateNumber = useVerifyPlateNumber({
+    onSuccess: () => {
+      showSuccessAlert("Berhasil", "Plat nomor berhasil diverifikasi");
+      refetch();
+    },
+    onError: (error: Error) => {
+      showErrorAlert(
+        "Gagal",
+        error.message || "Terjadi kesalahan saat memverifikasi plat nomor"
       );
     },
   });
@@ -256,8 +293,88 @@ export default function DetailPengiriman() {
     });
   };
 
-  const handleUploadPlatePhoto = () => {
-    alert("Fitur pengunggahan foto plat nomor belum diimplementasikan");
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Reset input value untuk memungkinkan upload file yang sama
+    event.target.value = "";
+
+    try {
+      // Validasi tipe file
+      if (!file.type.startsWith("image/")) {
+        showErrorAlert(
+          "Format File Tidak Valid",
+          "Silakan pilih file gambar (JPG, PNG, dll.)"
+        );
+        return;
+      }
+
+      // Validasi ukuran file (maksimal 10MB)
+      const maxSizeInMB = 10;
+      const maxSizeInBytes = maxSizeInMB * 1024 * 1024;
+      if (file.size > maxSizeInBytes) {
+        const fileSizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+        showErrorAlert(
+          "File Terlalu Besar",
+          `Ukuran file (${fileSizeInMB}MB) melebihi batas maksimum ${maxSizeInMB}MB. Silakan pilih file yang lebih kecil.`
+        );
+        return;
+      }
+
+      handleUploadPlatePhoto(file);
+    } catch (error) {
+      console.error("Error processing file:", error);
+      showErrorAlert(
+        "Error",
+        "Terjadi kesalahan saat memproses file. Silakan coba lagi."
+      );
+    }
+  };
+
+  const handleUploadPlatePhoto = (file: File) => {
+    if (!shipmentId || !file) return;
+    uploadPlatePhoto.mutate({ shipmentId, file });
+  };
+
+  const handleVerifyPlateNumber = () => {
+    if (!shipmentId) return;
+    verifyPlateNumber.mutate(shipmentId);
+  };
+
+  const handleDeletePlatePhoto = () => {
+    if (!shipmentId) return;
+
+    showConfirmationAlert(
+      "Hapus Foto Plat Nomor",
+      "Apakah Anda yakin ingin menghapus foto plat nomor ini? Tindakan ini tidak dapat dibatalkan.",
+      "Ya, Hapus!",
+      "Batal"
+    ).then((result) => {
+      if (isConfirmed(result)) {
+        deletePlatePhoto.mutate(shipmentId);
+      }
+    });
+  };
+
+  const handleReplacePhoto = () => {
+    if (!hasPengirimanUpdateAccess) return;
+    document.getElementById("platePhotoInput")?.click();
+  };
+
+  const handleViewPlatePhoto = () => {
+    if (!shipment?.platePhoto) return;
+
+    // Gunakan path relatif yang akan di-proxy oleh Vite
+    const fileUrl = `/public${shipment.platePhoto}`;
+    setPreviewFile({
+      url: fileUrl,
+      name: "Foto Plat Nomor",
+      type: "image/jpeg",
+    });
+    setPreviewModalOpen(true);
   };
 
   const handleTabChange = (tab: "info" | "items" | "spmb" | "do") => {
@@ -430,38 +547,191 @@ export default function DetailPengiriman() {
                           )}
                         </p>
                       </div>
-                      {shipment.platePhoto ? (
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            Foto Plat Nomor
-                          </p>
-                          <img
-                            src={shipment.platePhoto}
-                            alt="Foto Plat Nomor"
-                            className="object-cover w-full h-32 mt-2 rounded-md"
-                          />
-                        </div>
-                      ) : (
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            Foto Plat Nomor
-                          </p>
-                          <p className="text-red-500">
-                            Belum ada foto plat nomor
-                          </p>
-                          {hasPengirimanUpdateAccess && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="mt-2"
-                              onClick={handleUploadPlatePhoto}
-                            >
-                              <Upload className="w-4 h-4 mr-2" />
-                              Unggah Foto
-                            </Button>
-                          )}
-                        </div>
-                      )}
+                      <div>
+                        <p className="text-sm text-gray-500">Foto Plat Nomor</p>
+                        {shipment.platePhoto ? (
+                          <div className="mt-2">
+                            <div className="relative group">
+                              <img
+                                src={`/public${shipment.platePhoto}`}
+                                alt="Foto Plat Nomor"
+                                className="object-cover w-full h-40 transition-all duration-300 border border-gray-200 rounded-lg cursor-pointer hover:opacity-95 hover:shadow-lg"
+                                onClick={handleViewPlatePhoto}
+                                onError={(e) => {
+                                  console.error(
+                                    "Error loading image:",
+                                    e.currentTarget.src
+                                  );
+                                  // Show fallback content
+                                  const parent = e.currentTarget.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = `
+                                      <div class="flex items-center justify-center w-full h-40 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+                                        <div class="text-center">
+                                          <p class="text-sm text-gray-500">Gambar tidak dapat dimuat</p>
+                                          <p class="text-xs text-gray-400 mt-1">Klik untuk melihat detail</p>
+                                        </div>
+                                      </div>
+                                    `;
+                                  }
+                                }}
+                                onLoad={() => {
+                                  console.log(
+                                    "Image loaded successfully:",
+                                    `/public${shipment.platePhoto}`
+                                  );
+                                }}
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center transition-all duration-300 bg-white/0 rounded-lg opacity-0 group-hover:bg-white/10 group-hover:opacity-100 backdrop-blur-[1px]">
+                                <div className="transition-transform duration-300 transform scale-90 group-hover:scale-100">
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="text-gray-700 border border-gray-200 shadow-lg bg-white/95 hover:bg-white backdrop-blur-sm"
+                                    onClick={handleViewPlatePhoto}
+                                  >
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    Lihat Detail
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="p-4 mt-3 space-y-3 border border-gray-200 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  {shipment.isVerified ? (
+                                    <div className="flex items-center px-3 py-1.5 bg-green-100 rounded-full border border-green-200">
+                                      <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                                      <span className="text-sm font-medium text-green-700">
+                                        Terverifikasi
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center px-3 py-1.5 bg-orange-100 rounded-full border border-orange-200">
+                                      <div className="w-4 h-4 mr-2 bg-orange-400 rounded-full"></div>
+                                      <span className="text-sm font-medium text-orange-700">
+                                        Belum diverifikasi
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                {hasPengirimanUpdateAccess &&
+                                  !shipment.isVerified && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleVerifyPlateNumber}
+                                      disabled={verifyPlateNumber.isPending}
+                                      className="text-blue-600 transition-all duration-200 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                                    >
+                                      {verifyPlateNumber.isPending ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                      ) : (
+                                        <CheckCircle className="w-4 h-4 mr-2" />
+                                      )}
+                                      Verifikasi
+                                    </Button>
+                                  )}
+                              </div>
+
+                              {/* Tombol Aksi Foto */}
+                              {hasPengirimanUpdateAccess && (
+                                <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleReplacePhoto}
+                                    disabled={
+                                      uploadPlatePhoto.isPending ||
+                                      deletePlatePhoto.isPending
+                                    }
+                                    className="flex-1 text-blue-600 transition-all duration-200 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                                  >
+                                    <RefreshCw className="w-4 h-4 mr-2" />
+                                    Ganti Foto
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleDeletePlatePhoto}
+                                    disabled={
+                                      uploadPlatePhoto.isPending ||
+                                      deletePlatePhoto.isPending
+                                    }
+                                    className="flex-1 text-red-600 transition-all duration-200 border-red-200 hover:bg-red-50 hover:border-red-300"
+                                  >
+                                    {deletePlatePhoto.isPending ? (
+                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                    )}
+                                    Hapus Foto
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-2">
+                            <div className="mt-2">
+                              <div
+                                className="flex items-center justify-center w-full h-40 transition-all duration-300 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gradient-to-br from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 hover:border-blue-300 group"
+                                onClick={() =>
+                                  hasPengirimanUpdateAccess &&
+                                  document
+                                    .getElementById("platePhotoInput")
+                                    ?.click()
+                                }
+                              >
+                                <div className="p-6 text-center">
+                                  <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 transition-colors duration-300 bg-gray-200 rounded-full group-hover:bg-blue-200">
+                                    <Upload className="w-6 h-6 text-gray-400 transition-colors duration-300 group-hover:text-blue-500" />
+                                  </div>
+                                  <p className="mb-1 text-sm font-medium text-gray-600 transition-colors duration-300 group-hover:text-blue-700">
+                                    Belum ada foto plat nomor
+                                  </p>
+                                  <p className="text-xs text-gray-500 transition-colors duration-300 group-hover:text-blue-600">
+                                    {hasPengirimanUpdateAccess
+                                      ? "Klik untuk mengunggah foto"
+                                      : "Tidak ada izin upload"}
+                                  </p>
+                                </div>
+                              </div>
+                              {hasPengirimanUpdateAccess && (
+                                <div className="mt-4">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      document
+                                        .getElementById("platePhotoInput")
+                                        ?.click()
+                                    }
+                                    disabled={uploadPlatePhoto.isPending}
+                                    className="w-full text-blue-600 transition-all duration-200 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                                  >
+                                    {uploadPlatePhoto.isPending ? (
+                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                      <Upload className="w-4 h-4 mr-2" />
+                                    )}
+                                    {uploadPlatePhoto.isPending
+                                      ? "Mengunggah..."
+                                      : "Unggah Foto Plat Nomor"}
+                                  </Button>
+                                  <div className="p-3 mt-3 border border-blue-100 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
+                                    <p className="text-xs text-blue-700">
+                                      <strong>Format:</strong> JPG, PNG
+                                      <br />
+                                      <strong>Ukuran maksimal:</strong> 10MB
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -1091,6 +1361,22 @@ export default function DetailPengiriman() {
           </div>
         )}
       </div>
+
+      {/* File Preview Modal */}
+      <FilePreviewModal
+        isOpen={previewModalOpen}
+        onClose={() => setPreviewModalOpen(false)}
+        file={previewFile}
+      />
+
+      {/* Hidden file input for photo replacement */}
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+        id="platePhotoInput"
+      />
     </div>
   );
 }

@@ -107,12 +107,6 @@ export interface ShipmentPagination {
     hasPrev: boolean;
   };
 }
-
-export interface UploadPlatePhotoInput {
-  shipmentId: string;
-  platePhoto: File;
-}
-
 export interface ChosenProduct {
   id: string;
   shipmentId: string;

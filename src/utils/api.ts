@@ -1,8 +1,13 @@
 import { BASE_URL } from "@/constant/baseUrl";
 import { getAccessToken } from "./storage";
 
-export const getAuthHeaders = (): HeadersInit => {
-  const headers: HeadersInit = { "Content-Type": "application/json" };
+export const getAuthHeaders = (isFileUpload: boolean = false): HeadersInit => {
+  const headers: HeadersInit = {};
+
+  // Hanya tambahkan Content-Type jika bukan file upload
+  if (!isFileUpload) {
+    headers["Content-Type"] = "application/json";
+  }
 
   const token = getAccessToken();
   if (token) headers["x-outmanage-token"] = token;
@@ -49,10 +54,13 @@ export const fetchApi = async (
       ? path
       : buildApiUrl(path, params);
 
+  // Deteksi apakah ini file upload berdasarkan body
+  const isFileUpload = options.body instanceof FormData;
+
   return fetch(url, {
     ...options,
     headers: {
-      ...getAuthHeaders(),
+      ...getAuthHeaders(isFileUpload),
       ...(options.headers || {}),
     },
   });
