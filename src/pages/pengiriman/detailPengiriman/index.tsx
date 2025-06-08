@@ -4,11 +4,7 @@ import {
   useChooseProduct,
   useShipmentChosenProducts,
 } from "@/hooks/pengiriman";
-import {
-  useUploadPlatePhoto,
-  useVerifyPlateNumber,
-  useDeletePlatePhoto,
-} from "@/hooks/media";
+import { useUploadPlatePhoto, useVerifyPlateNumber } from "@/hooks/media";
 import { useParams, useNavigate } from "react-router";
 import { Link } from "react-router";
 import {
@@ -26,7 +22,6 @@ import {
   MapPin,
   Eye,
   CheckCircle,
-  Trash2,
   RefreshCw,
 } from "lucide-react";
 
@@ -168,6 +163,7 @@ export default function DetailPengiriman() {
   );
   const [previewFile, setPreviewFile] = useState<FilePreview | null>(null);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [allProductsChosen, setAllProductsChosen] = useState(false);
 
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
@@ -242,19 +238,6 @@ export default function DetailPengiriman() {
       showErrorAlert(
         "Gagal",
         error.message || "Terjadi kesalahan saat mengupload foto plat nomor"
-      );
-    },
-  });
-
-  const deletePlatePhoto = useDeletePlatePhoto({
-    onSuccess: () => {
-      showSuccessAlert("Berhasil", "Foto plat nomor berhasil dihapus");
-      refetch();
-    },
-    onError: (error: Error) => {
-      showErrorAlert(
-        "Gagal",
-        error.message || "Terjadi kesalahan saat menghapus foto plat nomor"
       );
     },
   });
@@ -344,23 +327,8 @@ export default function DetailPengiriman() {
     verifyPlateNumber.mutate(shipmentId);
   };
 
-  const handleDeletePlatePhoto = () => {
-    if (!shipmentId) return;
-
-    showConfirmationAlert(
-      "Hapus Foto Plat Nomor",
-      "Apakah Anda yakin ingin menghapus foto plat nomor ini? Tindakan ini tidak dapat dibatalkan.",
-      "Ya, Hapus!",
-      "Batal"
-    ).then((result) => {
-      if (isConfirmed(result)) {
-        deletePlatePhoto.mutate(shipmentId);
-      }
-    });
-  };
-
   const handleReplacePhoto = () => {
-    if (!hasPengirimanUpdateAccess) return;
+    if (!hasPengirimanUpdateAccess || !allProductsChosen) return;
     document.getElementById("platePhotoInput")?.click();
   };
 
@@ -389,6 +357,16 @@ export default function DetailPengiriman() {
       refetchChosenProducts();
     }
   }, [activeTab, shipmentId, refetchChosenProducts]);
+
+  // Check if all products are chosen
+  useEffect(() => {
+    if (shipment && shipment.shipmentItems) {
+      const allChosen = shipment.shipmentItems.every(
+        (item) => item.chosenProduct === true
+      );
+      setAllProductsChosen(allChosen);
+    }
+  }, [shipment]);
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
@@ -635,98 +613,97 @@ export default function DetailPengiriman() {
                               </div>
 
                               {/* Tombol Aksi Foto */}
-                              {hasPengirimanUpdateAccess && (
-                                <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleReplacePhoto}
-                                    disabled={
-                                      uploadPlatePhoto.isPending ||
-                                      deletePlatePhoto.isPending
-                                    }
-                                    className="flex-1 text-blue-600 transition-all duration-200 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
-                                  >
-                                    <RefreshCw className="w-4 h-4 mr-2" />
-                                    Ganti Foto
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleDeletePlatePhoto}
-                                    disabled={
-                                      uploadPlatePhoto.isPending ||
-                                      deletePlatePhoto.isPending
-                                    }
-                                    className="flex-1 text-red-600 transition-all duration-200 border-red-200 hover:bg-red-50 hover:border-red-300"
-                                  >
-                                    {deletePlatePhoto.isPending ? (
-                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                    )}
-                                    Hapus Foto
-                                  </Button>
-                                </div>
-                              )}
+                              {hasPengirimanUpdateAccess &&
+                                allProductsChosen && (
+                                  <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={handleReplacePhoto}
+                                      disabled={uploadPlatePhoto.isPending}
+                                      className="w-full text-blue-600 transition-all duration-200 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                                    >
+                                      <RefreshCw className="w-4 h-4 mr-2" />
+                                      Ganti Foto
+                                    </Button>
+                                  </div>
+                                )}
                             </div>
                           </div>
                         ) : (
                           <div className="mt-2">
                             <div className="mt-2">
-                              <div
-                                className="flex items-center justify-center w-full h-40 transition-all duration-300 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gradient-to-br from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 hover:border-blue-300 group"
-                                onClick={() =>
-                                  hasPengirimanUpdateAccess &&
-                                  document
-                                    .getElementById("platePhotoInput")
-                                    ?.click()
-                                }
-                              >
-                                <div className="p-6 text-center">
-                                  <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 transition-colors duration-300 bg-gray-200 rounded-full group-hover:bg-blue-200">
-                                    <Upload className="w-6 h-6 text-gray-400 transition-colors duration-300 group-hover:text-blue-500" />
-                                  </div>
-                                  <p className="mb-1 text-sm font-medium text-gray-600 transition-colors duration-300 group-hover:text-blue-700">
-                                    Belum ada foto plat nomor
-                                  </p>
-                                  <p className="text-xs text-gray-500 transition-colors duration-300 group-hover:text-blue-600">
-                                    {hasPengirimanUpdateAccess
-                                      ? "Klik untuk mengunggah foto"
-                                      : "Tidak ada izin upload"}
+                              {!allProductsChosen ? (
+                                <div className="p-4 border rounded-lg border-amber-200 bg-amber-50">
+                                  <p className="text-sm text-amber-700">
+                                    <strong>Perhatian:</strong> Anda harus
+                                    memilih semua produk terlebih dahulu sebelum
+                                    dapat mengunggah foto plat nomor.
                                   </p>
                                 </div>
-                              </div>
-                              {hasPengirimanUpdateAccess && (
-                                <div className="mt-4">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
+                              ) : (
+                                <>
+                                  <div
+                                    className="flex items-center justify-center w-full h-40 transition-all duration-300 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gradient-to-br from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 hover:border-blue-300 group"
                                     onClick={() =>
+                                      hasPengirimanUpdateAccess &&
+                                      allProductsChosen &&
                                       document
                                         .getElementById("platePhotoInput")
                                         ?.click()
                                     }
-                                    disabled={uploadPlatePhoto.isPending}
-                                    className="w-full text-blue-600 transition-all duration-200 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
                                   >
-                                    {uploadPlatePhoto.isPending ? (
-                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    ) : (
-                                      <Upload className="w-4 h-4 mr-2" />
-                                    )}
-                                    {uploadPlatePhoto.isPending
-                                      ? "Mengunggah..."
-                                      : "Unggah Foto Plat Nomor"}
-                                  </Button>
-                                  <div className="p-3 mt-3 border border-blue-100 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
-                                    <p className="text-xs text-blue-700">
-                                      <strong>Format:</strong> JPG, PNG
-                                      <br />
-                                      <strong>Ukuran maksimal:</strong> 10MB
-                                    </p>
+                                    <div className="p-6 text-center">
+                                      <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 transition-colors duration-300 bg-gray-200 rounded-full group-hover:bg-blue-200">
+                                        <Upload className="w-6 h-6 text-gray-400 transition-colors duration-300 group-hover:text-blue-500" />
+                                      </div>
+                                      <p className="mb-1 text-sm font-medium text-gray-600 transition-colors duration-300 group-hover:text-blue-700">
+                                        Belum ada foto plat nomor
+                                      </p>
+                                      <p className="text-xs text-gray-500 transition-colors duration-300 group-hover:text-blue-600">
+                                        {hasPengirimanUpdateAccess &&
+                                        allProductsChosen
+                                          ? "Klik untuk mengunggah foto"
+                                          : "Tidak ada izin upload"}
+                                      </p>
+                                    </div>
                                   </div>
-                                </div>
+                                  {hasPengirimanUpdateAccess &&
+                                    allProductsChosen && (
+                                      <div className="mt-4">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() =>
+                                            document
+                                              .getElementById("platePhotoInput")
+                                              ?.click()
+                                          }
+                                          disabled={uploadPlatePhoto.isPending}
+                                          className="w-full text-blue-600 transition-all duration-200 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                                        >
+                                          {uploadPlatePhoto.isPending ? (
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                          ) : (
+                                            <Upload className="w-4 h-4 mr-2" />
+                                          )}
+                                          {uploadPlatePhoto.isPending
+                                            ? "Mengunggah..."
+                                            : "Unggah Foto Plat Nomor"}
+                                        </Button>
+                                        <div className="p-3 mt-3 border border-blue-100 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
+                                          <p className="text-xs text-blue-700">
+                                            <strong>Format:</strong> JPG, PNG
+                                            <br />
+                                            <strong>
+                                              Ukuran maksimal:
+                                            </strong>{" "}
+                                            10MB
+                                          </p>
+                                        </div>
+                                      </div>
+                                    )}
+                                </>
                               )}
                             </div>
                           </div>

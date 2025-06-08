@@ -1,5 +1,3 @@
-// hooks media
-
 import { useMutation } from "@tanstack/react-query";
 import { fetchApi } from "@/utils/api";
 import {
@@ -56,37 +54,37 @@ export const useUploadPlatePhoto = (options?: {
   });
 };
 
-// Hook untuk menghapus foto plat nomor
-export const useDeletePlatePhoto = (options?: {
-  onSuccess?: () => void;
-  onError?: (error: Error) => void;
-}) => {
-  return useMutation({
-    mutationFn: async (shipmentId: string) => {
-      const response = await fetchApi(
-        `/shipments/${shipmentId}/delete-plate-photo`,
-        {},
-        {
-          method: "DELETE",
-        }
-      );
+// // Hook untuk menghapus foto plat nomor
+// export const useDeletePlatePhoto = (options?: {
+//   onSuccess?: () => void;
+//   onError?: (error: Error) => void;
+// }) => {
+//   return useMutation({
+//     mutationFn: async (shipmentId: string) => {
+//       const response = await fetchApi(
+//         `/shipments/${shipmentId}/delete-plate-photo`,
+//         {},
+//         {
+//           method: "DELETE",
+//         }
+//       );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorResponse = createErrorResponse(
-          errorData,
-          "Gagal menghapus foto plat nomor"
-        );
-        throw new Error(errorResponse.message);
-      }
+//       if (!response.ok) {
+//         const errorData = await response.json().catch(() => ({}));
+//         const errorResponse = createErrorResponse(
+//           errorData,
+//           "Gagal menghapus foto plat nomor"
+//         );
+//         throw new Error(errorResponse.message);
+//       }
 
-      const result: ApiResponse<{ message: string }> = await response.json();
-      return result.data!;
-    },
-    onSuccess: options?.onSuccess,
-    onError: options?.onError,
-  });
-};
+//       const result: ApiResponse<{ message: string }> = await response.json();
+//       return result.data!;
+//     },
+//     onSuccess: options?.onSuccess,
+//     onError: options?.onError,
+//   });
+// };
 
 // Hook untuk verifikasi plat nomor
 export const useVerifyPlateNumber = (options?: {
