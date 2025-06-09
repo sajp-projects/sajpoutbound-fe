@@ -144,11 +144,11 @@ export default function DaftarDo() {
       case "PENDING":
         return "bg-yellow-50 text-yellow-600 border-yellow-200";
       case "PROSES":
-        return "bg-blue-50 text-blue-600 border-blue-200";
-      case "SELESAI":
-        return "bg-green-50 text-green-600 border-green-200";
+        return "bg-blue-100 text-blue-800";
+      case "COMPLETED":
+        return "bg-green-100 text-green-800";
       default:
-        return "bg-gray-50 text-gray-600 border-gray-200";
+        return "bg-gray-100 text-gray-800";
     }
   };
 

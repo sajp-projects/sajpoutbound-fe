@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/date";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
-import { ShipmentStatus, ChosenProduct } from "@/types/pengiriman";
+import { ShipmentStatus } from "@/types/pengiriman";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
@@ -72,7 +72,7 @@ function StatusBadge({ status }: StatusBadgeProps) {
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "PROSES":
         return "bg-blue-100 text-blue-800 border-blue-200";
-      case "SELESAI":
+      case "COMPLETED":
         return "bg-green-100 text-green-800 border-green-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
@@ -90,8 +90,48 @@ function StatusBadge({ status }: StatusBadgeProps) {
 }
 
 // Update untuk tipe ChosenProduct
-interface ChosenProductExtended extends ChosenProduct {
-  locationType?: string;
+interface ChosenProductExtended {
+  id: string;
+  shipmentId: string;
+  productId: string;
+  product: {
+    id: string;
+    name: string;
+    satuan: string;
+    warehouseId: string;
+    warehouse: {
+      id: string;
+      name: string;
+    };
+  };
+  deliveryOrders: {
+    id: string;
+    customerId: string;
+    customer: {
+      id: string;
+      name: string;
+      address?: string;
+    };
+  }[];
+  customers: {
+    id: string;
+    name: string;
+    address?: string;
+  }[];
+  shipmentItems: string[];
+  weighings: Array<{
+    id: string;
+    grossWeight: number;
+    netWeight: number;
+    tareWeight: number;
+  }>;
+  totalGrossWeight: number;
+  totalNetWeight: number;
+  totalTareWeight: number;
+  totalRequestedQuantity: number;
+  locationType: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Interface untuk ShipmentItem dengan locationType
@@ -163,7 +203,7 @@ export default function DetailPengiriman() {
   );
   const [previewFile, setPreviewFile] = useState<FilePreview | null>(null);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
-  const [allProductsChosen, setAllProductsChosen] = useState(false);
+  const [allItemsCompleted, setAllItemsCompleted] = useState(false);
 
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
@@ -328,7 +368,7 @@ export default function DetailPengiriman() {
   };
 
   const handleReplacePhoto = () => {
-    if (!hasPengirimanUpdateAccess || !allProductsChosen) return;
+    if (!hasPengirimanUpdateAccess || !allItemsCompleted) return;
     document.getElementById("platePhotoInput")?.click();
   };
 
@@ -358,13 +398,13 @@ export default function DetailPengiriman() {
     }
   }, [activeTab, shipmentId, refetchChosenProducts]);
 
-  // Check if all products are chosen
+  // Check if all items are completed
   useEffect(() => {
     if (shipment && shipment.shipmentItems) {
-      const allChosen = shipment.shipmentItems.every(
-        (item) => item.chosenProduct === true
+      const allCompleted = shipment.shipmentItems.every(
+        (item) => item.status === "COMPLETED"
       );
-      setAllProductsChosen(allChosen);
+      setAllItemsCompleted(allCompleted);
     }
   }, [shipment]);
 
@@ -614,7 +654,7 @@ export default function DetailPengiriman() {
 
                               {/* Tombol Aksi Foto */}
                               {hasPengirimanUpdateAccess &&
-                                allProductsChosen && (
+                                allItemsCompleted && (
                                   <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
                                     <Button
                                       variant="outline"
@@ -632,80 +672,67 @@ export default function DetailPengiriman() {
                           </div>
                         ) : (
                           <div className="mt-2">
-                            <div className="mt-2">
-                              {!allProductsChosen ? (
-                                <div className="p-4 border rounded-lg border-amber-200 bg-amber-50">
-                                  <p className="text-sm text-amber-700">
-                                    <strong>Perhatian:</strong> Anda harus
-                                    memilih semua produk terlebih dahulu sebelum
-                                    dapat mengunggah foto plat nomor.
-                                  </p>
-                                </div>
-                              ) : (
-                                <>
-                                  <div
-                                    className="flex items-center justify-center w-full h-40 transition-all duration-300 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gradient-to-br from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 hover:border-blue-300 group"
-                                    onClick={() =>
-                                      hasPengirimanUpdateAccess &&
-                                      allProductsChosen &&
-                                      document
-                                        .getElementById("platePhotoInput")
-                                        ?.click()
-                                    }
-                                  >
-                                    <div className="p-6 text-center">
-                                      <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 transition-colors duration-300 bg-gray-200 rounded-full group-hover:bg-blue-200">
-                                        <Upload className="w-6 h-6 text-gray-400 transition-colors duration-300 group-hover:text-blue-500" />
-                                      </div>
-                                      <p className="mb-1 text-sm font-medium text-gray-600 transition-colors duration-300 group-hover:text-blue-700">
-                                        Belum ada foto plat nomor
-                                      </p>
-                                      <p className="text-xs text-gray-500 transition-colors duration-300 group-hover:text-blue-600">
-                                        {hasPengirimanUpdateAccess &&
-                                        allProductsChosen
-                                          ? "Klik untuk mengunggah foto"
-                                          : "Tidak ada izin upload"}
-                                      </p>
+                            {allItemsCompleted ? (
+                              <>
+                                <div
+                                  className="flex items-center justify-center w-full h-40 transition-all duration-300 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gradient-to-br from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 hover:border-blue-300 group"
+                                  onClick={() =>
+                                    hasPengirimanUpdateAccess &&
+                                    allItemsCompleted &&
+                                    document
+                                      .getElementById("platePhotoInput")
+                                      ?.click()
+                                  }
+                                >
+                                  <div className="p-6 text-center">
+                                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 transition-colors duration-300 bg-gray-200 rounded-full group-hover:bg-blue-200">
+                                      <Upload className="w-6 h-6 text-gray-400 transition-colors duration-300 group-hover:text-blue-500" />
                                     </div>
+                                    <p className="mb-1 text-sm font-medium text-gray-600 transition-colors duration-300 group-hover:text-blue-700">
+                                      Belum ada foto plat nomor
+                                    </p>
+                                    <p className="text-xs text-gray-500 transition-colors duration-300 group-hover:text-blue-600">
+                                      {hasPengirimanUpdateAccess &&
+                                      allItemsCompleted
+                                        ? "Klik untuk mengunggah foto"
+                                        : "Tidak ada izin upload"}
+                                    </p>
                                   </div>
-                                  {hasPengirimanUpdateAccess &&
-                                    allProductsChosen && (
-                                      <div className="mt-4">
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() =>
-                                            document
-                                              .getElementById("platePhotoInput")
-                                              ?.click()
-                                          }
-                                          disabled={uploadPlatePhoto.isPending}
-                                          className="w-full text-blue-600 transition-all duration-200 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
-                                        >
-                                          {uploadPlatePhoto.isPending ? (
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                          ) : (
-                                            <Upload className="w-4 h-4 mr-2" />
-                                          )}
-                                          {uploadPlatePhoto.isPending
-                                            ? "Mengunggah..."
-                                            : "Unggah Foto Plat Nomor"}
-                                        </Button>
-                                        <div className="p-3 mt-3 border border-blue-100 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
-                                          <p className="text-xs text-blue-700">
-                                            <strong>Format:</strong> JPG, PNG
-                                            <br />
-                                            <strong>
-                                              Ukuran maksimal:
-                                            </strong>{" "}
-                                            10MB
-                                          </p>
-                                        </div>
+                                </div>
+                                {hasPengirimanUpdateAccess &&
+                                  allItemsCompleted && (
+                                    <div className="mt-4">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          document
+                                            .getElementById("platePhotoInput")
+                                            ?.click()
+                                        }
+                                        disabled={uploadPlatePhoto.isPending}
+                                        className="w-full text-blue-600 transition-all duration-200 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                                      >
+                                        {uploadPlatePhoto.isPending ? (
+                                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        ) : (
+                                          <Upload className="w-4 h-4 mr-2" />
+                                        )}
+                                        {uploadPlatePhoto.isPending
+                                          ? "Mengunggah..."
+                                          : "Unggah Foto Plat Nomor"}
+                                      </Button>
+                                      <div className="p-3 mt-3 border border-blue-100 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
+                                        <p className="text-xs text-blue-700">
+                                          <strong>Format:</strong> JPG, PNG
+                                          <br />
+                                          <strong>Ukuran maksimal:</strong> 10MB
+                                        </p>
                                       </div>
-                                    )}
-                                </>
-                              )}
-                            </div>
+                                    </div>
+                                  )}
+                              </>
+                            ) : null}
                           </div>
                         )}
                       </div>
@@ -1014,16 +1041,19 @@ export default function DetailPengiriman() {
                               No
                             </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                              Pelanggan
-                            </TableHead>
-                            <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
                               Barang
                             </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
                               Gudang
                             </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                              Satuan
+                              Lokasi
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                              Pelanggan
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                              Kuantitas
                             </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
                               Aksi
@@ -1034,7 +1064,7 @@ export default function DetailPengiriman() {
                           {!chosenProducts || chosenProducts.length === 0 ? (
                             <TableRow>
                               <TableCell
-                                colSpan={6}
+                                colSpan={7}
                                 className="px-4 py-6 text-sm text-center text-gray-500"
                               >
                                 Tidak ada item yang dipilih dalam pengiriman
@@ -1048,19 +1078,6 @@ export default function DetailPengiriman() {
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   {index + 1}
                                 </TableCell>
-                                <TableCell className="px-4 py-3 font-medium text-blue-600">
-                                  <Link
-                                    to={`/pelanggan/${item.deliveryOrder.customer.id}`}
-                                    className="text-blue-600 hover:underline"
-                                  >
-                                    {item.deliveryOrder.customer.name}
-                                  </Link>
-                                  {item.deliveryOrder.customer.address && (
-                                    <p className="mt-1 text-xs text-gray-500">
-                                      {item.deliveryOrder.customer.address}
-                                    </p>
-                                  )}
-                                </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   <Link
                                     to={`/barang/${item.productId}`}
@@ -1073,21 +1090,49 @@ export default function DetailPengiriman() {
                                   {item.product.warehouse.name}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                  <span className="flex items-center">
+                                    <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
+                                    {item.locationType || "GUDANG"}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                  <div className="space-y-1">
+                                    {item.customers.map((customer, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="flex items-center"
+                                      >
+                                        <Link
+                                          to={`/pelanggan/${customer.id}`}
+                                          className="text-xs text-blue-600 hover:underline"
+                                        >
+                                          {customer.name}
+                                        </Link>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                  {formatNumber(item.totalRequestedQuantity)}{" "}
                                   {item.product.satuan}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                   {hasPengirimanUpdateAccess && (
                                     <div className="flex justify-center space-x-2">
-                                      <Link to={`/do/${item.deliveryOrderId}`}>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                      {item.deliveryOrders.length > 0 && (
+                                        <Link
+                                          to={`/do/${item.deliveryOrders[0].id}`}
                                         >
-                                          <FileText className="w-4 h-4 mr-2" />
-                                          Detail DO
-                                        </Button>
-                                      </Link>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                          >
+                                            <FileText className="w-4 h-4 mr-2" />
+                                            Detail DO
+                                          </Button>
+                                        </Link>
+                                      )}
                                     </div>
                                   )}
                                 </TableCell>
@@ -1143,21 +1188,41 @@ export default function DetailPengiriman() {
                             <p className="text-xs text-gray-500">
                               Satuan: {item.product.satuan}
                             </p>
-                            <p className="mt-1 text-xs text-gray-500">
-                              Pelanggan: {item.deliveryOrder.customer.name}
+                            <p className="text-xs text-gray-500">
+                              Kuantitas:{" "}
+                              {formatNumber(item.totalRequestedQuantity)}{" "}
+                              {item.product.satuan}
                             </p>
+                            <p className="text-xs text-gray-500">
+                              Lokasi: {item.locationType || "GUDANG"}
+                            </p>
+                            <div className="mt-1">
+                              <p className="text-xs font-medium text-gray-600">
+                                Pelanggan:
+                              </p>
+                              {item.customers.map((customer, idx) => (
+                                <p
+                                  key={idx}
+                                  className="ml-2 text-xs text-gray-500"
+                                >
+                                  - {customer.name}
+                                </p>
+                              ))}
+                            </div>
                           </div>
                           <div className="mt-3 text-center">
-                            <Link to={`/do/${item.deliveryOrderId}`}>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
-                              >
-                                <FileText className="w-4 h-4 mr-2" />
-                                Detail DO
-                              </Button>
-                            </Link>
+                            {item.deliveryOrders.length > 0 && (
+                              <Link to={`/do/${item.deliveryOrders[0].id}`}>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                                >
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  Detail DO
+                                </Button>
+                              </Link>
+                            )}
                           </div>
                         </div>
                       ))

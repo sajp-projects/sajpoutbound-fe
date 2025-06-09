@@ -50,7 +50,7 @@ function StatusBadge({ status }: StatusBadgeProps) {
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "PROSES":
         return "bg-blue-100 text-blue-800 border-blue-200";
-      case "SELESAI":
+      case "COMPLETED":
         return "bg-green-100 text-green-800 border-green-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
@@ -367,7 +367,7 @@ export default function DetailDo() {
                 </h3>
 
                 <div className="overflow-hidden border border-gray-200 rounded-lg">
-                  <div className="overflow-x-auto overflow-auto  ">
+                  <div className="overflow-auto overflow-x-auto ">
                     <Table>
                       <TableHeader>
                         <TableRow className="border-b border-gray-200 bg-gray-50">
@@ -406,7 +406,7 @@ export default function DetailDo() {
                                 variant="outline"
                                 className="font-medium px-2 py-0.5 bg-green-100 text-green-800 border-green-200"
                               >
-                                Kuantitas Selesai
+                                Kuantitas Completed
                               </Badge>
                             </div>
                           </TableHead>
@@ -525,7 +525,7 @@ export default function DetailDo() {
                                     variant="outline"
                                     className="mr-1 font-medium px-1.5 py-0.5 text-xs bg-green-100 text-green-800 border-green-200"
                                   >
-                                    Selesai
+                                    Completed
                                   </Badge>
                                   {formatNumber(item.completedQuantity)}
                                 </span>

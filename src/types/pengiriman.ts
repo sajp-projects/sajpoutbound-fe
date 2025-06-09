@@ -1,5 +1,5 @@
 export type ShipmentType = "ANTAR" | "JEMPUT";
-export type ShipmentStatus = "PENDING" | "PROSES" | "SELESAI";
+export type ShipmentStatus = "PENDING" | "PROSES" | "COMPLETED";
 
 export interface ShipmentItem {
   id: string;
@@ -8,7 +8,8 @@ export interface ShipmentItem {
   productId: string;
   requestedQuantity: number;
   weightedQuantity: number | null;
-  status: "PENDING" | "PROSES" | "SELESAI";
+  status: ShipmentStatus;
+  locationType: string;
   chosenProduct?: boolean;
   warehouseId: string;
   weighedAt: string | null;
@@ -44,7 +45,7 @@ export interface SPMB {
   shipmentId: string;
   deliveryOrderId: string;
   code: string;
-  status: "PENDING" | "PROSES" | "SELESAI";
+  status: ShipmentStatus;
   documentPath: string | null;
   createdAt: string;
   updatedAt: string;
@@ -107,13 +108,32 @@ export interface ShipmentPagination {
     hasPrev: boolean;
   };
 }
+
+export interface Customer {
+  id: string;
+  name: string;
+  id_sl?: string;
+  address?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeliveryOrder {
+  id: string;
+  customerId: string;
+  address?: string;
+  internalNote?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  customer: Customer;
+}
+
 export interface ChosenProduct {
   id: string;
   shipmentId: string;
-  deliveryOrderId: string;
   productId: string;
-  createdAt: string;
-  updatedAt: string;
   product: {
     id: string;
     name: string;
@@ -124,15 +144,27 @@ export interface ChosenProduct {
       name: string;
     };
   };
-  deliveryOrder: {
+  deliveryOrders: DeliveryOrder[];
+  customers: Customer[];
+  shipmentItems: string[];
+  weighings: {
     id: string;
-    customerId: string;
-    customer: {
-      id: string;
-      name: string;
-      address?: string;
-    };
-  };
+    shipmentId: string;
+    createdAt: string;
+    updatedAt: string;
+  }[];
+  totalGrossWeight: number;
+  totalNetWeight: number;
+  totalTareWeight: number;
+  totalRequestedQuantity: number;
+  locationType: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChosenProductsResponse {
+  note: string;
+  chosenProducts: ChosenProduct[];
 }
 
 export interface DeliveryOrderProduct {

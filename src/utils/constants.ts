@@ -15,7 +15,7 @@ export const LOCATION_TYPE = {
 export const SHIPMENT_STATUS = {
   PENDING: "PENDING",
   PROSES: "PROSES",
-  SELESAI: "SELESAI",
+  COMPLETED: "COMPLETED",
 };
 
 export const SHIPMENT_TYPE_LABELS = {
@@ -26,5 +26,5 @@ export const SHIPMENT_TYPE_LABELS = {
 export const SHIPMENT_STATUS_LABELS = {
   [SHIPMENT_STATUS.PENDING]: "Pending",
   [SHIPMENT_STATUS.PROSES]: "Proses",
-  [SHIPMENT_STATUS.SELESAI]: "Selesai",
+  [SHIPMENT_STATUS.COMPLETED]: "Completed",
 };

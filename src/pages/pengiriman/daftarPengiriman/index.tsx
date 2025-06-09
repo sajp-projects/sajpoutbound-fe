@@ -235,7 +235,9 @@ export default function DaftarPengiriman() {
                 <SelectItem value="all">Semua Status</SelectItem>
                 <SelectItem value={SHIPMENT_STATUS.PENDING}>Pending</SelectItem>
                 <SelectItem value={SHIPMENT_STATUS.PROSES}>Proses</SelectItem>
-                <SelectItem value={SHIPMENT_STATUS.SELESAI}>Selesai</SelectItem>
+                <SelectItem value={SHIPMENT_STATUS.COMPLETED}>
+                  Completed
+                </SelectItem>
               </SelectContent>
             </Select>
 

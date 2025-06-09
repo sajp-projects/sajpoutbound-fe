@@ -6,6 +6,7 @@ import {
   CreateShipmentInput,
   UpdateShipmentInput,
   ChosenProduct,
+  ChosenProductsResponse,
 } from "@/types/pengiriman";
 import { useQueryClient } from "@tanstack/react-query";
 import { createErrorResponse, handleApiError } from "@/utils/errorHandler";
@@ -359,7 +360,8 @@ export function useShipmentChosenProducts(shipmentId: string, options = {}) {
           );
         }
 
-        const result: ApiResponse<ChosenProduct[]> = await response.json();
+        const result: ApiResponse<ChosenProductsResponse> =
+          await response.json();
 
         if (!result.success) {
           throw new Error(
@@ -367,7 +369,7 @@ export function useShipmentChosenProducts(shipmentId: string, options = {}) {
           );
         }
 
-        return result.data || [];
+        return result.data?.chosenProducts || [];
       } catch (error) {
         console.error("Error fetching chosen products:", error);
         throw error;

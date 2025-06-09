@@ -1,6 +1,6 @@
 import { Pagination } from "./user";
 
-export type DeliveryOrderStatus = "PENDING" | "PROSES" | "SELESAI";
+export type DeliveryOrderStatus = "PENDING" | "PROSES" | "COMPLETED";
 
 export interface DeliveryOrderProduct {
   id: string;

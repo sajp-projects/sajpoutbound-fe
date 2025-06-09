@@ -1,5 +1,3 @@
-// types media
-
 export interface PlatePhotoUploadResponse {
   id: string;
   platePhoto: string;
