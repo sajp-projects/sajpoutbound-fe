@@ -575,6 +575,11 @@ export default function TambahPengiriman() {
                                     {...field}
                                     placeholder="Contoh: B 1234 ABC"
                                     disabled={isSubmitting}
+                                    onChange={(e) => {
+                                      field.onChange(
+                                        e.target.value.toUpperCase()
+                                      );
+                                    }}
                                     className={cn(
                                       form.formState.errors.plateNumber &&
                                         "border-red-500"
