@@ -5,7 +5,6 @@ import {
   ShipmentPagination,
   CreateShipmentInput,
   UpdateShipmentInput,
-  ChosenProduct,
   ChosenProductsResponse,
 } from "@/types/pengiriman";
 import { useQueryClient } from "@tanstack/react-query";

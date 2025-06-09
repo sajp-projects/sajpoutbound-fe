@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
 import { Pagination } from "@/components/Pagination";
 import { LoadingState } from "@/components/LoadingState";
-import { EmptyState } from "@/components/EmptyState";
 import { getActionLabel } from "@/utils/badges";
 
 export default function LogGudang() {
@@ -46,21 +45,6 @@ export default function LogGudang() {
     totalPages: 0,
     hasNext: false,
     hasPrev: false,
-  };
-
-  const getEntityTypeLabel = (entityType: string) => {
-    const labels = {
-      WAREHOUSE: {
-        label: "Gudang",
-        color: "bg-purple-100 text-purple-800 border-purple-200",
-      },
-    };
-    return (
-      labels[entityType as keyof typeof labels] || {
-        label: entityType,
-        color: "bg-gray-100 text-gray-800 border-gray-200",
-      }
-    );
   };
 
   const renderChanges = (

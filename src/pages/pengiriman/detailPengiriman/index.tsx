@@ -23,6 +23,7 @@ import {
   Eye,
   CheckCircle,
   RefreshCw,
+  X,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/date";
 import { LoadingState } from "@/components/LoadingState";
@@ -204,6 +219,23 @@ export default function DetailPengiriman() {
   const [previewFile, setPreviewFile] = useState<FilePreview | null>(null);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [allItemsCompleted, setAllItemsCompleted] = useState(false);
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [selectedProductDOs, setSelectedProductDOs] = useState<
+    {
+      doId: string;
+      customer: {
+        id: string;
+        name: string;
+      };
+      product: {
+        id: string;
+        name: string;
+        quantity: number;
+        satuan: string;
+      };
+    }[]
+  >([]);
 
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
@@ -250,12 +282,33 @@ export default function DetailPengiriman() {
 
   const chooseProduct = useChooseProduct({
     onSuccess: () => {
-      showSuccessAlert("Berhasil", "Produk berhasil dipilih");
-      refetch();
-      refetchChosenProducts();
+      // Tutup modal terlebih dahulu, baru tampilkan alert sukses
+      handleCloseProductModal();
+      // Tunda alert agar tampil setelah modal tertutup
+      setTimeout(() => {
+        showSuccessAlert("Berhasil", "Produk berhasil dipilih");
+        refetch();
+        refetchChosenProducts();
+      }, 300);
     },
     onError: (error: FormErrorData) => {
-      showErrorAlert("Gagal", error.message);
+      // Tutup modal terlebih dahulu, baru tampilkan alert error
+      handleCloseProductModal();
+
+      // Tunda alert agar tampil setelah modal tertutup
+      setTimeout(() => {
+        // Coba parse error message jika dalam format JSON
+        try {
+          const errorObj = JSON.parse(error.message);
+          if (errorObj && errorObj.message) {
+            showErrorAlert("Gagal", errorObj.message);
+            return;
+          }
+        } catch {
+          // Jika bukan JSON, gunakan pesan error langsung
+        }
+        showErrorAlert("Gagal", error.message);
+      }, 300);
     },
   });
 
@@ -390,6 +443,50 @@ export default function DetailPengiriman() {
     if (tab === "items") {
       refetchChosenProducts();
     }
+  };
+
+  const handleOpenProductModal = (productId: string) => {
+    if (!shipment) return;
+
+    const productDOs: {
+      doId: string;
+      customer: {
+        id: string;
+        name: string;
+      };
+      product: {
+        id: string;
+        name: string;
+        quantity: number;
+        satuan: string;
+      };
+    }[] = [];
+
+    // Collect all DOs containing this product
+    shipment.shipmentItems.forEach((item) => {
+      if (item.productId === productId) {
+        productDOs.push({
+          doId: item.deliveryOrderId,
+          customer: item.deliveryOrder.customer,
+          product: {
+            id: item.productId,
+            name: item.product.name,
+            quantity: item.requestedQuantity,
+            satuan: item.product.satuan,
+          },
+        });
+      }
+    });
+
+    setSelectedProductId(productId);
+    setSelectedProductDOs(productDOs);
+    setProductModalOpen(true);
+  };
+
+  const handleCloseProductModal = () => {
+    setProductModalOpen(false);
+    setSelectedProductId("");
+    setSelectedProductDOs([]);
   };
 
   useEffect(() => {
@@ -855,159 +952,310 @@ export default function DetailPengiriman() {
                   Delivery Orders & Produk
                 </h3>
                 <p className="mb-4 text-sm text-gray-500">
-                  Pilih produk dari delivery order yang akan dimasukkan ke dalam
-                  pengiriman ini
+                  Ringkasan produk dari seluruh delivery order dalam pengiriman
+                  ini
                 </p>
 
-                {/* Group items by delivery order */}
-                {(() => {
-                  // Group items by delivery order
-                  const doMap = new Map<string, GroupedDeliveryOrder>();
+                {/* Tabel produk */}
+                <div className="mb-6 border border-gray-200 rounded-lg">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b border-gray-200 bg-gray-50">
+                          <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
+                            No
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                            Produk
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                            Gudang
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                            Jumlah DO
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                            Total Kuantitas
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                            Status
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                            Aksi
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(() => {
+                          // Group items by product
+                          const productMap = new Map<
+                            string,
+                            {
+                              id: string;
+                              name: string;
+                              satuan: string;
+                              warehouseId: string;
+                              warehouse: {
+                                id: string;
+                                name: string;
+                              };
+                              doIds: Set<string>;
+                              totalQuantity: number;
+                              isChosen: boolean;
+                            }
+                          >();
 
-                  shipment.shipmentItems.forEach((item) => {
-                    const doId = item.deliveryOrderId;
-                    if (!doMap.has(doId)) {
-                      doMap.set(doId, {
-                        id: doId,
-                        customer: item.deliveryOrder.customer,
-                        products: [],
-                      });
-                    }
+                          shipment.shipmentItems.forEach((item) => {
+                            const productId = item.productId;
+                            if (!productMap.has(productId)) {
+                              productMap.set(productId, {
+                                id: productId,
+                                name: item.product.name,
+                                satuan: item.product.satuan,
+                                warehouseId: item.warehouseId,
+                                warehouse: item.warehouse,
+                                doIds: new Set([item.deliveryOrderId]),
+                                totalQuantity: item.requestedQuantity,
+                                isChosen: item.chosenProduct || false,
+                              });
+                            } else {
+                              const product = productMap.get(productId)!;
+                              product.doIds.add(item.deliveryOrderId);
+                              product.totalQuantity += item.requestedQuantity;
+                              if (item.chosenProduct) {
+                                product.isChosen = true;
+                              }
+                            }
+                          });
 
-                    doMap.get(doId)?.products.push({
-                      id: item.productId,
-                      name: item.product.name,
-                      satuan: item.product.satuan,
-                      quantity: item.requestedQuantity,
-                      warehouseId: item.warehouseId,
-                      chosenProduct: item.chosenProduct,
-                      locationType: (item as ShipmentItemExtended).locationType,
-                      warehouse: item.warehouse,
-                    });
-                  });
-
-                  return Array.from(doMap.values()).map(
-                    (deliveryOrder: GroupedDeliveryOrder, doIndex: number) => (
-                      <div
-                        key={deliveryOrder.id}
-                        className="mb-6 overflow-hidden border border-gray-200 rounded-lg"
-                      >
-                        <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-medium text-gray-900">
-                                <Link
-                                  to={`/do/${deliveryOrder.id}`}
-                                  className="text-blue-600 hover:underline"
-                                >
-                                  Delivery Order #{doIndex + 1}
-                                </Link>
-                              </h4>
-                              <p className="text-sm text-gray-500">
-                                {deliveryOrder.customer.name}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                          <Table>
-                            <TableHeader>
-                              <TableRow className="border-b border-gray-200 bg-gray-50">
-                                <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
-                                  No
-                                </TableHead>
-                                <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                                  Produk
-                                </TableHead>
-                                <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                                  Gudang
-                                </TableHead>
-                                <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                                  Lokasi
-                                </TableHead>
-                                <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
-                                  Kuantitas
-                                </TableHead>
-                                <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
-                                  Aksi
-                                </TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {deliveryOrder.products.map(
-                                (product: ProductItem, index: number) => (
-                                  <TableRow
-                                    key={`${deliveryOrder.id}-${product.id}`}
+                          return Array.from(productMap.values()).map(
+                            (product, index) => (
+                              <TableRow key={product.id}>
+                                <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                  {index + 1}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                  <Link
+                                    to={`/barang/${product.id}`}
+                                    className="text-blue-600 hover:underline"
                                   >
-                                    <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                      {index + 1}
-                                    </TableCell>
-                                    <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                      <Link
-                                        to={`/barang/${product.id}`}
-                                        className="text-blue-600 hover:underline"
+                                    {product.name}
+                                  </Link>
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                  {product.warehouse.name}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
+                                  <Badge
+                                    variant="outline"
+                                    className="text-blue-700 border-blue-200 bg-blue-50"
+                                  >
+                                    {product.doIds.size} DO
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                  {formatNumber(product.totalQuantity)}{" "}
+                                  {product.satuan}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
+                                  {product.isChosen ? (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-green-700 border-green-200 bg-green-50"
+                                    >
+                                      Sudah Dimuat
+                                    </Badge>
+                                  ) : (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-yellow-700 border-yellow-200 bg-yellow-50"
+                                    >
+                                      Belum Dimuat
+                                    </Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
+                                  {hasPengirimanUpdateAccess &&
+                                    !product.isChosen && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                        onClick={() =>
+                                          handleOpenProductModal(product.id)
+                                        }
+                                        disabled={chooseProduct.isPending}
                                       >
-                                        {product.name}
-                                      </Link>
-                                    </TableCell>
-                                    <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                      {product.warehouse.name}
-                                    </TableCell>
-                                    <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                      <span className="flex items-center">
-                                        <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                                        {product.locationType || "GUDANG"}
-                                      </span>
-                                    </TableCell>
-                                    <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                      {formatNumber(product.quantity)}{" "}
-                                      {product.satuan}
-                                    </TableCell>
-                                    <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                                      {hasPengirimanUpdateAccess && (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className={
-                                            product.chosenProduct
-                                              ? "text-green-600 border-green-200 hover:bg-green-50"
-                                              : "text-blue-600 border-blue-200 hover:bg-blue-50"
-                                          }
-                                          onClick={() =>
-                                            handleChooseProduct(
-                                              deliveryOrder.id,
-                                              product.id
-                                            )
-                                          }
-                                          disabled={
-                                            chooseProduct.isPending ||
-                                            product.chosenProduct
-                                          }
-                                        >
-                                          {chooseProduct.isPending ? (
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                          ) : product.chosenProduct ? (
-                                            <Check className="w-4 h-4 mr-2" />
-                                          ) : (
-                                            <Check className="w-4 h-4 mr-2" />
-                                          )}
-                                          {product.chosenProduct
-                                            ? "Produk Terpilih"
-                                            : "Pilih Produk"}
-                                        </Button>
-                                      )}
-                                    </TableCell>
+                                        <Package className="w-4 h-4 mr-2" />
+                                        Pilih Produk
+                                      </Button>
+                                    )}
+                                  {hasPengirimanUpdateAccess &&
+                                    product.isChosen && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-green-600 border-green-200 hover:bg-green-50"
+                                        disabled={true}
+                                      >
+                                        <Check className="w-4 h-4 mr-2" />
+                                        Produk Terpilih
+                                      </Button>
+                                    )}
+                                </TableCell>
+                              </TableRow>
+                            )
+                          );
+                        })()}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                {/* Accordion untuk delivery order */}
+                <h4 className="mb-4 text-lg font-medium text-gray-900">
+                  Daftar Delivery Order
+                </h4>
+                <Accordion type="multiple" className="space-y-4">
+                  {(() => {
+                    // Group items by delivery order
+                    const doMap = new Map<string, GroupedDeliveryOrder>();
+
+                    shipment.shipmentItems.forEach((item) => {
+                      const doId = item.deliveryOrderId;
+                      if (!doMap.has(doId)) {
+                        doMap.set(doId, {
+                          id: doId,
+                          customer: item.deliveryOrder.customer,
+                          products: [],
+                        });
+                      }
+
+                      doMap.get(doId)?.products.push({
+                        id: item.productId,
+                        name: item.product.name,
+                        satuan: item.product.satuan,
+                        quantity: item.requestedQuantity,
+                        warehouseId: item.warehouseId,
+                        chosenProduct: item.chosenProduct,
+                        locationType: (item as ShipmentItemExtended)
+                          .locationType,
+                        warehouse: item.warehouse,
+                      });
+                    });
+
+                    return Array.from(doMap.values()).map(
+                      (
+                        deliveryOrder: GroupedDeliveryOrder,
+                        doIndex: number
+                      ) => (
+                        <AccordionItem
+                          key={deliveryOrder.id}
+                          value={`do-${doIndex}`}
+                          className="overflow-hidden border border-gray-200 rounded-lg"
+                        >
+                          <AccordionTrigger className="px-4 py-3 bg-gray-50 hover:bg-gray-100 hover:no-underline">
+                            <div className="flex items-start text-left">
+                              <div>
+                                <h4 className="font-medium text-gray-900">
+                                  <Link
+                                    to={`/do/${deliveryOrder.id}`}
+                                    className="text-blue-600 hover:underline"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    Delivery Order #{doIndex + 1}
+                                  </Link>
+                                </h4>
+                                <p className="text-sm text-gray-500">
+                                  {deliveryOrder.customer.name}
+                                </p>
+                              </div>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="p-0">
+                            <div className="overflow-x-auto">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow className="border-b border-gray-200 bg-gray-50">
+                                    <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
+                                      No
+                                    </TableHead>
+                                    <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                                      Produk
+                                    </TableHead>
+                                    <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                                      Gudang
+                                    </TableHead>
+                                    <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                                      Lokasi
+                                    </TableHead>
+                                    <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                                      Kuantitas
+                                    </TableHead>
+                                    <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                                      Status
+                                    </TableHead>
                                   </TableRow>
-                                )
-                              )}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </div>
-                    )
-                  );
-                })()}
+                                </TableHeader>
+                                <TableBody>
+                                  {deliveryOrder.products.map(
+                                    (product: ProductItem, index: number) => (
+                                      <TableRow
+                                        key={`${deliveryOrder.id}-${product.id}`}
+                                      >
+                                        <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                          {index + 1}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                          <Link
+                                            to={`/barang/${product.id}`}
+                                            className="text-blue-600 hover:underline"
+                                          >
+                                            {product.name}
+                                          </Link>
+                                        </TableCell>
+                                        <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                          {product.warehouse.name}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                          <span className="flex items-center">
+                                            <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
+                                            {product.locationType || "GUDANG"}
+                                          </span>
+                                        </TableCell>
+                                        <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                          {formatNumber(product.quantity)}{" "}
+                                          {product.satuan}
+                                        </TableCell>
+                                        <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
+                                          {product.chosenProduct ? (
+                                            <Badge
+                                              variant="outline"
+                                              className="text-green-700 border-green-200 bg-green-50"
+                                            >
+                                              Sudah Dimuat
+                                            </Badge>
+                                          ) : (
+                                            <Badge
+                                              variant="outline"
+                                              className="text-yellow-700 border-yellow-200 bg-yellow-50"
+                                            >
+                                              Belum Dimuat
+                                            </Badge>
+                                          )}
+                                        </TableCell>
+                                      </TableRow>
+                                    )
+                                  )}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      )
+                    );
+                  })()}
+                </Accordion>
               </div>
             )}
 
@@ -1419,6 +1667,148 @@ export default function DetailPengiriman() {
         className="hidden"
         id="platePhotoInput"
       />
+
+      {/* Product Detail Modal */}
+      <Dialog open={productModalOpen} onOpenChange={setProductModalOpen}>
+        <DialogContent className="sm:max-w-[600px] bg-white border-0 p-0 rounded-lg shadow-lg">
+          <div className="p-6">
+            <DialogHeader className="pb-4">
+              <DialogTitle className="flex items-center text-xl font-semibold text-gray-900">
+                <Package className="w-5 h-5 mr-2 text-blue-600" />
+                Detail Produk untuk Pengiriman
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Pilih produk untuk dimuat dalam pengiriman
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="py-4">
+              {selectedProductDOs.length > 0 && (
+                <>
+                  <h3 className="mb-3 text-base font-medium text-gray-800">
+                    Informasi Produk
+                  </h3>
+                  <div className="p-4 mb-4 border border-blue-100 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
+                    <p className="text-base font-medium text-blue-800">
+                      {selectedProductDOs[0].product.name}
+                    </p>
+                    <div className="grid grid-cols-2 gap-4 mt-3 text-sm text-gray-700">
+                      <div>
+                        <p className="text-xs font-medium text-blue-600">
+                          Total Kuantitas
+                        </p>
+                        <p className="font-semibold text-gray-800">
+                          {formatNumber(
+                            selectedProductDOs.reduce(
+                              (sum, item) => sum + item.product.quantity,
+                              0
+                            )
+                          )}{" "}
+                          {selectedProductDOs[0].product.satuan}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-blue-600">
+                          Total Delivery Order
+                        </p>
+                        <p className="font-semibold text-gray-800">
+                          <Badge
+                            variant="outline"
+                            className="font-medium text-blue-700 border-blue-200 bg-blue-50"
+                          >
+                            {selectedProductDOs.length} DO
+                          </Badge>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 className="mb-3 text-base font-medium text-gray-800">
+                    Delivery Orders Terkait
+                  </h3>
+                  <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                    {selectedProductDOs.map((doItem, index) => (
+                      <div
+                        key={doItem.doId}
+                        className="p-4 transition-colors duration-200 bg-white border border-gray-200 rounded-lg hover:border-gray-300"
+                      >
+                        <div className="flex justify-between">
+                          <div>
+                            <div className="flex items-center">
+                              <span className="flex items-center justify-center w-6 h-6 mr-2 text-xs font-medium text-white bg-blue-600 rounded-full">
+                                {index + 1}
+                              </span>
+                              <p className="text-sm font-medium text-gray-800">
+                                <Link
+                                  to={`/do/${doItem.doId}`}
+                                  className="text-blue-600 hover:underline"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  DO #{index + 1}
+                                </Link>
+                              </p>
+                            </div>
+                            <p className="mt-1 ml-8 text-xs text-gray-500">
+                              Pelanggan: {doItem.customer.name}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-gray-500">Kuantitas</p>
+                            <p className="text-sm font-semibold text-gray-800">
+                              {formatNumber(doItem.product.quantity)}{" "}
+                              {doItem.product.satuan}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <DialogFooter className="flex flex-col gap-2 pt-4 mt-4 border-t border-gray-100 sm:flex-row sm:justify-between sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCloseProductModal}
+                className="text-gray-700 border-gray-300 hover:bg-gray-50"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Batal
+              </Button>
+
+              <Button
+                onClick={() => {
+                  if (selectedProductId && selectedProductDOs.length > 0) {
+                    // Tidak perlu try-catch di sini karena handleChooseProduct menggunakan
+                    // useMutation yang menangani error melalui onError callback
+                    handleChooseProduct(
+                      selectedProductDOs[0].doId,
+                      selectedProductId
+                    );
+                    // Modal akan ditutup di onSuccess atau onError callback pada chooseProduct
+                  }
+                }}
+                disabled={chooseProduct.isPending}
+                className="text-white bg-blue-600 shadow-sm hover:bg-blue-700"
+              >
+                {chooseProduct.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Memproses...
+                  </>
+                ) : (
+                  <>
+                    <Package className="w-4 h-4 mr-2" />
+                    Muat Barang
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
