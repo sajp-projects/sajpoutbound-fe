@@ -11,6 +11,7 @@ import {
   saveAuthData,
   getUser,
 } from "./storage";
+import { ApiResponse } from "@/types/api";
 
 // Flag to prevent race conditions during token refresh
 let isRefreshing = false;
@@ -38,6 +39,28 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
+
+    // Pastikan error response selalu memiliki data yang lengkap untuk dikonsumsi oleh client
+    if (error.response && error.response.data) {
+      const errorData = error.response.data as unknown;
+
+      // Jika server mengembalikan respons tapi tidak dalam format yang diharapkan
+      if (typeof errorData === "string") {
+        error.response.data = {
+          success: false,
+          message: errorData,
+          errorType: "serverError",
+        } as ApiResponse<unknown>;
+      } else if (typeof errorData === "object") {
+        const apiResponse = errorData as Partial<ApiResponse<unknown>>;
+        // Pastikan selalu ada message error jika belum ada
+        if (!apiResponse.message) {
+          apiResponse.message = error.message || "Terjadi kesalahan";
+          apiResponse.success = false;
+          error.response.data = apiResponse as ApiResponse<unknown>;
+        }
+      }
+    }
 
     const isLoginRequest = originalRequest.url?.includes("/auth/login");
     const isRefreshRequest = originalRequest.url?.includes(

@@ -54,6 +54,7 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
+    form.clearErrors();
 
     const data = form.getValues();
 
@@ -63,15 +64,23 @@ export default function Login() {
         onError: (error: unknown) => {
           try {
             const errorData = error as LoginError;
+
+            // Reset pesan error sebelumnya
+            form.clearErrors();
+            setGeneralError(null);
+
             if (
               errorData.errorType === "joiValidationError" &&
-              errorData.details
+              errorData.details &&
+              errorData.details.length > 0
             ) {
               errorData.details.forEach(
                 (detail: { path: string[]; message: string }) => {
-                  if (detail.path.includes("email")) {
+                  // Mapping path dari backend ke field di form
+                  const path = detail.path[0];
+                  if (path === "email" || path === "username") {
                     form.setError("email", { message: detail.message });
-                  } else if (detail.path.includes("password")) {
+                  } else if (path === "password") {
                     form.setError("password", { message: detail.message });
                   } else {
                     setGeneralError(detail.message);
@@ -79,9 +88,13 @@ export default function Login() {
                 }
               );
             } else if (errorData.message) {
+              // Untuk pesan error umum tanpa detail validasi
               setGeneralError(errorData.message);
+            } else {
+              setGeneralError("Terjadi kesalahan saat login");
             }
-          } catch {
+          } catch (e) {
+            console.error("Error handling login error:", e);
             setGeneralError("Terjadi kesalahan saat menghubungi server");
           }
         },

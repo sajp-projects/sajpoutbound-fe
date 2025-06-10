@@ -7,6 +7,7 @@ import * as storage from "@/utils/storage";
 import { ApiResponse } from "@/types/api";
 import { createErrorResponse } from "@/utils/errorHandler";
 import { useMutation } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -45,22 +46,47 @@ export function useAuth() {
       email: string;
       password: string;
     }) => {
-      const response = await axiosInstance.post("/auth/login", {
-        email,
-        password,
-      });
+      try {
+        const response = await axiosInstance.post("/auth/login", {
+          email,
+          password,
+        });
 
-      const result = response.data as ApiResponse<LoginResponseData>;
+        const result = response.data as ApiResponse<LoginResponseData>;
 
-      if (!result.success) {
-        const errorResult = createErrorResponse(
-          result,
-          "Terjadi kesalahan saat login"
-        );
-        throw errorResult;
+        if (!result.success) {
+          const errorResult = createErrorResponse(
+            result,
+            "Terjadi kesalahan saat login"
+          );
+          throw errorResult;
+        }
+
+        return result.data!;
+      } catch (error) {
+        // Menangani error dari Axios
+        const axiosError = error as AxiosError<ApiResponse<unknown>>;
+
+        if (axiosError.response?.data) {
+          // Jika ada response data dari backend
+          const errorData = axiosError.response.data;
+          const errorResult = createErrorResponse(
+            errorData,
+            "Terjadi kesalahan saat login"
+          );
+          throw errorResult;
+        } else if (axiosError.message) {
+          throw {
+            message: axiosError.message,
+            errorType: "networkError",
+          };
+        } else {
+          throw {
+            message: "Terjadi kesalahan saat menghubungi server",
+            errorType: "unknownError",
+          };
+        }
       }
-
-      return result.data!;
     },
     onSuccess: (data) => {
       handleLoginSuccess(data.user, data.tokens);
