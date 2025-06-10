@@ -24,6 +24,7 @@ import {
   CheckCircle,
   RefreshCw,
   X,
+  Scale,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -133,7 +134,14 @@ interface ChosenProductExtended {
     name: string;
     address?: string;
   }[];
-  shipmentItems: string[];
+  shipmentItems: Array<{
+    id: string;
+    status: string;
+    requestedQuantity: number;
+    weightedQuantity: number | null;
+    locationType: string;
+    weighedAt: string | null;
+  }>;
   weighings: Array<{
     id: string;
     grossWeight: number;
@@ -1304,6 +1312,9 @@ export default function DetailPengiriman() {
                               Kuantitas
                             </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                              Status Timbangan
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
                               Aksi
                             </TableHead>
                           </TableRow>
@@ -1312,7 +1323,7 @@ export default function DetailPengiriman() {
                           {!chosenProducts || chosenProducts.length === 0 ? (
                             <TableRow>
                               <TableCell
-                                colSpan={7}
+                                colSpan={8}
                                 className="px-4 py-6 text-sm text-center text-gray-500"
                               >
                                 Tidak ada item yang dipilih dalam pengiriman
@@ -1363,6 +1374,26 @@ export default function DetailPengiriman() {
                                 <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
                                   {formatNumber(item.totalRequestedQuantity)}{" "}
                                   {item.product.satuan}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
+                                  {item.shipmentItems.every(
+                                    (si) => si.status === "COMPLETED"
+                                  ) ? (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-green-700 border-green-200 bg-green-50 flex items-center justify-center gap-1"
+                                    >
+                                      <Scale className="w-3 h-3" />
+                                      Sudah Ditimbang
+                                    </Badge>
+                                  ) : (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-yellow-700 border-yellow-200 bg-yellow-50"
+                                    >
+                                      Belum Ditimbang
+                                    </Badge>
+                                  )}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                   {hasPengirimanUpdateAccess && (
@@ -1425,6 +1456,24 @@ export default function DetailPengiriman() {
                             <span className="text-sm font-medium text-gray-800">
                               #{index + 1}
                             </span>
+                            {item.shipmentItems.every(
+                              (si) => si.status === "COMPLETED"
+                            ) ? (
+                              <Badge
+                                variant="outline"
+                                className="text-green-700 border-green-200 bg-green-50 flex items-center gap-1"
+                              >
+                                <Scale className="w-3 h-3" />
+                                Sudah Ditimbang
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-yellow-700 border-yellow-200 bg-yellow-50"
+                              >
+                                Belum Ditimbang
+                              </Badge>
+                            )}
                           </div>
                           <div className="mt-2">
                             <p className="text-sm font-medium text-blue-600">

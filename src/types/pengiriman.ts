@@ -146,12 +146,19 @@ export interface ChosenProduct {
   };
   deliveryOrders: DeliveryOrder[];
   customers: Customer[];
-  shipmentItems: string[];
+  shipmentItems: Array<{
+    id: string;
+    status: string;
+    requestedQuantity: number;
+    weightedQuantity: number | null;
+    locationType: string;
+    weighedAt: string | null;
+  }>;
   weighings: {
     id: string;
-    shipmentId: string;
-    createdAt: string;
-    updatedAt: string;
+    grossWeight: number;
+    netWeight: number;
+    tareWeight: number;
   }[];
   totalGrossWeight: number;
   totalNetWeight: number;
