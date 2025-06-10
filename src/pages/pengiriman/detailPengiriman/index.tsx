@@ -685,7 +685,6 @@ export default function DetailPengiriman() {
                                     "Error loading image:",
                                     e.currentTarget.src
                                   );
-                                  // Show fallback content
                                   const parent = e.currentTarget.parentElement;
                                   if (parent) {
                                     parent.innerHTML = `
@@ -697,12 +696,6 @@ export default function DetailPengiriman() {
                                       </div>
                                     `;
                                   }
-                                }}
-                                onLoad={() => {
-                                  console.log(
-                                    "Image loaded successfully:",
-                                    `/public${shipment.platePhoto}`
-                                  );
                                 }}
                               />
                               <div className="absolute inset-0 flex items-center justify-center transition-all duration-300 bg-white/0 rounded-lg opacity-0 group-hover:bg-white/10 group-hover:opacity-100 backdrop-blur-[1px]">
@@ -1381,7 +1374,7 @@ export default function DetailPengiriman() {
                                   ) ? (
                                     <Badge
                                       variant="outline"
-                                      className="text-green-700 border-green-200 bg-green-50 flex items-center justify-center gap-1"
+                                      className="flex items-center justify-center gap-1 text-green-700 border-green-200 bg-green-50"
                                     >
                                       <Scale className="w-3 h-3" />
                                       Sudah Ditimbang
@@ -1461,7 +1454,7 @@ export default function DetailPengiriman() {
                             ) ? (
                               <Badge
                                 variant="outline"
-                                className="text-green-700 border-green-200 bg-green-50 flex items-center gap-1"
+                                className="flex items-center gap-1 text-green-700 border-green-200 bg-green-50"
                               >
                                 <Scale className="w-3 h-3" />
                                 Sudah Ditimbang
