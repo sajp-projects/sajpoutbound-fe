@@ -125,6 +125,7 @@ interface DOProduct {
   name: string;
   satuan: string;
   quantity: number;
+  pendingQuantity: number;
 }
 
 // Menambahkan interface untuk DoFormState
@@ -254,6 +255,7 @@ export default function TambahPengiriman() {
         name: item.product.name,
         satuan: item.product.satuan,
         quantity: item.quantity,
+        pendingQuantity: item.pendingQuantity,
       }));
 
       setSelectedDOProducts((prev) => ({
@@ -930,7 +932,9 @@ export default function TambahPengiriman() {
                                             </p>
                                             <p className="text-sm text-gray-500">
                                               Stok tersedia:{" "}
-                                              {formatNumber(product.quantity)}{" "}
+                                              {formatNumber(
+                                                product.pendingQuantity
+                                              )}{" "}
                                               {product.satuan}
                                             </p>
                                           </div>

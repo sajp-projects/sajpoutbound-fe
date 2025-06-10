@@ -1,5 +1,5 @@
 export type ShipmentType = "ANTAR" | "JEMPUT";
-export type ShipmentStatus = "PENDING" | "PROSES" | "COMPLETED";
+export type ShipmentStatus = "PENDING" | "PROSES" | "SELESAI" | "COMPLETED";
 
 export interface ShipmentItem {
   id: string;
