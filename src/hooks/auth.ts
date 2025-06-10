@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { showSuccessAlert, showWarningAlert } from "@/utils/sweetAlert";
-import { fetchApi } from "@/utils/api";
+import { axiosInstance } from "@/utils/axios";
 import { User, LoginResponseData, Tokens } from "@/types/auth";
 import * as storage from "@/utils/storage";
 import { ApiResponse } from "@/types/api";
@@ -45,16 +45,12 @@ export function useAuth() {
       email: string;
       password: string;
     }) => {
-      const response = await fetchApi(
-        "/auth/login",
-        {},
-        {
-          method: "POST",
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      const response = await axiosInstance.post("/auth/login", {
+        email,
+        password,
+      });
 
-      const result = (await response.json()) as ApiResponse<LoginResponseData>;
+      const result = response.data as ApiResponse<LoginResponseData>;
 
       if (!result.success) {
         const errorResult = createErrorResponse(
@@ -72,15 +68,30 @@ export function useAuth() {
     },
   });
 
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await axiosInstance.post("/auth/logout");
+    },
+    onSuccess: () => {
+      storage.clearAuthData();
+      setUser(null);
+      setIsAuthenticated(false);
+      showSuccessAlert(
+        "Logout Berhasil",
+        "Anda telah berhasil keluar dari sistem"
+      );
+      navigate("/login");
+    },
+    onError: () => {
+      storage.clearAuthData();
+      setUser(null);
+      setIsAuthenticated(false);
+      navigate("/login");
+    },
+  });
+
   const logout = () => {
-    storage.clearAuthData();
-    setUser(null);
-    setIsAuthenticated(false);
-    showSuccessAlert(
-      "Logout Berhasil",
-      "Anda telah berhasil keluar dari sistem"
-    );
-    navigate("/login");
+    logoutMutation.mutate();
   };
 
   const checkAuthRedirect = (requireAuth = true, redirectTo = "/login") => {
@@ -97,11 +108,35 @@ export function useAuth() {
     }
   };
 
+  const refreshTokenMutation = useMutation({
+    mutationFn: async () => {
+      const response = await axiosInstance.get("/auth/refresh-token");
+      return response.data;
+    },
+    onSuccess: (data) => {
+      const currentUser = storage.getUser();
+      if (currentUser && data.data?.accessToken) {
+        storage.saveAuthData(currentUser, {
+          accessToken: data.data.accessToken,
+          refreshToken: "",
+        });
+      }
+    },
+    onError: () => {
+      storage.clearAuthData();
+      setUser(null);
+      setIsAuthenticated(false);
+      navigate("/login");
+    },
+  });
+
   return {
     user,
     isAuthenticated,
     isLoading,
     loginMutation,
+    logoutMutation,
+    refreshTokenMutation,
     logout,
     checkAuthRedirect,
   };

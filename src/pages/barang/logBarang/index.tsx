@@ -48,21 +48,6 @@ export default function LogBarang() {
     hasPrev: false,
   };
 
-  const getEntityTypeLabel = (entityType: string) => {
-    const labels = {
-      PRODUCT: {
-        label: "Barang",
-        color: "bg-purple-100 text-purple-800 border-purple-200",
-      },
-    };
-    return (
-      labels[entityType as keyof typeof labels] || {
-        label: entityType,
-        color: "bg-gray-100 text-gray-800 border-gray-200",
-      }
-    );
-  };
-
   const renderChanges = (
     oldData: Record<string, unknown> | null,
     newData: Record<string, unknown> | null

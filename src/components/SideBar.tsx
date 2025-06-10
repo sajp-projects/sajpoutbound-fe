@@ -17,7 +17,7 @@ import {
   X,
   Lock,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation, Link } from "react-router";
 import { cn } from "../lib/utils";
 import { getRoleId } from "@/utils/storage";
@@ -45,7 +45,7 @@ interface SideBarProps {
 export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
   const location = useLocation();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
-  const { logout, isAuthenticated } = useAuth();
+  const { logout, logoutMutation, isAuthenticated } = useAuth();
   const [isMobileView, setIsMobileView] = useState(false);
 
   const roleId = getRoleId() || "";
@@ -111,245 +111,248 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     );
   };
 
-  const menuItems: MenuItem[] = [
-    {
-      name: "Dashboard",
-      icon: <Home className="w-4 h-4 sm:w-5 sm:h-5" />,
-      path: "/",
-    },
-    {
-      name: "Pengguna",
-      icon: <Users className="w-4 h-4 sm:w-5 sm:h-5" />,
-      resource: PERMISSION.RESOURCES.USER,
-      subItems: [
-        {
-          name: "Daftar Pengguna",
-          path: "/pengguna",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Tambah Pengguna",
-          path: "/pengguna/tambah",
-          action: PERMISSION.ACTIONS.CREATE,
-        },
-        {
-          name: "Arsip Pengguna",
-          path: "/pengguna/arsip",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Log Pengguna",
-          path: "/pengguna/log",
-          action: PERMISSION.ACTIONS.READ,
-        },
-      ],
-    },
-    {
-      name: "Peran",
-      icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
-      resource: PERMISSION.RESOURCES.ROLE,
-      subItems: [
-        {
-          name: "Daftar Peran",
-          path: "/peran",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Tambah Peran",
-          path: "/peran/tambah",
-          action: PERMISSION.ACTIONS.CREATE,
-        },
-      ],
-    },
-    {
-      name: "Izin",
-      icon: <Lock className="w-4 h-4 sm:w-5 sm:h-5" />,
-      resource: PERMISSION.RESOURCES.PERMISSION,
-      subItems: [
-        {
-          name: "Daftar Izin",
-          path: roleId ? `/peran/${roleId}/izin` : "/",
-          action: PERMISSION.ACTIONS.READ,
-        },
-      ],
-    },
-    {
-      name: "Barang",
-      icon: <Package className="w-4 h-4 sm:w-5 sm:h-5" />,
-      resource: PERMISSION.RESOURCES.PRODUCT,
-      subItems: [
-        {
-          name: "Daftar Barang",
-          path: "/barang",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Tambah Barang",
-          path: "/barang/tambah",
-          action: PERMISSION.ACTIONS.CREATE,
-        },
-        {
-          name: "Log Barang",
-          path: "/barang/log",
-          action: PERMISSION.ACTIONS.READ,
-        },
-      ],
-    },
-    {
-      name: "Pelanggan",
-      icon: <UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
-      resource: PERMISSION.RESOURCES.CUSTOMER,
-      subItems: [
-        {
-          name: "Daftar Pelanggan",
-          path: "/pelanggan",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Tambah Pelanggan",
-          path: "/pelanggan/tambah",
-          action: PERMISSION.ACTIONS.CREATE,
-        },
-        {
-          name: "Log Pelanggan",
-          path: "/pelanggan/log",
-          action: PERMISSION.ACTIONS.READ,
-        },
-      ],
-    },
-    {
-      name: "Gudang",
-      icon: <Warehouse className="w-4 h-4 sm:w-5 sm:h-5" />,
-      resource: PERMISSION.RESOURCES.WAREHOUSE,
-      subItems: [
-        {
-          name: "Daftar Gudang",
-          path: "/gudang",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Tambah Gudang",
-          path: "/gudang/tambah",
-          action: PERMISSION.ACTIONS.CREATE,
-        },
-        {
-          name: "Log Gudang",
-          path: "/gudang/log",
-          action: PERMISSION.ACTIONS.READ,
-        },
-      ],
-    },
-    {
-      name: "Delivery Order",
-      icon: <FileText className="w-4 h-4 sm:w-5 sm:h-5" />,
-      resource: PERMISSION.RESOURCES.DO,
-      subItems: [
-        {
-          name: "Daftar DO",
-          path: "/do",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Tambah DO",
-          path: "/do/tambah",
-          action: PERMISSION.ACTIONS.CREATE,
-        },
-        {
-          name: "DO Arsip",
-          path: "/do/arsip",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Log DO",
-          path: "/do/log",
-          action: PERMISSION.ACTIONS.READ,
-        },
-      ],
-    },
-    {
-      name: "Armada",
-      icon: <Truck className="w-4 h-4 sm:w-5 sm:h-5" />,
-      resource: PERMISSION.RESOURCES.ARMADA,
-      subItems: [
-        {
-          name: "Daftar Armada",
-          path: "/armada",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Tambah Armada",
-          path: "/armada/tambah",
-          action: PERMISSION.ACTIONS.CREATE,
-        },
-        {
-          name: "Log Armada",
-          path: "/armada/log",
-          action: PERMISSION.ACTIONS.READ,
-        },
-      ],
-    },
-    {
-      name: "Pengiriman",
-      icon: <PackageCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
-      resource: PERMISSION.RESOURCES.PENGIRIMAN,
-      subItems: [
-        {
-          name: "Daftar Pengiriman",
-          path: "/pengiriman",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Tambah Pengiriman",
-          path: "/pengiriman/tambah",
-          action: PERMISSION.ACTIONS.CREATE,
-        },
-        {
-          name: "Pengiriman Arsip",
-          path: "/pengiriman/arsip",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Log Pengiriman",
-          path: "/pengiriman/log",
-          action: PERMISSION.ACTIONS.READ,
-        },
-      ],
-    },
-    {
-      name: "Laporan",
-      icon: <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />,
-      resource: PERMISSION.RESOURCES.LAPORAN,
-      subItems: [
-        {
-          name: "Laporan Gudang",
-          path: "/laporan/gudang",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Laporan Pengiriman",
-          path: "/laporan/pengiriman",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Laporan DO",
-          path: "/laporan/do",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Laporan Armada",
-          path: "/laporan/armada",
-          action: PERMISSION.ACTIONS.READ,
-        },
-        {
-          name: "Laporan Custom",
-          path: "/laporan/custom",
-          action: PERMISSION.ACTIONS.READ,
-        },
-      ],
-    },
-  ];
+  const menuItems: MenuItem[] = useMemo(
+    () => [
+      {
+        name: "Dashboard",
+        icon: <Home className="w-4 h-4 sm:w-5 sm:h-5" />,
+        path: "/",
+      },
+      {
+        name: "Pengguna",
+        icon: <Users className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.USER,
+        subItems: [
+          {
+            name: "Daftar Pengguna",
+            path: "/pengguna",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Tambah Pengguna",
+            path: "/pengguna/tambah",
+            action: PERMISSION.ACTIONS.CREATE,
+          },
+          {
+            name: "Arsip Pengguna",
+            path: "/pengguna/arsip",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Log Pengguna",
+            path: "/pengguna/log",
+            action: PERMISSION.ACTIONS.READ,
+          },
+        ],
+      },
+      {
+        name: "Peran",
+        icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.ROLE,
+        subItems: [
+          {
+            name: "Daftar Peran",
+            path: "/peran",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Tambah Peran",
+            path: "/peran/tambah",
+            action: PERMISSION.ACTIONS.CREATE,
+          },
+        ],
+      },
+      {
+        name: "Izin",
+        icon: <Lock className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.PERMISSION,
+        subItems: [
+          {
+            name: "Daftar Izin",
+            path: roleId ? `/peran/${roleId}/izin` : "/",
+            action: PERMISSION.ACTIONS.READ,
+          },
+        ],
+      },
+      {
+        name: "Barang",
+        icon: <Package className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.PRODUCT,
+        subItems: [
+          {
+            name: "Daftar Barang",
+            path: "/barang",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Tambah Barang",
+            path: "/barang/tambah",
+            action: PERMISSION.ACTIONS.CREATE,
+          },
+          {
+            name: "Log Barang",
+            path: "/barang/log",
+            action: PERMISSION.ACTIONS.READ,
+          },
+        ],
+      },
+      {
+        name: "Pelanggan",
+        icon: <UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.CUSTOMER,
+        subItems: [
+          {
+            name: "Daftar Pelanggan",
+            path: "/pelanggan",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Tambah Pelanggan",
+            path: "/pelanggan/tambah",
+            action: PERMISSION.ACTIONS.CREATE,
+          },
+          {
+            name: "Log Pelanggan",
+            path: "/pelanggan/log",
+            action: PERMISSION.ACTIONS.READ,
+          },
+        ],
+      },
+      {
+        name: "Gudang",
+        icon: <Warehouse className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.WAREHOUSE,
+        subItems: [
+          {
+            name: "Daftar Gudang",
+            path: "/gudang",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Tambah Gudang",
+            path: "/gudang/tambah",
+            action: PERMISSION.ACTIONS.CREATE,
+          },
+          {
+            name: "Log Gudang",
+            path: "/gudang/log",
+            action: PERMISSION.ACTIONS.READ,
+          },
+        ],
+      },
+      {
+        name: "Delivery Order",
+        icon: <FileText className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.DO,
+        subItems: [
+          {
+            name: "Daftar DO",
+            path: "/do",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Tambah DO",
+            path: "/do/tambah",
+            action: PERMISSION.ACTIONS.CREATE,
+          },
+          {
+            name: "DO Arsip",
+            path: "/do/arsip",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Log DO",
+            path: "/do/log",
+            action: PERMISSION.ACTIONS.READ,
+          },
+        ],
+      },
+      {
+        name: "Armada",
+        icon: <Truck className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.ARMADA,
+        subItems: [
+          {
+            name: "Daftar Armada",
+            path: "/armada",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Tambah Armada",
+            path: "/armada/tambah",
+            action: PERMISSION.ACTIONS.CREATE,
+          },
+          {
+            name: "Log Armada",
+            path: "/armada/log",
+            action: PERMISSION.ACTIONS.READ,
+          },
+        ],
+      },
+      {
+        name: "Pengiriman",
+        icon: <PackageCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.PENGIRIMAN,
+        subItems: [
+          {
+            name: "Daftar Pengiriman",
+            path: "/pengiriman",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Tambah Pengiriman",
+            path: "/pengiriman/tambah",
+            action: PERMISSION.ACTIONS.CREATE,
+          },
+          {
+            name: "Pengiriman Arsip",
+            path: "/pengiriman/arsip",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Log Pengiriman",
+            path: "/pengiriman/log",
+            action: PERMISSION.ACTIONS.READ,
+          },
+        ],
+      },
+      {
+        name: "Laporan",
+        icon: <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.LAPORAN,
+        subItems: [
+          {
+            name: "Laporan Gudang",
+            path: "/laporan/gudang",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Laporan Pengiriman",
+            path: "/laporan/pengiriman",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Laporan DO",
+            path: "/laporan/do",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Laporan Armada",
+            path: "/laporan/armada",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Laporan Custom",
+            path: "/laporan/custom",
+            action: PERMISSION.ACTIONS.READ,
+          },
+        ],
+      },
+    ],
+    [roleId]
+  );
 
-  const getActiveMenuName = () => {
+  const getActiveMenuName = useCallback(() => {
     const currentPath = location.pathname;
 
     for (const item of menuItems) {
@@ -369,14 +372,14 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
       }
     }
     return null;
-  };
+  }, [location.pathname, menuItems]);
 
   useEffect(() => {
     const activeMenu = getActiveMenuName();
     if (activeMenu) {
       setOpenMenus([activeMenu]);
     }
-  }, [location.pathname]);
+  }, [location.pathname, getActiveMenuName]);
 
   const isMenuActive = (menuName: string) => {
     return menuItems
@@ -529,10 +532,13 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
           <div className="px-2 pt-1 pb-4 sm:px-3 sm:pb-5">
             <button
               onClick={logout}
-              className="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-gray-700 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors group w-full text-left text-xs sm:text-sm"
+              disabled={logoutMutation.isPending}
+              className="flex items-center px-2 sm:px-3 py-1.5 sm:py-2 text-gray-700 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors group w-full text-left text-xs sm:text-sm disabled:opacity-50"
             >
               <LogOut className="w-4 h-4 text-gray-500 sm:w-5 sm:h-5 group-hover:text-red-500" />
-              <span className="ml-2 sm:ml-3">Keluar</span>
+              <span className="ml-2 sm:ml-3">
+                {logoutMutation.isPending ? "Keluar..." : "Keluar"}
+              </span>
             </button>
           </div>
         </div>
