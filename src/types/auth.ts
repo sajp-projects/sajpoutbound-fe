@@ -7,7 +7,6 @@ export interface User {
 
 export interface Tokens {
   accessToken: string;
-  refreshToken: string;
 }
 
 export interface AuthState {

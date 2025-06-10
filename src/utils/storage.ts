@@ -1,9 +1,9 @@
-import { User, Tokens } from "@/types/auth";
+import { Tokens, User } from '@/types/auth';
 
 const KEYS = {
-  ACCESS_TOKEN: "accessToken",
-  REFRESH_TOKEN: "refreshToken",
-  USER: "user",
+  ACCESS_TOKEN: 'accessToken',
+  REFRESH_TOKEN: 'refreshToken',
+  USER: 'user',
 };
 
 const storage = {
@@ -15,7 +15,6 @@ const storage = {
 
 export const saveAuthData = (user: User, tokens: Tokens): void => {
   storage.set(KEYS.ACCESS_TOKEN, tokens.accessToken);
-  storage.set(KEYS.REFRESH_TOKEN, tokens.refreshToken);
   storage.set(KEYS.USER, JSON.stringify(user));
 };
 
@@ -38,7 +37,7 @@ export const getUser = (): User | null => {
   try {
     return JSON.parse(userData) as User;
   } catch (error) {
-    console.error("Error parsing user data:", error);
+    console.error('Error parsing user data:', error);
     return null;
   }
 };
