@@ -39,10 +39,15 @@ export function useDeliveryOrders(
     "queryKey" | "queryFn"
   > & {
     searchQuery?: string;
+    statusFilter?: string;
   }
 ) {
   const [searchParams] = useSearchParams();
   const searchQuery = options?.searchQuery;
+  const statusFilter =
+    options?.statusFilter !== undefined
+      ? options.statusFilter
+      : searchParams.get("status") || "";
 
   const filters = {
     page: searchParams.get("page") || "1",
@@ -51,6 +56,7 @@ export function useDeliveryOrders(
       searchQuery !== undefined
         ? searchQuery
         : searchParams.get("search") || "",
+    status: statusFilter,
   };
 
   return useQuery({

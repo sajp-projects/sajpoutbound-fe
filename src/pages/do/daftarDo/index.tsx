@@ -1,5 +1,5 @@
 import { useDeleteDeliveryOrder, useDeliveryOrders } from "@/hooks/do";
-import { Download, Plus } from "lucide-react";
+import { Download, Filter, Plus } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 
 import { ActionButtons, ActionType } from "@/components/ActionButtons";
@@ -10,6 +10,12 @@ import { Pagination } from "@/components/Pagination";
 import { SearchInput } from "@/components/SearchInput";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -33,6 +39,13 @@ import {
   showSuccessAlert,
 } from "@/utils/sweetAlert";
 
+// Definisikan konstanta untuk status DO
+const DO_STATUS = {
+  PENDING: "PENDING",
+  PROSES: "PROSES",
+  COMPLETED: "COMPLETED",
+};
+
 interface ActionConfig {
   type: ActionType;
   onClick?: () => void;
@@ -45,7 +58,7 @@ interface ActionConfig {
 }
 
 export default function DaftarDo() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
 
@@ -55,11 +68,15 @@ export default function DaftarDo() {
 
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
+  const statusFilter = searchParams.get("status") || "";
+  const searchQuery = searchParams.get("search") || "";
 
   const { data, isLoading, isError, refetch } = useDeliveryOrders({
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+    searchQuery: searchQuery,
+    statusFilter: statusFilter,
   });
 
   const deliveryOrders = data?.deliveryOrders || [];
@@ -84,6 +101,20 @@ export default function DaftarDo() {
       );
     },
   });
+
+  const handleFilter = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams);
+
+    if (value && value !== "all") {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+
+    params.set("page", "1");
+
+    setSearchParams(params);
+  };
 
   const handleArsipkan = async (id: string) => {
     const result = await showConfirmationAlert(
@@ -152,6 +183,22 @@ export default function DaftarDo() {
     }
   };
 
+  const getStatusFilterLabel = () => {
+    switch (statusFilter) {
+      case DO_STATUS.PENDING:
+        return "Pending";
+      case DO_STATUS.PROSES:
+        return "Proses";
+      case DO_STATUS.COMPLETED:
+        return "Selesai";
+      default:
+        return "Status";
+    }
+  };
+
+  // Tidak perlu filter manual karena sudah difilter di backend
+  const filteredDeliveryOrders = deliveryOrders;
+
   return (
     <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
       <div className="flex flex-row items-center justify-between w-full gap-2">
@@ -182,6 +229,54 @@ export default function DaftarDo() {
             </p>
           </div>
           <div className="flex flex-wrap items-center w-full gap-2 sm:gap-3 sm:w-auto">
+            <div className="w-[160px] sm:w-[190px]">
+              <Select
+                value={statusFilter || "all"}
+                onValueChange={(value) => handleFilter("status", value)}
+              >
+                <SelectTrigger className="flex items-center w-full text-xs text-gray-700 bg-white border-gray-300 h-9 hover:bg-gray-50 sm:text-sm">
+                  <div className="flex items-center">
+                    <Filter className="w-3 h-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+                    <span className="truncate">{getStatusFilterLabel()}</span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px] bg-white border border-gray-300 rounded-md overflow-auto">
+                  <SelectItem
+                    value="all"
+                    className={cn(!statusFilter && "font-medium text-blue-600")}
+                  >
+                    Semua Status
+                  </SelectItem>
+                  <SelectItem
+                    value={DO_STATUS.PENDING}
+                    className={cn(
+                      statusFilter === DO_STATUS.PENDING &&
+                        "font-medium text-blue-600"
+                    )}
+                  >
+                    Pending
+                  </SelectItem>
+                  <SelectItem
+                    value={DO_STATUS.PROSES}
+                    className={cn(
+                      statusFilter === DO_STATUS.PROSES &&
+                        "font-medium text-blue-600"
+                    )}
+                  >
+                    Proses
+                  </SelectItem>
+                  <SelectItem
+                    value={DO_STATUS.COMPLETED}
+                    className={cn(
+                      statusFilter === DO_STATUS.COMPLETED &&
+                        "font-medium text-blue-600"
+                    )}
+                  >
+                    Selesai
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -235,14 +330,14 @@ export default function DaftarDo() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {deliveryOrders.length === 0 ? (
+                    {filteredDeliveryOrders.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="h-24 text-center">
                           <EmptyState title="Tidak ada data delivery order yang ditemukan" />
                         </TableCell>
                       </TableRow>
                     ) : (
-                      deliveryOrders.map((deliveryOrder, idx) => (
+                      filteredDeliveryOrders.map((deliveryOrder, idx) => (
                         <TableRow
                           key={deliveryOrder.id}
                           className={cn(
@@ -299,12 +394,12 @@ export default function DaftarDo() {
             </div>
 
             <div className="w-full space-y-3 sm:hidden">
-              {deliveryOrders.length === 0 ? (
+              {filteredDeliveryOrders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center w-full p-6 bg-white border border-gray-200 rounded-lg">
                   <EmptyState title="Tidak ada data delivery order yang ditemukan" />
                 </div>
               ) : (
-                deliveryOrders.map((deliveryOrder) => (
+                filteredDeliveryOrders.map((deliveryOrder) => (
                   <div
                     key={deliveryOrder.id}
                     className="w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
