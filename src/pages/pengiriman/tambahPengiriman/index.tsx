@@ -5,9 +5,12 @@ import Joi from "joi";
 import { joiResolver } from "@hookform/resolvers/joi";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Loader2, Plus, Save, Trash } from "lucide-react";
-
 import { useCreateShipment } from "@/hooks/pengiriman";
-import { useDeliveryOrders, useDeliveryOrder } from "@/hooks/do";
+import {
+  useDeliveryOrders,
+  useDeliveryOrder,
+  deliveryOrderKeys,
+} from "@/hooks/do";
 import { useArmadas } from "@/hooks/armada";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +50,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Validasi plat nomor Indonesia
 const plateNumberRegex = /^[A-Z]{1,2}\s?\d{1,4}\s?[A-Z]{1,3}$/;
@@ -140,6 +144,7 @@ interface DoFormStateItem {
 
 export default function TambahPengiriman() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deliveryOrderSearchQuery, setDeliveryOrderSearchQuery] = useState("");
   const [armadaSearchQuery, setArmadaSearchQuery] = useState("");
@@ -203,11 +208,13 @@ export default function TambahPengiriman() {
     deliveryOrdersData?.deliveryOrders?.map((do_item) => ({
       label: `${do_item.customer.name}`,
       value: do_item.id,
-      secondary: `${do_item.address} - ${do_item.items.length} items`,
+      secondary: `${do_item.address} - ${do_item.items.length} barang`,
     })) || [];
 
   const createShipment = useCreateShipment({
     onSuccess: (data: Shipment) => {
+      queryClient.invalidateQueries({ queryKey: deliveryOrderKeys.list({}) });
+      queryClient.invalidateQueries({ queryKey: ["deliveryOrders"] });
       showSuccessAlert("Berhasil!", "Pengiriman berhasil dibuat").then(() => {
         navigate(`/pengiriman/${data.id}`);
       });
@@ -272,12 +279,26 @@ export default function TambahPengiriman() {
         // Cek apakah sudah ada data barang yang tersimpan untuk DO ini
         const existingProducts = doFormState[activeDOId]?.products;
 
+        // Hanya tambahkan produk yang memiliki pendingQuantity > 0
+        const availableProducts = doProducts.filter(
+          (product) => product.pendingQuantity > 0
+        );
+
         if (existingProducts && existingProducts.length > 0) {
-          // Gunakan data yang sudah tersimpan jika ada
-          form.setValue(`deliveryOrders.${doIndex}.products`, existingProducts);
+          // Gunakan data yang sudah tersimpan jika ada, tapi pastikan urutannya sesuai dengan availableProducts
+          const orderedProducts = availableProducts.map((product) => {
+            const existingProduct = existingProducts.find(
+              (ep) => ep.productId === product.id
+            );
+            return {
+              productId: product.id,
+              requestedQuantity: existingProduct?.requestedQuantity || 0,
+            };
+          });
+          form.setValue(`deliveryOrders.${doIndex}.products`, orderedProducts);
         } else {
           // Inisialisasi array barang dengan requestedQuantity 0 jika belum ada
-          const initialProducts = doProducts.map((product) => ({
+          const initialProducts = availableProducts.map((product) => ({
             productId: product.id,
             requestedQuantity: 0,
           }));
@@ -556,39 +577,67 @@ export default function TambahPengiriman() {
   };
 
   // Simpan perubahan barang saat nilai berubah
-  const handleProductQuantityChange = (
-    doId: string,
-    productId: string,
-    value: number
-  ) => {
-    // Update form state untuk DO ini
-    setDoFormState((prev) => {
-      const doData = prev[doId] || { products: [] };
-      const products = [...(doData.products || [])];
+  const handleProductQuantityChange = useCallback(
+    (doId: string, productId: string, value: number) => {
+      // Update form state untuk DO ini
+      setDoFormState((prev) => {
+        const doData = prev[doId] || { products: [] };
+        const products = [...(doData.products || [])];
 
-      // Cari barang yang sesuai
-      const productIndex = products.findIndex((p) => p.productId === productId);
+        // Cari barang yang sesuai
+        const productIndex = products.findIndex(
+          (p) => p.productId === productId
+        );
 
-      if (productIndex !== -1) {
-        // Update barang yang sudah ada
-        products[productIndex].requestedQuantity = value;
-      } else {
-        // Tambahkan barang baru
-        products.push({
-          productId,
-          requestedQuantity: value,
-        });
-      }
+        if (productIndex !== -1) {
+          // Update barang yang sudah ada
+          products[productIndex].requestedQuantity = value;
+        } else {
+          // Tambahkan barang baru dengan urutan yang benar sesuai dengan selectedDOProducts
+          const doProducts = selectedDOProducts[doId] || [];
+          const availableProducts = doProducts.filter(
+            (p) => p.pendingQuantity > 0
+          );
 
-      return {
-        ...prev,
-        [doId]: {
-          ...doData,
-          products,
-        },
-      };
-    });
-  };
+          // Buat ulang array products dengan urutan yang benar
+          const newProducts = availableProducts.map((product) => {
+            const existingProduct = products.find(
+              (p) => p.productId === product.id
+            );
+            if (product.id === productId) {
+              return {
+                productId,
+                requestedQuantity: value,
+              };
+            }
+            return (
+              existingProduct || {
+                productId: product.id,
+                requestedQuantity: 0,
+              }
+            );
+          });
+
+          return {
+            ...prev,
+            [doId]: {
+              ...doData,
+              products: newProducts,
+            },
+          };
+        }
+
+        return {
+          ...prev,
+          [doId]: {
+            ...doData,
+            products,
+          },
+        };
+      });
+    },
+    [selectedDOProducts]
+  );
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
@@ -905,7 +954,12 @@ export default function TambahPengiriman() {
                                   ] ||
                                     selectedDOProducts[
                                       watchDeliveryOrders[index].deliveryOrderId
-                                    ].length === 0) && (
+                                    ].length === 0 ||
+                                    selectedDOProducts[
+                                      watchDeliveryOrders[index].deliveryOrderId
+                                    ].filter(
+                                      (product) => product.pendingQuantity > 0
+                                    ).length === 0) && (
                                     <p className="py-2 text-sm text-red-500">
                                       Tidak ada barang yang tersedia
                                     </p>
@@ -921,101 +975,119 @@ export default function TambahPengiriman() {
                                       {selectedDOProducts[
                                         watchDeliveryOrders[index]
                                           .deliveryOrderId
-                                      ].map((product, productIndex) => (
-                                        <div
-                                          key={product.id}
-                                          className="grid grid-cols-1 gap-2 pb-2 border-b border-gray-200 bitems-center sm:grid-cols-7 last:border-0 last:pb-0"
-                                        >
-                                          <div className="sm:col-span-4">
-                                            <p className="font-medium">
-                                              {product.name}
-                                            </p>
-                                            <p className="text-sm text-gray-500">
-                                              Stok tersedia:{" "}
-                                              {formatNumber(
-                                                product.pendingQuantity
-                                              )}{" "}
-                                              {product.satuan}
-                                            </p>
-                                          </div>
-                                          <div className="sm:col-span-3">
-                                            <FormField
-                                              control={form.control}
-                                              name={`deliveryOrders.${index}.products.${productIndex}.requestedQuantity`}
-                                              render={({ field }) => (
-                                                <FormItem className="h-[80px]">
-                                                  <FormControl>
-                                                    <Input
-                                                      type="text"
-                                                      placeholder="Masukkan jumlah"
-                                                      value={
-                                                        field.value > 0
-                                                          ? formatNumber(
-                                                              field.value
-                                                            )
-                                                          : ""
-                                                      }
-                                                      onChange={(e) => {
-                                                        const numValue =
-                                                          parseInt(
-                                                            e.target.value.replace(
-                                                              /\D/g,
-                                                              ""
-                                                            )
-                                                          ) || 0;
-                                                        field.onChange(
-                                                          numValue
-                                                        );
+                                      ]
+                                        .filter(
+                                          (product) =>
+                                            product.pendingQuantity > 0
+                                        )
+                                        .map((product) => {
+                                          // Cari index produk yang tepat berdasarkan productId di form
+                                          const formProducts =
+                                            watchDeliveryOrders[index]
+                                              ?.products || [];
+                                          const productFormIndex =
+                                            formProducts.findIndex(
+                                              (fp) =>
+                                                fp.productId === product.id
+                                            );
 
-                                                        // Update hidden field for productId
-                                                        form.setValue(
-                                                          `deliveryOrders.${index}.products.${productIndex}.productId`,
-                                                          product.id
-                                                        );
+                                          return (
+                                            <div
+                                              key={product.id}
+                                              className="grid grid-cols-1 gap-2 pb-2 border-b border-gray-200 bitems-center sm:grid-cols-7 last:border-0 last:pb-0"
+                                            >
+                                              <div className="sm:col-span-4">
+                                                <p className="font-medium">
+                                                  {product.name}
+                                                </p>
+                                                <p className="text-sm text-gray-500">
+                                                  Stok tersedia:{" "}
+                                                  {formatNumber(
+                                                    product.pendingQuantity
+                                                  )}{" "}
+                                                  {product.satuan}
+                                                </p>
+                                              </div>
+                                              <div className="sm:col-span-3">
+                                                {productFormIndex !== -1 && (
+                                                  <>
+                                                    <FormField
+                                                      control={form.control}
+                                                      name={`deliveryOrders.${index}.products.${productFormIndex}.requestedQuantity`}
+                                                      render={({ field }) => (
+                                                        <FormItem className="h-[80px]">
+                                                          <FormControl>
+                                                            <Input
+                                                              type="text"
+                                                              placeholder="Masukkan jumlah"
+                                                              value={
+                                                                field.value > 0
+                                                                  ? formatNumber(
+                                                                      field.value
+                                                                    )
+                                                                  : ""
+                                                              }
+                                                              onChange={(e) => {
+                                                                const numValue =
+                                                                  parseInt(
+                                                                    e.target.value.replace(
+                                                                      /\D/g,
+                                                                      ""
+                                                                    )
+                                                                  ) || 0;
+                                                                field.onChange(
+                                                                  numValue
+                                                                );
 
-                                                        // Simpan perubahan ke state untuk mencegah reset
-                                                        handleProductQuantityChange(
-                                                          watchDeliveryOrders[
-                                                            index
-                                                          ].deliveryOrderId,
-                                                          product.id,
-                                                          numValue
-                                                        );
-                                                      }}
-                                                      disabled={isSubmitting}
-                                                      className={cn(
-                                                        field.value >
-                                                          product.quantity &&
-                                                          "border-orange-500"
+                                                                // Simpan perubahan ke state untuk mencegah reset
+                                                                handleProductQuantityChange(
+                                                                  watchDeliveryOrders[
+                                                                    index
+                                                                  ]
+                                                                    .deliveryOrderId,
+                                                                  product.id,
+                                                                  numValue
+                                                                );
+                                                              }}
+                                                              disabled={
+                                                                isSubmitting
+                                                              }
+                                                              className={cn(
+                                                                field.value >
+                                                                  product.quantity &&
+                                                                  "border-orange-500"
+                                                              )}
+                                                            />
+                                                          </FormControl>
+                                                          <div className="min-h-[20px]">
+                                                            {field.value >
+                                                              product.quantity && (
+                                                              <p className="text-xs text-orange-500">
+                                                                Nilai melebihi
+                                                                stok tersedia
+                                                              </p>
+                                                            )}
+                                                          </div>
+                                                        </FormItem>
                                                       )}
                                                     />
-                                                  </FormControl>
-                                                  <div className="min-h-[20px]">
-                                                    {field.value >
-                                                      product.quantity && (
-                                                      <p className="text-xs text-orange-500">
-                                                        Nilai melebihi stok
-                                                        tersedia
-                                                      </p>
-                                                    )}
-                                                  </div>
-                                                </FormItem>
-                                              )}
-                                            />
-                                            <FormField
-                                              control={form.control}
-                                              name={`deliveryOrders.${index}.products.${productIndex}.productId`}
-                                              render={({ field }) => (
-                                                <input
-                                                  type="hidden"
-                                                  {...field}
-                                                  value={product.id}
-                                                />
-                                              )}
-                                            />
-                                          </div>
-                                        </div>
-                                      ))}
+                                                    <FormField
+                                                      control={form.control}
+                                                      name={`deliveryOrders.${index}.products.${productFormIndex}.productId`}
+                                                      render={({ field }) => (
+                                                        <input
+                                                          type="hidden"
+                                                          {...field}
+                                                          value={product.id}
+                                                        />
+                                                      )}
+                                                    />
+                                                  </>
+                                                )}
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
                                     </div>
                                   )}
                               </div>

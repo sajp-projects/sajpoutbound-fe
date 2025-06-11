@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createErrorResponse, handleApiError } from "@/utils/errorHandler";
 import { ApiResponse, ApiErrorResult } from "@/types/api";
 import { BASE_URL } from "@/constant/baseUrl";
+import { deliveryOrderKeys } from "./do";
 
 export const shipmentKeys = {
   all: ["shipments"] as const,
@@ -185,6 +186,7 @@ export function useCreateShipment(options = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: shipmentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: deliveryOrderKeys.all });
     },
     ...options,
   });
