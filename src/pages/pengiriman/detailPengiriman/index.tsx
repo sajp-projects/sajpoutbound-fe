@@ -2058,44 +2058,46 @@ export default function DetailPengiriman() {
               )}
             </div>
 
-            <DialogFooter className="flex flex-col gap-2 pt-4 mt-4 border-t border-gray-100 sm:flex-row sm:justify-between sm:gap-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCloseProductModal}
-                className="text-gray-700 border-gray-300 hover:bg-gray-50"
-              >
-                <X className="w-4 h-4 mr-2" />
-                Batal
-              </Button>
+            <DialogFooter className="pt-4 mt-4 border-t border-gray-100">
+              <div className="flex w-full gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCloseProductModal}
+                  className="flex-1 text-gray-700 transition-all duration-200 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Batal
+                </Button>
 
-              <Button
-                onClick={() => {
-                  if (selectedProductId && selectedProductDOs.length > 0) {
-                    // Tidak perlu try-catch di sini karena handleChooseProduct menggunakan
-                    // useMutation yang menangani error melalui onError callback
-                    handleChooseProduct(
-                      selectedProductDOs[0].doId,
-                      selectedProductId
-                    );
-                    // Modal akan ditutup di onSuccess atau onError callback pada chooseProduct
-                  }
-                }}
-                disabled={chooseProduct.isPending}
-                className="text-white bg-blue-600 shadow-sm hover:bg-blue-700"
-              >
-                {chooseProduct.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Memproses...
-                  </>
-                ) : (
-                  <>
-                    <Package className="w-4 h-4 mr-2" />
-                    Muat Barang
-                  </>
-                )}
-              </Button>
+                <Button
+                  onClick={() => {
+                    if (selectedProductId && selectedProductDOs.length > 0) {
+                      // Tidak perlu try-catch di sini karena handleChooseProduct menggunakan
+                      // useMutation yang menangani error melalui onError callback
+                      handleChooseProduct(
+                        selectedProductDOs[0].doId,
+                        selectedProductId
+                      );
+                      // Modal akan ditutup di onSuccess atau onError callback pada chooseProduct
+                    }
+                  }}
+                  disabled={chooseProduct.isPending}
+                  className="flex-1 text-white transition-all duration-200 bg-blue-600 shadow-md hover:bg-blue-700 hover:shadow-lg"
+                >
+                  {chooseProduct.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Memproses...
+                    </>
+                  ) : (
+                    <>
+                      <Package className="w-4 h-4 mr-2" />
+                      Muat Barang
+                    </>
+                  )}
+                </Button>
+              </div>
             </DialogFooter>
           </div>
         </DialogContent>
