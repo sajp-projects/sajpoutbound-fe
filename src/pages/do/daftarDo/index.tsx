@@ -186,7 +186,6 @@ export default function DaftarDo() {
               variant="outline"
               size="sm"
               leftIcon={<Download className="w-3 h-3 sm:h-4 sm:w-4" />}
-              className="w-full sm:w-auto"
             >
               Export
             </Button>

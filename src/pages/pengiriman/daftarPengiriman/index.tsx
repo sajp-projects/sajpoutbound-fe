@@ -1,5 +1,5 @@
 import { useDeleteShipment, useShipmentsWithParams } from "@/hooks/pengiriman";
-import { Download, Plus } from "lucide-react";
+import { Download, Filter, Plus } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 
 import { ActionButtons, ActionType } from "@/components/ActionButtons";
@@ -15,7 +15,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import {
   Table,
@@ -177,6 +176,30 @@ export default function DaftarPengiriman() {
     return actions;
   };
 
+  const getStatusFilterLabel = () => {
+    switch (statusFilter) {
+      case SHIPMENT_STATUS.PENDING:
+        return "Pending";
+      case SHIPMENT_STATUS.PROSES:
+        return "Proses";
+      case SHIPMENT_STATUS.SELESAI:
+        return "Selesai";
+      default:
+        return "Status";
+    }
+  };
+
+  const getTypeFilterLabel = () => {
+    switch (typeFilter) {
+      case SHIPMENT_TYPE.ANTAR:
+        return "Antar";
+      case SHIPMENT_TYPE.JEMPUT:
+        return "Jemput";
+      default:
+        return "Tipe";
+    }
+  };
+
   return (
     <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
       <div className="flex flex-row items-center justify-between w-full gap-2">
@@ -207,52 +230,110 @@ export default function DaftarPengiriman() {
             </p>
           </div>
           <div className="flex flex-wrap items-center w-full gap-2 sm:gap-3 sm:w-auto">
+            <div className="w-[160px] sm:w-[190px]">
+              <Select
+                value={statusFilter || "all"}
+                onValueChange={(value) => handleFilter("status", value)}
+              >
+                <SelectTrigger className="flex items-center w-full text-xs text-gray-700 bg-white border-gray-300 h-9 hover:bg-gray-50 sm:text-sm">
+                  <div className="flex items-center">
+                    <Filter className="w-3 h-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+                    <span className="truncate">{getStatusFilterLabel()}</span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px] bg-white border border-gray-300 rounded-md overflow-auto">
+                  <SelectItem
+                    value="all"
+                    className={cn(!statusFilter && "font-medium text-blue-600")}
+                  >
+                    Semua Status
+                  </SelectItem>
+                  <SelectItem
+                    value={SHIPMENT_STATUS.PENDING}
+                    className={cn(
+                      statusFilter === SHIPMENT_STATUS.PENDING &&
+                        "font-medium text-blue-600"
+                    )}
+                  >
+                    Pending
+                  </SelectItem>
+                  <SelectItem
+                    value={SHIPMENT_STATUS.PROSES}
+                    className={cn(
+                      statusFilter === SHIPMENT_STATUS.PROSES &&
+                        "font-medium text-blue-600"
+                    )}
+                  >
+                    Proses
+                  </SelectItem>
+                  <SelectItem
+                    value={SHIPMENT_STATUS.SELESAI}
+                    className={cn(
+                      statusFilter === SHIPMENT_STATUS.SELESAI &&
+                        "font-medium text-blue-600"
+                    )}
+                  >
+                    Selesai
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="w-[160px] sm:w-[190px]">
+              <Select
+                value={typeFilter || "all"}
+                onValueChange={(value) => handleFilter("type", value)}
+              >
+                <SelectTrigger className="flex items-center w-full text-xs text-gray-700 bg-white border-gray-300 h-9 hover:bg-gray-50 sm:text-sm">
+                  <div className="flex items-center">
+                    <Filter className="w-3 h-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+                    <span className="truncate">{getTypeFilterLabel()}</span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px] bg-white border border-gray-300 rounded-md overflow-auto">
+                  <SelectItem
+                    value="all"
+                    className={cn(!typeFilter && "font-medium text-blue-600")}
+                  >
+                    Semua Tipe
+                  </SelectItem>
+                  <SelectItem
+                    value={SHIPMENT_TYPE.ANTAR}
+                    className={cn(
+                      typeFilter === SHIPMENT_TYPE.ANTAR &&
+                        "font-medium text-blue-600"
+                    )}
+                  >
+                    Antar
+                  </SelectItem>
+                  <SelectItem
+                    value={SHIPMENT_TYPE.JEMPUT}
+                    className={cn(
+                      typeFilter === SHIPMENT_TYPE.JEMPUT &&
+                        "font-medium text-blue-600"
+                    )}
+                  >
+                    Jemput
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button
               variant="outline"
               size="sm"
               leftIcon={<Download className="w-3 h-3 sm:h-4 sm:w-4" />}
-              className="w-full sm:w-auto"
             >
               Export
             </Button>
           </div>
         </div>
 
-        <div className="flex flex-col w-full gap-3 mb-4 sm:flex-row sm:items-center sm:mb-6">
-          <div className="w-full sm:w-1/2 md:w-1/3">
-            <SearchInput placeholder="Cari pengiriman..." className="w-full" />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 ml-auto sm:flex-nowrap">
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => handleFilter("status", value)}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value={SHIPMENT_STATUS.PENDING}>Pending</SelectItem>
-                <SelectItem value={SHIPMENT_STATUS.PROSES}>Proses</SelectItem>
-                <SelectItem value={SHIPMENT_STATUS.SELESAI}>Selesai</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={typeFilter}
-              onValueChange={(value) => handleFilter("type", value)}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Tipe" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Tipe</SelectItem>
-                <SelectItem value={SHIPMENT_TYPE.ANTAR}>Antar</SelectItem>
-                <SelectItem value={SHIPMENT_TYPE.JEMPUT}>Jemput</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="w-full mb-4 sm:mb-6">
+          <SearchInput
+            placeholder="Cari pengiriman..."
+            className="w-full sm:max-w-md"
+          />
         </div>
 
         {isLoading ? (

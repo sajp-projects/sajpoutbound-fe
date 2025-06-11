@@ -234,7 +234,7 @@ export default function DetailPelanggan() {
                       <div>
                         <p className="text-sm text-gray-500">ID</p>
                         <p
-                          className="p-1 font-mono font-medium text-gray-900 rounded bg-gray-50 wrap-text break-all"
+                          className="p-1 font-mono font-medium text-gray-900 break-all rounded bg-gray-50 wrap-text"
                           title={customer?.id_sl}
                         >
                           {customer?.id_sl}
@@ -354,11 +354,11 @@ export default function DetailPelanggan() {
             {activeTab === "deliveryOrders" && (
               <div className="space-y-4">
                 <div className="p-4 border border-gray-200 rounded-lg">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-2 sm:mb-0">
+                  <div className="flex flex-col items-start justify-between mb-4 sm:flex-row sm:items-center">
+                    <h3 className="mb-2 text-lg font-medium text-gray-900 sm:mb-0">
                       Delivery Order {customer.name}
                     </h3>
-                    <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
+                    <span className="px-2 py-1 text-sm text-gray-500 bg-gray-100 rounded-md">
                       Total:{" "}
                       <span className="font-medium text-gray-700">
                         {activeDeliveryOrders.length}
@@ -381,7 +381,7 @@ export default function DetailPelanggan() {
                     <div>
                       {/* Desktop View */}
                       <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
-                        <div className="w-full overflow-x-auto overflow-auto  ">
+                        <div className="w-full overflow-auto overflow-x-auto ">
                           <Table>
                             <TableHeader>
                               <TableRow className="border-b border-gray-200 bg-gray-50">
@@ -456,10 +456,10 @@ export default function DetailPelanggan() {
                             className="w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
                           >
                             <div className="w-full p-3">
-                              <div className="flex justify-between items-start mb-2">
+                              <div className="flex items-start justify-between mb-2">
                                 <div className="flex-1 mr-2 overflow-hidden">
                                   <Link to={`/do/${do_.id}`}>
-                                    <h3 className="text-sm font-medium text-blue-600 hover:underline truncate">
+                                    <h3 className="text-sm font-medium text-blue-600 truncate hover:underline">
                                       DO-{do_.id.substring(0, 8)}
                                     </h3>
                                   </Link>
@@ -472,7 +472,7 @@ export default function DetailPelanggan() {
                                 </div>
                               </div>
 
-                              <div className="flex justify-between items-center text-xs text-gray-600 mt-2">
+                              <div className="flex items-center justify-between mt-2 text-xs text-gray-600">
                                 <div>
                                   {do_.items.length} item (
                                   {do_.items.reduce(
