@@ -163,19 +163,16 @@ export function Combobox({
               {selectedItem ? selectedItem.label : placeholder}
               <div className="flex ml-2">
                 {value && onClear && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
+                  <div
                     onClick={(e) => {
                       e.stopPropagation();
                       onClear();
                       setOpen(false);
                     }}
-                    className="w-4 h-4 p-0 mr-1 text-gray-400 hover:text-gray-500"
+                    className="flex items-center justify-center w-4 h-4 p-0 mr-1 text-gray-400 cursor-pointer hover:text-gray-500"
                   >
                     <X className="w-4 h-4" />
-                  </Button>
+                  </div>
                 )}
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin opacity-70" />

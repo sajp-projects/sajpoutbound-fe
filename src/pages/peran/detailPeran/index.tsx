@@ -158,7 +158,7 @@ export default function DetailPeran() {
                 )}
                 onClick={() => setActiveTab("info")}
               >
-                <Info className="w-4 h-4 mr-2 flex-shrink-0" />
+                <Info className="flex-shrink-0 w-4 h-4 mr-2" />
                 Informasi Peran
               </button>
               <button
@@ -170,7 +170,7 @@ export default function DetailPeran() {
                 )}
                 onClick={() => setActiveTab("users")}
               >
-                <Users className="w-4 h-4 mr-2 flex-shrink-0" />
+                <Users className="flex-shrink-0 w-4 h-4 mr-2" />
                 Pengguna Terkait
                 {role?.users && role.users.length > 0 && (
                   <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
@@ -362,7 +362,7 @@ export default function DetailPeran() {
                                     <div className="flex items-center text-sm text-gray-600">
                                       <Mail className="w-4 h-4 mr-2 text-gray-400" />
                                       <span
-                                        className="truncate max-w-full"
+                                        className="max-w-full truncate"
                                         title={user.email}
                                       >
                                         {user.email}
@@ -433,7 +433,7 @@ export default function DetailPeran() {
                                 <div className="flex items-center text-sm text-gray-600">
                                   <Mail className="w-4 h-4 mr-2 text-gray-400" />
                                   <span
-                                    className="truncate max-w-full"
+                                    className="max-w-full truncate"
                                     title={user.email}
                                   >
                                     {user.email}
@@ -442,7 +442,7 @@ export default function DetailPeran() {
                                 <div className="flex items-center text-sm text-gray-600">
                                   <Calendar className="w-4 h-4 mr-2 text-gray-400" />
                                   <span
-                                    className="truncate max-w-full"
+                                    className="max-w-full truncate"
                                     title={`Bergabung: ${formatDate(
                                       user.createdAt
                                     )}`}
@@ -453,7 +453,7 @@ export default function DetailPeran() {
                                 <div className="flex items-center text-sm text-gray-600">
                                   <User className="w-4 h-4 mr-2 text-gray-400" />
                                   <span
-                                    className="truncate max-w-full"
+                                    className="max-w-full truncate"
                                     title={`ID: ${user.id}`}
                                   >
                                     ID: {user.id}

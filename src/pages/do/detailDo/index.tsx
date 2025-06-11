@@ -366,109 +366,109 @@ export default function DetailDo() {
                   Daftar Barang
                 </h3>
 
-                <div className="overflow-hidden border border-gray-200 rounded-lg">
-                  <div className="overflow-auto overflow-x-auto ">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-b border-gray-200 bg-gray-50">
-                          <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
-                            No
-                          </TableHead>
-                          <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                            Nama Barang
-                          </TableHead>
-                          <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
-                            Kuantitas Dipesan
-                          </TableHead>
-                          <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
-                            <div className="inline-block ml-1">
-                              <Badge
-                                variant="outline"
-                                className="font-medium px-2 py-0.5 bg-red-100 text-red-800 border-red-200"
-                              >
-                                Kuantitas Pending
-                              </Badge>
-                            </div>
-                          </TableHead>
-                          <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
-                            <div className="inline-block ml-1">
-                              <Badge
-                                variant="outline"
-                                className="font-medium px-2 py-0.5 bg-yellow-100 text-yellow-800 border-yellow-200"
-                              >
-                                Kuantitas Diproses
-                              </Badge>
-                            </div>
-                          </TableHead>
-                          <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
-                            <div className="inline-block ml-1">
-                              <Badge
-                                variant="outline"
-                                className="font-medium px-2 py-0.5 bg-green-100 text-green-800 border-green-200"
-                              >
-                                Kuantitas Completed
-                              </Badge>
-                            </div>
-                          </TableHead>
-                          <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                            Satuan
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {deliveryOrder.items.length === 0 ? (
-                          <TableRow>
-                            <TableCell
-                              colSpan={7}
-                              className="px-4 py-6 text-sm text-center text-gray-500"
-                            >
-                              Tidak ada item dalam delivery order ini
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          deliveryOrder.items.map((item, index) => (
-                            <TableRow key={item.id}>
-                              <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                {index + 1}
-                              </TableCell>
-                              <TableCell className="px-4 py-3 font-medium text-blue-600">
-                                <Link
-                                  to={`/barang/${item.productId}`}
-                                  className="text-blue-600 hover:underline"
+                {/* Desktop view with table */}
+                <div className="hidden sm:block">
+                  <div className="overflow-hidden border border-gray-200 rounded-lg">
+                    <div className="overflow-auto overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-b border-gray-200 bg-gray-50">
+                            <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
+                              No
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                              Nama Barang
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                              Kuantitas Dipesan
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                              <div className="inline-block ml-1">
+                                <Badge
+                                  variant="outline"
+                                  className="font-medium px-2 py-0.5 bg-red-100 text-red-800 border-red-200"
                                 >
-                                  {" "}
-                                  {item.product.name}
-                                </Link>
-                              </TableCell>
-                              <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                {formatNumber(item.quantity)}
-                              </TableCell>
-                              <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                {formatNumber(item.pendingQuantity)}
-                              </TableCell>
-                              <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                {formatNumber(item.processingQuantity)}
-                              </TableCell>
-                              <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                {formatNumber(item.completedQuantity)}
-                              </TableCell>
-                              <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                {item.product.satuan}
+                                  Kuantitas Pending
+                                </Badge>
+                              </div>
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                              <div className="inline-block ml-1">
+                                <Badge
+                                  variant="outline"
+                                  className="font-medium px-2 py-0.5 bg-yellow-100 text-yellow-800 border-yellow-200"
+                                >
+                                  Kuantitas Diproses
+                                </Badge>
+                              </div>
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                              <div className="inline-block ml-1">
+                                <Badge
+                                  variant="outline"
+                                  className="font-medium px-2 py-0.5 bg-green-100 text-green-800 border-green-200"
+                                >
+                                  Kuantitas Completed
+                                </Badge>
+                              </div>
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                              Satuan
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {deliveryOrder.items.length === 0 ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={7}
+                                className="px-4 py-6 text-sm text-center text-gray-500"
+                              >
+                                Tidak ada item dalam delivery order ini
                               </TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
+                          ) : (
+                            deliveryOrder.items.map((item, index) => (
+                              <TableRow key={item.id}>
+                                <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                  {index + 1}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 font-medium text-blue-600">
+                                  <Link
+                                    to={`/barang/${item.productId}`}
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    {" "}
+                                    {item.product.name}
+                                  </Link>
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                  {formatNumber(item.quantity)}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                  {formatNumber(item.pendingQuantity)}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                  {formatNumber(item.processingQuantity)}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                  {formatNumber(item.completedQuantity)}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                  {item.product.satuan}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 </div>
 
-                {/* Mobile view for Items */}
-                <div className="mt-4 sm:hidden">
-                  <h4 className="mb-2 text-sm font-medium text-gray-700">
-                    Daftar Item:
-                  </h4>
-                  <div className="space-y-3">
+                {/* Mobile view with cards */}
+                <div className="sm:hidden">
+                  <div className="w-full space-y-3">
                     {deliveryOrder.items.length === 0 ? (
                       <p className="text-sm text-gray-500">
                         Tidak ada item dalam delivery order ini
@@ -477,59 +477,66 @@ export default function DetailDo() {
                       deliveryOrder.items.map((item, index) => (
                         <div
                           key={item.id}
-                          className="p-3 border border-gray-200 rounded-md"
+                          className="w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
                         >
-                          <div className="flex justify-between">
-                            <span className="text-sm font-medium text-gray-800">
-                              #{index + 1}
-                            </span>
-                            <span className="font-medium text-blue-600">
-                              {item.product.name}
-                            </span>
-                          </div>
-                          <div className="flex justify-between mt-2 text-sm text-gray-600">
-                            <span>Kuantitas Dipesan:</span>
-                            <span>
-                              {formatNumber(item.quantity)}{" "}
-                              {item.product.satuan}
-                            </span>
-                          </div>
-                          <div className="flex justify-between mt-2 text-sm text-gray-600">
-                            <span>Status:</span>
-                            <div className="flex flex-wrap gap-1">
-                              {item.pendingQuantity > 0 && (
-                                <span className="text-gray-600">
-                                  <Badge
-                                    variant="outline"
-                                    className="mr-1 font-medium px-1.5 py-0.5 text-xs bg-red-100 text-red-800 border-red-200"
-                                  >
-                                    Pending
-                                  </Badge>
+                          <div className="w-full p-3">
+                            <div className="flex items-start justify-between w-full mb-2">
+                              <div className="max-w-[80%]">
+                                <Link
+                                  to={`/barang/${item.productId}`}
+                                  className="text-blue-600 hover:underline"
+                                >
+                                  <h3 className="text-sm font-medium text-blue-600 break-words">
+                                    {item.product.name}
+                                  </h3>
+                                </Link>
+                                <p className="mt-1 text-xs text-gray-600">
+                                  <span className="font-medium">
+                                    Kuantitas:
+                                  </span>{" "}
+                                  {formatNumber(item.quantity)}{" "}
+                                  {item.product.satuan}
+                                </p>
+                              </div>
+                              <span className="px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">
+                                #{index + 1}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-2 mt-3">
+                              <div className="flex flex-col items-center p-2 border border-red-100 rounded-md bg-red-50">
+                                <Badge
+                                  variant="outline"
+                                  className="mb-1 font-medium px-1.5 py-0.5 text-xs bg-red-100 text-red-800 border-red-200"
+                                >
+                                  Pending
+                                </Badge>
+                                <span className="text-sm font-medium text-red-800">
                                   {formatNumber(item.pendingQuantity)}
                                 </span>
-                              )}
-                              {item.processingQuantity > 0 && (
-                                <span className="text-gray-600">
-                                  <Badge
-                                    variant="outline"
-                                    className="mr-1 font-medium px-1.5 py-0.5 text-xs bg-yellow-100 text-yellow-800 border-yellow-200"
-                                  >
-                                    Diproses
-                                  </Badge>
+                              </div>
+                              <div className="flex flex-col items-center p-2 border border-yellow-100 rounded-md bg-yellow-50">
+                                <Badge
+                                  variant="outline"
+                                  className="mb-1 font-medium px-1.5 py-0.5 text-xs bg-yellow-100 text-yellow-800 border-yellow-200"
+                                >
+                                  Diproses
+                                </Badge>
+                                <span className="text-sm font-medium text-yellow-800">
                                   {formatNumber(item.processingQuantity)}
                                 </span>
-                              )}
-                              {item.completedQuantity > 0 && (
-                                <span className="text-gray-600">
-                                  <Badge
-                                    variant="outline"
-                                    className="mr-1 font-medium px-1.5 py-0.5 text-xs bg-green-100 text-green-800 border-green-200"
-                                  >
-                                    Completed
-                                  </Badge>
+                              </div>
+                              <div className="flex flex-col items-center p-2 border border-green-100 rounded-md bg-green-50">
+                                <Badge
+                                  variant="outline"
+                                  className="mb-1 font-medium px-1.5 py-0.5 text-xs bg-green-100 text-green-800 border-green-200"
+                                >
+                                  Completed
+                                </Badge>
+                                <span className="text-sm font-medium text-green-800">
                                   {formatNumber(item.completedQuantity)}
                                 </span>
-                              )}
+                              </div>
                             </div>
                           </div>
                         </div>

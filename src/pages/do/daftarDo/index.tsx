@@ -44,6 +44,7 @@ const DO_STATUS = {
   PENDING: "PENDING",
   PROSES: "PROSES",
   COMPLETED: "COMPLETED",
+  SELESAI: "SELESAI",
 };
 
 interface ActionConfig {
@@ -178,6 +179,8 @@ export default function DaftarDo() {
         return "bg-blue-100 text-blue-800";
       case "COMPLETED":
         return "bg-green-100 text-green-800";
+      case "SELESAI":
+        return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -190,6 +193,8 @@ export default function DaftarDo() {
       case DO_STATUS.PROSES:
         return "Proses";
       case DO_STATUS.COMPLETED:
+        return "Selesai";
+      case DO_STATUS.SELESAI:
         return "Selesai";
       default:
         return "Status";
@@ -305,7 +310,7 @@ export default function DaftarDo() {
         ) : (
           <div className="w-full">
             <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
-              <div className="w-full overflow-x-auto overflow-auto  ">
+              <div className="w-full overflow-auto overflow-x-auto ">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b border-gray-200 bg-gray-50">

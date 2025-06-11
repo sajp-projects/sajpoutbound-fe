@@ -201,9 +201,9 @@ export default function TambahPengiriman() {
 
   const deliveryOrders =
     deliveryOrdersData?.deliveryOrders?.map((do_item) => ({
-      label: `${do_item.id} - ${do_item.customer.name}`,
+      label: `${do_item.customer.name}`,
       value: do_item.id,
-      secondary: `${do_item.items.length} items`,
+      secondary: `${do_item.address} - ${do_item.items.length} items`,
     })) || [];
 
   const createShipment = useCreateShipment({
@@ -269,14 +269,14 @@ export default function TambahPengiriman() {
       );
 
       if (doIndex !== -1) {
-        // Cek apakah sudah ada data produk yang tersimpan untuk DO ini
+        // Cek apakah sudah ada data barang yang tersimpan untuk DO ini
         const existingProducts = doFormState[activeDOId]?.products;
 
         if (existingProducts && existingProducts.length > 0) {
           // Gunakan data yang sudah tersimpan jika ada
           form.setValue(`deliveryOrders.${doIndex}.products`, existingProducts);
         } else {
-          // Inisialisasi array produk dengan requestedQuantity 0 jika belum ada
+          // Inisialisasi array barang dengan requestedQuantity 0 jika belum ada
           const initialProducts = doProducts.map((product) => ({
             productId: product.id,
             requestedQuantity: 0,
@@ -292,8 +292,8 @@ export default function TambahPengiriman() {
   useEffect(() => {
     if (activeDOError && activeDOId) {
       showErrorAlert(
-        "Error Memuat Produk",
-        `Gagal memuat produk untuk DO ${activeDOId}: ${activeDOError.message}`
+        "Error Memuat Barang",
+        `Gagal memuat Barang untuk DO ${activeDOId}: ${activeDOError.message}`
       );
     }
   }, [activeDOError, activeDOId]);
@@ -354,7 +354,7 @@ export default function TambahPengiriman() {
           product.requestedQuantity > selectedProduct.quantity
         ) {
           errors.push(
-            `DO ${doIndex + 1}, Produk ${
+            `DO ${doIndex + 1}, Barang ${
               selectedProduct.name
             }: Jumlah yang diminta (${formatNumber(
               product.requestedQuantity
@@ -396,7 +396,7 @@ export default function TambahPengiriman() {
       requestedQuantity: number;
     }[] = [];
 
-    // Gabungkan semua produk dari semua DO
+    // Gabungkan semua Barang dari semua DO
     values.deliveryOrders.forEach((do_item) => {
       if (!do_item.deliveryOrderId) return;
 
@@ -416,7 +416,7 @@ export default function TambahPengiriman() {
       setIsSubmitting(false);
       showErrorAlert(
         "Validasi Gagal",
-        "Minimal harus ada 1 produk yang dipilih dengan jumlah yang valid"
+        "Minimal harus ada 1 Barang yang dipilih dengan jumlah yang valid"
       );
       return;
     }
@@ -472,7 +472,7 @@ export default function TambahPengiriman() {
     // Simpan state form yang sedang aktif untuk mencegah reset
     const currentFormValues = form.getValues().deliveryOrders;
 
-    // Simpan setiap DO dan produknya ke state
+    // Simpan setiap DO dan barangnya ke state
     currentFormValues.forEach((doItem) => {
       if (doItem.deliveryOrderId) {
         setDoFormState((prev) => ({
@@ -555,7 +555,7 @@ export default function TambahPengiriman() {
     form.setValue("type", value);
   };
 
-  // Simpan perubahan produk saat nilai berubah
+  // Simpan perubahan barang saat nilai berubah
   const handleProductQuantityChange = (
     doId: string,
     productId: string,
@@ -566,14 +566,14 @@ export default function TambahPengiriman() {
       const doData = prev[doId] || { products: [] };
       const products = [...(doData.products || [])];
 
-      // Cari produk yang sesuai
+      // Cari barang yang sesuai
       const productIndex = products.findIndex((p) => p.productId === productId);
 
       if (productIndex !== -1) {
-        // Update produk yang sudah ada
+        // Update barang yang sudah ada
         products[productIndex].requestedQuantity = value;
       } else {
-        // Tambahkan produk baru
+        // Tambahkan barang baru
         products.push({
           productId,
           requestedQuantity: value,
@@ -882,18 +882,18 @@ export default function TambahPengiriman() {
                               />
                             </div>
 
-                            {/* Daftar Produk - ditampilkan jika DO dipilih */}
+                            {/* Daftar barang - ditampilkan jika DO dipilih */}
                             {watchDeliveryOrders[index]?.deliveryOrderId && (
                               <div className="mt-4 ">
                                 <h4 className="mb-2 font-medium text-md">
-                                  Daftar Produk
+                                  Daftar Barang
                                 </h4>
 
                                 {isDOLoading(
                                   watchDeliveryOrders[index].deliveryOrderId
                                 ) && (
                                   <p className="py-2 text-sm text-blue-500">
-                                    Memuat produk...
+                                    Memuat barang...
                                   </p>
                                 )}
 
@@ -907,7 +907,7 @@ export default function TambahPengiriman() {
                                       watchDeliveryOrders[index].deliveryOrderId
                                     ].length === 0) && (
                                     <p className="py-2 text-sm text-red-500">
-                                      Tidak ada produk yang tersedia
+                                      Tidak ada barang yang tersedia
                                     </p>
                                   )}
 
@@ -1054,13 +1054,13 @@ export default function TambahPengiriman() {
               </div>
 
               {/* Tombol Aksi */}
-              <div className="flex flex-col gap-3 pt-4 border-t border-gray-200 sm:flex-row sm:justify-end">
-                <Link to="/pengiriman" className="w-full sm:w-auto">
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <Link to="/pengiriman">
                   <Button
                     type="button"
                     variant="outline"
                     disabled={isSubmitting}
-                    className="w-full text-gray-700 sm:w-auto"
+                    className="text-gray-700"
                   >
                     Batal
                   </Button>
@@ -1068,7 +1068,7 @@ export default function TambahPengiriman() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full text-white bg-blue-600 hover:bg-blue-700 sm:w-auto"
+                  className="text-white bg-blue-600 hover:bg-blue-700"
                 >
                   {isSubmitting ? (
                     <>
@@ -1078,7 +1078,7 @@ export default function TambahPengiriman() {
                   ) : (
                     <>
                       <Save className="w-4 h-4 mr-2" />
-                      Simpan Pengiriman
+                      Simpan
                     </>
                   )}
                 </Button>

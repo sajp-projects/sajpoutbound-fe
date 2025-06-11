@@ -318,7 +318,7 @@ export function useChooseProduct(options = {}) {
 
       if (!result.success) {
         throw new Error(
-          JSON.stringify(createErrorResponse(result, "Gagal memilih produk"))
+          JSON.stringify(createErrorResponse(result, "Gagal memilih barang"))
         );
       }
 
@@ -364,7 +364,7 @@ export function useShipmentChosenProducts(shipmentId: string, options = {}) {
 
         if (!result.success) {
           throw new Error(
-            result.message || "Gagal mendapatkan produk terpilih"
+            result.message || "Gagal mendapatkan barang terpilih"
           );
         }
 

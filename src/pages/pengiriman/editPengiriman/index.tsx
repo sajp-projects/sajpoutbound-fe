@@ -411,13 +411,13 @@ export default function EditPengiriman() {
               </div>
 
               {/* Tombol Aksi */}
-              <div className="flex flex-col gap-3 pt-4 border-t border-gray-200 sm:flex-row sm:justify-end">
-                <Link to={`/pengiriman/${id}`} className="w-full sm:w-auto">
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <Link to={`/pengiriman/${id}`}>
                   <Button
                     type="button"
                     variant="outline"
                     disabled={isSubmitting}
-                    className="w-full text-gray-700 sm:w-auto"
+                    className="text-gray-700"
                   >
                     Batal
                   </Button>
@@ -425,7 +425,7 @@ export default function EditPengiriman() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full text-white bg-blue-600 hover:bg-blue-700 sm:w-auto"
+                  className="text-white bg-blue-600 hover:bg-blue-700"
                 >
                   {isSubmitting ? (
                     <>
@@ -435,7 +435,7 @@ export default function EditPengiriman() {
                   ) : (
                     <>
                       <Save className="w-4 h-4 mr-2" />
-                      Simpan Perubahan
+                      Simpan
                     </>
                   )}
                 </Button>
