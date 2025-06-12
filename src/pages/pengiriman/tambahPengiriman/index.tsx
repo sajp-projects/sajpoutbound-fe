@@ -206,7 +206,7 @@ export default function TambahPengiriman() {
 
   const deliveryOrders =
     deliveryOrdersData?.deliveryOrders?.map((do_item) => ({
-      label: `${do_item.customer.name}`,
+      label: `${do_item.doNumber} - ${do_item.customer.name}`,
       value: do_item.id,
       secondary: `${do_item.address} - ${do_item.items.length} barang`,
     })) || [];
