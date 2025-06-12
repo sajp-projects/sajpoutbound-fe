@@ -380,3 +380,39 @@ export function useShipmentChosenProducts(shipmentId: string, options = {}) {
     ...options,
   });
 }
+
+export function useDeleteShipmentItems(options = {}) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      shipmentId,
+      deliveryOrderId,
+    }: {
+      shipmentId: string;
+      deliveryOrderId: string;
+    }) => {
+      const response = await fetchApi(
+        `${BASE_URL}/shipments/${shipmentId}/items/${deliveryOrderId}`,
+        {},
+        {
+          method: "DELETE",
+        }
+      );
+
+      const result: ApiResponse<void> = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Gagal menghapus item pengiriman");
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.detail(variables.shipmentId),
+      });
+      queryClient.invalidateQueries({ queryKey: deliveryOrderKeys.all });
+    },
+    ...options,
+  });
+}

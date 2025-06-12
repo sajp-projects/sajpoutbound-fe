@@ -96,6 +96,7 @@ export interface UpdateShipmentInput {
   armadaId?: string;
   internalNote?: string;
   plateNumber?: string;
+  items?: CreateShipmentItem[];
 }
 
 export interface ShipmentPagination {
