@@ -6,7 +6,11 @@ import { joiResolver } from "@hookform/resolvers/joi";
 import { useForm } from "react-hook-form";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 
-import { useShipment, useUpdateShipment } from "@/hooks/pengiriman";
+import {
+  shipmentKeys,
+  useShipment,
+  useUpdateShipment,
+} from "@/hooks/pengiriman";
 import { useArmadas } from "@/hooks/armada";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
@@ -33,6 +37,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { showSuccessAlert, showErrorAlert } from "@/utils/sweetAlert";
 import { cn } from "@/lib/utils";
 import { UpdateShipmentInput } from "@/types/pengiriman";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Validasi plat nomor Indonesia
 const plateNumberRegex = /^[A-Z]{1,2}\s?\d{1,4}\s?[A-Z]{1,3}$/;
@@ -71,6 +76,7 @@ type FormValues = {
 };
 
 export default function EditPengiriman() {
+  const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -111,6 +117,15 @@ export default function EditPengiriman() {
 
   const updateShipment = useUpdateShipment({
     onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.detail(id || ""),
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.archived(),
+      });
       showSuccessAlert("Berhasil!", "Pengiriman berhasil diperbarui").then(
         () => {
           navigate(`/pengiriman/${id}`);

@@ -5,7 +5,7 @@ import Joi from "joi";
 import { joiResolver } from "@hookform/resolvers/joi";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Loader2, Plus, Save, Trash } from "lucide-react";
-import { useCreateShipment } from "@/hooks/pengiriman";
+import { shipmentKeys, useCreateShipment } from "@/hooks/pengiriman";
 import {
   useDeliveryOrders,
   useDeliveryOrder,
@@ -215,6 +215,12 @@ export default function TambahPengiriman() {
     onSuccess: (data: Shipment) => {
       queryClient.invalidateQueries({ queryKey: deliveryOrderKeys.list({}) });
       queryClient.invalidateQueries({ queryKey: ["deliveryOrders"] });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.archived(),
+      });
       showSuccessAlert("Berhasil!", "Pengiriman berhasil dibuat").then(() => {
         navigate(`/pengiriman/${data.id}`);
       });
