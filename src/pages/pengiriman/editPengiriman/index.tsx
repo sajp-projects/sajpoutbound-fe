@@ -338,8 +338,44 @@ export default function EditPengiriman() {
         ...prev,
         [activeDOId]: doProducts,
       }));
+
+      // Temukan indeks DO yang sesuai dengan activeDOId
+      const doIndex = watchDeliveryOrders.findIndex(
+        (item) => item.deliveryOrderId === activeDOId
+      );
+
+      if (doIndex !== -1) {
+        // Tampilkan semua produk, bukan hanya yang memiliki pendingQuantity > 0
+        const availableProducts = doProducts; // Tampilkan semua produk
+
+        // Cek apakah sudah ada products yang tersimpan untuk DO ini
+        const existingProducts = watchDeliveryOrders[doIndex]?.products || [];
+
+        if (existingProducts.length === 0) {
+          // Inisialisasi array barang dengan requestedQuantity 0 untuk semua barang
+          const initialProducts = availableProducts.map((product) => ({
+            productId: product.id,
+            requestedQuantity: 0,
+          }));
+
+          form.setValue(`deliveryOrders.${doIndex}.products`, initialProducts);
+        } else {
+          // Pastikan semua produk yang tersedia ada dalam form
+          const updatedProducts = availableProducts.map((product) => {
+            const existingProduct = existingProducts.find(
+              (ep) => ep.productId === product.id
+            );
+            return {
+              productId: product.id,
+              requestedQuantity: existingProduct?.requestedQuantity || 0,
+            };
+          });
+
+          form.setValue(`deliveryOrders.${doIndex}.products`, updatedProducts);
+        }
+      }
     }
-  }, [activeDOData, activeDOId]);
+  }, [activeDOData, activeDOId, form, watchDeliveryOrders]);
 
   // Handle error saat memuat DO
   useEffect(() => {
@@ -512,6 +548,7 @@ export default function EditPengiriman() {
       if (!do_item.deliveryOrderId) return;
 
       do_item.products.forEach((product) => {
+        // Hanya kirim barang yang memiliki requestedQuantity > 0
         if (product.productId && product.requestedQuantity > 0) {
           items.push({
             deliveryOrderId: do_item.deliveryOrderId,
@@ -940,13 +977,7 @@ export default function EditPengiriman() {
                                       selectedDOProducts[
                                         watchDeliveryOrders[index]
                                           .deliveryOrderId
-                                      ].length === 0 ||
-                                      selectedDOProducts[
-                                        watchDeliveryOrders[index]
-                                          .deliveryOrderId
-                                      ].filter(
-                                        (product) => product.pendingQuantity > 0
-                                      ).length === 0) && (
+                                      ].length === 0) && (
                                       <p className="py-2 text-sm text-red-500">
                                         Tidak ada barang yang tersedia
                                       </p>
@@ -962,112 +993,105 @@ export default function EditPengiriman() {
                                         {selectedDOProducts[
                                           watchDeliveryOrders[index]
                                             .deliveryOrderId
-                                        ]
-                                          .filter(
-                                            (product) =>
-                                              product.pendingQuantity > 0
-                                          )
-                                          .map((product) => {
-                                            const formProducts =
-                                              watchDeliveryOrders[index]
-                                                ?.products || [];
-                                            const productFormIndex =
-                                              formProducts.findIndex(
-                                                (fp) =>
-                                                  fp.productId === product.id
-                                              );
-
-                                            return (
-                                              <div
-                                                key={product.id}
-                                                className="grid items-center grid-cols-1 gap-2 pb-2 border-b border-gray-200 sm:grid-cols-7 last:border-0 last:pb-0"
-                                              >
-                                                <div className="sm:col-span-4">
-                                                  <p className="font-medium">
-                                                    {product.name}
-                                                  </p>
-                                                  <p className="text-sm text-gray-500">
-                                                    Stok tersedia:{" "}
-                                                    {formatNumber(
-                                                      product.pendingQuantity
-                                                    )}{" "}
-                                                    {product.satuan}
-                                                  </p>
-                                                </div>
-                                                <div className="sm:col-span-3">
-                                                  {productFormIndex !== -1 && (
-                                                    <>
-                                                      <FormField
-                                                        control={form.control}
-                                                        name={`deliveryOrders.${index}.products.${productFormIndex}.requestedQuantity`}
-                                                        render={({ field }) => (
-                                                          <FormItem className="h-[80px]">
-                                                            <FormControl>
-                                                              <Input
-                                                                type="text"
-                                                                placeholder="Masukkan jumlah"
-                                                                value={
-                                                                  field.value >
-                                                                  0
-                                                                    ? formatNumber(
-                                                                        field.value
-                                                                      )
-                                                                    : ""
-                                                                }
-                                                                onChange={(
-                                                                  e
-                                                                ) => {
-                                                                  const numValue =
-                                                                    parseInt(
-                                                                      e.target.value.replace(
-                                                                        /\D/g,
-                                                                        ""
-                                                                      )
-                                                                    ) || 0;
-                                                                  field.onChange(
-                                                                    numValue
-                                                                  );
-                                                                }}
-                                                                disabled={
-                                                                  isSubmitting ||
-                                                                  isChosen
-                                                                }
-                                                                className={cn(
-                                                                  field.value >
-                                                                    product.quantity &&
-                                                                    "border-orange-500"
-                                                                )}
-                                                              />
-                                                            </FormControl>
-                                                            <div className="min-h-[20px]">
-                                                              {field.value >
-                                                                product.quantity && (
-                                                                <p className="text-xs text-orange-500">
-                                                                  Nilai melebihi
-                                                                  stok tersedia
-                                                                </p>
-                                                              )}
-                                                            </div>
-                                                          </FormItem>
-                                                        )}
-                                                      />
-                                                      <FormField
-                                                        control={form.control}
-                                                        name={`deliveryOrders.${index}.products.${productFormIndex}.productId`}
-                                                        render={({ field }) => (
-                                                          <input
-                                                            type="hidden"
-                                                            {...field}
-                                                            value={product.id}
-                                                          />
-                                                        )}
-                                                      />
-                                                    </>
-                                                  )}
-                                                </div>
-                                              </div>
+                                        ].map((product) => {
+                                          // Cari index produk yang tepat berdasarkan productId di form
+                                          const formProducts =
+                                            watchDeliveryOrders[index]
+                                              ?.products || [];
+                                          const productFormIndex =
+                                            formProducts.findIndex(
+                                              (fp) =>
+                                                fp.productId === product.id
                                             );
-                                          })}
+
+                                          return (
+                                            <div
+                                              key={product.id}
+                                              className="grid items-center grid-cols-1 gap-2 pb-2 border-b border-gray-200 sm:grid-cols-7 last:border-0 last:pb-0"
+                                            >
+                                              <div className="sm:col-span-4">
+                                                <p className="font-medium">
+                                                  {product.name}
+                                                </p>
+                                                <p className="text-sm text-gray-500">
+                                                  Stok tersedia:{" "}
+                                                  {formatNumber(
+                                                    product.pendingQuantity
+                                                  )}{" "}
+                                                  {product.satuan}
+                                                </p>
+                                              </div>
+                                              <div className="sm:col-span-3">
+                                                {productFormIndex !== -1 && (
+                                                  <>
+                                                    <FormField
+                                                      control={form.control}
+                                                      name={`deliveryOrders.${index}.products.${productFormIndex}.requestedQuantity`}
+                                                      render={({ field }) => (
+                                                        <FormItem className="h-[80px]">
+                                                          <FormControl>
+                                                            <Input
+                                                              type="text"
+                                                              placeholder="Masukkan jumlah"
+                                                              value={
+                                                                field.value > 0
+                                                                  ? formatNumber(
+                                                                      field.value
+                                                                    )
+                                                                  : ""
+                                                              }
+                                                              onChange={(e) => {
+                                                                const numValue =
+                                                                  parseInt(
+                                                                    e.target.value.replace(
+                                                                      /\D/g,
+                                                                      ""
+                                                                    )
+                                                                  ) || 0;
+                                                                field.onChange(
+                                                                  numValue
+                                                                );
+                                                              }}
+                                                              disabled={
+                                                                isSubmitting ||
+                                                                isChosen
+                                                              }
+                                                              className={cn(
+                                                                field.value >
+                                                                  product.quantity &&
+                                                                  "border-orange-500"
+                                                              )}
+                                                            />
+                                                          </FormControl>
+                                                          <div className="min-h-[20px]">
+                                                            {field.value >
+                                                              product.quantity && (
+                                                              <p className="text-xs text-orange-500">
+                                                                Nilai melebihi
+                                                                stok tersedia
+                                                              </p>
+                                                            )}
+                                                          </div>
+                                                        </FormItem>
+                                                      )}
+                                                    />
+                                                    <FormField
+                                                      control={form.control}
+                                                      name={`deliveryOrders.${index}.products.${productFormIndex}.productId`}
+                                                      render={({ field }) => (
+                                                        <input
+                                                          type="hidden"
+                                                          {...field}
+                                                          value={product.id}
+                                                        />
+                                                      )}
+                                                    />
+                                                  </>
+                                                )}
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
                                       </div>
                                     )}
                                 </div>
