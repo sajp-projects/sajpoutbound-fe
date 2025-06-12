@@ -271,9 +271,9 @@ export default function DaftarDo() {
                     Proses
                   </SelectItem>
                   <SelectItem
-                    value={DO_STATUS.COMPLETED}
+                    value={DO_STATUS.SELESAI}
                     className={cn(
-                      statusFilter === DO_STATUS.COMPLETED &&
+                      statusFilter === DO_STATUS.SELESAI &&
                         "font-medium text-blue-600"
                     )}
                   >

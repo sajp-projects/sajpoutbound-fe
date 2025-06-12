@@ -53,6 +53,7 @@ export interface SPMB {
 
 export interface Shipment {
   id: string;
+  shipmentNumber: string;
   type: ShipmentType;
   status: ShipmentStatus;
   armadaId: string;

@@ -355,7 +355,7 @@ export default function DaftarPengiriman() {
                         No.
                       </TableHead>
                       <TableHead className="w-[25%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
-                        ID
+                        Nomor Pengiriman
                       </TableHead>
                       <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Plat Nomor
@@ -394,8 +394,11 @@ export default function DaftarPengiriman() {
                             {idx + 1 + (pagination.page - 1) * pagination.limit}
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-gray-600 text-sm">
-                            <div className="wrap-text" title={shipment.id}>
-                              {shipment.id}
+                            <div
+                              className="wrap-text"
+                              title={shipment.shipmentNumber}
+                            >
+                              {shipment.shipmentNumber}
                             </div>
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-gray-600 text-sm">
@@ -472,7 +475,7 @@ export default function DaftarPengiriman() {
                               )}
                             </div>
                             <p className="mt-1 text-xs text-gray-600 break-all">
-                              ID: {shipment.id}
+                              Nomor: {shipment.shipmentNumber}
                             </p>
                           </div>
                         </div>

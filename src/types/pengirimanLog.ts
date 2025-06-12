@@ -18,6 +18,7 @@ export interface ShipmentLog {
     id: string;
     plateNumber: string;
     type: string;
+    shipmentNumber: string;
   };
 }
 

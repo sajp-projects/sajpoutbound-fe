@@ -49,6 +49,35 @@ export default function LogSemuaPengiriman() {
   const logs = data.logs;
   const pagination = data.pagination;
 
+  // Fungsi untuk mendapatkan shipmentNumber dari log
+  const getShipmentNumber = (log: ShipmentLog) => {
+    // Coba ambil dari objek shipment
+    if (log.shipment?.shipmentNumber) {
+      return log.shipment.shipmentNumber;
+    }
+
+    // Coba ambil dari oldData
+    if (
+      log.oldData &&
+      typeof log.oldData === "object" &&
+      "shipmentNumber" in log.oldData
+    ) {
+      return String(log.oldData.shipmentNumber);
+    }
+
+    // Coba ambil dari newData
+    if (
+      log.newData &&
+      typeof log.newData === "object" &&
+      "shipmentNumber" in log.newData
+    ) {
+      return String(log.newData.shipmentNumber);
+    }
+
+    // Fallback ke ID pendek jika tidak ada
+    return log.shipment?.id.substring(0, 8) || "";
+  };
+
   const getEntityTypeLabel = (entityType: string) => {
     switch (entityType) {
       case "SHIPMENT":
@@ -254,8 +283,7 @@ export default function LogSemuaPengiriman() {
                         to={`/pengiriman/${log.shipment.id}`}
                         className="font-medium text-blue-600 hover:underline whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
                       >
-                        {log.shipment.type === "ANTAR" ? "Antar" : "Jemput"} -{" "}
-                        {log.shipment.id.substring(0, 8)}
+                        {getShipmentNumber(log) || "No Number"}
                       </Link>
                     )}
                   </TableCell>
@@ -370,7 +398,7 @@ export default function LogSemuaPengiriman() {
                       className="max-w-full text-sm text-blue-600 truncate hover:underline"
                     >
                       {log.shipment.type === "ANTAR" ? "Antar" : "Jemput"} -{" "}
-                      {log.shipment.id.substring(0, 8)}
+                      {getShipmentNumber(log) || "No Number"}
                     </Link>
                   </div>
                 )}

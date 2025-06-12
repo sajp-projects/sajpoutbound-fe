@@ -437,6 +437,10 @@ export default function LogPengiriman() {
                 ({shipmentData.type === "ANTAR" ? "Antar" : "Jemput"})
               </h2>
               <p className="mt-1 text-sm text-gray-600">
+                <span className="font-medium">Nomor Pengiriman:</span>{" "}
+                {shipmentData.shipmentNumber}
+              </p>
+              <p className="mt-1 text-sm text-gray-600">
                 <span className="font-medium">Status:</span>{" "}
                 {shipmentData.status}
               </p>

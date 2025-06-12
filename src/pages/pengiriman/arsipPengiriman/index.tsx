@@ -126,7 +126,7 @@ export default function ArsipPengiriman() {
                 No
               </TableHead>
               <TableHead className="py-4 font-semibold text-gray-700">
-                ID
+                Nomor Pengiriman
               </TableHead>
               <TableHead className="py-4 font-semibold text-gray-700">
                 Plat Nomor
@@ -168,7 +168,7 @@ export default function ArsipPengiriman() {
                     {idx + 1 + (pagination.page - 1) * pagination.limit}
                   </TableCell>
                   <TableCell className="font-medium text-gray-600">
-                    {shipment.id}
+                    {shipment.shipmentNumber}
                   </TableCell>
                   <TableCell className="text-gray-600">
                     {shipment.type === "ANTAR" ? (
@@ -276,7 +276,7 @@ export default function ArsipPengiriman() {
                     )}
                   </h3>
                   <p className="text-sm text-gray-600 truncate">
-                    ID: {shipment.id}
+                    Nomor: {shipment.shipmentNumber}
                   </p>
                 </div>
                 <div className="flex flex-col items-end">
