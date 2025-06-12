@@ -25,6 +25,7 @@ export interface DeliveryOrderProduct {
 
 export interface DeliveryOrder {
   id: string;
+  doNumber: string;
   customerId: string;
   address: string;
   internalNote: string;

@@ -110,6 +110,9 @@ export default function ArsipDo() {
                 No
               </TableHead>
               <TableHead className="py-4 font-semibold text-gray-700">
+                No. DO
+              </TableHead>
+              <TableHead className="py-4 font-semibold text-gray-700">
                 Pelanggan
               </TableHead>
               <TableHead className="py-4 font-semibold text-gray-700">
@@ -148,6 +151,9 @@ export default function ArsipDo() {
                   >
                     <TableCell className="font-medium text-center">
                       {idx + 1 + (pagination.page - 1) * pagination.limit}
+                    </TableCell>
+                    <TableCell className="font-medium text-gray-600">
+                      {deliveryOrder.doNumber}
                     </TableCell>
                     <TableCell className="font-medium text-blue-600">
                       {deliveryOrder.customer.name}
@@ -249,6 +255,9 @@ export default function ArsipDo() {
                   </h3>
                   <p className="text-sm text-gray-600 truncate">
                     {deliveryOrder.address}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    DO: {deliveryOrder.doNumber}
                   </p>
                 </div>
               </div>

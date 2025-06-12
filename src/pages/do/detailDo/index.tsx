@@ -277,9 +277,9 @@ export default function DetailDo() {
                     </h3>
                     <div className="space-y-3">
                       <div>
-                        <p className="text-sm text-gray-500">ID Dokumen</p>
+                        <p className="text-sm text-gray-500">No. DO</p>
                         <p className="p-1 font-mono text-sm font-medium text-gray-900 break-all rounded bg-gray-50">
-                          {deliveryOrder.id}
+                          {deliveryOrder.doNumber}
                         </p>
                       </div>
                       <div>

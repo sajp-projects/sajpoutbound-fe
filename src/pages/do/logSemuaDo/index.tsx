@@ -54,35 +54,51 @@ export default function LogSemuaDo() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className="text-xs font-medium text-gray-600 mb-1">
+          <div className="mb-1 text-xs font-medium text-gray-600">
             Data delivery order yang dibuat:
           </div>
-          <div className="overflow-x-auto w-full">
+          <div className="w-full overflow-x-auto">
             <table className="w-full text-xs border-collapse">
               <tbody>
                 <tr>
-                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Pelanggan</td>
-                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                    No. DO
+                  </td>
+                  <td className="max-w-full p-1 overflow-hidden border border-gray-200 whitespace-nowrap text-ellipsis">
+                    {newData.doNumber as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                    Pelanggan
+                  </td>
+                  <td className="max-w-full p-1 overflow-hidden border border-gray-200 whitespace-nowrap text-ellipsis">
                     {newData.customerName as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Alamat</td>
-                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                    Alamat
+                  </td>
+                  <td className="max-w-full p-1 overflow-hidden border border-gray-200 whitespace-nowrap text-ellipsis">
                     {newData.address as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Catatan Internal</td>
-                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                    Catatan Internal
+                  </td>
+                  <td className="max-w-full p-1 overflow-hidden border border-gray-200 whitespace-nowrap text-ellipsis">
                     {newData.internalNote as string}
                   </td>
                 </tr>
                 {typeof newData.items !== "undefined" &&
                   Array.isArray(newData.items) && (
                     <tr>
-                      <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Item</td>
-                      <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                      <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                        Item
+                      </td>
+                      <td className="max-w-full p-1 overflow-hidden border border-gray-200 whitespace-nowrap text-ellipsis">
                         <ul className="pl-2 list-inside">
                           {(
                             newData.items as {
@@ -112,18 +128,28 @@ export default function LogSemuaDo() {
       const isRestore = newData?.deletedAt === null;
       return (
         <div>
-          <div className="text-xs font-medium text-gray-600 mb-1">
+          <div className="mb-1 text-xs font-medium text-gray-600">
             {isRestore
               ? "Delivery Order dipulihkan:"
               : "Data delivery order yang diarsipkan:"}
           </div>
           {oldData && (
-            <div className="overflow-x-auto w-full">
+            <div className="w-full overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <tbody>
                   <tr>
-                    <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Status</td>
-                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                    <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                      No. DO
+                    </td>
+                    <td className="max-w-full p-1 overflow-hidden border border-gray-200 whitespace-nowrap text-ellipsis">
+                      {oldData.doNumber as string}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                      Status
+                    </td>
+                    <td className="max-w-full p-1 overflow-hidden border border-gray-200 whitespace-nowrap text-ellipsis">
                       {isRestore ? "Dipulihkan" : "Diarsipkan"}
                     </td>
                   </tr>
@@ -137,6 +163,14 @@ export default function LogSemuaDo() {
 
     if (oldData && newData) {
       const changes = [];
+
+      if (oldData.doNumber !== newData.doNumber) {
+        changes.push({
+          field: "No. DO",
+          oldValue: oldData.doNumber as string,
+          newValue: newData.doNumber as string,
+        });
+      }
 
       if (oldData.customerName !== newData.customerName) {
         changes.push({
@@ -184,12 +218,16 @@ export default function LogSemuaDo() {
 
       return (
         <div>
-          <div className="text-xs font-medium text-gray-600 mb-1">Perubahan:</div>
-          <div className="overflow-x-auto w-full">
+          <div className="mb-1 text-xs font-medium text-gray-600">
+            Perubahan:
+          </div>
+          <div className="w-full overflow-x-auto">
             <table className="w-full text-xs border-collapse">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Field</th>
+                  <th className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                    Field
+                  </th>
                   <th className="px-2 py-1 font-medium text-left border border-gray-200">
                     Nilai Lama
                   </th>
@@ -201,8 +239,10 @@ export default function LogSemuaDo() {
               <tbody>
                 {changes.map((change, idx) => (
                   <tr key={idx}>
-                    <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">{change.field}</td>
-                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                    <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                      {change.field}
+                    </td>
+                    <td className="max-w-full p-1 overflow-hidden border border-gray-200 whitespace-nowrap text-ellipsis">
                       {change.field === "Item" &&
                       "items" in change &&
                       change.items ? (
@@ -222,7 +262,7 @@ export default function LogSemuaDo() {
                         change.oldValue
                       )}
                     </td>
-                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                    <td className="max-w-full p-1 overflow-hidden border border-gray-200 whitespace-nowrap text-ellipsis">
                       {change.field === "Item" &&
                       "items" in change &&
                       change.items ? (
@@ -254,9 +294,48 @@ export default function LogSemuaDo() {
     return null;
   };
 
+  const getDoNumber = (log: DeliveryOrderLog): string => {
+    if (
+      log.newData &&
+      typeof log.newData === "object" &&
+      "doNumber" in log.newData
+    ) {
+      return String(log.newData.doNumber || "");
+    }
+    if (
+      log.oldData &&
+      typeof log.oldData === "object" &&
+      "doNumber" in log.oldData
+    ) {
+      return String(log.oldData.doNumber || "");
+    }
+    return "";
+  };
+
+  const getCustomerName = (log: DeliveryOrderLog): string => {
+    if (log.deliveryOrder) {
+      return log.deliveryOrder.customer.name;
+    }
+    if (
+      log.newData &&
+      typeof log.newData === "object" &&
+      "customerName" in log.newData
+    ) {
+      return String(log.newData.customerName || "");
+    }
+    if (
+      log.oldData &&
+      typeof log.oldData === "object" &&
+      "customerName" in log.oldData
+    ) {
+      return String(log.oldData.customerName || "");
+    }
+    return "";
+  };
+
   const renderLogTable = () => (
     <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
-      <div className="overflow-x-auto w-full">
+      <div className="w-full overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-b border-gray-200 bg-gray-50">
@@ -267,7 +346,10 @@ export default function LogSemuaDo() {
                 Waktu
               </TableHead>
               <TableHead className="py-4 font-semibold text-gray-700">
-                Delivery Order
+                No. DO
+              </TableHead>
+              <TableHead className="py-4 font-semibold text-gray-700">
+                Pelanggan
               </TableHead>
               <TableHead className="py-4 font-semibold text-gray-700">
                 Aksi
@@ -303,13 +385,24 @@ export default function LogSemuaDo() {
                     {formatDate(log.createdAt)}
                   </TableCell>
                   <TableCell>
-                    {log.deliveryOrder && (
+                    {getDoNumber(log) && (
+                      <span className="font-medium text-gray-700">
+                        {getDoNumber(log)}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {log.deliveryOrder ? (
                       <Link
                         to={`/do/${log.deliveryOrder.id}`}
                         className="font-medium text-blue-600 hover:underline whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]"
                       >
                         {log.deliveryOrder.customer.name}
                       </Link>
+                    ) : (
+                      <span className="text-gray-700">
+                        {getCustomerName(log)}
+                      </span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -333,7 +426,7 @@ export default function LogSemuaDo() {
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <p className="text-sm text-gray-700 line-clamp-2 overflow-hidden">
+                    <p className="overflow-hidden text-sm text-gray-700 line-clamp-2">
                       {log.description}
                     </p>
                     <div className="mt-2">
@@ -395,25 +488,37 @@ export default function LogSemuaDo() {
               </div>
 
               <div className="mb-2">
-                {log.deliveryOrder && (
+                {getDoNumber(log) && (
                   <div className="mb-1">
-                    <span className="text-sm font-medium">
-                      Delivery Order:{" "}
+                    <span className="text-sm font-medium">No. DO: </span>
+                    <span className="text-sm text-gray-700">
+                      {getDoNumber(log)}
                     </span>
-                    <Link
-                      to={`/do/${log.deliveryOrder.id}`}
-                      className="text-sm text-blue-600 hover:underline truncate max-w-full"
-                    >
-                      {log.deliveryOrder.customer.name}
-                    </Link>
                   </div>
                 )}
-                <p className="mb-1 text-sm text-gray-700 line-clamp-2 overflow-hidden">
+                {getCustomerName(log) && (
+                  <div className="mb-1">
+                    <span className="text-sm font-medium">Pelanggan: </span>
+                    {log.deliveryOrder ? (
+                      <Link
+                        to={`/do/${log.deliveryOrder.id}`}
+                        className="max-w-full text-sm text-blue-600 truncate hover:underline"
+                      >
+                        {log.deliveryOrder.customer.name}
+                      </Link>
+                    ) : (
+                      <span className="text-sm text-gray-700">
+                        {getCustomerName(log)}
+                      </span>
+                    )}
+                  </div>
+                )}
+                <p className="mb-1 overflow-hidden text-sm text-gray-700 line-clamp-2">
                   {log.description}
                 </p>
                 <div className="text-xs text-gray-500">
                   Dilakukan oleh:{" "}
-                  <span className="font-medium text-blue-600 truncate max-w-full">
+                  <span className="max-w-full font-medium text-blue-600 truncate">
                     {log.performedBy.name}
                   </span>
                 </div>

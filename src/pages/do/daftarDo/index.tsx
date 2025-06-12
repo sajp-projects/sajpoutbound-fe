@@ -318,7 +318,7 @@ export default function DaftarDo() {
                         No.
                       </TableHead>
                       <TableHead className="w-[18%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
-                        ID
+                        No. DO
                       </TableHead>
                       <TableHead className="w-[25%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Pelanggan
@@ -354,8 +354,11 @@ export default function DaftarDo() {
                             {idx + 1 + (pagination.page - 1) * pagination.limit}
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-gray-600 text-sm">
-                            <div className="wrap-text" title={deliveryOrder.id}>
-                              {deliveryOrder.id}
+                            <div
+                              className="wrap-text"
+                              title={deliveryOrder.doNumber}
+                            >
+                              {deliveryOrder.doNumber}
                             </div>
                           </TableCell>
                           <TableCell className="py-2.5 px-3 font-medium text-sm">
@@ -419,7 +422,7 @@ export default function DaftarDo() {
                             {deliveryOrder.customer.name}
                           </Link>
                           <p className="mt-1 text-xs text-gray-600 break-all">
-                            ID: {deliveryOrder.id}
+                            DO: {deliveryOrder.doNumber}
                           </p>
                         </div>
                         <Badge

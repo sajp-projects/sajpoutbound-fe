@@ -91,6 +91,14 @@ export default function LogDo() {
               <tbody>
                 <tr>
                   <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                    No. DO
+                  </td>
+                  <td className="px-2 py-1 border border-gray-200">
+                    {newData.doNumber as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                     Pelanggan
                   </td>
                   <td className="px-2 py-1 border border-gray-200">
@@ -153,6 +161,14 @@ export default function LogDo() {
               <tbody>
                 <tr>
                   <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                    No. DO
+                  </td>
+                  <td className="px-2 py-1 border border-gray-200">
+                    {oldData.doNumber as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                     Pelanggan
                   </td>
                   <td className="px-2 py-1 border border-gray-200">
@@ -176,6 +192,14 @@ export default function LogDo() {
 
     if (oldData && newData) {
       const changes = [];
+
+      if (oldData.doNumber !== newData.doNumber) {
+        changes.push({
+          field: "No. DO",
+          oldValue: oldData.doNumber as string,
+          newValue: newData.doNumber as string,
+        });
+      }
 
       if (oldData.customerName !== newData.customerName) {
         changes.push({
@@ -510,6 +534,10 @@ export default function LogDo() {
               <h2 className="text-xl font-semibold text-gray-900">
                 Log Aktivitas: {deliveryOrderData.customer.name}
               </h2>
+              <p className="mt-1 text-sm text-gray-600">
+                <span className="font-medium">No. DO:</span>{" "}
+                {deliveryOrderData.doNumber}
+              </p>
               <p className="mt-1 text-sm text-gray-600">
                 <span className="font-medium">Alamat:</span>{" "}
                 {deliveryOrderData.address}
