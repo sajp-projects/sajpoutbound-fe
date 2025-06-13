@@ -17,8 +17,11 @@ import {
   showSuccessAlert,
 } from "@/utils/sweetAlert";
 import { Loader2, Save } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
+
+// Validasi plat nomor Indonesia
+const plateNumberRegex = /^[A-Z]{1,2}\s?\d{1,4}\s?[A-Z]{1,3}$/;
 
 interface ArmadaFormData {
   model: string;
@@ -40,6 +43,29 @@ export default function TambahArmada() {
     description: "",
   });
   const [errors, setErrors] = useState<ArmadaFormErrors>({});
+
+  // Validasi realtime untuk plat nomor
+  useEffect(() => {
+    if (formData.plateNumber) {
+      if (!plateNumberRegex.test(formData.plateNumber)) {
+        setErrors((prev) => ({
+          ...prev,
+          plateNumber: "Format plat nomor tidak valid (contoh: B 1234 ABC)",
+        }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          plateNumber: undefined,
+        }));
+      }
+    } else {
+      // Hapus error jika field kosong
+      setErrors((prev) => ({
+        ...prev,
+        plateNumber: undefined,
+      }));
+    }
+  }, [formData.plateNumber]);
 
   const createArmadaMutation = useCreateArmada({
     onSuccess: (data) => {
@@ -90,16 +116,49 @@ export default function TambahArmada() {
     >
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
 
-    if (errors[name as keyof typeof errors]) {
+    // Konversi plat nomor ke uppercase untuk plateNumber
+    if (name === "plateNumber") {
+      setFormData((prev) => ({ ...prev, [name]: value.toUpperCase() }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+
+    // Hapus error untuk field yang sedang diubah, kecuali plateNumber yang divalidasi realtime
+    if (name !== "plateNumber" && errors[name as keyof typeof errors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
+  const validateForm = () => {
+    const newErrors: ArmadaFormErrors = {};
+    let isValid = true;
+
+    if (!formData.model.trim()) {
+      newErrors.model = "Model armada harus diisi";
+      isValid = false;
+    }
+
+    if (!formData.plateNumber.trim()) {
+      newErrors.plateNumber = "Plat nomor harus diisi";
+      isValid = false;
+    } else if (!plateNumberRegex.test(formData.plateNumber)) {
+      newErrors.plateNumber =
+        "Format plat nomor tidak valid (contoh: B 1234 ABC)";
+      isValid = false;
+    }
+
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+    return isValid;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setErrors({});
+    setErrors((prev) => ({ ...prev, general: undefined }));
+
+    if (!validateForm()) {
+      return;
+    }
 
     showConfirmationAlert(
       "Konfirmasi",
@@ -217,7 +276,7 @@ export default function TambahArmada() {
                   name="plateNumber"
                   value={formData.plateNumber}
                   onChange={handleInputChange}
-                  placeholder="Masukkan plat nomor kendaraan"
+                  placeholder="Contoh: B 1234 ABC"
                   className={cn(
                     "mt-1 w-full border-gray-300",
                     errors.plateNumber
@@ -231,7 +290,7 @@ export default function TambahArmada() {
                   </p>
                 ) : (
                   <p className="mt-1 text-sm text-gray-500">
-                    Nomor plat kendaraan
+                    Nomor plat kendaraan (format: B 1234 ABC)
                   </p>
                 )}
               </div>
