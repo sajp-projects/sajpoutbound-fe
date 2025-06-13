@@ -190,6 +190,7 @@ export default function EditPengiriman() {
     staleTime: 300000,
     refetchOnWindowFocus: false,
     searchQuery: deliveryOrderSearchQuery,
+    availableOnly: true,
   });
 
   // Hook untuk mendapatkan detail DO yang sedang aktif dipilih
@@ -214,11 +215,14 @@ export default function EditPengiriman() {
       secondary: armada.description,
     })) || [];
 
+  // Convert DO data ke format ComboboxItem (filtering sudah dilakukan di backend)
   const deliveryOrders =
     deliveryOrdersData?.deliveryOrders?.map((do_item) => ({
       label: `${do_item.doNumber} - ${do_item.customer.name}`,
       value: do_item.id,
-      secondary: `${do_item.address} - ${do_item.items.length} barang`,
+      secondary: `${do_item.address} - ${
+        do_item.items.filter((item) => item.pendingQuantity > 0).length
+      } barang tersedia`,
     })) || [];
 
   const updateShipment = useUpdateShipment({
@@ -360,8 +364,15 @@ export default function EditPengiriman() {
       );
 
       if (doIndex !== -1) {
-        // Tampilkan semua produk, bukan hanya yang memiliki pendingQuantity > 0
-        const availableProducts = doProducts; // Tampilkan semua produk
+        // Untuk edit, tampilkan semua produk (termasuk yang pendingQuantity = 0)
+        // karena mungkin ada shipment item yang sudah ada sebelumnya
+        const availableProducts = doProducts;
+
+        // Jika tidak ada barang sama sekali, set products kosong
+        if (availableProducts.length === 0) {
+          form.setValue(`deliveryOrders.${doIndex}.products`, []);
+          return;
+        }
 
         // Cek apakah sudah ada products yang tersimpan untuk DO ini
         const existingProducts = watchDeliveryOrders[doIndex]?.products || [];
@@ -457,13 +468,38 @@ export default function EditPengiriman() {
         return;
       }
 
+      // Ambil DO lama untuk membersihkan state
+      const oldDeliveryOrderId = watchDeliveryOrders[index]?.deliveryOrderId;
+
       form.setValue(`deliveryOrders.${index}.deliveryOrderId`, value);
       form.clearErrors(`deliveryOrders.${index}.deliveryOrderId`);
 
       // Reset products array
       form.setValue(`deliveryOrders.${index}.products`, []);
 
+      // Reset locationType juga
+      form.setValue(`deliveryOrders.${index}.locationType`, "");
+      form.clearErrors(`deliveryOrders.${index}.locationType`);
+
+      // Bersihkan state DO lama dari selectedDOProducts
+      if (oldDeliveryOrderId) {
+        setSelectedDOProducts((prev) => {
+          const newState = { ...prev };
+          delete newState[oldDeliveryOrderId];
+          return newState;
+        });
+      }
+
+      // Jika memilih DO baru, pastikan state bersih untuk DO tersebut
       if (value) {
+        // Hapus state lama jika ada untuk DO yang dipilih
+        setSelectedDOProducts((prev) => {
+          const newState = { ...prev };
+          delete newState[value];
+          return newState;
+        });
+
+        // Load data DO yang baru
         loadDOProducts(value);
       }
     },
@@ -522,6 +558,20 @@ export default function EditPengiriman() {
       );
       return;
     }
+
+    // Bersihkan state untuk DO yang dihapus
+    if (doItem?.deliveryOrderId) {
+      setSelectedDOProducts((prev) => {
+        const newState = { ...prev };
+        delete newState[doItem.deliveryOrderId];
+        return newState;
+      });
+    }
+
+    // Bersihkan error untuk field yang akan dihapus
+    form.clearErrors(`deliveryOrders.${index}.deliveryOrderId`);
+    form.clearErrors(`deliveryOrders.${index}.locationType`);
+    form.clearErrors(`deliveryOrders.${index}.products`);
 
     // Hapus dari form
     remove(index);

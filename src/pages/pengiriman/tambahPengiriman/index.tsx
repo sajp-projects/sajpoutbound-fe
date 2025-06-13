@@ -180,6 +180,7 @@ export default function TambahPengiriman() {
     staleTime: 300000,
     refetchOnWindowFocus: false,
     searchQuery: deliveryOrderSearchQuery,
+    availableOnly: true,
   });
 
   // Hook untuk mendapatkan detail DO yang sedang aktif dipilih
@@ -204,11 +205,14 @@ export default function TambahPengiriman() {
       secondary: armada.description,
     })) || [];
 
+  // Convert DO data ke format ComboboxItem (filtering sudah dilakukan di backend)
   const deliveryOrders =
     deliveryOrdersData?.deliveryOrders?.map((do_item) => ({
       label: `${do_item.doNumber} - ${do_item.customer.name}`,
       value: do_item.id,
-      secondary: `${do_item.address} - ${do_item.items.length} barang`,
+      secondary: `${do_item.address} - ${
+        do_item.items.filter((item) => item.pendingQuantity > 0).length
+      } barang tersedia`,
     })) || [];
 
   const createShipment = useCreateShipment({
@@ -289,6 +293,12 @@ export default function TambahPengiriman() {
         const availableProducts = doProducts.filter(
           (product) => product.pendingQuantity > 0
         );
+
+        // Jika tidak ada barang yang tersedia, tampilkan pesan dan jangan set products
+        if (availableProducts.length === 0) {
+          form.setValue(`deliveryOrders.${doIndex}.products`, []);
+          return;
+        }
 
         if (existingProducts && existingProducts.length > 0) {
           // Gunakan data yang sudah tersimpan jika ada, tapi pastikan urutannya sesuai dengan availableProducts
@@ -525,6 +535,46 @@ export default function TambahPengiriman() {
     }));
   };
 
+  const removeDO = (index: number) => {
+    // Ambil DO yang akan dihapus untuk membersihkan state
+    const doToRemove = watchDeliveryOrders[index];
+
+    if (doToRemove?.deliveryOrderId) {
+      // Bersihkan state untuk DO yang dihapus
+      setSelectedDOProducts((prev) => {
+        const newState = { ...prev };
+        delete newState[doToRemove.deliveryOrderId];
+        return newState;
+      });
+
+      setDoFormState((prev) => {
+        const newState = { ...prev };
+        delete newState[doToRemove.deliveryOrderId];
+        return newState;
+      });
+    }
+
+    // Bersihkan error untuk field yang akan dihapus
+    form.clearErrors(`deliveryOrders.${index}.deliveryOrderId`);
+    form.clearErrors(`deliveryOrders.${index}.locationType`);
+    form.clearErrors(`deliveryOrders.${index}.products`);
+
+    // Hapus field dari form
+    remove(index);
+
+    // Update accordion states - shift indices untuk accordion yang tersisa
+    const newAccordionStates: Record<string, boolean> = {};
+    Object.keys(openAccordions).forEach((key) => {
+      const keyIndex = parseInt(key.split("-")[1]);
+      if (keyIndex < index) {
+        newAccordionStates[key] = openAccordions[key];
+      } else if (keyIndex > index) {
+        newAccordionStates[`do-${keyIndex - 1}`] = openAccordions[key];
+      }
+    });
+    setOpenAccordions(newAccordionStates);
+  };
+
   const handleDeliveryOrderSearch = useCallback(
     (query: string) => {
       setDeliveryOrderSearchQuery(query);
@@ -556,13 +606,50 @@ export default function TambahPengiriman() {
         return;
       }
 
+      // Ambil DO lama untuk membersihkan state
+      const oldDeliveryOrderId = watchDeliveryOrders[index]?.deliveryOrderId;
+
       form.setValue(`deliveryOrders.${index}.deliveryOrderId`, value);
       form.clearErrors(`deliveryOrders.${index}.deliveryOrderId`);
 
       // Reset products array
       form.setValue(`deliveryOrders.${index}.products`, []);
 
+      // Reset locationType juga
+      form.setValue(`deliveryOrders.${index}.locationType`, "");
+      form.clearErrors(`deliveryOrders.${index}.locationType`);
+
+      // Bersihkan state DO lama dari selectedDOProducts dan doFormState
+      if (oldDeliveryOrderId) {
+        setSelectedDOProducts((prev) => {
+          const newState = { ...prev };
+          delete newState[oldDeliveryOrderId];
+          return newState;
+        });
+
+        setDoFormState((prev) => {
+          const newState = { ...prev };
+          delete newState[oldDeliveryOrderId];
+          return newState;
+        });
+      }
+
+      // Jika memilih DO baru, pastikan state bersih untuk DO tersebut
       if (value) {
+        // Hapus state lama jika ada untuk DO yang dipilih
+        setSelectedDOProducts((prev) => {
+          const newState = { ...prev };
+          delete newState[value];
+          return newState;
+        });
+
+        setDoFormState((prev) => {
+          const newState = { ...prev };
+          delete newState[value];
+          return newState;
+        });
+
+        // Load data DO yang baru
         loadDOProducts(value);
       }
     },
@@ -842,7 +929,7 @@ export default function TambahPengiriman() {
                                   variant="ghost"
                                   size="sm"
                                   className="flex items-center justify-center w-8 h-8 p-1 text-white bg-red-500 rounded-md hover:bg-red-600"
-                                  onClick={() => remove(index)}
+                                  onClick={() => removeDO(index)}
                                   disabled={isSubmitting}
                                 >
                                   <Trash className="w-4 h-4" />

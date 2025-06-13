@@ -40,6 +40,7 @@ export function useDeliveryOrders(
   > & {
     searchQuery?: string;
     statusFilter?: string;
+    availableOnly?: boolean;
   }
 ) {
   const [searchParams] = useSearchParams();
@@ -48,6 +49,7 @@ export function useDeliveryOrders(
     options?.statusFilter !== undefined
       ? options.statusFilter
       : searchParams.get("status") || "";
+  const availableOnly = options?.availableOnly;
 
   const filters = {
     page: searchParams.get("page") || "1",
@@ -57,6 +59,9 @@ export function useDeliveryOrders(
         ? searchQuery
         : searchParams.get("search") || "",
     status: statusFilter,
+    ...(availableOnly !== undefined && {
+      availableOnly: availableOnly.toString(),
+    }),
   };
 
   return useQuery({
