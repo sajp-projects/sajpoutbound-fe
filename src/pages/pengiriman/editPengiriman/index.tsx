@@ -1,27 +1,27 @@
-import { joiResolver } from '@hookform/resolvers/joi';
-import Joi from 'joi';
-import { ArrowLeft, Loader2, Plus, Save, Trash } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { Link, useNavigate, useParams } from 'react-router';
+import { joiResolver } from "@hookform/resolvers/joi";
+import Joi from "joi";
+import { ArrowLeft, Loader2, Plus, Save, Trash } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { Link, useNavigate, useParams } from "react-router";
 
-import { ErrorState } from '@/components/ErrorState';
-import { LoadingState } from '@/components/LoadingState';
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Combobox } from '@/components/ui/combobox';
+} from "@/components/ui/card";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Form,
   FormControl,
@@ -29,34 +29,34 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { useArmadas } from '@/hooks/armada';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useArmadas } from "@/hooks/armada";
 import {
   deliveryOrderKeys,
   useDeliveryOrder,
   useDeliveryOrders,
-} from '@/hooks/do';
+} from "@/hooks/do";
 import {
   shipmentKeys,
   useShipment,
   useUpdateShipment,
-} from '@/hooks/pengiriman';
-import { cn } from '@/lib/utils';
-import { UpdateShipmentInput } from '@/types/pengiriman';
-import { LOCATION_TYPE } from '@/utils/constants';
-import { formatNumber } from '@/utils/formatNumber';
-import { showErrorAlert, showSuccessAlert } from '@/utils/sweetAlert';
-import { useQueryClient } from '@tanstack/react-query';
+} from "@/hooks/pengiriman";
+import { cn } from "@/lib/utils";
+import { UpdateShipmentInput } from "@/types/pengiriman";
+import { LOCATION_TYPE } from "@/utils/constants";
+import { formatNumber } from "@/utils/formatNumber";
+import { showErrorAlert, showSuccessAlert } from "@/utils/sweetAlert";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Validasi plat nomor Indonesia
 const plateNumberRegex = /^[A-Z]{1,2}\s?\d{1,4}\s?[A-Z]{1,3}$/;
@@ -64,19 +64,19 @@ const plateNumberRegex = /^[A-Z]{1,2}\s?\d{1,4}\s?[A-Z]{1,3}$/;
 // Schema untuk validasi
 const deliveryOrderItemSchema = Joi.object({
   deliveryOrderId: Joi.string().required().messages({
-    'string.empty': 'ID DO harus diisi',
-    'any.required': 'ID DO harus diisi',
+    "string.empty": "ID DO harus diisi",
+    "any.required": "ID DO harus diisi",
   }),
   locationType: Joi.string().required().messages({
-    'string.empty': 'Tipe lokasi harus dipilih',
-    'any.required': 'Tipe lokasi harus dipilih',
+    "string.empty": "Tipe lokasi harus dipilih",
+    "any.required": "Tipe lokasi harus dipilih",
   }),
   products: Joi.array()
     .items(
       Joi.object({
         productId: Joi.string().required(),
         requestedQuantity: Joi.number().integer().min(0).required(),
-        shipmentItemId: Joi.string().optional(),
+        shipmentItemId: Joi.string().allow("", null).optional(),
       })
     )
     .required(),
@@ -84,41 +84,41 @@ const deliveryOrderItemSchema = Joi.object({
 });
 
 const formSchema = Joi.object({
-  type: Joi.string().valid('ANTAR', 'JEMPUT').required().messages({
-    'any.only': 'Tipe harus ANTAR atau JEMPUT',
-    'any.required': 'Tipe pengiriman harus diisi',
+  type: Joi.string().valid("ANTAR", "JEMPUT").required().messages({
+    "any.only": "Tipe harus ANTAR atau JEMPUT",
+    "any.required": "Tipe pengiriman harus diisi",
   }),
-  plateNumber: Joi.when('type', {
-    is: 'JEMPUT',
+  plateNumber: Joi.when("type", {
+    is: "JEMPUT",
     then: Joi.string().pattern(plateNumberRegex).required().messages({
-      'string.empty': 'Plat nomor harus diisi',
-      'string.pattern.base':
-        'Format plat nomor tidak valid (contoh: B 1234 ABC)',
-      'any.required': 'Plat nomor harus diisi',
+      "string.empty": "Plat nomor harus diisi",
+      "string.pattern.base":
+        "Format plat nomor tidak valid (contoh: B 1234 ABC)",
+      "any.required": "Plat nomor harus diisi",
     }),
-    otherwise: Joi.string().allow('').optional(),
+    otherwise: Joi.string().allow("").optional(),
   }),
-  armadaId: Joi.when('type', {
-    is: 'ANTAR',
+  armadaId: Joi.when("type", {
+    is: "ANTAR",
     then: Joi.string().required().messages({
-      'string.empty': 'Armada harus dipilih',
-      'any.required': 'Armada harus dipilih',
+      "string.empty": "Armada harus dipilih",
+      "any.required": "Armada harus dipilih",
     }),
-    otherwise: Joi.string().allow('').optional(),
+    otherwise: Joi.string().allow("").optional(),
   }),
-  internalNote: Joi.string().allow('').optional(),
+  internalNote: Joi.string().allow("").optional(),
   deliveryOrders: Joi.array()
     .items(deliveryOrderItemSchema)
     .min(1)
     .required()
     .messages({
-      'array.min': 'Minimal harus ada 1 Delivery Order',
-      'any.required': 'Delivery Order harus diisi',
+      "array.min": "Minimal harus ada 1 Delivery Order",
+      "any.required": "Delivery Order harus diisi",
     }),
 });
 
 interface FormValues {
-  type: 'ANTAR' | 'JEMPUT';
+  type: "ANTAR" | "JEMPUT";
   plateNumber?: string;
   armadaId?: string;
   internalNote?: string;
@@ -147,12 +147,12 @@ export default function EditPengiriman() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deliveryOrderSearchQuery, setDeliveryOrderSearchQuery] = useState('');
-  const [armadaSearchQuery, setArmadaSearchQuery] = useState('');
+  const [deliveryOrderSearchQuery, setDeliveryOrderSearchQuery] = useState("");
+  const [armadaSearchQuery, setArmadaSearchQuery] = useState("");
   const [selectedDOProducts, setSelectedDOProducts] = useState<
     Record<string, DOProduct[]>
   >({});
-  const [activeDOId, setActiveDOId] = useState<string>('');
+  const [activeDOId, setActiveDOId] = useState<string>("");
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
     {}
   );
@@ -164,7 +164,7 @@ export default function EditPengiriman() {
     error,
     refetch,
   } = useShipment(
-    { id: id || '' },
+    { id: id || "" },
     {
       enabled: !!id,
       refetchOnWindowFocus: false,
@@ -225,7 +225,7 @@ export default function EditPengiriman() {
     onSuccess: () => {
       // Invalidate shipment queries
       queryClient.invalidateQueries({
-        queryKey: shipmentKeys.detail(id || ''),
+        queryKey: shipmentKeys.detail(id || ""),
       });
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.lists(),
@@ -241,7 +241,7 @@ export default function EditPengiriman() {
           });
         }
       });
-      showSuccessAlert('Berhasil!', 'Pengiriman berhasil diperbarui').then(
+      showSuccessAlert("Berhasil!", "Pengiriman berhasil diperbarui").then(
         () => {
           navigate(`/pengiriman/${id}`);
         }
@@ -250,8 +250,8 @@ export default function EditPengiriman() {
     onError: (error: Error) => {
       setIsSubmitting(false);
       showErrorAlert(
-        'Gagal Memperbarui Pengiriman',
-        error.message || 'Terjadi kesalahan saat memperbarui pengiriman'
+        "Gagal Memperbarui Pengiriman",
+        error.message || "Terjadi kesalahan saat memperbarui pengiriman"
       );
     },
   });
@@ -259,22 +259,22 @@ export default function EditPengiriman() {
   const form = useForm<FormValues>({
     resolver: joiResolver(formSchema),
     defaultValues: {
-      type: 'ANTAR',
-      plateNumber: '',
-      armadaId: '',
-      internalNote: '',
+      type: "ANTAR",
+      plateNumber: "",
+      armadaId: "",
+      internalNote: "",
       deliveryOrders: [],
     },
-    mode: 'onChange',
+    mode: "onChange",
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: 'deliveryOrders',
+    name: "deliveryOrders",
   });
 
-  const watchType = form.watch('type');
-  const watchDeliveryOrders = form.watch('deliveryOrders');
+  const watchType = form.watch("type");
+  const watchDeliveryOrders = form.watch("deliveryOrders");
 
   // Inisialisasi form dengan data shipment yang ada
   useEffect(() => {
@@ -310,9 +310,9 @@ export default function EditPengiriman() {
 
       form.reset({
         type: shipment.type,
-        plateNumber: shipment.plateNumber || '',
-        armadaId: shipment.armadaId || '',
-        internalNote: shipment.internalNote || '',
+        plateNumber: shipment.plateNumber || "",
+        armadaId: shipment.armadaId || "",
+        internalNote: shipment.internalNote || "",
         deliveryOrders: deliveryOrdersArray,
       });
 
@@ -371,6 +371,7 @@ export default function EditPengiriman() {
           const initialProducts = availableProducts.map((product) => ({
             productId: product.id,
             requestedQuantity: 0,
+            shipmentItemId: "", // Kosong untuk item baru
           }));
 
           form.setValue(`deliveryOrders.${doIndex}.products`, initialProducts);
@@ -383,7 +384,7 @@ export default function EditPengiriman() {
             return {
               productId: product.id,
               requestedQuantity: existingProduct?.requestedQuantity || 0,
-              shipmentItemId: existingProduct?.shipmentItemId || '',
+              shipmentItemId: existingProduct?.shipmentItemId || "", // Kosong jika tidak ada
             };
           });
 
@@ -397,7 +398,7 @@ export default function EditPengiriman() {
   useEffect(() => {
     if (activeDOError && activeDOId) {
       showErrorAlert(
-        'Error Memuat Barang',
+        "Error Memuat Barang",
         `Gagal memuat Barang untuk DO ${activeDOId}: ${activeDOError.message}`
       );
     }
@@ -450,8 +451,8 @@ export default function EditPengiriman() {
 
       if (isDuplicate) {
         showErrorAlert(
-          'Validasi DO Gagal',
-          'DO ini sudah ditambahkan. Setiap DO hanya dapat ditambahkan sekali.'
+          "Validasi DO Gagal",
+          "DO ini sudah ditambahkan. Setiap DO hanya dapat ditambahkan sekali."
         );
         return;
       }
@@ -469,17 +470,17 @@ export default function EditPengiriman() {
     [form, loadDOProducts, watchDeliveryOrders]
   );
 
-  const handleTypeChange = (value: 'ANTAR' | 'JEMPUT') => {
-    form.resetField('plateNumber');
-    form.resetField('armadaId');
+  const handleTypeChange = (value: "ANTAR" | "JEMPUT") => {
+    form.resetField("plateNumber");
+    form.resetField("armadaId");
 
-    form.setValue('plateNumber', '');
-    form.setValue('armadaId', '');
+    form.setValue("plateNumber", "");
+    form.setValue("armadaId", "");
 
-    form.clearErrors('plateNumber');
-    form.clearErrors('armadaId');
+    form.clearErrors("plateNumber");
+    form.clearErrors("armadaId");
 
-    form.setValue('type', value);
+    form.setValue("type", value);
   };
 
   const addNewDeliveryOrder = () => {
@@ -490,15 +491,15 @@ export default function EditPengiriman() {
 
     if (emptyDOIndex !== -1) {
       showErrorAlert(
-        'Validasi DO Gagal',
-        'Harap isi DO yang kosong terlebih dahulu sebelum menambahkan DO baru.'
+        "Validasi DO Gagal",
+        "Harap isi DO yang kosong terlebih dahulu sebelum menambahkan DO baru."
       );
       return;
     }
 
     append({
-      deliveryOrderId: '',
-      locationType: '',
+      deliveryOrderId: "",
+      locationType: "",
       products: [],
       isChosen: false,
     });
@@ -516,8 +517,8 @@ export default function EditPengiriman() {
     // Cek apakah DO sudah chosen
     if (doItem.isChosen) {
       showErrorAlert(
-        'Tidak Dapat Menghapus',
-        'DO ini tidak dapat dihapus karena barangnya sudah dimuat/dipilih.'
+        "Tidak Dapat Menghapus",
+        "DO ini tidak dapat dihapus karena barangnya sudah dimuat/dipilih."
       );
       return;
     }
@@ -528,7 +529,7 @@ export default function EditPengiriman() {
     // Update accordion states
     const newAccordionStates: Record<string, boolean> = {};
     Object.keys(openAccordions).forEach((key) => {
-      const keyIndex = parseInt(key.split('-')[1]);
+      const keyIndex = parseInt(key.split("-")[1]);
       if (keyIndex < index) {
         newAccordionStates[key] = openAccordions[key];
       } else if (keyIndex > index) {
@@ -550,8 +551,8 @@ export default function EditPengiriman() {
     if (deliveryOrderIds.length !== uniqueDeliveryOrderIds.size) {
       setIsSubmitting(false);
       showErrorAlert(
-        'Validasi Gagal',
-        'Terdapat Delivery Order duplikat. Setiap DO hanya dapat ditambahkan sekali.'
+        "Validasi Gagal",
+        "Terdapat Delivery Order duplikat. Setiap DO hanya dapat ditambahkan sekali."
       );
       return;
     }
@@ -576,7 +577,10 @@ export default function EditPengiriman() {
             productId: product.productId,
             requestedQuantity: product.requestedQuantity,
             locationType: do_item.locationType,
-            shipmentItemId: product.shipmentItemId,
+            // Hanya kirim shipmentItemId jika ada dan tidak kosong
+            ...(product.shipmentItemId && product.shipmentItemId.trim() !== ""
+              ? { shipmentItemId: product.shipmentItemId }
+              : {}),
           };
           items.push(item);
         }
@@ -586,8 +590,8 @@ export default function EditPengiriman() {
     if (items.length === 0) {
       setIsSubmitting(false);
       showErrorAlert(
-        'Validasi Gagal',
-        'Minimal harus ada 1 Barang yang dipilih dengan jumlah yang valid'
+        "Validasi Gagal",
+        "Minimal harus ada 1 Barang yang dipilih dengan jumlah yang valid"
       );
       return;
     }
@@ -595,20 +599,20 @@ export default function EditPengiriman() {
     // Persiapkan payload
     const payload: UpdateShipmentInput = {
       type: values.type,
-      internalNote: values.internalNote || '',
+      internalNote: values.internalNote || "",
       items,
     };
 
-    if (values.type === 'ANTAR' && values.armadaId) {
+    if (values.type === "ANTAR" && values.armadaId) {
       payload.armadaId = values.armadaId;
-      payload.plateNumber = '';
-    } else if (values.type === 'JEMPUT' && values.plateNumber) {
+      payload.plateNumber = "";
+    } else if (values.type === "JEMPUT" && values.plateNumber) {
       payload.plateNumber = values.plateNumber;
-      payload.armadaId = '';
+      payload.armadaId = "";
     }
 
     updateShipment.mutate({
-      id: id || '',
+      id: id || "",
       ...payload,
     });
   };
@@ -624,7 +628,7 @@ export default function EditPengiriman() {
         message={
           error instanceof Error
             ? error.message
-            : 'Terjadi kesalahan saat memuat data pengiriman'
+            : "Terjadi kesalahan saat memuat data pengiriman"
         }
         onRetry={refetch}
         retryButtonText="Coba lagi"
@@ -666,7 +670,7 @@ export default function EditPengiriman() {
         <CardHeader>
           <CardTitle>Form Edit Pengiriman</CardTitle>
           <CardDescription>
-            Perbarui detail pengiriman dengan ID:{' '}
+            Perbarui detail pengiriman dengan ID:{" "}
             <code className="px-1 py-0.5 bg-gray-100 text-gray-800 rounded text-sm">
               {id}
             </code>
@@ -689,7 +693,7 @@ export default function EditPengiriman() {
                       render={({ field }) => (
                         <FormItem className="space-y-3">
                           <FormLabel>
-                            Tipe Pengiriman{' '}
+                            Tipe Pengiriman{" "}
                             <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
@@ -725,7 +729,7 @@ export default function EditPengiriman() {
 
                     {/* Field kondisional berdasarkan tipe */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      {watchType === 'JEMPUT' ? (
+                      {watchType === "JEMPUT" ? (
                         <div className="sm:col-span-2">
                           <FormField
                             control={form.control}
@@ -733,7 +737,7 @@ export default function EditPengiriman() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>
-                                  Plat Nomor Kendaraan{' '}
+                                  Plat Nomor Kendaraan{" "}
                                   <span className="text-red-500">*</span>
                                 </FormLabel>
                                 <FormControl>
@@ -748,7 +752,7 @@ export default function EditPengiriman() {
                                     }}
                                     className={cn(
                                       form.formState.errors.plateNumber &&
-                                        'border-red-500'
+                                        "border-red-500"
                                     )}
                                   />
                                 </FormControl>
@@ -770,7 +774,7 @@ export default function EditPengiriman() {
                                 <FormControl>
                                   <Combobox
                                     items={armadas}
-                                    value={field.value || ''}
+                                    value={field.value || ""}
                                     onValueChange={(val) => {
                                       field.onChange(val);
                                     }}
@@ -778,7 +782,7 @@ export default function EditPengiriman() {
                                     searchPlaceholder="Cari armada..."
                                     isLoading={loadingArmadas}
                                     name="armadaId"
-                                    onClear={() => field.onChange('')}
+                                    onClear={() => field.onChange("")}
                                     onSearch={handleArmadaSearch}
                                     useServerSearch
                                   />
@@ -847,10 +851,10 @@ export default function EditPengiriman() {
                             key={field.id}
                             value={`do-${index}`}
                             className={cn(
-                              'mb-4 overflow-hidden border rounded-lg',
+                              "mb-4 overflow-hidden border rounded-lg",
                               isChosen
-                                ? 'border-green-300 bg-green-50'
-                                : 'border-gray-200 bg-gray-50'
+                                ? "border-green-300 bg-green-50"
+                                : "border-gray-200 bg-gray-50"
                             )}
                           >
                             <div className="flex items-center justify-between p-4">
@@ -889,14 +893,14 @@ export default function EditPengiriman() {
                                   render={({ field }) => (
                                     <FormItem className="h-[80px]">
                                       <FormLabel>
-                                        Delivery Order{' '}
+                                        Delivery Order{" "}
                                         <span className="text-red-500">*</span>
                                       </FormLabel>
                                       <FormControl>
                                         <div
                                           className={cn(
                                             isChosen &&
-                                              'opacity-50 pointer-events-none'
+                                              "opacity-50 pointer-events-none"
                                           )}
                                         >
                                           <Combobox
@@ -913,7 +917,7 @@ export default function EditPengiriman() {
                                             isLoading={loadingDeliveryOrders}
                                             name={`deliveryOrders.${index}.deliveryOrderId`}
                                             onClear={() => {
-                                              field.onChange('');
+                                              field.onChange("");
                                               form.setValue(
                                                 `deliveryOrders.${index}.products`,
                                                 []
@@ -938,7 +942,7 @@ export default function EditPengiriman() {
                                   render={({ field }) => (
                                     <FormItem className="h-[80px]">
                                       <FormLabel>
-                                        Tipe Lokasi{' '}
+                                        Tipe Lokasi{" "}
                                         <span className="text-red-500">*</span>
                                       </FormLabel>
                                       <FormControl>
@@ -1036,7 +1040,7 @@ export default function EditPengiriman() {
                                                   {product.name}
                                                 </p>
                                                 <p className="text-sm text-gray-500">
-                                                  Stok tersedia:{' '}
+                                                  Stok tersedia:{" "}
                                                   {(() => {
                                                     const shipmentItem =
                                                       shipment?.shipmentItems.find(
@@ -1070,7 +1074,7 @@ export default function EditPengiriman() {
                                                                 productFormIndex
                                                               ]
                                                                 ?.shipmentItemId ||
-                                                                '')
+                                                                "")
                                                         )
                                                         .reduce(
                                                           (sum, si) =>
@@ -1092,7 +1096,7 @@ export default function EditPengiriman() {
                                                         ? 0
                                                         : stokTersedia
                                                     );
-                                                  })()}{' '}
+                                                  })()}{" "}
                                                   {product.satuan}
                                                 </p>
                                               </div>
@@ -1113,14 +1117,14 @@ export default function EditPengiriman() {
                                                                   ? formatNumber(
                                                                       field.value
                                                                     )
-                                                                  : ''
+                                                                  : ""
                                                               }
                                                               onChange={(e) => {
                                                                 const numValue =
                                                                   parseInt(
                                                                     e.target.value.replace(
                                                                       /\D/g,
-                                                                      ''
+                                                                      ""
                                                                     )
                                                                   ) || 0;
                                                                 field.onChange(
@@ -1134,7 +1138,7 @@ export default function EditPengiriman() {
                                                               className={cn(
                                                                 field.value >
                                                                   product.quantity &&
-                                                                  'border-orange-500'
+                                                                  "border-orange-500"
                                                               )}
                                                             />
                                                           </FormControl>
@@ -1158,6 +1162,19 @@ export default function EditPengiriman() {
                                                           type="hidden"
                                                           {...field}
                                                           value={product.id}
+                                                        />
+                                                      )}
+                                                    />
+                                                    <FormField
+                                                      control={form.control}
+                                                      name={`deliveryOrders.${index}.products.${productFormIndex}.shipmentItemId`}
+                                                      render={({ field }) => (
+                                                        <input
+                                                          type="hidden"
+                                                          {...field}
+                                                          value={
+                                                            field.value || ""
+                                                          }
                                                         />
                                                       )}
                                                     />
@@ -1192,7 +1209,7 @@ export default function EditPengiriman() {
                       <FormControl>
                         <Textarea
                           {...field}
-                          value={field.value || ''}
+                          value={field.value || ""}
                           placeholder="Tambahkan catatan internal (opsional)"
                           disabled={isSubmitting}
                           rows={4}

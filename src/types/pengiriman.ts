@@ -1,5 +1,5 @@
-export type ShipmentType = 'ANTAR' | 'JEMPUT';
-export type ShipmentStatus = 'PENDING' | 'PROSES' | 'SELESAI' | 'COMPLETED';
+export type ShipmentType = "ANTAR" | "JEMPUT";
+export type ShipmentStatus = "PENDING" | "PROSES" | "SELESAI" | "COMPLETED";
 
 export interface ShipmentItem {
   id: string;
@@ -84,6 +84,14 @@ export interface CreateShipmentItem {
   requestedQuantity: number;
 }
 
+export interface UpdateShipmentItem {
+  deliveryOrderId: string;
+  locationType: string;
+  productId: string;
+  requestedQuantity: number;
+  shipmentItemId?: string; // Optional untuk item baru
+}
+
 export interface CreateShipmentInput {
   type: ShipmentType;
   armadaId?: string;
@@ -97,7 +105,7 @@ export interface UpdateShipmentInput {
   armadaId?: string;
   internalNote?: string;
   plateNumber?: string;
-  items?: CreateShipmentItem[];
+  items?: UpdateShipmentItem[];
 }
 
 export interface ShipmentPagination {
