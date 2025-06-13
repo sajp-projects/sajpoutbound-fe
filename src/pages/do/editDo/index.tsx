@@ -5,7 +5,11 @@ import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { joiResolver } from "@hookform/resolvers/joi";
 import Joi from "joi";
 
-import { useDeliveryOrder, useUpdateDeliveryOrder } from "@/hooks/do";
+import {
+  deliveryOrderKeys,
+  useDeliveryOrder,
+  useUpdateDeliveryOrder,
+} from "@/hooks/do";
 import { useCustomers } from "@/hooks/pelanggan";
 import { useProducts } from "@/hooks/barang";
 import { Button } from "@/components/ui/button";
@@ -28,6 +32,8 @@ import { LoadingState } from "@/components/LoadingState";
 import { formatNumber } from "@/utils/formatNumber";
 import { cn } from "@/lib/utils";
 import { Combobox, ComboboxItem } from "@/components/ui/combobox";
+import { shipmentKeys } from "@/hooks/pengiriman";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ExtendedProduct extends CreateDeliveryOrderProduct {
   productName?: string;
@@ -76,6 +82,7 @@ const schema = Joi.object({
 });
 
 export default function EditDo() {
+  const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const deliveryOrderId = id || "";
@@ -191,6 +198,13 @@ export default function EditDo() {
 
   const updateDeliveryOrder = useUpdateDeliveryOrder({
     onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.detail(data.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.list({}),
+      });
+
       showSuccessAlert(
         "Berhasil!",
         "Delivery Order telah berhasil diperbarui."
