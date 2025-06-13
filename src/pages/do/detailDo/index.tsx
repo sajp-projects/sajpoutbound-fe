@@ -1,5 +1,5 @@
 import { useDeliveryOrder, useDeleteDeliveryOrder } from "@/hooks/do";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useLocation } from "react-router";
 import { Link } from "react-router";
 import {
   ArrowLeft,
@@ -37,7 +37,7 @@ import {
   showConfirmationAlert,
   isConfirmed,
 } from "@/utils/sweetAlert";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface StatusBadgeProps {
   status: DeliveryOrderStatus;
@@ -70,9 +70,21 @@ function StatusBadge({ status }: StatusBadgeProps) {
 export default function DetailDo() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
-  const [activeTab, setActiveTab] = useState<"info" | "items">("info");
+
+  // Get tab from URL query parameter or default to "info"
+  const getTabFromUrl = (): "info" | "items" => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab === "items") {
+      return tab;
+    }
+    return "info";
+  };
+
+  const [activeTab, setActiveTab] = useState<"info" | "items">(getTabFromUrl());
 
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
@@ -136,6 +148,25 @@ export default function DetailDo() {
       }
     });
   };
+
+  const handleTabChange = (tab: "info" | "items") => {
+    setActiveTab(tab);
+
+    // Update URL with the active tab
+    const searchParams = new URLSearchParams(location.search);
+    searchParams.set("tab", tab);
+    navigate(`${location.pathname}?${searchParams.toString()}`, {
+      replace: true,
+    });
+  };
+
+  // Effect to update tab when URL changes
+  useEffect(() => {
+    const currentTab = getTabFromUrl();
+    if (currentTab !== activeTab) {
+      setActiveTab(currentTab);
+    }
+  }, [location.search]);
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
@@ -206,7 +237,7 @@ export default function DetailDo() {
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => setActiveTab("info")}
+                onClick={() => handleTabChange("info")}
               >
                 <Info className="flex-shrink-0 w-4 h-4 mr-2" />
                 Informasi DO
@@ -218,7 +249,7 @@ export default function DetailDo() {
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => setActiveTab("items")}
+                onClick={() => handleTabChange("items")}
               >
                 <FileText className="flex-shrink-0 w-4 h-4 mr-2" />
                 Daftar Barang

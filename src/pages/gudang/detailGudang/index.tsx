@@ -18,7 +18,7 @@ import {
   User,
   Info,
 } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, useLocation } from "react-router";
 import {
   Table,
   TableBody,
@@ -34,7 +34,7 @@ import { useRolePermissions } from "@/hooks/izin";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { hasPermission } from "@/utils/permission";
 import { getRoleId } from "@/utils/storage";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface WarehouseUser {
   id: string;
@@ -63,10 +63,22 @@ declare module "@/types/gudang" {
 export default function DetailGudang() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
+
+  // Get tab from URL query parameter or default to "info"
+  const getTabFromUrl = (): "info" | "users" | "products" => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab === "users" || tab === "products") {
+      return tab;
+    }
+    return "info";
+  };
+
   const [activeTab, setActiveTab] = useState<"info" | "users" | "products">(
-    "info"
+    getTabFromUrl()
   );
 
   const { data: permissions } = useRolePermissions(roleId, {
@@ -126,6 +138,25 @@ export default function DetailGudang() {
     });
   };
 
+  const handleTabChange = (tab: "info" | "users" | "products") => {
+    setActiveTab(tab);
+
+    // Update URL with the active tab
+    const searchParams = new URLSearchParams(location.search);
+    searchParams.set("tab", tab);
+    navigate(`${location.pathname}?${searchParams.toString()}`, {
+      replace: true,
+    });
+  };
+
+  // Effect to update tab when URL changes
+  useEffect(() => {
+    const currentTab = getTabFromUrl();
+    if (currentTab !== activeTab) {
+      setActiveTab(currentTab);
+    }
+  }, [location.search]);
+
   return (
     <div className="px-4 space-y-6 sm:px-0">
       <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
@@ -171,7 +202,7 @@ export default function DetailGudang() {
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => setActiveTab("info")}
+                onClick={() => handleTabChange("info")}
               >
                 <Info className="flex-shrink-0 w-4 h-4 mr-2" />
                 Informasi Gudang
@@ -183,7 +214,7 @@ export default function DetailGudang() {
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => setActiveTab("users")}
+                onClick={() => handleTabChange("users")}
               >
                 <User className="flex-shrink-0 w-4 h-4 mr-2" />
                 Pengguna Terkait
@@ -200,7 +231,7 @@ export default function DetailGudang() {
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => setActiveTab("products")}
+                onClick={() => handleTabChange("products")}
               >
                 <Package className="flex-shrink-0 w-4 h-4 mr-2" />
                 Barang Terkait

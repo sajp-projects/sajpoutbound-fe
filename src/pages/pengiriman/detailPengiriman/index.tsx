@@ -5,7 +5,7 @@ import {
   useShipmentChosenProducts,
 } from "@/hooks/pengiriman";
 import { useUploadPlatePhoto, useVerifyPlateNumber } from "@/hooks/media";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useLocation } from "react-router";
 import { Link } from "react-router";
 import {
   ArrowLeft,
@@ -221,10 +221,22 @@ interface GroupedDeliveryOrder {
 export default function DetailPengiriman() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
+
+  // Get tab from URL query parameter or default to "info"
+  const getTabFromUrl = (): "info" | "items" | "spmb" | "do" => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab === "items" || tab === "spmb" || tab === "do") {
+      return tab;
+    }
+    return "info";
+  };
+
   const [activeTab, setActiveTab] = useState<"info" | "items" | "spmb" | "do">(
-    "info"
+    getTabFromUrl()
   );
   const [previewFile, setPreviewFile] = useState<FilePreview | null>(null);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
@@ -458,6 +470,13 @@ export default function DetailPengiriman() {
     if (tab === "items") {
       refetchChosenProducts();
     }
+
+    // Update URL with the active tab
+    const searchParams = new URLSearchParams(location.search);
+    searchParams.set("tab", tab);
+    navigate(`${location.pathname}?${searchParams.toString()}`, {
+      replace: true,
+    });
   };
 
   const handleOpenProductModal = (productId: string) => {
@@ -509,6 +528,14 @@ export default function DetailPengiriman() {
       refetchChosenProducts();
     }
   }, [activeTab, shipmentId, refetchChosenProducts]);
+
+  // Effect to update tab when URL changes
+  useEffect(() => {
+    const currentTab = getTabFromUrl();
+    if (currentTab !== activeTab) {
+      setActiveTab(currentTab);
+    }
+  }, [location.search]);
 
   // Check if all items are completed
   useEffect(() => {

@@ -11,11 +11,11 @@ import {
   Lock,
   Trash2,
 } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utils/date";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -41,9 +41,21 @@ import { useDeleteRole } from "@/hooks/role";
 
 export default function DetailPeran() {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState<"info" | "users">("info");
-  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get tab from URL query parameter or default to "info"
+  const getTabFromUrl = (): "info" | "users" => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab === "users") {
+      return tab;
+    }
+    return "info";
+  };
+
+  const [activeTab, setActiveTab] = useState<"info" | "users">(getTabFromUrl());
+  const { isAuthenticated } = useAuth();
 
   const roleId = getRoleId() || "";
 
@@ -112,6 +124,25 @@ export default function DetailPeran() {
     });
   };
 
+  const handleTabChange = (tab: "info" | "users") => {
+    setActiveTab(tab);
+
+    // Update URL with the active tab
+    const searchParams = new URLSearchParams(location.search);
+    searchParams.set("tab", tab);
+    navigate(`${location.pathname}?${searchParams.toString()}`, {
+      replace: true,
+    });
+  };
+
+  // Effect to update tab when URL changes
+  useEffect(() => {
+    const currentTab = getTabFromUrl();
+    if (currentTab !== activeTab) {
+      setActiveTab(currentTab);
+    }
+  }, [location.search]);
+
   return (
     <div className="px-4 space-y-6 sm:px-0">
       <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
@@ -156,7 +187,7 @@ export default function DetailPeran() {
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => setActiveTab("info")}
+                onClick={() => handleTabChange("info")}
               >
                 <Info className="flex-shrink-0 w-4 h-4 mr-2" />
                 Informasi Peran
@@ -168,7 +199,7 @@ export default function DetailPeran() {
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => setActiveTab("users")}
+                onClick={() => handleTabChange("users")}
               >
                 <Users className="flex-shrink-0 w-4 h-4 mr-2" />
                 Pengguna Terkait
