@@ -266,37 +266,37 @@ export function useDeleteShipment(options = {}) {
   });
 }
 
-export function useRestoreShipment(options = {}) {
-  const queryClient = useQueryClient();
+// export function useRestoreShipment(options = {}) {
+//   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async ({ id }: { id: string }) => {
-      const response = await fetchApi(
-        `${BASE_URL}/shipments/${id}/restore`,
-        {},
-        {
-          method: "PATCH",
-        }
-      );
+//   return useMutation({
+//     mutationFn: async ({ id }: { id: string }) => {
+//       const response = await fetchApi(
+//         `${BASE_URL}/shipments/${id}/restore`,
+//         {},
+//         {
+//           method: "PATCH",
+//         }
+//       );
 
-      const result: ApiResponse<Shipment> = await response.json();
+//       const result: ApiResponse<Shipment> = await response.json();
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Gagal memulihkan pengiriman");
-      }
+//       if (!response.ok || !result.success) {
+//         throw new Error(result.message || "Gagal memulihkan pengiriman");
+//       }
 
-      return result.data;
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: shipmentKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: shipmentKeys.archived() });
-      queryClient.invalidateQueries({
-        queryKey: shipmentKeys.detail(variables.id),
-      });
-    },
-    ...options,
-  });
-}
+//       return result.data;
+//     },
+//     onSuccess: (_, variables) => {
+//       queryClient.invalidateQueries({ queryKey: shipmentKeys.lists() });
+//       queryClient.invalidateQueries({ queryKey: shipmentKeys.archived() });
+//       queryClient.invalidateQueries({
+//         queryKey: shipmentKeys.detail(variables.id),
+//       });
+//     },
+//     ...options,
+//   });
+// }
 
 export function useChooseProduct(options = {}) {
   const queryClient = useQueryClient();

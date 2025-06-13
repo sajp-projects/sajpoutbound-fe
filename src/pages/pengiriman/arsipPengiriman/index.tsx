@@ -1,5 +1,5 @@
-import { useArchivedShipments, useRestoreShipment } from "@/hooks/pengiriman";
-import { Eye, RefreshCw } from "lucide-react";
+import { useArchivedShipments } from "@/hooks/pengiriman";
+import { Eye, History } from "lucide-react";
 import { Link } from "react-router";
 
 import { Badge } from "@/components/ui/badge";
@@ -15,19 +15,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Shipment, ShipmentStatus, ShipmentType } from "@/types/pengiriman";
 import { formatDate, formatDateShort } from "@/utils/date";
-import {
-  showSuccessAlert,
-  showErrorAlert,
-  showConfirmationAlert,
-  isConfirmed,
-} from "@/utils/sweetAlert";
 import { LoadingState } from "@/components/LoadingState";
 import { EmptyState } from "@/components/EmptyState";
-import { useAuth } from "@/hooks/auth";
-import { useRolePermissions } from "@/hooks/izin";
-import { PERMISSION } from "@/constant/PERMISSION";
-import { hasPermission } from "@/utils/permission";
-import { getRoleId } from "@/utils/storage";
 import { Pagination } from "@/components/Pagination";
 import { useSearchParams } from "react-router";
 
@@ -35,19 +24,6 @@ export default function ArsipPengiriman() {
   const [searchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
-
-  const { isAuthenticated } = useAuth();
-  const roleId = getRoleId() || "";
-
-  const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && roleId !== "",
-  });
-
-  const hasPengirimanUpdateAccess = hasPermission(
-    permissions,
-    PERMISSION.RESOURCES.PENGIRIMAN,
-    PERMISSION.ACTIONS.UPDATE
-  );
 
   const {
     data = {
@@ -62,7 +38,6 @@ export default function ArsipPengiriman() {
       },
     },
     isLoading,
-    refetch,
   } = useArchivedShipments({
     staleTime: 5000,
     refetchOnMount: "always",
@@ -70,34 +45,6 @@ export default function ArsipPengiriman() {
 
   const archivedShipments = data.shipments;
   const pagination = data.pagination;
-
-  const restoreShipment = useRestoreShipment({
-    onSuccess: () => {
-      showSuccessAlert("Berhasil!", "Pengiriman berhasil dipulihkan");
-      refetch();
-    },
-    onError: (error: Error) => {
-      showErrorAlert(
-        "Gagal!",
-        `Gagal memulihkan pengiriman: ${
-          error.message || "Terjadi kesalahan saat memulihkan pengiriman."
-        }`
-      );
-    },
-  });
-
-  const handleRestore = (id: string) => {
-    showConfirmationAlert(
-      "Konfirmasi Pemulihan",
-      "Apakah Anda yakin ingin memulihkan pengiriman ini?",
-      "Ya, Pulihkan!",
-      "Batal"
-    ).then((result) => {
-      if (isConfirmed(result)) {
-        restoreShipment.mutate({ id });
-      }
-    });
-  };
 
   const getStatusBadgeClass = (status: ShipmentStatus) => {
     switch (status) {
@@ -214,26 +161,16 @@ export default function ArsipPengiriman() {
                           <Eye className="w-4 h-4" />
                         </Button>
                       </Link>
-                      {hasPengirimanUpdateAccess && (
+                      <Link to={`/pengiriman/${shipment.id}/log`}>
                         <Button
                           size="sm"
                           variant="ghost"
                           className="w-8 h-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          title="Pulihkan"
-                          onClick={() => handleRestore(shipment.id)}
-                          disabled={
-                            restoreShipment.isPending &&
-                            restoreShipment.variables?.id === shipment.id
-                          }
+                          title="Lihat Log Aktivitas"
                         >
-                          {restoreShipment.isPending &&
-                          restoreShipment.variables?.id === shipment.id ? (
-                            <div className="w-4 h-4 border-2 border-blue-200 rounded-full border-t-blue-600 animate-spin"></div>
-                          ) : (
-                            <RefreshCw className="w-4 h-4" />
-                          )}
+                          <History className="w-4 h-4" />
                         </Button>
-                      )}
+                      </Link>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -323,26 +260,16 @@ export default function ArsipPengiriman() {
                     <Eye className="w-4 h-4" />
                   </Button>
                 </Link>
-                {hasPengirimanUpdateAccess && (
+                <Link to={`/pengiriman/${shipment.id}/log`}>
                   <Button
                     size="sm"
                     variant="ghost"
                     className="p-0 text-blue-600 w-9 h-9 hover:text-blue-700 hover:bg-blue-50"
-                    title="Pulihkan"
-                    onClick={() => handleRestore(shipment.id)}
-                    disabled={
-                      restoreShipment.isPending &&
-                      restoreShipment.variables?.id === shipment.id
-                    }
+                    title="Lihat Log Aktivitas"
                   >
-                    {restoreShipment.isPending &&
-                    restoreShipment.variables?.id === shipment.id ? (
-                      <div className="w-4 h-4 border-2 border-blue-200 rounded-full border-t-blue-600 animate-spin"></div>
-                    ) : (
-                      <RefreshCw className="w-4 h-4" />
-                    )}
+                    <History className="w-4 h-4" />
                   </Button>
-                )}
+                </Link>
               </div>
             </div>
           </div>
@@ -366,7 +293,7 @@ export default function ArsipPengiriman() {
               Pengiriman Terarsip
             </h2>
             <p className="text-sm text-gray-500">
-              Daftar pengiriman yang telah diarsipkan dari sistem
+              Daftar riwayat pengiriman yang telah diarsipkan dari sistem
             </p>
           </div>
         </div>
