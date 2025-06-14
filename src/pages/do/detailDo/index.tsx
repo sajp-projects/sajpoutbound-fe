@@ -166,6 +166,7 @@ export default function DetailDo() {
     if (currentTab !== activeTab) {
       setActiveTab(currentTab);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
   return (
