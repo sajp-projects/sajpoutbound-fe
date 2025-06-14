@@ -1,17 +1,18 @@
-import { useDeliveryOrder, useDeleteDeliveryOrder } from "@/hooks/do";
-import { useParams, useNavigate, useLocation } from "react-router";
-import { Link } from "react-router";
+import { useDeleteDeliveryOrder, useDeliveryOrder } from '@/hooks/do';
 import {
+  Archive,
   ArrowLeft,
   Edit,
-  Archive,
-  History,
   FileText,
+  History,
   Info,
-} from "lucide-react";
+} from 'lucide-react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ErrorState } from '@/components/ErrorState';
+import { LoadingState } from '@/components/LoadingState';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -19,25 +20,23 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import { formatDate } from "@/utils/date";
-import { formatNumber } from "@/utils/formatNumber";
-import { LoadingState } from "@/components/LoadingState";
-import { ErrorState } from "@/components/ErrorState";
-import { DeliveryOrderStatus } from "@/types/do";
-import { PERMISSION } from "@/constant/PERMISSION";
-import { useAuth } from "@/hooks/auth";
-import { useRolePermissions } from "@/hooks/izin";
-import { hasPermission } from "@/utils/permission";
-import { getRoleId } from "@/utils/storage";
+} from '@/components/ui/table';
+import { PERMISSION } from '@/constant/PERMISSION';
+import { useAuth } from '@/hooks/auth';
+import { useRolePermissions } from '@/hooks/izin';
+import { cn } from '@/lib/utils';
+import { DeliveryOrderStatus } from '@/types/do';
+import { formatDate } from '@/utils/date';
+import { formatNumber } from '@/utils/formatNumber';
+import { hasPermission } from '@/utils/permission';
+import { getRoleId } from '@/utils/storage';
 import {
-  showSuccessAlert,
-  showErrorAlert,
-  showConfirmationAlert,
   isConfirmed,
-} from "@/utils/sweetAlert";
-import { useState, useEffect } from "react";
+  showConfirmationAlert,
+  showErrorAlert,
+  showSuccessAlert,
+} from '@/utils/sweetAlert';
+import { useEffect, useState } from 'react';
 
 interface StatusBadgeProps {
   status: DeliveryOrderStatus;
@@ -46,21 +45,21 @@ interface StatusBadgeProps {
 function StatusBadge({ status }: StatusBadgeProps) {
   const getStatusColor = (status: DeliveryOrderStatus) => {
     switch (status) {
-      case "PENDING":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "PROSES":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "COMPLETED":
-        return "bg-green-100 text-green-800 border-green-200";
+      case 'PENDING':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'PROSES':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'COMPLETED':
+        return 'bg-green-100 text-green-800 border-green-200';
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   return (
     <Badge
       variant="outline"
-      className={cn("font-medium px-2.5 py-0.5", getStatusColor(status))}
+      className={cn('font-medium px-2.5 py-0.5', getStatusColor(status))}
     >
       {status}
     </Badge>
@@ -72,22 +71,22 @@ export default function DetailDo() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useAuth();
-  const roleId = getRoleId() || "";
+  const roleId = getRoleId() || '';
 
   // Get tab from URL query parameter or default to "info"
-  const getTabFromUrl = (): "info" | "items" => {
+  const getTabFromUrl = (): 'info' | 'items' => {
     const params = new URLSearchParams(location.search);
-    const tab = params.get("tab");
-    if (tab === "items") {
+    const tab = params.get('tab');
+    if (tab === 'items') {
       return tab;
     }
-    return "info";
+    return 'info';
   };
 
-  const [activeTab, setActiveTab] = useState<"info" | "items">(getTabFromUrl());
+  const [activeTab, setActiveTab] = useState<'info' | 'items'>(getTabFromUrl());
 
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && !!roleId && roleId !== "",
+    enabled: isAuthenticated && !!roleId && roleId !== '',
   });
 
   const hasDoUpdateAccess = hasPermission(
@@ -102,7 +101,7 @@ export default function DetailDo() {
     PERMISSION.ACTIONS.DELETE
   );
 
-  const deliveryOrderId = id || "";
+  const deliveryOrderId = id || '';
 
   const {
     data: deliveryOrder,
@@ -114,23 +113,24 @@ export default function DetailDo() {
     { id: deliveryOrderId },
     {
       enabled: !!deliveryOrderId,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
+      staleTime: 0,
     }
   );
 
   const deleteDeliveryOrder = useDeleteDeliveryOrder({
     onSuccess: () => {
-      showSuccessAlert("Berhasil!", "Delivery Order berhasil diarsipkan").then(
+      showSuccessAlert('Berhasil!', 'Delivery Order berhasil diarsipkan').then(
         () => {
-          navigate("/do");
+          navigate('/do');
         }
       );
     },
     onError: (error) => {
       showErrorAlert(
-        "Gagal Mengarsipkan",
+        'Gagal Mengarsipkan',
         `Gagal mengarsipkan delivery order: ${
-          error.message || "Terjadi kesalahan saat mengarsipkan delivery order."
+          error.message || 'Terjadi kesalahan saat mengarsipkan delivery order.'
         }`
       );
     },
@@ -138,10 +138,10 @@ export default function DetailDo() {
 
   const handleDelete = (id: string) => {
     showConfirmationAlert(
-      "Konfirmasi Arsip",
-      "Apakah Anda yakin ingin mengarsipkan Delivery Order ini?",
-      "Ya, Arsipkan!",
-      "Batal"
+      'Konfirmasi Arsip',
+      'Apakah Anda yakin ingin mengarsipkan Delivery Order ini?',
+      'Ya, Arsipkan!',
+      'Batal'
     ).then((result) => {
       if (isConfirmed(result)) {
         deleteDeliveryOrder.mutate({ id });
@@ -149,12 +149,12 @@ export default function DetailDo() {
     });
   };
 
-  const handleTabChange = (tab: "info" | "items") => {
+  const handleTabChange = (tab: 'info' | 'items') => {
     setActiveTab(tab);
 
     // Update URL with the active tab
     const searchParams = new URLSearchParams(location.search);
-    searchParams.set("tab", tab);
+    searchParams.set('tab', tab);
     navigate(`${location.pathname}?${searchParams.toString()}`, {
       replace: true,
     });
@@ -207,7 +207,7 @@ export default function DetailDo() {
             message={
               error instanceof Error
                 ? error.message
-                : "Terjadi kesalahan pada server"
+                : 'Terjadi kesalahan pada server'
             }
             onRetry={refetch}
             retryButtonText="Coba lagi"
@@ -232,24 +232,24 @@ export default function DetailDo() {
             <div className="flex overflow-x-auto border-b border-gray-200 scrollbar-none">
               <button
                 className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
-                  activeTab === "info"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  'px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap',
+                  activeTab === 'info'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 )}
-                onClick={() => handleTabChange("info")}
+                onClick={() => handleTabChange('info')}
               >
                 <Info className="flex-shrink-0 w-4 h-4 mr-2" />
                 Informasi DO
               </button>
               <button
                 className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
-                  activeTab === "items"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  'px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap',
+                  activeTab === 'items'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 )}
-                onClick={() => handleTabChange("items")}
+                onClick={() => handleTabChange('items')}
               >
                 <FileText className="flex-shrink-0 w-4 h-4 mr-2" />
                 Daftar Barang
@@ -261,7 +261,7 @@ export default function DetailDo() {
               </button>
             </div>
 
-            {activeTab === "info" && (
+            {activeTab === 'info' && (
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-4">
                   <div className="p-4 border border-gray-200 rounded-lg">
@@ -316,7 +316,7 @@ export default function DetailDo() {
                       <div>
                         <p className="text-sm text-gray-500">Status</p>
                         <StatusBadge
-                          status={deliveryOrder.status || "PENDING"}
+                          status={deliveryOrder.status || 'PENDING'}
                         />
                       </div>
                       <div>
@@ -380,8 +380,8 @@ export default function DetailDo() {
                           >
                             <Archive className="w-4 h-4 mr-2" />
                             {deleteDeliveryOrder.isPending
-                              ? "Mengarsipkan..."
-                              : "Arsipkan DO"}
+                              ? 'Mengarsipkan...'
+                              : 'Arsipkan DO'}
                           </Button>
                         )}
                     </div>
@@ -390,7 +390,7 @@ export default function DetailDo() {
               </div>
             )}
 
-            {activeTab === "items" && (
+            {activeTab === 'items' && (
               <div className="p-4 border border-gray-200 rounded-lg">
                 <h3 className="flex items-center mb-4 text-lg font-medium text-gray-900">
                   <FileText className="w-5 h-5 mr-2 text-blue-600" />
@@ -469,7 +469,7 @@ export default function DetailDo() {
                                     to={`/barang/${item.productId}`}
                                     className="text-blue-600 hover:underline"
                                   >
-                                    {" "}
+                                    {' '}
                                     {item.product.name}
                                   </Link>
                                 </TableCell>
@@ -524,8 +524,8 @@ export default function DetailDo() {
                                 <p className="mt-1 text-xs text-gray-600">
                                   <span className="font-medium">
                                     Kuantitas:
-                                  </span>{" "}
-                                  {formatNumber(item.quantity)}{" "}
+                                  </span>{' '}
+                                  {formatNumber(item.quantity)}{' '}
                                   {item.product.satuan}
                                 </p>
                               </div>

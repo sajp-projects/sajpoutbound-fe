@@ -534,6 +534,7 @@ export default function DetailPengiriman() {
     if (currentTab !== activeTab) {
       setActiveTab(currentTab);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
   // Check if all items are completed
