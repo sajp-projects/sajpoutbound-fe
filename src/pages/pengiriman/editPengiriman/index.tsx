@@ -1,27 +1,27 @@
-import { joiResolver } from '@hookform/resolvers/joi';
-import Joi from 'joi';
-import { ArrowLeft, Loader2, Plus, Save, Trash } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { Link, useNavigate, useParams } from 'react-router';
+import { joiResolver } from "@hookform/resolvers/joi";
+import Joi from "joi";
+import { ArrowLeft, Loader2, Plus, Save, Trash } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { Link, useNavigate, useParams } from "react-router";
 
-import { ErrorState } from '@/components/ErrorState';
-import { LoadingState } from '@/components/LoadingState';
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Combobox } from '@/components/ui/combobox';
+} from "@/components/ui/card";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Form,
   FormControl,
@@ -29,35 +29,35 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { useArmadas } from '@/hooks/armada';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useArmadas } from "@/hooks/armada";
 import {
   deliveryOrderKeys,
   useDeliveryOrder,
   useDeliveryOrders,
   useDeliveryOrdersByIds,
-} from '@/hooks/do';
+} from "@/hooks/do";
 import {
   shipmentKeys,
   useShipment,
   useUpdateShipment,
-} from '@/hooks/pengiriman';
-import { cn } from '@/lib/utils';
-import { UpdateShipmentInput } from '@/types/pengiriman';
-import { LOCATION_TYPE } from '@/utils/constants';
-import { formatNumber } from '@/utils/formatNumber';
-import { showErrorAlert, showSuccessAlert } from '@/utils/sweetAlert';
-import { useQueryClient } from '@tanstack/react-query';
+} from "@/hooks/pengiriman";
+import { cn } from "@/lib/utils";
+import { UpdateShipmentInput } from "@/types/pengiriman";
+import { LOCATION_TYPE } from "@/utils/constants";
+import { formatNumber } from "@/utils/formatNumber";
+import { showErrorAlert, showSuccessAlert } from "@/utils/sweetAlert";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Validasi plat nomor Indonesia
 const plateNumberRegex = /^[A-Z]{1,2}\s?\d{1,4}\s?[A-Z]{1,3}$/;
@@ -65,19 +65,19 @@ const plateNumberRegex = /^[A-Z]{1,2}\s?\d{1,4}\s?[A-Z]{1,3}$/;
 // Schema untuk validasi
 const deliveryOrderItemSchema = Joi.object({
   deliveryOrderId: Joi.string().required().messages({
-    'string.empty': 'ID DO harus diisi',
-    'any.required': 'ID DO harus diisi',
+    "string.empty": "ID DO harus diisi",
+    "any.required": "ID DO harus diisi",
   }),
   locationType: Joi.string().required().messages({
-    'string.empty': 'Tipe lokasi harus dipilih',
-    'any.required': 'Tipe lokasi harus dipilih',
+    "string.empty": "Tipe lokasi harus dipilih",
+    "any.required": "Tipe lokasi harus dipilih",
   }),
   products: Joi.array()
     .items(
       Joi.object({
         productId: Joi.string().required(),
         requestedQuantity: Joi.number().integer().min(0).required(),
-        shipmentItemId: Joi.string().allow('', null).optional(),
+        shipmentItemId: Joi.string().allow("", null).optional(),
       })
     )
     .required(),
@@ -85,41 +85,41 @@ const deliveryOrderItemSchema = Joi.object({
 });
 
 const formSchema = Joi.object({
-  type: Joi.string().valid('ANTAR', 'JEMPUT').required().messages({
-    'any.only': 'Tipe harus ANTAR atau JEMPUT',
-    'any.required': 'Tipe pengiriman harus diisi',
+  type: Joi.string().valid("ANTAR", "JEMPUT").required().messages({
+    "any.only": "Tipe harus ANTAR atau JEMPUT",
+    "any.required": "Tipe pengiriman harus diisi",
   }),
-  plateNumber: Joi.when('type', {
-    is: 'JEMPUT',
+  plateNumber: Joi.when("type", {
+    is: "JEMPUT",
     then: Joi.string().pattern(plateNumberRegex).required().messages({
-      'string.empty': 'Plat nomor harus diisi',
-      'string.pattern.base':
-        'Format plat nomor tidak valid (contoh: B 1234 ABC)',
-      'any.required': 'Plat nomor harus diisi',
+      "string.empty": "Plat nomor harus diisi",
+      "string.pattern.base":
+        "Format plat nomor tidak valid (contoh: B 1234 ABC)",
+      "any.required": "Plat nomor harus diisi",
     }),
-    otherwise: Joi.string().allow('').optional(),
+    otherwise: Joi.string().allow("").optional(),
   }),
-  armadaId: Joi.when('type', {
-    is: 'ANTAR',
+  armadaId: Joi.when("type", {
+    is: "ANTAR",
     then: Joi.string().required().messages({
-      'string.empty': 'Armada harus dipilih',
-      'any.required': 'Armada harus dipilih',
+      "string.empty": "Armada harus dipilih",
+      "any.required": "Armada harus dipilih",
     }),
-    otherwise: Joi.string().allow('').optional(),
+    otherwise: Joi.string().allow("").optional(),
   }),
-  internalNote: Joi.string().allow('').optional(),
+  internalNote: Joi.string().allow("").optional(),
   deliveryOrders: Joi.array()
     .items(deliveryOrderItemSchema)
     .min(1)
     .required()
     .messages({
-      'array.min': 'Minimal harus ada 1 Delivery Order',
-      'any.required': 'Delivery Order harus diisi',
+      "array.min": "Minimal harus ada 1 Delivery Order",
+      "any.required": "Delivery Order harus diisi",
     }),
 });
 
 interface FormValues {
-  type: 'ANTAR' | 'JEMPUT';
+  type: "ANTAR" | "JEMPUT";
   plateNumber?: string;
   armadaId?: string;
   internalNote?: string;
@@ -131,7 +131,6 @@ interface FormValues {
       requestedQuantity: number;
       shipmentItemId?: string;
     }[];
-    isChosen?: boolean;
   }[];
 }
 
@@ -148,12 +147,12 @@ export default function EditPengiriman() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deliveryOrderSearchQuery, setDeliveryOrderSearchQuery] = useState('');
-  const [armadaSearchQuery, setArmadaSearchQuery] = useState('');
+  const [deliveryOrderSearchQuery, setDeliveryOrderSearchQuery] = useState("");
+  const [armadaSearchQuery, setArmadaSearchQuery] = useState("");
   const [selectedDOProducts, setSelectedDOProducts] = useState<
     Record<string, DOProduct[]>
   >({});
-  const [activeDOId, setActiveDOId] = useState<string>('');
+  const [activeDOId, setActiveDOId] = useState<string>("");
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
     {}
   );
@@ -165,7 +164,7 @@ export default function EditPengiriman() {
     error,
     refetch,
   } = useShipment(
-    { id: id || '' },
+    { id: id || "" },
     {
       enabled: !!id,
       refetchOnWindowFocus: false,
@@ -252,7 +251,7 @@ export default function EditPengiriman() {
     onSuccess: () => {
       // Invalidate shipment queries
       queryClient.invalidateQueries({
-        queryKey: shipmentKeys.detail(id || ''),
+        queryKey: shipmentKeys.detail(id || ""),
       });
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.lists(),
@@ -268,7 +267,7 @@ export default function EditPengiriman() {
           });
         }
       });
-      showSuccessAlert('Berhasil!', 'Pengiriman berhasil diperbarui').then(
+      showSuccessAlert("Berhasil!", "Pengiriman berhasil diperbarui").then(
         () => {
           navigate(`/pengiriman/${id}`);
         }
@@ -277,8 +276,8 @@ export default function EditPengiriman() {
     onError: (error: Error) => {
       setIsSubmitting(false);
       showErrorAlert(
-        'Gagal Memperbarui Pengiriman',
-        error.message || 'Terjadi kesalahan saat memperbarui pengiriman'
+        "Gagal Memperbarui Pengiriman",
+        error.message || "Terjadi kesalahan saat memperbarui pengiriman"
       );
     },
   });
@@ -286,22 +285,22 @@ export default function EditPengiriman() {
   const form = useForm<FormValues>({
     resolver: joiResolver(formSchema),
     defaultValues: {
-      type: 'ANTAR',
-      plateNumber: '',
-      armadaId: '',
-      internalNote: '',
+      type: "ANTAR",
+      plateNumber: "",
+      armadaId: "",
+      internalNote: "",
       deliveryOrders: [],
     },
-    mode: 'onChange',
+    mode: "onChange",
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: 'deliveryOrders',
+    name: "deliveryOrders",
   });
 
-  const watchType = form.watch('type');
-  const watchDeliveryOrders = form.watch('deliveryOrders');
+  const watchType = form.watch("type");
+  const watchDeliveryOrders = form.watch("deliveryOrders");
 
   // Inisialisasi form dengan data shipment yang ada
   useEffect(() => {
@@ -316,7 +315,6 @@ export default function EditPengiriman() {
             deliveryOrderId: doId,
             locationType: item.locationType,
             products: [],
-            isChosen: item.chosenProduct || false,
           });
         }
 
@@ -326,20 +324,15 @@ export default function EditPengiriman() {
           requestedQuantity: item.requestedQuantity,
           shipmentItemId: item.id,
         });
-
-        // Update isChosen if any product is chosen
-        if (item.chosenProduct) {
-          doData.isChosen = true;
-        }
       });
 
       const deliveryOrdersArray = Array.from(doMap.values());
 
       form.reset({
         type: shipment.type,
-        plateNumber: shipment.plateNumber || '',
-        armadaId: shipment.armadaId || '',
-        internalNote: shipment.internalNote || '',
+        plateNumber: shipment.plateNumber || "",
+        armadaId: shipment.armadaId || "",
+        internalNote: shipment.internalNote || "",
         deliveryOrders: deliveryOrdersArray,
       });
 
@@ -387,11 +380,24 @@ export default function EditPengiriman() {
       );
 
       if (doIndex !== -1) {
-        // Untuk edit, tampilkan semua produk (termasuk yang pendingQuantity = 0)
-        // karena mungkin ada shipment item yang sudah ada sebelumnya
-        const availableProducts = doProducts;
+        // Untuk edit, tampilkan produk yang memiliki pendingQuantity > 0
+        // ATAU yang sudah ada dalam shipment items (untuk item yang sudah ada sebelumnya)
+        const existingShipmentItems =
+          shipment?.shipmentItems.filter(
+            (si) => si.deliveryOrderId === activeDOId
+          ) || [];
 
-        // Jika tidak ada barang sama sekali, set products kosong
+        const existingProductIds = existingShipmentItems.map(
+          (si) => si.productId
+        );
+
+        const availableProducts = doProducts.filter(
+          (product) =>
+            product.pendingQuantity > 0 ||
+            existingProductIds.includes(product.id)
+        );
+
+        // Jika tidak ada barang yang tersedia, set products kosong
         if (availableProducts.length === 0) {
           form.setValue(`deliveryOrders.${doIndex}.products`, []);
           return;
@@ -405,7 +411,7 @@ export default function EditPengiriman() {
           const initialProducts = availableProducts.map((product) => ({
             productId: product.id,
             requestedQuantity: 0,
-            shipmentItemId: '', // Kosong untuk item baru
+            shipmentItemId: "", // Kosong untuk item baru
           }));
 
           form.setValue(`deliveryOrders.${doIndex}.products`, initialProducts);
@@ -418,7 +424,7 @@ export default function EditPengiriman() {
             return {
               productId: product.id,
               requestedQuantity: existingProduct?.requestedQuantity || 0,
-              shipmentItemId: existingProduct?.shipmentItemId || '', // Kosong jika tidak ada
+              shipmentItemId: existingProduct?.shipmentItemId || "", // Kosong jika tidak ada
             };
           });
 
@@ -426,13 +432,13 @@ export default function EditPengiriman() {
         }
       }
     }
-  }, [activeDOData, activeDOId, form, watchDeliveryOrders]);
+  }, [activeDOData, activeDOId, form, watchDeliveryOrders, shipment]);
 
   // Handle error saat memuat DO
   useEffect(() => {
     if (activeDOError && activeDOId) {
       showErrorAlert(
-        'Error Memuat Barang',
+        "Error Memuat Barang",
         `Gagal memuat Barang untuk DO ${activeDOId}: ${activeDOError.message}`
       );
     }
@@ -485,8 +491,8 @@ export default function EditPengiriman() {
 
       if (isDuplicate) {
         showErrorAlert(
-          'Validasi DO Gagal',
-          'DO ini sudah ditambahkan. Setiap DO hanya dapat ditambahkan sekali.'
+          "Validasi DO Gagal",
+          "DO ini sudah ditambahkan. Setiap DO hanya dapat ditambahkan sekali."
         );
         return;
       }
@@ -501,7 +507,7 @@ export default function EditPengiriman() {
       form.setValue(`deliveryOrders.${index}.products`, []);
 
       // Reset locationType juga
-      form.setValue(`deliveryOrders.${index}.locationType`, '');
+      form.setValue(`deliveryOrders.${index}.locationType`, "");
       form.clearErrors(`deliveryOrders.${index}.locationType`);
 
       // Bersihkan state DO lama dari selectedDOProducts
@@ -529,17 +535,17 @@ export default function EditPengiriman() {
     [form, loadDOProducts, watchDeliveryOrders]
   );
 
-  const handleTypeChange = (value: 'ANTAR' | 'JEMPUT') => {
-    form.resetField('plateNumber');
-    form.resetField('armadaId');
+  const handleTypeChange = (value: "ANTAR" | "JEMPUT") => {
+    form.resetField("plateNumber");
+    form.resetField("armadaId");
 
-    form.setValue('plateNumber', '');
-    form.setValue('armadaId', '');
+    form.setValue("plateNumber", "");
+    form.setValue("armadaId", "");
 
-    form.clearErrors('plateNumber');
-    form.clearErrors('armadaId');
+    form.clearErrors("plateNumber");
+    form.clearErrors("armadaId");
 
-    form.setValue('type', value);
+    form.setValue("type", value);
   };
 
   const addNewDeliveryOrder = () => {
@@ -550,17 +556,16 @@ export default function EditPengiriman() {
 
     if (emptyDOIndex !== -1) {
       showErrorAlert(
-        'Validasi DO Gagal',
-        'Harap isi DO yang kosong terlebih dahulu sebelum menambahkan DO baru.'
+        "Validasi DO Gagal",
+        "Harap isi DO yang kosong terlebih dahulu sebelum menambahkan DO baru."
       );
       return;
     }
 
     append({
-      deliveryOrderId: '',
-      locationType: '',
+      deliveryOrderId: "",
+      locationType: "",
       products: [],
-      isChosen: false,
     });
 
     // Membuka accordion untuk DO baru
@@ -573,11 +578,24 @@ export default function EditPengiriman() {
   const removeDO = (index: number) => {
     const doItem = watchDeliveryOrders[index];
 
-    // Cek apakah DO sudah chosen
-    if (doItem.isChosen) {
+    // Cek apakah ada barang dalam DO ini yang sudah chosen
+    const hasChosenProducts =
+      doItem?.deliveryOrderId &&
+      doItem?.products?.length > 0 &&
+      doItem?.products?.some((product) => {
+        // Cari shipment item yang sesuai dengan DO dan product ini
+        const shipmentItem = shipment?.shipmentItems.find(
+          (si) =>
+            si.deliveryOrderId === doItem.deliveryOrderId &&
+            si.productId === product.productId
+        );
+        return shipmentItem?.chosenProduct === true;
+      });
+
+    if (hasChosenProducts) {
       showErrorAlert(
-        'Tidak Dapat Menghapus',
-        'DO ini tidak dapat dihapus karena barangnya sudah dimuat/dipilih.'
+        "Tidak Dapat Menghapus",
+        "DO ini tidak dapat dihapus karena ada barang yang sudah dimuat/dipilih."
       );
       return;
     }
@@ -602,7 +620,7 @@ export default function EditPengiriman() {
     // Update accordion states
     const newAccordionStates: Record<string, boolean> = {};
     Object.keys(openAccordions).forEach((key) => {
-      const keyIndex = parseInt(key.split('-')[1]);
+      const keyIndex = parseInt(key.split("-")[1]);
       if (keyIndex < index) {
         newAccordionStates[key] = openAccordions[key];
       } else if (keyIndex > index) {
@@ -624,8 +642,8 @@ export default function EditPengiriman() {
     if (deliveryOrderIds.length !== uniqueDeliveryOrderIds.size) {
       setIsSubmitting(false);
       showErrorAlert(
-        'Validasi Gagal',
-        'Terdapat Delivery Order duplikat. Setiap DO hanya dapat ditambahkan sekali.'
+        "Validasi Gagal",
+        "Terdapat Delivery Order duplikat. Setiap DO hanya dapat ditambahkan sekali."
       );
       return;
     }
@@ -651,7 +669,7 @@ export default function EditPengiriman() {
             requestedQuantity: product.requestedQuantity,
             locationType: do_item.locationType,
             // Hanya kirim shipmentItemId jika ada dan tidak kosong
-            ...(product.shipmentItemId && product.shipmentItemId.trim() !== ''
+            ...(product.shipmentItemId && product.shipmentItemId.trim() !== ""
               ? { shipmentItemId: product.shipmentItemId }
               : {}),
           };
@@ -663,8 +681,8 @@ export default function EditPengiriman() {
     if (items.length === 0) {
       setIsSubmitting(false);
       showErrorAlert(
-        'Validasi Gagal',
-        'Minimal harus ada 1 Barang yang dipilih dengan jumlah yang valid'
+        "Validasi Gagal",
+        "Minimal harus ada 1 Barang yang dipilih dengan jumlah yang valid"
       );
       return;
     }
@@ -672,20 +690,20 @@ export default function EditPengiriman() {
     // Persiapkan payload
     const payload: UpdateShipmentInput = {
       type: values.type,
-      internalNote: values.internalNote || '',
+      internalNote: values.internalNote || "",
       items,
     };
 
-    if (values.type === 'ANTAR' && values.armadaId) {
+    if (values.type === "ANTAR" && values.armadaId) {
       payload.armadaId = values.armadaId;
-      payload.plateNumber = '';
-    } else if (values.type === 'JEMPUT' && values.plateNumber) {
+      payload.plateNumber = "";
+    } else if (values.type === "JEMPUT" && values.plateNumber) {
       payload.plateNumber = values.plateNumber;
-      payload.armadaId = '';
+      payload.armadaId = "";
     }
 
     updateShipment.mutate({
-      id: id || '',
+      id: id || "",
       ...payload,
     });
   };
@@ -701,7 +719,7 @@ export default function EditPengiriman() {
         message={
           error instanceof Error
             ? error.message
-            : 'Terjadi kesalahan saat memuat data pengiriman'
+            : "Terjadi kesalahan saat memuat data pengiriman"
         }
         onRetry={refetch}
         retryButtonText="Coba lagi"
@@ -743,7 +761,7 @@ export default function EditPengiriman() {
         <CardHeader>
           <CardTitle>Form Edit Pengiriman</CardTitle>
           <CardDescription>
-            Perbarui detail pengiriman dengan ID:{' '}
+            Perbarui detail pengiriman dengan ID:{" "}
             <code className="px-1 py-0.5 bg-gray-100 text-gray-800 rounded text-sm">
               {id}
             </code>
@@ -766,7 +784,7 @@ export default function EditPengiriman() {
                       render={({ field }) => (
                         <FormItem className="space-y-3">
                           <FormLabel>
-                            Tipe Pengiriman{' '}
+                            Tipe Pengiriman{" "}
                             <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
@@ -802,7 +820,7 @@ export default function EditPengiriman() {
 
                     {/* Field kondisional berdasarkan tipe */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      {watchType === 'JEMPUT' ? (
+                      {watchType === "JEMPUT" ? (
                         <div className="sm:col-span-2">
                           <FormField
                             control={form.control}
@@ -810,7 +828,7 @@ export default function EditPengiriman() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>
-                                  Plat Nomor Kendaraan{' '}
+                                  Plat Nomor Kendaraan{" "}
                                   <span className="text-red-500">*</span>
                                 </FormLabel>
                                 <FormControl>
@@ -825,7 +843,7 @@ export default function EditPengiriman() {
                                     }}
                                     className={cn(
                                       form.formState.errors.plateNumber &&
-                                        'border-red-500'
+                                        "border-red-500"
                                     )}
                                   />
                                 </FormControl>
@@ -847,7 +865,7 @@ export default function EditPengiriman() {
                                 <FormControl>
                                   <Combobox
                                     items={armadas}
-                                    value={field.value || ''}
+                                    value={field.value || ""}
                                     onValueChange={(val) => {
                                       field.onChange(val);
                                     }}
@@ -855,7 +873,7 @@ export default function EditPengiriman() {
                                     searchPlaceholder="Cari armada..."
                                     isLoading={loadingArmadas}
                                     name="armadaId"
-                                    onClear={() => field.onChange('')}
+                                    onClear={() => field.onChange("")}
                                     onSearch={handleArmadaSearch}
                                     useServerSearch
                                   />
@@ -917,17 +935,30 @@ export default function EditPengiriman() {
                     >
                       {fields.map((field, index) => {
                         const doItem = watchDeliveryOrders[index];
-                        const isChosen = doItem?.isChosen || false;
+
+                        // Cek apakah ada barang dalam DO ini yang sudah chosen
+                        const hasChosenProducts =
+                          doItem?.deliveryOrderId &&
+                          doItem?.products?.length > 0 &&
+                          doItem?.products?.some((product) => {
+                            // Cari shipment item yang sesuai dengan DO dan product ini
+                            const shipmentItem = shipment?.shipmentItems.find(
+                              (si) =>
+                                si.deliveryOrderId === doItem.deliveryOrderId &&
+                                si.productId === product.productId
+                            );
+                            return shipmentItem?.chosenProduct === true;
+                          });
 
                         return (
                           <AccordionItem
                             key={field.id}
                             value={`do-${index}`}
                             className={cn(
-                              'mb-4 overflow-hidden border rounded-lg',
-                              isChosen
-                                ? 'border-green-300 bg-green-50'
-                                : 'border-gray-200 bg-gray-50'
+                              "mb-4 overflow-hidden border rounded-lg",
+                              hasChosenProducts
+                                ? "border-green-300 bg-green-50"
+                                : "border-gray-200 bg-gray-50"
                             )}
                           >
                             <div className="flex items-center justify-between p-4">
@@ -935,14 +966,14 @@ export default function EditPengiriman() {
                                 <h4 className="font-medium text-gray-900">
                                   #Delivery Order {index + 1}
                                 </h4>
-                                {isChosen && (
+                                {hasChosenProducts && (
                                   <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
-                                    Sudah Dimuat
+                                    Ada Barang Dimuat
                                   </span>
                                 )}
                               </div>
                               <div className="flex items-center gap-2">
-                                {fields.length > 1 && !isChosen && (
+                                {fields.length > 1 && !hasChosenProducts && (
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -966,14 +997,32 @@ export default function EditPengiriman() {
                                   render={({ field }) => (
                                     <FormItem className="h-[80px]">
                                       <FormLabel>
-                                        Delivery Order{' '}
+                                        Delivery Order{" "}
                                         <span className="text-red-500">*</span>
                                       </FormLabel>
                                       <FormControl>
                                         <div
                                           className={cn(
-                                            isChosen &&
-                                              'opacity-50 pointer-events-none'
+                                            // Hanya disable jika DO sudah dipilih DAN SEMUA produk dalam DO sudah chosen
+                                            doItem?.deliveryOrderId &&
+                                              doItem?.products?.length > 0 &&
+                                              doItem?.products?.every(
+                                                (product) => {
+                                                  const shipmentItem =
+                                                    shipment?.shipmentItems.find(
+                                                      (si) =>
+                                                        si.deliveryOrderId ===
+                                                          doItem.deliveryOrderId &&
+                                                        si.productId ===
+                                                          product.productId
+                                                    );
+                                                  return (
+                                                    shipmentItem?.chosenProduct ===
+                                                    true
+                                                  );
+                                                }
+                                              ) &&
+                                              "opacity-50 pointer-events-none"
                                           )}
                                         >
                                           <Combobox
@@ -990,7 +1039,7 @@ export default function EditPengiriman() {
                                             isLoading={loadingDeliveryOrders}
                                             name={`deliveryOrders.${index}.deliveryOrderId`}
                                             onClear={() => {
-                                              field.onChange('');
+                                              field.onChange("");
                                               form.setValue(
                                                 `deliveryOrders.${index}.products`,
                                                 []
@@ -1015,14 +1064,37 @@ export default function EditPengiriman() {
                                   render={({ field }) => (
                                     <FormItem className="h-[80px]">
                                       <FormLabel>
-                                        Tipe Lokasi{' '}
+                                        Tipe Lokasi{" "}
                                         <span className="text-red-500">*</span>
                                       </FormLabel>
                                       <FormControl>
                                         <Select
                                           onValueChange={field.onChange}
                                           value={field.value}
-                                          disabled={isSubmitting || isChosen}
+                                          disabled={
+                                            isSubmitting ||
+                                            // Hanya disable jika DO sudah dipilih DAN SEMUA produk dalam DO sudah chosen
+                                            Boolean(
+                                              doItem?.deliveryOrderId &&
+                                                doItem?.products?.length > 0 &&
+                                                doItem?.products?.every(
+                                                  (product) => {
+                                                    const shipmentItem =
+                                                      shipment?.shipmentItems.find(
+                                                        (si) =>
+                                                          si.deliveryOrderId ===
+                                                            doItem.deliveryOrderId &&
+                                                          si.productId ===
+                                                            product.productId
+                                                      );
+                                                    return (
+                                                      shipmentItem?.chosenProduct ===
+                                                      true
+                                                    );
+                                                  }
+                                                )
+                                            )
+                                          }
                                         >
                                           <SelectTrigger>
                                             <SelectValue placeholder="Pilih tipe lokasi" />
@@ -1076,7 +1148,26 @@ export default function EditPengiriman() {
                                       selectedDOProducts[
                                         watchDeliveryOrders[index]
                                           .deliveryOrderId
-                                      ].length === 0) && (
+                                      ].length === 0 ||
+                                      selectedDOProducts[
+                                        watchDeliveryOrders[index]
+                                          .deliveryOrderId
+                                      ].filter((product) => {
+                                        // Filter produk yang memiliki pendingQuantity > 0
+                                        // ATAU yang sudah ada dalam shipment items
+                                        const existsInShipment =
+                                          shipment?.shipmentItems.some(
+                                            (si) =>
+                                              si.deliveryOrderId ===
+                                                watchDeliveryOrders[index]
+                                                  ?.deliveryOrderId &&
+                                              si.productId === product.id
+                                          );
+                                        return (
+                                          product.pendingQuantity > 0 ||
+                                          existsInShipment
+                                        );
+                                      }).length === 0) && (
                                       <p className="py-2 text-sm text-red-500">
                                         Tidak ada barang yang tersedia
                                       </p>
@@ -1087,176 +1178,177 @@ export default function EditPengiriman() {
                                   ) &&
                                     selectedDOProducts[
                                       watchDeliveryOrders[index].deliveryOrderId
-                                    ]?.length > 0 && (
+                                    ]?.length > 0 &&
+                                    selectedDOProducts[
+                                      watchDeliveryOrders[index].deliveryOrderId
+                                    ].filter((product) => {
+                                      // Filter produk yang memiliki pendingQuantity > 0
+                                      // ATAU yang sudah ada dalam shipment items
+                                      const existsInShipment =
+                                        shipment?.shipmentItems.some(
+                                          (si) =>
+                                            si.deliveryOrderId ===
+                                              watchDeliveryOrders[index]
+                                                ?.deliveryOrderId &&
+                                            si.productId === product.id
+                                        );
+                                      return (
+                                        product.pendingQuantity > 0 ||
+                                        existsInShipment
+                                      );
+                                    }).length > 0 && (
                                       <div className="p-3 space-y-3 border border-gray-200 rounded-md">
                                         {selectedDOProducts[
                                           watchDeliveryOrders[index]
                                             .deliveryOrderId
-                                        ].map((product) => {
-                                          // Cari index produk yang tepat berdasarkan productId di form
-                                          const formProducts =
-                                            watchDeliveryOrders[index]
-                                              ?.products || [];
-                                          const productFormIndex =
-                                            formProducts.findIndex(
-                                              (fp) =>
-                                                fp.productId === product.id
+                                        ]
+                                          .filter((product) => {
+                                            // Filter produk yang memiliki pendingQuantity > 0
+                                            // ATAU yang sudah ada dalam shipment items
+                                            const existsInShipment =
+                                              shipment?.shipmentItems.some(
+                                                (si) =>
+                                                  si.deliveryOrderId ===
+                                                    watchDeliveryOrders[index]
+                                                      ?.deliveryOrderId &&
+                                                  si.productId === product.id
+                                              );
+                                            return (
+                                              product.pendingQuantity > 0 ||
+                                              existsInShipment
                                             );
+                                          })
+                                          .map((product) => {
+                                            // Cari index produk yang tepat berdasarkan productId di form
+                                            const formProducts =
+                                              watchDeliveryOrders[index]
+                                                ?.products || [];
+                                            const productFormIndex =
+                                              formProducts.findIndex(
+                                                (fp) =>
+                                                  fp.productId === product.id
+                                              );
 
-                                          return (
-                                            <div
-                                              key={product.id}
-                                              className="grid items-center grid-cols-1 gap-2 pb-2 border-b border-gray-200 sm:grid-cols-7 last:border-0 last:pb-0"
-                                            >
-                                              <div className="sm:col-span-4">
-                                                <p className="font-medium">
-                                                  {product.name}
-                                                </p>
-                                                <p className="text-sm text-gray-500">
-                                                  Stok tersedia:{' '}
-                                                  {(() => {
-                                                    const shipmentItem =
-                                                      shipment?.shipmentItems.find(
-                                                        (si) =>
-                                                          si.deliveryOrderId ===
-                                                            watchDeliveryOrders[
-                                                              index
-                                                            ]
-                                                              ?.deliveryOrderId &&
-                                                          si.productId ===
-                                                            product.id
-                                                      );
+                                            // Cek apakah produk ini sudah chosen
+                                            const isProductChosen =
+                                              shipment?.shipmentItems.some(
+                                                (si) =>
+                                                  si.deliveryOrderId ===
+                                                    watchDeliveryOrders[index]
+                                                      ?.deliveryOrderId &&
+                                                  si.productId === product.id &&
+                                                  si.chosenProduct === true
+                                              );
 
-                                                    const originalDOQuantity =
-                                                      shipmentItem?.originalDOQuantity ??
-                                                      product.quantity;
-
-                                                    const totalOtherRequested =
-                                                      shipment?.shipmentItems
-                                                        .filter(
-                                                          (si) =>
-                                                            si.deliveryOrderId ===
-                                                              watchDeliveryOrders[
-                                                                index
-                                                              ]
-                                                                ?.deliveryOrderId &&
-                                                            si.productId ===
-                                                              product.id &&
-                                                            si.id !==
-                                                              (formProducts[
-                                                                productFormIndex
-                                                              ]
-                                                                ?.shipmentItemId ||
-                                                                '')
-                                                        )
-                                                        .reduce(
-                                                          (sum, si) =>
-                                                            sum +
-                                                            (si.requestedQuantity ||
-                                                              0),
-                                                          0
-                                                        ) || 0;
-                                                    const currentInput =
-                                                      form.getValues(
-                                                        `deliveryOrders.${index}.products.${productFormIndex}.requestedQuantity`
-                                                      ) || 0;
-                                                    const stokTersedia =
-                                                      originalDOQuantity -
-                                                      totalOtherRequested -
-                                                      currentInput;
-                                                    return formatNumber(
-                                                      stokTersedia < 0
-                                                        ? 0
-                                                        : stokTersedia
-                                                    );
-                                                  })()}{' '}
-                                                  {product.satuan}
-                                                </p>
-                                              </div>
-                                              <div className="sm:col-span-3">
-                                                {productFormIndex !== -1 && (
-                                                  <>
-                                                    <FormField
-                                                      control={form.control}
-                                                      name={`deliveryOrders.${index}.products.${productFormIndex}.requestedQuantity`}
-                                                      render={({ field }) => (
-                                                        <FormItem className="h-[80px]">
-                                                          <FormControl>
-                                                            <Input
-                                                              type="text"
-                                                              placeholder="Masukkan jumlah"
-                                                              value={
-                                                                field.value > 0
-                                                                  ? formatNumber(
-                                                                      field.value
-                                                                    )
-                                                                  : ''
-                                                              }
-                                                              onChange={(e) => {
-                                                                const numValue =
-                                                                  parseInt(
-                                                                    e.target.value.replace(
-                                                                      /\D/g,
-                                                                      ''
-                                                                    )
-                                                                  ) || 0;
-                                                                field.onChange(
-                                                                  numValue
-                                                                );
-                                                              }}
-                                                              disabled={
-                                                                isSubmitting ||
-                                                                isChosen
-                                                              }
-                                                              className={cn(
-                                                                field.value >
-                                                                  product.quantity &&
-                                                                  'border-orange-500'
+                                            return (
+                                              <div
+                                                key={product.id}
+                                                className="grid items-center grid-cols-1 gap-2 pb-2 border-b border-gray-200 sm:grid-cols-7 last:border-0 last:pb-0"
+                                              >
+                                                <div className="sm:col-span-4">
+                                                  <p className="font-medium">
+                                                    {product.name}
+                                                    {isProductChosen && (
+                                                      <span className="ml-2 px-1 py-0.5 text-xs font-medium text-green-700 bg-green-100 rounded">
+                                                        Sudah Dimuat
+                                                      </span>
+                                                    )}
+                                                  </p>
+                                                  <p className="text-sm text-gray-500">
+                                                    Stok tersedia:{" "}
+                                                    {formatNumber(
+                                                      product.pendingQuantity
+                                                    )}{" "}
+                                                    {product.satuan}
+                                                  </p>
+                                                </div>
+                                                <div className="sm:col-span-3">
+                                                  {productFormIndex !== -1 && (
+                                                    <>
+                                                      <FormField
+                                                        control={form.control}
+                                                        name={`deliveryOrders.${index}.products.${productFormIndex}.requestedQuantity`}
+                                                        render={({ field }) => (
+                                                          <FormItem className="h-[80px]">
+                                                            <FormControl>
+                                                              <Input
+                                                                type="text"
+                                                                placeholder="Masukkan jumlah"
+                                                                value={
+                                                                  field.value >
+                                                                  0
+                                                                    ? formatNumber(
+                                                                        field.value
+                                                                      )
+                                                                    : ""
+                                                                }
+                                                                onChange={(
+                                                                  e
+                                                                ) => {
+                                                                  const numValue =
+                                                                    parseInt(
+                                                                      e.target.value.replace(
+                                                                        /\D/g,
+                                                                        ""
+                                                                      )
+                                                                    ) || 0;
+                                                                  field.onChange(
+                                                                    numValue
+                                                                  );
+                                                                }}
+                                                                disabled={
+                                                                  isSubmitting ||
+                                                                  isProductChosen
+                                                                }
+                                                                className={cn(
+                                                                  field.value >
+                                                                    product.pendingQuantity &&
+                                                                    "border-orange-500"
+                                                                )}
+                                                              />
+                                                            </FormControl>
+                                                            <div className="min-h-[20px]">
+                                                              {field.value >
+                                                                product.pendingQuantity && (
+                                                                <p className="text-xs text-orange-500">
+                                                                  Nilai melebihi
+                                                                  stok tersedia
+                                                                </p>
                                                               )}
-                                                            />
-                                                          </FormControl>
-                                                          <div className="min-h-[20px]">
-                                                            {field.value >
-                                                              product.quantity && (
-                                                              <p className="text-xs text-orange-500">
-                                                                Nilai melebihi
-                                                                stok tersedia
-                                                              </p>
-                                                            )}
-                                                          </div>
-                                                        </FormItem>
-                                                      )}
-                                                    />
-                                                    <FormField
-                                                      control={form.control}
-                                                      name={`deliveryOrders.${index}.products.${productFormIndex}.productId`}
-                                                      render={({ field }) => (
-                                                        <input
-                                                          type="hidden"
-                                                          {...field}
-                                                          value={product.id}
-                                                        />
-                                                      )}
-                                                    />
-                                                    <FormField
-                                                      control={form.control}
-                                                      name={`deliveryOrders.${index}.products.${productFormIndex}.shipmentItemId`}
-                                                      render={({ field }) => (
-                                                        <input
-                                                          type="hidden"
-                                                          {...field}
-                                                          value={
-                                                            field.value || ''
-                                                          }
-                                                        />
-                                                      )}
-                                                    />
-                                                  </>
-                                                )}
+                                                            </div>
+                                                          </FormItem>
+                                                        )}
+                                                      />
+                                                      <FormField
+                                                        control={form.control}
+                                                        name={`deliveryOrders.${index}.products.${productFormIndex}.productId`}
+                                                        render={({ field }) => (
+                                                          <input
+                                                            type="hidden"
+                                                            {...field}
+                                                            value={product.id}
+                                                          />
+                                                        )}
+                                                      />
+                                                      <FormField
+                                                        control={form.control}
+                                                        name={`deliveryOrders.${index}.products.${productFormIndex}.shipmentItemId`}
+                                                        render={({ field }) => (
+                                                          <input
+                                                            type="hidden"
+                                                            {...field}
+                                                            value={
+                                                              field.value || ""
+                                                            }
+                                                          />
+                                                        )}
+                                                      />
+                                                    </>
+                                                  )}
+                                                </div>
                                               </div>
-                                            </div>
-                                          );
-                                        })}
+                                            );
+                                          })}
                                       </div>
                                     )}
                                 </div>
@@ -1282,7 +1374,7 @@ export default function EditPengiriman() {
                       <FormControl>
                         <Textarea
                           {...field}
-                          value={field.value || ''}
+                          value={field.value || ""}
                           placeholder="Tambahkan catatan internal (opsional)"
                           disabled={isSubmitting}
                           rows={4}
