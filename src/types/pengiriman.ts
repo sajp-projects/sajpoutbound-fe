@@ -27,6 +27,7 @@ export interface ShipmentItem {
   };
   deliveryOrder: {
     id: string;
+    doNumber: string;
     customerId?: string;
     customer: {
       id: string;
@@ -206,4 +207,28 @@ export interface DeliveryOrderProduct {
       name: string;
     };
   }[];
+}
+
+// Add types for shipment and shipment item for Penggunaan di Pengiriman tab
+export interface ShipmentItemFromDO {
+  id: string;
+  requestedQuantity: number;
+  product: {
+    id: string;
+    name: string;
+    satuan: string;
+  };
+}
+
+export interface ShipmentFromDO {
+  id: string;
+  shipmentNumber: string;
+  status: string;
+  createdAt: string;
+  armada?: {
+    id: string;
+    model: string;
+    plateNumber: string;
+  };
+  shipmentItems: ShipmentItemFromDO[];
 }

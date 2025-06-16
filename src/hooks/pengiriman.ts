@@ -419,3 +419,26 @@ export function useDeleteShipmentItems(options = {}) {
     ...options,
   });
 }
+
+export function useShipmentsByDeliveryOrderId(
+  deliveryOrderId: string,
+  options = {}
+) {
+  return useQuery({
+    queryKey: ['shipmentsByDeliveryOrderId', deliveryOrderId],
+    queryFn: async () => {
+      if (!deliveryOrderId) return [];
+      const response = await fetchApi(
+        `/delivery-orders/${deliveryOrderId}/shipments`,
+        {},
+        { method: 'GET' }
+      );
+      const result = await response.json();
+      if (!result.success)
+        throw new Error(result.message || 'Gagal mengambil data pengiriman');
+      return result.data?.shipments || [];
+    },
+    enabled: !!deliveryOrderId,
+    ...options,
+  });
+}

@@ -209,6 +209,7 @@ interface ProductItem {
 
 interface GroupedDeliveryOrder {
   id: string;
+  doNumber: string;
   customer: {
     id: string;
     name: string;
@@ -1306,6 +1307,7 @@ export default function DetailPengiriman() {
                       if (!doMap.has(doId)) {
                         doMap.set(doId, {
                           id: doId,
+                          doNumber: item.deliveryOrder.doNumber,
                           customer: item.deliveryOrder.customer,
                           products: [],
                         });
@@ -1343,7 +1345,7 @@ export default function DetailPengiriman() {
                                     className="text-blue-600 hover:underline"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    Delivery Order #{doIndex + 1}
+                                    {deliveryOrder.doNumber}
                                   </Link>
                                 </h4>
                                 <p className="text-sm text-gray-500">

@@ -24,8 +24,10 @@ import {
 import { PERMISSION } from '@/constant/PERMISSION';
 import { useAuth } from '@/hooks/auth';
 import { useRolePermissions } from '@/hooks/izin';
+import { useShipmentsByDeliveryOrderId } from '@/hooks/pengiriman';
 import { cn } from '@/lib/utils';
 import { DeliveryOrderStatus } from '@/types/do';
+import { ShipmentFromDO, ShipmentItemFromDO } from '@/types/pengiriman';
 import { formatDate } from '@/utils/date';
 import { formatNumber } from '@/utils/formatNumber';
 import { hasPermission } from '@/utils/permission';
@@ -74,16 +76,18 @@ export default function DetailDo() {
   const roleId = getRoleId() || '';
 
   // Get tab from URL query parameter or default to "info"
-  const getTabFromUrl = (): 'info' | 'items' => {
+  const getTabFromUrl = (): 'info' | 'items' | 'shipments' => {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
-    if (tab === 'items') {
+    if (tab === 'items' || tab === 'shipments') {
       return tab;
     }
     return 'info';
   };
 
-  const [activeTab, setActiveTab] = useState<'info' | 'items'>(getTabFromUrl());
+  const [activeTab, setActiveTab] = useState<'info' | 'items' | 'shipments'>(
+    getTabFromUrl()
+  );
 
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== '',
@@ -149,7 +153,7 @@ export default function DetailDo() {
     });
   };
 
-  const handleTabChange = (tab: 'info' | 'items') => {
+  const handleTabChange = (tab: 'info' | 'items' | 'shipments') => {
     setActiveTab(tab);
 
     // Update URL with the active tab
@@ -168,6 +172,16 @@ export default function DetailDo() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
+
+  // Fetch shipments that use this DO
+  const {
+    data: shipments,
+    isLoading: isLoadingShipments,
+    error: shipmentsError,
+    refetch: refetchShipments,
+  } = useShipmentsByDeliveryOrderId(deliveryOrderId, {
+    enabled: activeTab === 'shipments' && !!deliveryOrderId,
+  });
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
@@ -257,6 +271,23 @@ export default function DetailDo() {
                 {deliveryOrder.items.length > 0 && (
                   <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
                     {deliveryOrder.items.length}
+                  </span>
+                )}
+              </button>
+              <button
+                className={cn(
+                  'px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap',
+                  activeTab === 'shipments'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                )}
+                onClick={() => handleTabChange('shipments')}
+              >
+                <Archive className="flex-shrink-0 w-4 h-4 mr-2" />
+                Penggunaan di Pengiriman
+                {shipments && shipments.length > 0 && (
+                  <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                    {shipments.length}
                   </span>
                 )}
               </button>
@@ -576,6 +607,121 @@ export default function DetailDo() {
                     )}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'shipments' && (
+              <div className="p-4 border border-gray-200 rounded-lg">
+                <h3 className="flex items-center mb-4 text-lg font-medium text-gray-900">
+                  <Archive className="w-5 h-5 mr-2 text-blue-600" />
+                  Penggunaan di Pengiriman
+                </h3>
+                {isLoadingShipments ? (
+                  <LoadingState text="Memuat data pengiriman..." />
+                ) : shipmentsError ? (
+                  <ErrorState
+                    title="Gagal Memuat Data Pengiriman"
+                    message={
+                      shipmentsError instanceof Error
+                        ? shipmentsError.message
+                        : 'Terjadi kesalahan pada server'
+                    }
+                    onRetry={refetchShipments}
+                    retryButtonText="Coba lagi"
+                  />
+                ) : !shipments || shipments.length === 0 ? (
+                  <div className="p-6 rounded-lg bg-yellow-50">
+                    <div className="text-center">
+                      <h2 className="mb-2 text-lg font-semibold text-yellow-700">
+                        Tidak ada pengiriman yang menggunakan DO ini
+                      </h2>
+                      <p className="mb-4 text-yellow-600">
+                        Belum ada pengiriman yang menggunakan item dari delivery
+                        order ini.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b border-gray-200 bg-gray-50">
+                          <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
+                            No
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                            No. Pengiriman
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                            Status
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                            Tanggal Dibuat
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                            Armada
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                            Barang dari DO ini
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {shipments.map(
+                          (shipment: ShipmentFromDO, idx: number) => (
+                            <TableRow key={shipment.id}>
+                              <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                {idx + 1}
+                              </TableCell>
+                              <TableCell className="px-4 py-3 font-medium text-blue-600">
+                                {shipment.shipmentNumber || '-'}
+                              </TableCell>
+                              <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                {shipment.status}
+                              </TableCell>
+                              <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                {formatDate(shipment.createdAt)}
+                              </TableCell>
+                              <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                {shipment.armada?.model || '-'}
+                              </TableCell>
+                              <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Nama Barang</TableHead>
+                                      <TableHead>Kuantitas</TableHead>
+                                      <TableHead>Satuan</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {shipment.shipmentItems.map(
+                                      (item: ShipmentItemFromDO) => (
+                                        <TableRow key={item.id}>
+                                          <TableCell>
+                                            {item.product.name}
+                                          </TableCell>
+                                          <TableCell>
+                                            {formatNumber(
+                                              item.requestedQuantity
+                                            )}
+                                          </TableCell>
+                                          <TableCell>
+                                            {item.product.satuan}
+                                          </TableCell>
+                                        </TableRow>
+                                      )
+                                    )}
+                                  </TableBody>
+                                </Table>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
             )}
           </div>
