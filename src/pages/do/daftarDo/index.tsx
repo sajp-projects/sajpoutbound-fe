@@ -151,13 +151,23 @@ export default function DaftarDo() {
   const getDeliveryOrderActions = (deliveryOrder: DeliveryOrder) => {
     const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
 
-    if (hasDoUpdateAccess) {
+    // Hanya tampilkan aksi edit jika user memiliki akses dan status bukan COMPLETED/SELESAI
+    if (
+      hasDoUpdateAccess &&
+      deliveryOrder.status !== "COMPLETED" &&
+      deliveryOrder.status !== "SELESAI"
+    ) {
       actions.push({ type: ActionType.EDIT });
     }
 
     actions.push({ type: ActionType.LOG });
 
-    if (hasDoDeleteAccess) {
+    // Hanya tampilkan aksi arsip jika user memiliki akses dan status bukan COMPLETED/SELESAI
+    if (
+      hasDoDeleteAccess &&
+      deliveryOrder.status !== "COMPLETED" &&
+      deliveryOrder.status !== "SELESAI"
+    ) {
       actions.push({
         type: ActionType.ARCHIVE,
         onClick: () => handleArsipkan(deliveryOrder.id),

@@ -302,6 +302,29 @@ export default function EditPengiriman() {
   const watchType = form.watch("type");
   const watchDeliveryOrders = form.watch("deliveryOrders");
 
+  // Helper function untuk menghitung stok tersedia untuk edit
+  const calculateAvailableStock = useCallback(
+    (product: DOProduct, deliveryOrderId?: string) => {
+      if (!deliveryOrderId) return product.pendingQuantity;
+
+      const currentEditedQuantity =
+        shipment?.shipmentItems.find(
+          (si) =>
+            si.deliveryOrderId === deliveryOrderId &&
+            si.productId === product.id
+        )?.requestedQuantity || 0;
+
+      return product.pendingQuantity + currentEditedQuantity;
+    },
+    [shipment]
+  );
+
+  // Helper function untuk mengecek apakah ada barang yang sudah dimuat
+  const hasChosenProducts = useCallback(() => {
+    if (!shipment?.shipmentItems) return false;
+    return shipment.shipmentItems.some((item) => item.chosenProduct === true);
+  }, [shipment]);
+
   // Inisialisasi form dengan data shipment yang ada
   useEffect(() => {
     if (shipment) {
@@ -336,6 +359,19 @@ export default function EditPengiriman() {
         deliveryOrders: deliveryOrdersArray,
       });
 
+      // Pastikan nilai diset dengan benar setelah reset
+      setTimeout(() => {
+        // Pastikan plateNumber diset dengan benar untuk tipe JEMPUT
+        if (shipment.type === "JEMPUT" && shipment.plateNumber) {
+          form.setValue("plateNumber", shipment.plateNumber);
+        }
+
+        // Pastikan armadaId diset dengan benar untuk tipe ANTAR
+        if (shipment.type === "ANTAR" && shipment.armadaId) {
+          form.setValue("armadaId", shipment.armadaId);
+        }
+      }, 100);
+
       // Set accordion states - open all by default
       const accordionStates: Record<string, boolean> = {};
       deliveryOrdersArray.forEach((_, index) => {
@@ -351,6 +387,16 @@ export default function EditPengiriman() {
       });
     }
   }, [shipment, form]);
+
+  // Ensure plateNumber is set correctly for JEMPUT type after form initialization
+  useEffect(() => {
+    if (shipment && shipment.type === "JEMPUT" && shipment.plateNumber) {
+      const currentPlateNumber = form.getValues("plateNumber");
+      if (!currentPlateNumber || currentPlateNumber !== shipment.plateNumber) {
+        form.setValue("plateNumber", shipment.plateNumber);
+      }
+    }
+  }, [shipment, form, watchType]);
 
   // Refetch data saat komponen pertama kali dimuat
   useEffect(() => {
@@ -536,16 +582,27 @@ export default function EditPengiriman() {
   );
 
   const handleTypeChange = (value: "ANTAR" | "JEMPUT") => {
-    form.resetField("plateNumber");
-    form.resetField("armadaId");
+    // Cek apakah ada barang yang sudah dimuat
+    if (hasChosenProducts()) {
+      showErrorAlert(
+        "Tidak Dapat Mengubah Tipe",
+        "Tipe pengiriman tidak dapat diubah karena ada barang yang sudah dimuat/dipilih."
+      );
+      // Kembalikan ke nilai asli
+      form.setValue("type", shipment?.type || "ANTAR");
+      return;
+    }
 
-    form.setValue("plateNumber", "");
-    form.setValue("armadaId", "");
-
-    form.clearErrors("plateNumber");
-    form.clearErrors("armadaId");
-
-    form.setValue("type", value);
+    // Reset field yang tidak relevan untuk tipe yang dipilih
+    if (value === "ANTAR") {
+      form.resetField("plateNumber");
+      form.setValue("plateNumber", "");
+      form.clearErrors("plateNumber");
+    } else if (value === "JEMPUT") {
+      form.resetField("armadaId");
+      form.setValue("armadaId", "");
+      form.clearErrors("armadaId");
+    }
   };
 
   const addNewDeliveryOrder = () => {
@@ -729,7 +786,7 @@ export default function EditPengiriman() {
 
   if (!shipment) {
     return (
-      <div className="p-6 rounded-lg bg-red-50">
+      <div className="p-6 bg-red-50 rounded-lg">
         <div className="text-center">
           <h2 className="mb-2 text-lg font-semibold text-red-700">
             Pengiriman tidak ditemukan
@@ -751,7 +808,7 @@ export default function EditPengiriman() {
       <div className="flex items-center">
         <Link to={`/pengiriman/${id}`}>
           <Button variant="ghost" size="sm" className="mr-2">
-            <ArrowLeft className="w-4 h-4 mr-1" />
+            <ArrowLeft className="mr-1 w-4 h-4" />
             Kembali
           </Button>
         </Link>
@@ -786,27 +843,55 @@ export default function EditPengiriman() {
                           <FormLabel>
                             Tipe Pengiriman{" "}
                             <span className="text-red-500">*</span>
+                            {hasChosenProducts() && (
+                              <span className="px-2 py-1 ml-2 text-xs font-medium text-orange-700 bg-orange-100 rounded-full">
+                                Tidak dapat diubah - Ada barang dimuat
+                              </span>
+                            )}
                           </FormLabel>
                           <FormControl>
                             <RadioGroup
-                              onValueChange={handleTypeChange}
+                              onValueChange={(value) => {
+                                // Hanya panggil handleTypeChange jika nilai benar-benar berubah
+                                if (field.value !== value) {
+                                  handleTypeChange(value as "ANTAR" | "JEMPUT");
+                                }
+                                field.onChange(value);
+                              }}
                               value={field.value}
                               className="flex flex-col space-y-2 sm:flex-row sm:space-x-4 sm:space-y-0"
+                              disabled={hasChosenProducts() || isSubmitting}
                             >
                               <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="ANTAR" id="antar" />
+                                <RadioGroupItem
+                                  value="ANTAR"
+                                  id="antar"
+                                  disabled={hasChosenProducts() || isSubmitting}
+                                />
                                 <label
                                   htmlFor="antar"
-                                  className="text-sm font-medium leading-none cursor-pointer"
+                                  className={cn(
+                                    "text-sm font-medium leading-none cursor-pointer",
+                                    hasChosenProducts() &&
+                                      "text-gray-400 cursor-not-allowed"
+                                  )}
                                 >
                                   Antar
                                 </label>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="JEMPUT" id="jemput" />
+                                <RadioGroupItem
+                                  value="JEMPUT"
+                                  id="jemput"
+                                  disabled={hasChosenProducts() || isSubmitting}
+                                />
                                 <label
                                   htmlFor="jemput"
-                                  className="text-sm font-medium leading-none cursor-pointer"
+                                  className={cn(
+                                    "text-sm font-medium leading-none cursor-pointer",
+                                    hasChosenProducts() &&
+                                      "text-gray-400 cursor-not-allowed"
+                                  )}
                                 >
                                   Jemput
                                 </label>
@@ -835,7 +920,9 @@ export default function EditPengiriman() {
                                   <Input
                                     {...field}
                                     placeholder="Contoh: B 1234 ABC"
-                                    disabled={isSubmitting}
+                                    disabled={
+                                      isSubmitting || hasChosenProducts()
+                                    }
                                     onChange={(e) => {
                                       field.onChange(
                                         e.target.value.toUpperCase()
@@ -843,7 +930,9 @@ export default function EditPengiriman() {
                                     }}
                                     className={cn(
                                       form.formState.errors.plateNumber &&
-                                        "border-red-500"
+                                        "border-red-500",
+                                      hasChosenProducts() &&
+                                        "bg-gray-50 text-gray-500"
                                     )}
                                   />
                                 </FormControl>
@@ -863,20 +952,27 @@ export default function EditPengiriman() {
                                   Armada <span className="text-red-500">*</span>
                                 </FormLabel>
                                 <FormControl>
-                                  <Combobox
-                                    items={armadas}
-                                    value={field.value || ""}
-                                    onValueChange={(val) => {
-                                      field.onChange(val);
-                                    }}
-                                    placeholder="Pilih armada"
-                                    searchPlaceholder="Cari armada..."
-                                    isLoading={loadingArmadas}
-                                    name="armadaId"
-                                    onClear={() => field.onChange("")}
-                                    onSearch={handleArmadaSearch}
-                                    useServerSearch
-                                  />
+                                  <div
+                                    className={cn(
+                                      hasChosenProducts() &&
+                                        "opacity-60 pointer-events-none"
+                                    )}
+                                  >
+                                    <Combobox
+                                      items={armadas}
+                                      value={field.value || ""}
+                                      onValueChange={(val) => {
+                                        field.onChange(val);
+                                      }}
+                                      placeholder="Pilih armada"
+                                      searchPlaceholder="Cari armada..."
+                                      isLoading={loadingArmadas}
+                                      name="armadaId"
+                                      onClear={() => field.onChange("")}
+                                      onSearch={handleArmadaSearch}
+                                      useServerSearch
+                                    />
+                                  </div>
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -890,7 +986,7 @@ export default function EditPengiriman() {
 
                 {/* Delivery Orders */}
                 <div>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-medium text-gray-900">
                       Delivery Orders
                     </h3>
@@ -902,7 +998,7 @@ export default function EditPengiriman() {
                       disabled={isSubmitting}
                       className="text-blue-600 border-blue-600 hover:bg-blue-50"
                     >
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus className="mr-2 w-4 h-4" />
                       Tambah DO
                     </Button>
                   </div>
@@ -955,14 +1051,14 @@ export default function EditPengiriman() {
                             key={field.id}
                             value={`do-${index}`}
                             className={cn(
-                              "mb-4 overflow-hidden border rounded-lg",
+                              "overflow-hidden mb-4 rounded-lg border",
                               hasChosenProducts
-                                ? "border-green-300 bg-green-50"
-                                : "border-gray-200 bg-gray-50"
+                                ? "bg-green-50 border-green-300"
+                                : "bg-gray-50 border-gray-200"
                             )}
                           >
-                            <div className="flex items-center justify-between p-4">
-                              <div className="flex items-center gap-2">
+                            <div className="flex justify-between items-center p-4">
+                              <div className="flex gap-2 items-center">
                                 <h4 className="font-medium text-gray-900">
                                   #Delivery Order {index + 1}
                                 </h4>
@@ -972,13 +1068,13 @@ export default function EditPengiriman() {
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex gap-2 items-center">
                                 {fields.length > 1 && !hasChosenProducts && (
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="flex items-center justify-center w-8 h-8 p-1 text-white bg-red-500 rounded-md hover:bg-red-600"
+                                    className="flex justify-center items-center p-1 w-8 h-8 text-white bg-red-500 rounded-md hover:bg-red-600"
                                     onClick={() => removeDO(index)}
                                     disabled={isSubmitting}
                                   >
@@ -1197,7 +1293,7 @@ export default function EditPengiriman() {
                                         existsInShipment
                                       );
                                     }).length > 0 && (
-                                      <div className="p-3 space-y-3 border border-gray-200 rounded-md">
+                                      <div className="p-3 space-y-3 rounded-md border border-gray-200">
                                         {selectedDOProducts[
                                           watchDeliveryOrders[index]
                                             .deliveryOrderId
@@ -1240,10 +1336,18 @@ export default function EditPengiriman() {
                                                   si.chosenProduct === true
                                               );
 
+                                            // Hitung stok tersedia untuk edit menggunakan helper function
+                                            const availableStock =
+                                              calculateAvailableStock(
+                                                product,
+                                                watchDeliveryOrders[index]
+                                                  ?.deliveryOrderId
+                                              );
+
                                             return (
                                               <div
                                                 key={product.id}
-                                                className="grid items-center grid-cols-1 gap-2 pb-2 border-b border-gray-200 sm:grid-cols-7 last:border-0 last:pb-0"
+                                                className="grid grid-cols-1 gap-2 items-center pb-2 border-b border-gray-200 sm:grid-cols-7 last:border-0 last:pb-0"
                                               >
                                                 <div className="sm:col-span-4">
                                                   <p className="font-medium">
@@ -1257,7 +1361,7 @@ export default function EditPengiriman() {
                                                   <p className="text-sm text-gray-500">
                                                     Stok tersedia:{" "}
                                                     {formatNumber(
-                                                      product.pendingQuantity
+                                                      availableStock
                                                     )}{" "}
                                                     {product.satuan}
                                                   </p>
@@ -1302,14 +1406,14 @@ export default function EditPengiriman() {
                                                                 }
                                                                 className={cn(
                                                                   field.value >
-                                                                    product.pendingQuantity &&
+                                                                    availableStock &&
                                                                     "border-orange-500"
                                                                 )}
                                                               />
                                                             </FormControl>
                                                             <div className="min-h-[20px]">
                                                               {field.value >
-                                                                product.pendingQuantity && (
+                                                                availableStock && (
                                                                 <p className="text-xs text-orange-500">
                                                                   Nilai melebihi
                                                                   stok tersedia
@@ -1388,7 +1492,7 @@ export default function EditPengiriman() {
               </div>
 
               {/* Tombol Aksi */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+              <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
                 <Link to={`/pengiriman/${id}`}>
                   <Button
                     type="button"
@@ -1406,12 +1510,12 @@ export default function EditPengiriman() {
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                       Menyimpan...
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4 mr-2" />
+                      <Save className="mr-2 w-4 h-4" />
                       Simpan
                     </>
                   )}

@@ -1,10 +1,10 @@
-import { useUploadPlatePhoto, useVerifyPlateNumber } from '@/hooks/media';
+import { useUploadPlatePhoto, useVerifyPlateNumber } from "@/hooks/media";
 import {
   useChooseProduct,
   useDeleteShipment,
   useShipment,
   useShipmentChosenProducts,
-} from '@/hooks/pengiriman';
+} from "@/hooks/pengiriman";
 import {
   Archive,
   ArrowLeft,
@@ -23,19 +23,19 @@ import {
   ShoppingCart,
   Upload,
   X,
-} from 'lucide-react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router';
+} from "lucide-react";
+import { Link, useLocation, useNavigate, useParams } from "react-router";
 
-import { ErrorState } from '@/components/ErrorState';
-import { LoadingState } from '@/components/LoadingState';
+import { ErrorState } from "@/components/ErrorState";
+import { LoadingState } from "@/components/LoadingState";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -43,8 +43,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { FilePreviewModal } from '@/components/ui/file-preview-modal';
+} from "@/components/ui/dialog";
+import { FilePreviewModal } from "@/components/ui/file-preview-modal";
 import {
   Table,
   TableBody,
@@ -52,29 +52,29 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { PERMISSION } from '@/constant/PERMISSION';
-import { useAuth } from '@/hooks/auth';
-import { useRolePermissions } from '@/hooks/izin';
-import { cn } from '@/lib/utils';
-import { FilePreview } from '@/types/media';
-import { ShipmentStatus } from '@/types/pengiriman';
+} from "@/components/ui/table";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/izin";
+import { cn } from "@/lib/utils";
+import { FilePreview } from "@/types/media";
+import { ShipmentStatus } from "@/types/pengiriman";
 import {
   SHIPMENT_STATUS_LABELS,
   SHIPMENT_TYPE_LABELS,
-} from '@/utils/constants';
-import { formatDate } from '@/utils/date';
-import { FormErrorData } from '@/utils/errorHandler';
-import { formatNumber } from '@/utils/formatNumber';
-import { hasPermission } from '@/utils/permission';
-import { getRoleId } from '@/utils/storage';
+} from "@/utils/constants";
+import { formatDate } from "@/utils/date";
+import { FormErrorData } from "@/utils/errorHandler";
+import { formatNumber } from "@/utils/formatNumber";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
 import {
   isConfirmed,
   showConfirmationAlert,
   showErrorAlert,
   showSuccessAlert,
-} from '@/utils/sweetAlert';
-import { useEffect, useState } from 'react';
+} from "@/utils/sweetAlert";
+import { useEffect, useState } from "react";
 
 interface StatusBadgeProps {
   status: ShipmentStatus;
@@ -83,23 +83,23 @@ interface StatusBadgeProps {
 function StatusBadge({ status }: StatusBadgeProps) {
   const getStatusColor = (status: ShipmentStatus) => {
     switch (status) {
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'PROSES':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'SELESAI':
-        return 'bg-green-100 text-green-800 border-green-200';
+      case "PENDING":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "PROSES":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "COMPLETED":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "SELESAI":
+        return "bg-green-100 text-green-800 border-green-200";
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   return (
     <Badge
       variant="outline"
-      className={cn('font-medium px-2.5 py-0.5', getStatusColor(status))}
+      className={cn("font-medium px-2.5 py-0.5", getStatusColor(status))}
     >
       {SHIPMENT_STATUS_LABELS[status]}
     </Badge>
@@ -223,26 +223,26 @@ export default function DetailPengiriman() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useAuth();
-  const roleId = getRoleId() || '';
+  const roleId = getRoleId() || "";
 
   // Get tab from URL query parameter or default to "info"
-  const getTabFromUrl = (): 'info' | 'items' | 'spmb' | 'do' => {
+  const getTabFromUrl = (): "info" | "items" | "spmb" | "do" => {
     const params = new URLSearchParams(location.search);
-    const tab = params.get('tab');
-    if (tab === 'items' || tab === 'spmb' || tab === 'do') {
+    const tab = params.get("tab");
+    if (tab === "items" || tab === "spmb" || tab === "do") {
       return tab;
     }
-    return 'info';
+    return "info";
   };
 
-  const [activeTab, setActiveTab] = useState<'info' | 'items' | 'spmb' | 'do'>(
+  const [activeTab, setActiveTab] = useState<"info" | "items" | "spmb" | "do">(
     getTabFromUrl()
   );
   const [previewFile, setPreviewFile] = useState<FilePreview | null>(null);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [allItemsCompleted, setAllItemsCompleted] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState<string>('');
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [selectedProductDOs, setSelectedProductDOs] = useState<
     {
       doId: string;
@@ -260,7 +260,7 @@ export default function DetailPengiriman() {
   >([]);
 
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && !!roleId && roleId !== '',
+    enabled: isAuthenticated && !!roleId && roleId !== "",
   });
 
   const hasPengirimanUpdateAccess = hasPermission(
@@ -275,7 +275,7 @@ export default function DetailPengiriman() {
     PERMISSION.ACTIONS.DELETE
   );
 
-  const shipmentId = id || '';
+  const shipmentId = id || "";
 
   const {
     data: shipment,
@@ -308,7 +308,7 @@ export default function DetailPengiriman() {
       handleCloseProductModal();
       // Tunda alert agar tampil setelah modal tertutup
       setTimeout(() => {
-        showSuccessAlert('Berhasil', 'Barang berhasil dipilih');
+        showSuccessAlert("Berhasil", "Barang berhasil dipilih");
         refetch();
         refetchChosenProducts();
       }, 300);
@@ -323,49 +323,49 @@ export default function DetailPengiriman() {
         try {
           const errorObj = JSON.parse(error.message);
           if (errorObj && errorObj.message) {
-            showErrorAlert('Gagal', errorObj.message);
+            showErrorAlert("Gagal", errorObj.message);
             return;
           }
         } catch {
           // Jika bukan JSON, gunakan pesan error langsung
         }
-        showErrorAlert('Gagal', error.message);
+        showErrorAlert("Gagal", error.message);
       }, 300);
     },
   });
 
   const deleteShipment = useDeleteShipment({
     onSuccess: () => {
-      showSuccessAlert('Berhasil', 'Pengiriman berhasil diarsipkan');
-      navigate('/pengiriman');
+      showSuccessAlert("Berhasil", "Pengiriman berhasil diarsipkan");
+      navigate("/pengiriman");
     },
     onError: (error: FormErrorData) => {
-      showErrorAlert('Gagal', error.message);
+      showErrorAlert("Gagal", error.message);
     },
   });
 
   const uploadPlatePhoto = useUploadPlatePhoto({
     onSuccess: () => {
-      showSuccessAlert('Berhasil', 'Foto plat nomor berhasil diunggah');
+      showSuccessAlert("Berhasil", "Foto plat nomor berhasil diunggah");
       refetch();
     },
     onError: (error: Error) => {
       showErrorAlert(
-        'Gagal',
-        error.message || 'Terjadi kesalahan saat mengupload foto plat nomor'
+        "Gagal",
+        error.message || "Terjadi kesalahan saat mengupload foto plat nomor"
       );
     },
   });
 
   const verifyPlateNumber = useVerifyPlateNumber({
     onSuccess: () => {
-      showSuccessAlert('Berhasil', 'Plat nomor berhasil diverifikasi');
+      showSuccessAlert("Berhasil", "Plat nomor berhasil diverifikasi");
       refetch();
     },
     onError: (error: Error) => {
       showErrorAlert(
-        'Gagal',
-        error.message || 'Terjadi kesalahan saat memverifikasi plat nomor'
+        "Gagal",
+        error.message || "Terjadi kesalahan saat memverifikasi plat nomor"
       );
     },
   });
@@ -380,10 +380,10 @@ export default function DetailPengiriman() {
 
   const handleDelete = (id: string) => {
     showConfirmationAlert(
-      'Konfirmasi Arsip',
-      'Apakah Anda yakin ingin mengarsipkan Pengiriman ini?',
-      'Ya, Arsipkan!',
-      'Batal'
+      "Konfirmasi Arsip",
+      "Apakah Anda yakin ingin mengarsipkan Pengiriman ini?",
+      "Ya, Arsipkan!",
+      "Batal"
     ).then((result) => {
       if (isConfirmed(result)) {
         deleteShipment.mutate({ id });
@@ -398,14 +398,14 @@ export default function DetailPengiriman() {
     if (!file) return;
 
     // Reset input value untuk memungkinkan upload file yang sama
-    event.target.value = '';
+    event.target.value = "";
 
     try {
       // Validasi tipe file
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         showErrorAlert(
-          'Format File Tidak Valid',
-          'Silakan pilih file gambar (JPG, PNG, dll.)'
+          "Format File Tidak Valid",
+          "Silakan pilih file gambar (JPG, PNG, dll.)"
         );
         return;
       }
@@ -416,7 +416,7 @@ export default function DetailPengiriman() {
       if (file.size > maxSizeInBytes) {
         const fileSizeInMB = (file.size / (1024 * 1024)).toFixed(2);
         showErrorAlert(
-          'File Terlalu Besar',
+          "File Terlalu Besar",
           `Ukuran file (${fileSizeInMB}MB) melebihi batas maksimum ${maxSizeInMB}MB. Silakan pilih file yang lebih kecil.`
         );
         return;
@@ -424,10 +424,10 @@ export default function DetailPengiriman() {
 
       handleUploadPlatePhoto(file);
     } catch (error) {
-      console.error('Error processing file:', error);
+      console.error("Error processing file:", error);
       showErrorAlert(
-        'Error',
-        'Terjadi kesalahan saat memproses file. Silakan coba lagi.'
+        "Error",
+        "Terjadi kesalahan saat memproses file. Silakan coba lagi."
       );
     }
   };
@@ -449,7 +449,7 @@ export default function DetailPengiriman() {
       shipment?.isVerified
     )
       return;
-    document.getElementById('platePhotoInput')?.click();
+    document.getElementById("platePhotoInput")?.click();
   };
 
   const handleViewPlatePhoto = () => {
@@ -459,21 +459,21 @@ export default function DetailPengiriman() {
     const fileUrl = `/public${shipment.platePhoto}`;
     setPreviewFile({
       url: fileUrl,
-      name: 'Foto Plat Nomor',
-      type: 'image/jpeg',
+      name: "Foto Plat Nomor",
+      type: "image/jpeg",
     });
     setPreviewModalOpen(true);
   };
 
-  const handleTabChange = (tab: 'info' | 'items' | 'spmb' | 'do') => {
+  const handleTabChange = (tab: "info" | "items" | "spmb" | "do") => {
     setActiveTab(tab);
-    if (tab === 'items') {
+    if (tab === "items") {
       refetchChosenProducts();
     }
 
     // Update URL with the active tab
     const searchParams = new URLSearchParams(location.search);
-    searchParams.set('tab', tab);
+    searchParams.set("tab", tab);
     navigate(`${location.pathname}?${searchParams.toString()}`, {
       replace: true,
     });
@@ -519,12 +519,12 @@ export default function DetailPengiriman() {
 
   const handleCloseProductModal = () => {
     setProductModalOpen(false);
-    setSelectedProductId('');
+    setSelectedProductId("");
     setSelectedProductDOs([]);
   };
 
   useEffect(() => {
-    if (activeTab === 'items' && shipmentId) {
+    if (activeTab === "items" && shipmentId) {
       refetchChosenProducts();
     }
   }, [activeTab, shipmentId, refetchChosenProducts]);
@@ -542,7 +542,7 @@ export default function DetailPengiriman() {
   useEffect(() => {
     if (shipment && shipment.shipmentItems) {
       const allCompleted = shipment.shipmentItems.every(
-        (item) => item.status === 'COMPLETED'
+        (item) => item.status === "COMPLETED"
       );
       setAllItemsCompleted(allCompleted);
     }
@@ -550,11 +550,11 @@ export default function DetailPengiriman() {
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
-      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0">
+      <div className="flex flex-col gap-3 justify-between items-start sm:flex-row sm:items-center sm:gap-0">
         <div className="flex items-center">
           <Link to="/pengiriman">
             <Button variant="ghost" size="sm" className="mr-2">
-              <ArrowLeft className="w-4 h-4 mr-1" />
+              <ArrowLeft className="mr-1 w-4 h-4" />
               Kembali
             </Button>
           </Link>
@@ -564,8 +564,8 @@ export default function DetailPengiriman() {
         </div>
       </div>
 
-      <div className="p-4 overflow-hidden bg-white rounded-lg shadow sm:p-6">
-        <div className="flex flex-col items-start justify-between gap-4 mb-6 sm:flex-row sm:items-center">
+      <div className="overflow-hidden p-4 bg-white rounded-lg shadow sm:p-6">
+        <div className="flex flex-col gap-4 justify-between items-start mb-6 sm:flex-row sm:items-center">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
               Informasi Pengiriman
@@ -585,13 +585,13 @@ export default function DetailPengiriman() {
             message={
               error instanceof Error
                 ? error.message
-                : 'Terjadi kesalahan pada server'
+                : "Terjadi kesalahan pada server"
             }
             onRetry={refetch}
             retryButtonText="Coba lagi"
           />
         ) : !shipment ? (
-          <div className="p-6 rounded-lg bg-red-50">
+          <div className="p-6 bg-red-50 rounded-lg">
             <div className="text-center">
               <h2 className="mb-2 text-lg font-semibold text-red-700">
                 Pengiriman tidak ditemukan
@@ -610,38 +610,38 @@ export default function DetailPengiriman() {
             <div className="flex overflow-x-auto border-b border-gray-200 scrollbar-none">
               <button
                 className={cn(
-                  'px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap',
-                  activeTab === 'info'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                  activeTab === "info"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => handleTabChange('info')}
+                onClick={() => handleTabChange("info")}
               >
-                <Info className="flex-shrink-0 w-4 h-4 mr-2" />
+                <Info className="flex-shrink-0 mr-2 w-4 h-4" />
                 Informasi Pengiriman
               </button>
               <button
                 className={cn(
-                  'px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap',
-                  activeTab === 'do'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                  activeTab === "do"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => handleTabChange('do')}
+                onClick={() => handleTabChange("do")}
               >
-                <ShoppingCart className="flex-shrink-0 w-4 h-4 mr-2" />
+                <ShoppingCart className="flex-shrink-0 mr-2 w-4 h-4" />
                 Delivery Orders & Barang
               </button>
               <button
                 className={cn(
-                  'px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap',
-                  activeTab === 'items'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                  activeTab === "items"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => handleTabChange('items')}
+                onClick={() => handleTabChange("items")}
               >
-                <Package className="flex-shrink-0 w-4 h-4 mr-2" />
+                <Package className="flex-shrink-0 mr-2 w-4 h-4" />
                 Item Pengiriman
                 {chosenProducts && chosenProducts.length > 0 && (
                   <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
@@ -651,14 +651,14 @@ export default function DetailPengiriman() {
               </button>
               <button
                 className={cn(
-                  'px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap',
-                  activeTab === 'spmb'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                  activeTab === "spmb"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 )}
-                onClick={() => handleTabChange('spmb')}
+                onClick={() => handleTabChange("spmb")}
               >
-                <FileText className="flex-shrink-0 w-4 h-4 mr-2" />
+                <FileText className="flex-shrink-0 mr-2 w-4 h-4" />
                 SPMB
                 {shipment.spmbs && shipment.spmbs.length > 0 && (
                   <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
@@ -668,10 +668,10 @@ export default function DetailPengiriman() {
               </button>
             </div>
 
-            {activeTab === 'info' && (
+            {activeTab === "info" && (
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-4">
-                  <div className="p-4 border border-gray-200 rounded-lg">
+                  <div className="p-4 rounded-lg border border-gray-200">
                     <h3 className="mb-4 text-lg font-medium text-gray-900">
                       Informasi Kendaraan
                     </h3>
@@ -685,15 +685,15 @@ export default function DetailPengiriman() {
                       <div>
                         <p className="text-sm text-gray-500">Model Kendaraan</p>
                         <p className="font-medium text-gray-700">
-                          {shipment.type === 'ANTAR'
+                          {shipment.type === "ANTAR"
                             ? shipment.armada?.model
-                            : 'Kendaraan Eksternal'}
+                            : "Kendaraan Eksternal"}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Plat Nomor</p>
                         <p className="font-medium text-gray-700">
-                          {shipment.type === 'ANTAR' ? (
+                          {shipment.type === "ANTAR" ? (
                             <Link
                               to={`/armada/${shipment.armadaId}`}
                               className="text-blue-600 hover:underline"
@@ -716,20 +716,20 @@ export default function DetailPengiriman() {
                               <img
                                 src={`/public${shipment.platePhoto}`}
                                 alt="Foto Plat Nomor"
-                                className="object-cover w-full h-40 transition-all duration-300 border border-gray-200 rounded-lg cursor-pointer hover:opacity-95 hover:shadow-lg"
+                                className="object-cover w-full h-40 rounded-lg border border-gray-200 transition-all duration-300 cursor-pointer hover:opacity-95 hover:shadow-lg"
                                 onClick={handleViewPlatePhoto}
                                 onError={(e) => {
                                   console.error(
-                                    'Error loading image:',
+                                    "Error loading image:",
                                     e.currentTarget.src
                                   );
                                   const parent = e.currentTarget.parentElement;
                                   if (parent) {
                                     parent.innerHTML = `
-                                      <div class="flex items-center justify-center w-full h-40 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+                                      <div class="flex justify-center items-center w-full h-40 bg-gray-100 rounded-lg border-2 border-gray-300 border-dashed">
                                         <div class="text-center">
                                           <p class="text-sm text-gray-500">Gambar tidak dapat dimuat</p>
-                                          <p class="text-xs text-gray-400 mt-1">Klik untuk melihat detail</p>
+                                          <p class="mt-1 text-xs text-gray-400">Klik untuk melihat detail</p>
                                         </div>
                                       </div>
                                     `;
@@ -741,28 +741,28 @@ export default function DetailPengiriman() {
                                   <Button
                                     variant="secondary"
                                     size="sm"
-                                    className="text-gray-700 border border-gray-200 shadow-lg bg-white/95 hover:bg-white backdrop-blur-sm"
+                                    className="text-gray-700 border border-gray-200 shadow-lg backdrop-blur-sm bg-white/95 hover:bg-white"
                                     onClick={handleViewPlatePhoto}
                                   >
-                                    <Eye className="w-4 h-4 mr-2" />
+                                    <Eye className="mr-2 w-4 h-4" />
                                     Lihat Detail
                                   </Button>
                                 </div>
                               </div>
                             </div>
-                            <div className="p-4 mt-3 space-y-3 border border-gray-200 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100">
-                              <div className="flex items-center justify-between">
+                            <div className="p-4 mt-3 space-y-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+                              <div className="flex justify-between items-center">
                                 <div className="flex items-center">
                                   {shipment.isVerified ? (
                                     <div className="flex items-center px-3 py-1.5 bg-green-100 rounded-full border border-green-200">
-                                      <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                                      <CheckCircle className="mr-2 w-4 h-4 text-green-600" />
                                       <span className="text-sm font-medium text-green-700">
                                         Terverifikasi
                                       </span>
                                     </div>
                                   ) : (
                                     <div className="flex items-center px-3 py-1.5 bg-orange-100 rounded-full border border-orange-200">
-                                      <div className="w-4 h-4 mr-2 bg-orange-400 rounded-full"></div>
+                                      <div className="mr-2 w-4 h-4 bg-orange-400 rounded-full"></div>
                                       <span className="text-sm font-medium text-orange-700">
                                         Belum diverifikasi
                                       </span>
@@ -776,12 +776,12 @@ export default function DetailPengiriman() {
                                       size="sm"
                                       onClick={handleVerifyPlateNumber}
                                       disabled={verifyPlateNumber.isPending}
-                                      className="text-blue-600 transition-all duration-200 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                                      className="text-blue-600 border-blue-200 transition-all duration-200 hover:bg-blue-50 hover:border-blue-300"
                                     >
                                       {verifyPlateNumber.isPending ? (
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                                       ) : (
-                                        <CheckCircle className="w-4 h-4 mr-2" />
+                                        <CheckCircle className="mr-2 w-4 h-4" />
                                       )}
                                       Verifikasi
                                     </Button>
@@ -792,15 +792,15 @@ export default function DetailPengiriman() {
                               {hasPengirimanUpdateAccess &&
                                 allItemsCompleted &&
                                 !shipment.isVerified && (
-                                  <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+                                  <div className="flex gap-2 items-center pt-2 border-t border-gray-200">
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={handleReplacePhoto}
                                       disabled={uploadPlatePhoto.isPending}
-                                      className="w-full text-blue-600 transition-all duration-200 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                                      className="w-full text-blue-600 border-blue-200 transition-all duration-200 hover:bg-blue-50 hover:border-blue-300"
                                     >
-                                      <RefreshCw className="w-4 h-4 mr-2" />
+                                      <RefreshCw className="mr-2 w-4 h-4" />
                                       Ganti Foto
                                     </Button>
                                   </div>
@@ -812,17 +812,17 @@ export default function DetailPengiriman() {
                             {allItemsCompleted ? (
                               <>
                                 <div
-                                  className="flex items-center justify-center w-full h-40 transition-all duration-300 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gradient-to-br from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 hover:border-blue-300 group"
+                                  className="flex justify-center items-center w-full h-40 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-gray-300 border-dashed transition-all duration-300 cursor-pointer hover:from-blue-50 hover:to-blue-100 hover:border-blue-300 group"
                                   onClick={() =>
                                     hasPengirimanUpdateAccess &&
                                     allItemsCompleted &&
                                     document
-                                      .getElementById('platePhotoInput')
+                                      .getElementById("platePhotoInput")
                                       ?.click()
                                   }
                                 >
                                   <div className="p-6 text-center">
-                                    <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 transition-colors duration-300 bg-gray-200 rounded-full group-hover:bg-blue-200">
+                                    <div className="flex justify-center items-center mx-auto mb-3 w-12 h-12 bg-gray-200 rounded-full transition-colors duration-300 group-hover:bg-blue-200">
                                       <Upload className="w-6 h-6 text-gray-400 transition-colors duration-300 group-hover:text-blue-500" />
                                     </div>
                                     <p className="mb-1 text-sm font-medium text-gray-600 transition-colors duration-300 group-hover:text-blue-700">
@@ -831,8 +831,8 @@ export default function DetailPengiriman() {
                                     <p className="text-xs text-gray-500 transition-colors duration-300 group-hover:text-blue-600">
                                       {hasPengirimanUpdateAccess &&
                                       allItemsCompleted
-                                        ? 'Klik untuk mengunggah foto'
-                                        : 'Tidak ada izin upload'}
+                                        ? "Klik untuk mengunggah foto"
+                                        : "Tidak ada izin upload"}
                                     </p>
                                   </div>
                                 </div>
@@ -844,22 +844,22 @@ export default function DetailPengiriman() {
                                         size="sm"
                                         onClick={() =>
                                           document
-                                            .getElementById('platePhotoInput')
+                                            .getElementById("platePhotoInput")
                                             ?.click()
                                         }
                                         disabled={uploadPlatePhoto.isPending}
-                                        className="w-full text-blue-600 transition-all duration-200 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                                        className="w-full text-blue-600 border-blue-200 transition-all duration-200 hover:bg-blue-50 hover:border-blue-300"
                                       >
                                         {uploadPlatePhoto.isPending ? (
-                                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                          <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                                         ) : (
-                                          <Upload className="w-4 h-4 mr-2" />
+                                          <Upload className="mr-2 w-4 h-4" />
                                         )}
                                         {uploadPlatePhoto.isPending
-                                          ? 'Mengunggah...'
-                                          : 'Unggah Foto Plat Nomor'}
+                                          ? "Mengunggah..."
+                                          : "Unggah Foto Plat Nomor"}
                                       </Button>
-                                      <div className="p-3 mt-3 border border-blue-100 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
+                                      <div className="p-3 mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
                                         <p className="text-xs text-blue-700">
                                           <strong>Format:</strong> JPG, PNG
                                           <br />
@@ -877,7 +877,7 @@ export default function DetailPengiriman() {
                   </div>
 
                   {shipment.internalNote && (
-                    <div className="p-4 border border-gray-200 rounded-lg">
+                    <div className="p-4 rounded-lg border border-gray-200">
                       <h3 className="mb-4 text-lg font-medium text-gray-900">
                         Catatan Internal
                       </h3>
@@ -889,7 +889,7 @@ export default function DetailPengiriman() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="p-4 border border-gray-200 rounded-lg">
+                  <div className="p-4 rounded-lg border border-gray-200">
                     <h3 className="mb-4 text-lg font-medium text-gray-900">
                       Informasi Dokumen
                     </h3>
@@ -898,7 +898,7 @@ export default function DetailPengiriman() {
                         <p className="text-sm text-gray-500">
                           Nomor Pengiriman
                         </p>
-                        <p className="p-1 font-mono text-sm font-medium text-gray-900 break-all rounded bg-gray-50">
+                        <p className="p-1 font-mono text-sm font-medium text-gray-900 break-all bg-gray-50 rounded">
                           {shipment.shipmentNumber}
                         </p>
                       </div>
@@ -933,7 +933,7 @@ export default function DetailPengiriman() {
                     </div>
                   </div>
 
-                  <div className="p-4 border border-gray-200 rounded-lg">
+                  <div className="p-4 rounded-lg border border-gray-200">
                     <h3 className="mb-4 text-lg font-medium text-gray-900">
                       Tindakan
                     </h3>
@@ -946,13 +946,15 @@ export default function DetailPengiriman() {
                           variant="outline"
                           className="justify-start w-full"
                         >
-                          <History className="w-4 h-4 mr-2" />
+                          <History className="mr-2 w-4 h-4" />
                           Lihat Log Aktivitas
                         </Button>
                       </Link>
                       {hasPengirimanUpdateAccess &&
                         shipment &&
-                        !shipment.deletedAt && (
+                        !shipment.deletedAt &&
+                        shipment.status !== "SELESAI" &&
+                        shipment.status !== "COMPLETED" && (
                           <Link
                             to={`/pengiriman/${shipmentId}/edit`}
                             className="w-full"
@@ -961,24 +963,26 @@ export default function DetailPengiriman() {
                               variant="outline"
                               className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
                             >
-                              <Edit className="w-4 h-4 mr-2" />
+                              <Edit className="mr-2 w-4 h-4" />
                               Edit Pengiriman
                             </Button>
                           </Link>
                         )}
                       {hasPengirimanDeleteAccess &&
                         shipment &&
-                        !shipment.deletedAt && (
+                        !shipment.deletedAt &&
+                        shipment.status !== "SELESAI" &&
+                        shipment.status !== "COMPLETED" && (
                           <Button
                             variant="outline"
                             className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
                             onClick={() => handleDelete(shipmentId)}
                             disabled={deleteShipment.isPending}
                           >
-                            <Archive className="w-4 h-4 mr-2" />
+                            <Archive className="mr-2 w-4 h-4" />
                             {deleteShipment.isPending
-                              ? 'Mengarsipkan...'
-                              : 'Arsipkan Pengiriman'}
+                              ? "Mengarsipkan..."
+                              : "Arsipkan Pengiriman"}
                           </Button>
                         )}
                     </div>
@@ -987,10 +991,10 @@ export default function DetailPengiriman() {
               </div>
             )}
 
-            {activeTab === 'do' && (
-              <div className="p-4 border border-gray-200 rounded-lg">
+            {activeTab === "do" && (
+              <div className="p-4 rounded-lg border border-gray-200">
                 <h3 className="flex items-center mb-4 text-lg font-medium text-gray-900">
-                  <ShoppingCart className="w-5 h-5 mr-2 text-blue-600" />
+                  <ShoppingCart className="mr-2 w-5 h-5 text-blue-600" />
                   Delivery Orders & Barang
                 </h3>
                 <p className="mb-4 text-sm text-gray-500">
@@ -999,11 +1003,11 @@ export default function DetailPengiriman() {
                 </p>
 
                 {/* Tabel barang - Desktop view */}
-                <div className="hidden mb-6 border border-gray-200 rounded-lg sm:block">
+                <div className="hidden mb-6 rounded-lg border border-gray-200 sm:block">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="border-b border-gray-200 bg-gray-50">
+                        <TableRow className="bg-gray-50 border-b border-gray-200">
                           <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
                             No
                           </TableHead>
@@ -1090,27 +1094,27 @@ export default function DetailPengiriman() {
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                   <Badge
                                     variant="outline"
-                                    className="text-blue-700 border-blue-200 bg-blue-50"
+                                    className="text-blue-700 bg-blue-50 border-blue-200"
                                   >
                                     {product.doIds.size} DO
                                   </Badge>
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                  {formatNumber(product.totalQuantity)}{' '}
+                                  {formatNumber(product.totalQuantity)}{" "}
                                   {product.satuan}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                   {product.isChosen ? (
                                     <Badge
                                       variant="outline"
-                                      className="text-green-700 border-green-200 bg-green-50"
+                                      className="text-green-700 bg-green-50 border-green-200"
                                     >
                                       Sudah Dimuat
                                     </Badge>
                                   ) : (
                                     <Badge
                                       variant="outline"
-                                      className="text-yellow-700 border-yellow-200 bg-yellow-50"
+                                      className="text-yellow-700 bg-yellow-50 border-yellow-200"
                                     >
                                       Belum Dimuat
                                     </Badge>
@@ -1128,7 +1132,7 @@ export default function DetailPengiriman() {
                                         }
                                         disabled={chooseProduct.isPending}
                                       >
-                                        <Package className="w-4 h-4 mr-2" />
+                                        <Package className="mr-2 w-4 h-4" />
                                         Muat Barang
                                       </Button>
                                     )}
@@ -1140,7 +1144,7 @@ export default function DetailPengiriman() {
                                         className="text-green-600 border-green-200 hover:bg-green-50"
                                         disabled={true}
                                       >
-                                        <Check className="w-4 h-4 mr-2" />
+                                        <Check className="mr-2 w-4 h-4" />
                                         Barang Sudah Dimuat
                                       </Button>
                                     )}
@@ -1206,11 +1210,11 @@ export default function DetailPengiriman() {
                         (product, index) => (
                           <div
                             key={product.id}
-                            className="p-4 border border-gray-200 rounded-lg"
+                            className="p-4 rounded-lg border border-gray-200"
                           >
-                            <div className="flex items-center justify-between mb-2">
+                            <div className="flex justify-between items-center mb-2">
                               <div className="flex items-center">
-                                <div className="flex items-center justify-center w-6 h-6 mr-2 text-xs font-medium text-white bg-blue-600 rounded-full">
+                                <div className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
                                   {index + 1}
                                 </div>
                                 <Link
@@ -1223,14 +1227,14 @@ export default function DetailPengiriman() {
                               {product.isChosen ? (
                                 <Badge
                                   variant="outline"
-                                  className="text-green-700 border-green-200 bg-green-50"
+                                  className="text-green-700 bg-green-50 border-green-200"
                                 >
                                   Sudah Dimuat
                                 </Badge>
                               ) : (
                                 <Badge
                                   variant="outline"
-                                  className="text-yellow-700 border-yellow-200 bg-yellow-50"
+                                  className="text-yellow-700 bg-yellow-50 border-yellow-200"
                                 >
                                   Belum Dimuat
                                 </Badge>
@@ -1245,16 +1249,16 @@ export default function DetailPengiriman() {
                                 <span className="font-medium">Jumlah DO: </span>
                                 <Badge
                                   variant="outline"
-                                  className="text-blue-700 border-blue-200 bg-blue-50"
+                                  className="text-blue-700 bg-blue-50 border-blue-200"
                                 >
                                   {product.doIds.size} DO
                                 </Badge>
                               </div>
                               <p>
                                 <span className="font-medium">
-                                  Total Kuantitas:{' '}
+                                  Total Kuantitas:{" "}
                                 </span>
-                                {formatNumber(product.totalQuantity)}{' '}
+                                {formatNumber(product.totalQuantity)}{" "}
                                 {product.satuan}
                               </p>
                             </div>
@@ -1270,7 +1274,7 @@ export default function DetailPengiriman() {
                                     }
                                     disabled={chooseProduct.isPending}
                                   >
-                                    <Package className="w-4 h-4 mr-2" />
+                                    <Package className="mr-2 w-4 h-4" />
                                     Muat Barang
                                   </Button>
                                 ) : (
@@ -1280,7 +1284,7 @@ export default function DetailPengiriman() {
                                     className="w-full text-green-600 border-green-200 hover:bg-green-50"
                                     disabled={true}
                                   >
-                                    <Check className="w-4 h-4 mr-2" />
+                                    <Check className="mr-2 w-4 h-4" />
                                     Barang Sudah Dimuat
                                   </Button>
                                 )}
@@ -1334,7 +1338,7 @@ export default function DetailPengiriman() {
                         <AccordionItem
                           key={deliveryOrder.id}
                           value={`do-${doIndex}`}
-                          className="overflow-hidden border border-gray-200 rounded-lg"
+                          className="overflow-hidden rounded-lg border border-gray-200"
                         >
                           <AccordionTrigger className="px-4 py-3 bg-gray-50 hover:bg-gray-100 hover:no-underline">
                             <div className="flex items-start text-left">
@@ -1358,7 +1362,7 @@ export default function DetailPengiriman() {
                             <div className="hidden overflow-x-auto sm:block">
                               <Table>
                                 <TableHeader>
-                                  <TableRow className="border-b border-gray-200 bg-gray-50">
+                                  <TableRow className="bg-gray-50 border-b border-gray-200">
                                     <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
                                       No
                                     </TableHead>
@@ -1402,25 +1406,25 @@ export default function DetailPengiriman() {
                                         <TableCell className="px-4 py-3 text-sm text-gray-600">
                                           <span className="flex items-center">
                                             <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                                            {product.locationType || 'GUDANG'}
+                                            {product.locationType || "GUDANG"}
                                           </span>
                                         </TableCell>
                                         <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                          {formatNumber(product.quantity)}{' '}
+                                          {formatNumber(product.quantity)}{" "}
                                           {product.satuan}
                                         </TableCell>
                                         <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                           {product.chosenProduct ? (
                                             <Badge
                                               variant="outline"
-                                              className="text-green-700 border-green-200 bg-green-50"
+                                              className="text-green-700 bg-green-50 border-green-200"
                                             >
                                               Sudah Dimuat
                                             </Badge>
                                           ) : (
                                             <Badge
                                               variant="outline"
-                                              className="text-yellow-700 border-yellow-200 bg-yellow-50"
+                                              className="text-yellow-700 bg-yellow-50 border-yellow-200"
                                             >
                                               Belum Dimuat
                                             </Badge>
@@ -1440,11 +1444,11 @@ export default function DetailPengiriman() {
                                   (product: ProductItem, index: number) => (
                                     <div
                                       key={`${deliveryOrder.id}-${product.id}`}
-                                      className="p-3 border border-gray-200 rounded-lg"
+                                      className="p-3 rounded-lg border border-gray-200"
                                     >
-                                      <div className="flex items-center justify-between mb-2">
+                                      <div className="flex justify-between items-center mb-2">
                                         <div className="flex items-center">
-                                          <div className="flex items-center justify-center w-6 h-6 mr-2 text-xs font-medium text-white bg-blue-600 rounded-full">
+                                          <div className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
                                             {index + 1}
                                           </div>
                                           <Link
@@ -1457,14 +1461,14 @@ export default function DetailPengiriman() {
                                         {product.chosenProduct ? (
                                           <Badge
                                             variant="outline"
-                                            className="text-green-700 border-green-200 bg-green-50"
+                                            className="text-green-700 bg-green-50 border-green-200"
                                           >
                                             Sudah Dimuat
                                           </Badge>
                                         ) : (
                                           <Badge
                                             variant="outline"
-                                            className="text-yellow-700 border-yellow-200 bg-yellow-50"
+                                            className="text-yellow-700 bg-yellow-50 border-yellow-200"
                                           >
                                             Belum Dimuat
                                           </Badge>
@@ -1473,24 +1477,24 @@ export default function DetailPengiriman() {
                                       <div className="space-y-1 text-xs text-gray-600">
                                         <p>
                                           <span className="font-medium">
-                                            Gudang:{' '}
+                                            Gudang:{" "}
                                           </span>
                                           {product.warehouse.name}
                                         </p>
                                         <p>
                                           <span className="font-medium">
-                                            Lokasi:{' '}
+                                            Lokasi:{" "}
                                           </span>
                                           <span className="flex items-center">
                                             <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                                            {product.locationType || 'GUDANG'}
+                                            {product.locationType || "GUDANG"}
                                           </span>
                                         </p>
                                         <p>
                                           <span className="font-medium">
-                                            Kuantitas:{' '}
+                                            Kuantitas:{" "}
                                           </span>
-                                          {formatNumber(product.quantity)}{' '}
+                                          {formatNumber(product.quantity)}{" "}
                                           {product.satuan}
                                         </p>
                                       </div>
@@ -1508,10 +1512,10 @@ export default function DetailPengiriman() {
               </div>
             )}
 
-            {activeTab === 'items' && (
-              <div className="p-4 border border-gray-200 rounded-lg">
+            {activeTab === "items" && (
+              <div className="p-4 rounded-lg border border-gray-200">
                 <h3 className="flex items-center mb-4 text-lg font-medium text-gray-900">
-                  <Package className="w-5 h-5 mr-2 text-blue-600" />
+                  <Package className="mr-2 w-5 h-5 text-blue-600" />
                   Item Pengiriman
                 </h3>
 
@@ -1523,7 +1527,7 @@ export default function DetailPengiriman() {
                     message={
                       chosenProductsError instanceof Error
                         ? chosenProductsError.message
-                        : 'Terjadi kesalahan pada server'
+                        : "Terjadi kesalahan pada server"
                     }
                     retryButtonText="Coba lagi"
                     onRetry={refetchChosenProducts}
@@ -1531,11 +1535,11 @@ export default function DetailPengiriman() {
                 ) : (
                   <div>
                     {/* Desktop view */}
-                    <div className="hidden overflow-hidden border border-gray-200 rounded-lg sm:block">
+                    <div className="hidden overflow-hidden rounded-lg border border-gray-200 sm:block">
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
-                            <TableRow className="border-b border-gray-200 bg-gray-50">
+                            <TableRow className="bg-gray-50 border-b border-gray-200">
                               <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
                                 No
                               </TableHead>
@@ -1594,7 +1598,7 @@ export default function DetailPengiriman() {
                                   <TableCell className="px-4 py-3 text-sm text-gray-600">
                                     <span className="flex items-center">
                                       <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                                      {item.locationType || 'GUDANG'}
+                                      {item.locationType || "GUDANG"}
                                     </span>
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-gray-600">
@@ -1615,16 +1619,16 @@ export default function DetailPengiriman() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                    {formatNumber(item.totalRequestedQuantity)}{' '}
+                                    {formatNumber(item.totalRequestedQuantity)}{" "}
                                     {item.product.satuan}
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                     {item.shipmentItems.every(
-                                      (si) => si.status === 'COMPLETED'
+                                      (si) => si.status === "COMPLETED"
                                     ) ? (
                                       <Badge
                                         variant="outline"
-                                        className="flex items-center justify-center gap-1 text-green-700 border-green-200 bg-green-50"
+                                        className="flex gap-1 justify-center items-center text-green-700 bg-green-50 border-green-200"
                                       >
                                         <Scale className="w-3 h-3" />
                                         Sudah Ditimbang
@@ -1632,7 +1636,7 @@ export default function DetailPengiriman() {
                                     ) : (
                                       <Badge
                                         variant="outline"
-                                        className="text-yellow-700 border-yellow-200 bg-yellow-50"
+                                        className="text-yellow-700 bg-yellow-50 border-yellow-200"
                                       >
                                         Belum Ditimbang
                                       </Badge>
@@ -1650,7 +1654,7 @@ export default function DetailPengiriman() {
                                               size="sm"
                                               className="text-blue-600 border-blue-200 hover:bg-blue-50"
                                             >
-                                              <FileText className="w-4 h-4 mr-2" />
+                                              <FileText className="mr-2 w-4 h-4" />
                                               Detail DO
                                             </Button>
                                           </Link>
@@ -1670,7 +1674,7 @@ export default function DetailPengiriman() {
                     <div className="block sm:hidden">
                       <div className="space-y-4">
                         {!chosenProducts || chosenProducts.length === 0 ? (
-                          <div className="p-4 text-center border border-gray-200 rounded-lg">
+                          <div className="p-4 text-center rounded-lg border border-gray-200">
                             <p className="text-sm text-gray-500">
                               Tidak ada item yang dipilih dalam pengiriman ini.
                               Muat Barang di tab "Delivery Orders & Barang".
@@ -1680,11 +1684,11 @@ export default function DetailPengiriman() {
                           chosenProducts.map((item, index) => (
                             <div
                               key={item.id}
-                              className="p-4 border border-gray-200 rounded-lg"
+                              className="p-4 rounded-lg border border-gray-200"
                             >
-                              <div className="flex items-center justify-between mb-3">
+                              <div className="flex justify-between items-center mb-3">
                                 <div className="flex items-center">
-                                  <div className="flex items-center justify-center w-6 h-6 mr-2 text-xs font-medium text-white bg-blue-600 rounded-full">
+                                  <div className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
                                     {index + 1}
                                   </div>
                                   <Link
@@ -1695,11 +1699,11 @@ export default function DetailPengiriman() {
                                   </Link>
                                 </div>
                                 {item.shipmentItems.every(
-                                  (si) => si.status === 'COMPLETED'
+                                  (si) => si.status === "COMPLETED"
                                 ) ? (
                                   <Badge
                                     variant="outline"
-                                    className="flex items-center gap-1 text-green-700 border-green-200 bg-green-50"
+                                    className="flex gap-1 items-center text-green-700 bg-green-50 border-green-200"
                                   >
                                     <Scale className="w-3 h-3" />
                                     Sudah Ditimbang
@@ -1707,7 +1711,7 @@ export default function DetailPengiriman() {
                                 ) : (
                                   <Badge
                                     variant="outline"
-                                    className="text-yellow-700 border-yellow-200 bg-yellow-50"
+                                    className="text-yellow-700 bg-yellow-50 border-yellow-200"
                                   >
                                     Belum Ditimbang
                                   </Badge>
@@ -1727,7 +1731,7 @@ export default function DetailPengiriman() {
                                   </span>
                                   <span className="flex items-center">
                                     <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                                    {item.locationType || 'GUDANG'}
+                                    {item.locationType || "GUDANG"}
                                   </span>
                                 </div>
                                 <div className="flex items-start">
@@ -1735,7 +1739,7 @@ export default function DetailPengiriman() {
                                     Kuantitas:
                                   </span>
                                   <span>
-                                    {formatNumber(item.totalRequestedQuantity)}{' '}
+                                    {formatNumber(item.totalRequestedQuantity)}{" "}
                                     {item.product.satuan}
                                   </span>
                                 </div>
@@ -1769,7 +1773,7 @@ export default function DetailPengiriman() {
                                         size="sm"
                                         className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
                                       >
-                                        <FileText className="w-4 h-4 mr-2" />
+                                        <FileText className="mr-2 w-4 h-4" />
                                         Detail DO
                                       </Button>
                                     </Link>
@@ -1785,20 +1789,20 @@ export default function DetailPengiriman() {
               </div>
             )}
 
-            {activeTab === 'spmb' && (
-              <div className="p-4 border border-gray-200 rounded-lg">
+            {activeTab === "spmb" && (
+              <div className="p-4 rounded-lg border border-gray-200">
                 <h3 className="flex items-center mb-4 text-lg font-medium text-gray-900">
-                  <FileText className="w-5 h-5 mr-2 text-blue-600" />
+                  <FileText className="mr-2 w-5 h-5 text-blue-600" />
                   Surat Perintah Muat Barang (SPMB)
                 </h3>
 
                 {/* Tampilan desktop dengan table */}
                 <div className="hidden sm:block">
-                  <div className="overflow-hidden border border-gray-200 rounded-lg">
+                  <div className="overflow-hidden rounded-lg border border-gray-200">
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow className="border-b border-gray-200 bg-gray-50">
+                          <TableRow className="bg-gray-50 border-b border-gray-200">
                             <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
                               No
                             </TableHead>
@@ -1851,12 +1855,12 @@ export default function DetailPengiriman() {
                                   <Badge
                                     variant="outline"
                                     className={cn(
-                                      'px-2 py-0.5 rounded-md font-medium text-xs',
-                                      spmb.status === 'PENDING'
-                                        ? 'bg-yellow-50 text-yellow-600 border-yellow-200'
-                                        : spmb.status === 'PROSES'
-                                        ? 'bg-blue-50 text-blue-600 border-blue-200'
-                                        : 'bg-green-50 text-green-600 border-green-200'
+                                      "px-2 py-0.5 rounded-md font-medium text-xs",
+                                      spmb.status === "PENDING"
+                                        ? "bg-yellow-50 text-yellow-600 border-yellow-200"
+                                        : spmb.status === "PROSES"
+                                        ? "bg-blue-50 text-blue-600 border-blue-200"
+                                        : "bg-green-50 text-green-600 border-green-200"
                                     )}
                                   >
                                     {spmb.status}
@@ -1894,7 +1898,7 @@ export default function DetailPengiriman() {
                 <div className="sm:hidden">
                   <div className="space-y-3">
                     {!shipment.spmbs || shipment.spmbs.length === 0 ? (
-                      <div className="p-4 text-center border border-gray-200 rounded-lg">
+                      <div className="p-4 text-center rounded-lg border border-gray-200">
                         <p className="text-sm text-gray-500">
                           Tidak ada SPMB dalam pengiriman ini
                         </p>
@@ -1903,11 +1907,11 @@ export default function DetailPengiriman() {
                       shipment.spmbs.map((spmb, index) => (
                         <div
                           key={spmb.id}
-                          className="p-4 border border-gray-200 rounded-lg"
+                          className="p-4 rounded-lg border border-gray-200"
                         >
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="flex justify-between items-center mb-2">
                             <div className="flex items-center">
-                              <div className="flex items-center justify-center w-6 h-6 mr-2 text-xs font-medium text-white bg-blue-600 rounded-full">
+                              <div className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
                                 {index + 1}
                               </div>
                               <span className="font-medium text-blue-600">
@@ -1917,12 +1921,12 @@ export default function DetailPengiriman() {
                             <Badge
                               variant="outline"
                               className={cn(
-                                'px-2 py-0.5 rounded-md font-medium text-xs',
-                                spmb.status === 'PENDING'
-                                  ? 'bg-yellow-50 text-yellow-600 border-yellow-200'
-                                  : spmb.status === 'PROSES'
-                                  ? 'bg-blue-50 text-blue-600 border-blue-200'
-                                  : 'bg-green-50 text-green-600 border-green-200'
+                                "px-2 py-0.5 rounded-md font-medium text-xs",
+                                spmb.status === "PENDING"
+                                  ? "bg-yellow-50 text-yellow-600 border-yellow-200"
+                                  : spmb.status === "PROSES"
+                                  ? "bg-blue-50 text-blue-600 border-blue-200"
+                                  : "bg-green-50 text-green-600 border-green-200"
                               )}
                             >
                               {spmb.status}
@@ -1931,7 +1935,7 @@ export default function DetailPengiriman() {
                           <div className="space-y-1 text-xs text-gray-600">
                             <p>
                               <span className="font-medium">
-                                Delivery Order:{' '}
+                                Delivery Order:{" "}
                               </span>
                               <Link
                                 to={`/do/${spmb.deliveryOrderId}`}
@@ -1943,7 +1947,7 @@ export default function DetailPengiriman() {
                             </p>
                             <p>
                               <span className="font-medium">
-                                Tanggal Dibuat:{' '}
+                                Tanggal Dibuat:{" "}
                               </span>
                               {formatDate(spmb.createdAt)}
                             </p>
@@ -1998,7 +2002,7 @@ export default function DetailPengiriman() {
           <div className="p-6">
             <DialogHeader className="pb-4">
               <DialogTitle className="flex items-center text-xl font-semibold text-gray-900">
-                <Package className="w-5 h-5 mr-2 text-blue-600" />
+                <Package className="mr-2 w-5 h-5 text-blue-600" />
                 Detail Barang untuk Pengiriman
               </DialogTitle>
               <DialogDescription className="text-gray-600">
@@ -2012,7 +2016,7 @@ export default function DetailPengiriman() {
                   <h3 className="mb-3 text-base font-medium text-gray-800">
                     Informasi Barang
                   </h3>
-                  <div className="p-4 mb-4 border border-blue-100 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50">
+                  <div className="p-4 mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
                     <p className="text-base font-medium text-blue-800">
                       {selectedProductDOs[0].product.name}
                     </p>
@@ -2027,7 +2031,7 @@ export default function DetailPengiriman() {
                               (sum, item) => sum + item.product.quantity,
                               0
                             )
-                          )}{' '}
+                          )}{" "}
                           {selectedProductDOs[0].product.satuan}
                         </p>
                       </div>
@@ -2038,7 +2042,7 @@ export default function DetailPengiriman() {
                         <div className="font-semibold text-gray-800">
                           <Badge
                             variant="outline"
-                            className="font-medium text-blue-700 border-blue-200 bg-blue-50"
+                            className="font-medium text-blue-700 bg-blue-50 border-blue-200"
                           >
                             {selectedProductDOs.length} DO
                           </Badge>
@@ -2054,12 +2058,12 @@ export default function DetailPengiriman() {
                     {selectedProductDOs.map((doItem, index) => (
                       <div
                         key={doItem.doId}
-                        className="p-4 transition-colors duration-200 bg-white border border-gray-200 rounded-lg hover:border-gray-300"
+                        className="p-4 bg-white rounded-lg border border-gray-200 transition-colors duration-200 hover:border-gray-300"
                       >
                         <div className="flex justify-between">
                           <div>
                             <div className="flex items-center">
-                              <span className="flex items-center justify-center w-6 h-6 mr-2 text-xs font-medium text-white bg-blue-600 rounded-full">
+                              <span className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
                                 {index + 1}
                               </span>
                               <p className="text-sm font-medium text-gray-800">
@@ -2079,7 +2083,7 @@ export default function DetailPengiriman() {
                           <div className="text-right">
                             <p className="text-xs text-gray-500">Kuantitas</p>
                             <p className="text-sm font-semibold text-gray-800">
-                              {formatNumber(doItem.product.quantity)}{' '}
+                              {formatNumber(doItem.product.quantity)}{" "}
                               {doItem.product.satuan}
                             </p>
                           </div>
@@ -2092,14 +2096,14 @@ export default function DetailPengiriman() {
             </div>
 
             <DialogFooter className="pt-4 mt-4 border-t border-gray-100">
-              <div className="flex w-full gap-3">
+              <div className="flex gap-3 w-full">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleCloseProductModal}
-                  className="flex-1 text-gray-700 transition-all duration-200 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+                  className="flex-1 text-gray-700 border-gray-300 transition-all duration-200 hover:bg-gray-50 hover:border-gray-400"
                 >
-                  <X className="w-4 h-4 mr-2" />
+                  <X className="mr-2 w-4 h-4" />
                   Batal
                 </Button>
 
@@ -2116,16 +2120,16 @@ export default function DetailPengiriman() {
                     }
                   }}
                   disabled={chooseProduct.isPending}
-                  className="flex-1 text-white transition-all duration-200 bg-blue-600 shadow-md hover:bg-blue-700 hover:shadow-lg"
+                  className="flex-1 text-white bg-blue-600 shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg"
                 >
                   {chooseProduct.isPending ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                       Memproses...
                     </>
                   ) : (
                     <>
-                      <Package className="w-4 h-4 mr-2" />
+                      <Package className="mr-2 w-4 h-4" />
                       Muat Barang
                     </>
                   )}

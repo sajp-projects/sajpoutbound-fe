@@ -156,13 +156,23 @@ export default function DaftarPengiriman() {
   const getShipmentActions = (shipment: Shipment) => {
     const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
 
-    if (hasPengirimanUpdateAccess) {
+    // Hanya tampilkan aksi edit jika user memiliki akses dan status bukan SELESAI/COMPLETED
+    if (
+      hasPengirimanUpdateAccess &&
+      shipment.status !== "SELESAI" &&
+      shipment.status !== "COMPLETED"
+    ) {
       actions.push({ type: ActionType.EDIT });
     }
 
     actions.push({ type: ActionType.LOG });
 
-    if (hasPengirimanDeleteAccess) {
+    // Hanya tampilkan aksi arsip jika user memiliki akses dan status bukan SELESAI/COMPLETED
+    if (
+      hasPengirimanDeleteAccess &&
+      shipment.status !== "SELESAI" &&
+      shipment.status !== "COMPLETED"
+    ) {
       actions.push({
         type: ActionType.ARCHIVE,
         onClick: () => handleArsipkan(shipment.id),
@@ -201,8 +211,8 @@ export default function DaftarPengiriman() {
   };
 
   return (
-    <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
-      <div className="flex flex-row items-center justify-between w-full gap-2">
+    <div className="flex flex-col px-2 space-y-4 w-full min-h-full sm:space-y-6 sm:px-4 md:px-0">
+      <div className="flex flex-row gap-2 justify-between items-center w-full">
         <h1 className="text-2xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
           Daftar Pengiriman
         </h1>
@@ -219,8 +229,8 @@ export default function DaftarPengiriman() {
         )}
       </div>
 
-      <div className="w-full p-3 overflow-hidden bg-white rounded-lg shadow sm:p-4 md:p-6">
-        <div className="flex flex-col items-start justify-between w-full gap-3 mb-4 sm:flex-row sm:items-center sm:mb-6">
+      <div className="overflow-hidden p-3 w-full bg-white rounded-lg shadow sm:p-4 md:p-6">
+        <div className="flex flex-col gap-3 justify-between items-start mb-4 w-full sm:flex-row sm:items-center sm:mb-6">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
               Pengiriman
@@ -229,15 +239,15 @@ export default function DaftarPengiriman() {
               Manajemen data pengiriman
             </p>
           </div>
-          <div className="flex flex-wrap items-center w-full gap-2 sm:gap-3 sm:w-auto">
+          <div className="flex flex-wrap gap-2 items-center w-full sm:gap-3 sm:w-auto">
             <div className="w-[160px] sm:w-[190px]">
               <Select
                 value={statusFilter || "all"}
                 onValueChange={(value) => handleFilter("status", value)}
               >
-                <SelectTrigger className="flex items-center w-full text-xs text-gray-700 bg-white border-gray-300 h-9 hover:bg-gray-50 sm:text-sm">
+                <SelectTrigger className="flex items-center w-full h-9 text-xs text-gray-700 bg-white border-gray-300 hover:bg-gray-50 sm:text-sm">
                   <div className="flex items-center">
-                    <Filter className="w-3 h-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+                    <Filter className="mr-1 w-3 h-3 sm:h-4 sm:w-4 sm:mr-2" />
                     <span className="truncate">{getStatusFilterLabel()}</span>
                   </div>
                 </SelectTrigger>
@@ -284,9 +294,9 @@ export default function DaftarPengiriman() {
                 value={typeFilter || "all"}
                 onValueChange={(value) => handleFilter("type", value)}
               >
-                <SelectTrigger className="flex items-center w-full text-xs text-gray-700 bg-white border-gray-300 h-9 hover:bg-gray-50 sm:text-sm">
+                <SelectTrigger className="flex items-center w-full h-9 text-xs text-gray-700 bg-white border-gray-300 hover:bg-gray-50 sm:text-sm">
                   <div className="flex items-center">
-                    <Filter className="w-3 h-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
+                    <Filter className="mr-1 w-3 h-3 sm:h-4 sm:w-4 sm:mr-2" />
                     <span className="truncate">{getTypeFilterLabel()}</span>
                   </div>
                 </SelectTrigger>
@@ -329,7 +339,7 @@ export default function DaftarPengiriman() {
           </div>
         </div>
 
-        <div className="w-full mb-4 sm:mb-6">
+        <div className="mb-4 w-full sm:mb-6">
           <SearchInput
             placeholder="Cari pengiriman..."
             className="w-full sm:max-w-md"
@@ -346,11 +356,11 @@ export default function DaftarPengiriman() {
           />
         ) : (
           <div className="w-full">
-            <div className="hidden w-full overflow-hidden border border-gray-200 rounded-lg sm:block">
-              <div className="w-full overflow-x-auto">
+            <div className="hidden overflow-hidden w-full rounded-lg border border-gray-200 sm:block">
+              <div className="overflow-x-auto w-full">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-b border-gray-200 bg-gray-50">
+                    <TableRow className="bg-gray-50 border-b border-gray-200">
                       <TableHead className="w-[5%] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
                         No.
                       </TableHead>
@@ -431,7 +441,7 @@ export default function DaftarPengiriman() {
                             {formatDate(shipment.createdAt)}
                           </TableCell>
                           <TableCell className="py-2.5 px-3">
-                            <div className="flex items-center justify-center">
+                            <div className="flex justify-center items-center">
                               <ActionButtons
                                 actions={getShipmentActions(shipment)}
                                 entityId={shipment.id}
@@ -447,19 +457,19 @@ export default function DaftarPengiriman() {
               </div>
             </div>
 
-            <div className="w-full space-y-3 sm:hidden">
+            <div className="space-y-3 w-full sm:hidden">
               {shipments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center w-full p-6 bg-white border border-gray-200 rounded-lg">
+                <div className="flex flex-col justify-center items-center p-6 w-full bg-white rounded-lg border border-gray-200">
                   <EmptyState title="Tidak ada data pengiriman yang ditemukan" />
                 </div>
               ) : (
                 shipments.map((shipment) => (
                   <div
                     key={shipment.id}
-                    className="w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
+                    className="overflow-hidden w-full bg-white rounded-lg border border-gray-200 shadow-sm"
                   >
-                    <div className="w-full p-4">
-                      <div className="flex items-start justify-between w-full mb-2">
+                    <div className="p-4 w-full">
+                      <div className="flex justify-between items-start mb-2 w-full">
                         <div className="max-w-[65%]">
                           <div className="mb-2">
                             <div className="text-sm font-medium text-gray-600 break-words">
@@ -479,7 +489,7 @@ export default function DaftarPengiriman() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex flex-col items-end gap-1">
+                        <div className="flex flex-col gap-1 items-end">
                           <Badge
                             variant="outline"
                             className={cn(
@@ -504,7 +514,7 @@ export default function DaftarPengiriman() {
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-end gap-2 pt-2 mt-2 border-t">
+                      <div className="flex gap-2 justify-end items-center pt-2 mt-2 border-t">
                         <ActionButtons
                           actions={getShipmentActions(shipment)}
                           entityId={shipment.id}
@@ -517,7 +527,7 @@ export default function DaftarPengiriman() {
               )}
             </div>
 
-            <div className="w-full mt-4">
+            <div className="mt-4 w-full">
               <Pagination
                 totalItems={pagination.total}
                 itemsPerPage={pagination.limit}
