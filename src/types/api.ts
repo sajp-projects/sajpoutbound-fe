@@ -5,9 +5,11 @@ export interface ApiResponse<T> {
   errorType?: string;
 }
 
+// test
+
 export interface JoiValidationError {
   message: string;
-  errorType: "joiValidationError";
+  errorType: 'joiValidationError';
   details: Array<{
     message: string;
     path: string[];
