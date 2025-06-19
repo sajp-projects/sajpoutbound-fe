@@ -1,61 +1,95 @@
 import { BrowserRouter, Route, Routes } from "react-router";
+import { Suspense, lazy } from "react";
 import { PERMISSION } from "@/constant/PERMISSION";
 import AuthLayout from "./layout/AuthLayout";
 import BaseLayout from "./layout/BaseLayout";
 import RBACLayout from "./layout/RBACLayout";
-import Login from "./pages/auth/login";
-import Dashboard from "./pages/dashboard";
-import ArsipPengguna from "./pages/pengguna/arsipPengguna";
-import Pengguna from "./pages/pengguna/daftarPengguna";
-import DetailPengguna from "./pages/pengguna/detailPengguna";
-import EditPengguna from "./pages/pengguna/editPengguna";
-import LogPengguna from "./pages/pengguna/logPengguna";
-import TambahPengguna from "./pages/pengguna/tambahPengguna";
-import Role from "./pages/peran/daftarPeran";
-import DetailPeran from "./pages/peran/detailPeran";
-import EditPeran from "./pages/peran/editPeran";
-import IzinPeran from "./pages/izin/daftarIzin";
-import TambahPeran from "./pages/peran/tambahPeran";
-import DaftarGudang from "./pages/gudang/daftarGudang";
-import DetailGudang from "./pages/gudang/detailGudang";
-import EditGudang from "./pages/gudang/editGudang";
-import TambahGudang from "./pages/gudang/tambahGudang";
-import LogGudang from "./pages/gudang/logGudang";
-import LogSemuaGudang from "./pages/gudang/logSemuaGudang";
-import LogSemuaPengguna from "./pages/pengguna/logSemuaPengguna";
-import DaftarBarang from "./pages/barang/daftarBarang";
-import DetailBarang from "./pages/barang/detailBarang";
-import EditBarang from "./pages/barang/editBarang";
-import TambahBarang from "./pages/barang/tambahBarang";
-import LogBarang from "./pages/barang/logBarang";
-import LogSemuaBarang from "./pages/barang/logSemuaBarang";
-import DaftarPelanggan from "./pages/pelanggan/daftarPelanggan";
-import TambahPelanggan from "./pages/pelanggan/tambahPelanggan";
-import LogPelanggan from "./pages/pelanggan/logPelanggan";
-import LogSemuaPelanggan from "./pages/pelanggan/logSemuaPelanggan";
-import EditPelanggan from "./pages/pelanggan/editPelanggan";
-import DetailPelanggan from "./pages/pelanggan/detailPelanggan";
-import DaftarArmada from "./pages/armada/daftarArmada";
-import TambahArmada from "./pages/armada/tambahArmada";
-import LogArmada from "./pages/armada/logArmada";
-import LogSemuaArmada from "./pages/armada/logSemuaArmada";
-import EditArmada from "./pages/armada/editArmada";
-import DetailArmada from "./pages/armada/detailArmada";
-import NotFound from "./pages/notFound";
-import DaftarDo from "./pages/do/daftarDo";
-import TambahDo from "./pages/do/tambahDo";
-import LogDo from "./pages/do/logDo";
-import ArsipDo from "./pages/do/arsipDo";
-import EditDo from "./pages/do/editDo";
-import DetailDo from "./pages/do/detailDo";
-import LogSemuaDo from "./pages/do/logSemuaDo";
-import DaftarPengiriman from "./pages/pengiriman/daftarPengiriman";
-import LogPengiriman from "./pages/pengiriman/logPengiriman";
-import DetailPengiriman from "./pages/pengiriman/detailPengiriman";
-import EditPengiriman from "./pages/pengiriman/editPengiriman";
-import TambahPengiriman from "./pages/pengiriman/tambahPengiriman";
-import LogSemuaPengiriman from "./pages/pengiriman/logSemuaPengiriman";
-import ArsipPengiriman from "./pages/pengiriman/arsipPengiriman";
+import LoadingFallback from "@/components/LoadingFallback";
+
+// Lazy import untuk semua komponen halaman
+const Login = lazy(() => import("./pages/auth/login"));
+const Dashboard = lazy(() => import("./pages/dashboard"));
+const NotFound = lazy(() => import("./pages/notFound"));
+
+// Lazy import untuk halaman pengguna
+const ArsipPengguna = lazy(() => import("./pages/pengguna/arsipPengguna"));
+const Pengguna = lazy(() => import("./pages/pengguna/daftarPengguna"));
+const DetailPengguna = lazy(() => import("./pages/pengguna/detailPengguna"));
+const EditPengguna = lazy(() => import("./pages/pengguna/editPengguna"));
+const LogPengguna = lazy(() => import("./pages/pengguna/logPengguna"));
+const TambahPengguna = lazy(() => import("./pages/pengguna/tambahPengguna"));
+const LogSemuaPengguna = lazy(
+  () => import("./pages/pengguna/logSemuaPengguna")
+);
+
+// Lazy import untuk halaman peran
+const Role = lazy(() => import("./pages/peran/daftarPeran"));
+const DetailPeran = lazy(() => import("./pages/peran/detailPeran"));
+const EditPeran = lazy(() => import("./pages/peran/editPeran"));
+const IzinPeran = lazy(() => import("./pages/izin/daftarIzin"));
+const TambahPeran = lazy(() => import("./pages/peran/tambahPeran"));
+
+// Lazy import untuk halaman gudang
+const DaftarGudang = lazy(() => import("./pages/gudang/daftarGudang"));
+const DetailGudang = lazy(() => import("./pages/gudang/detailGudang"));
+const EditGudang = lazy(() => import("./pages/gudang/editGudang"));
+const TambahGudang = lazy(() => import("./pages/gudang/tambahGudang"));
+const LogGudang = lazy(() => import("./pages/gudang/logGudang"));
+const LogSemuaGudang = lazy(() => import("./pages/gudang/logSemuaGudang"));
+
+// Lazy import untuk halaman barang
+const DaftarBarang = lazy(() => import("./pages/barang/daftarBarang"));
+const DetailBarang = lazy(() => import("./pages/barang/detailBarang"));
+const EditBarang = lazy(() => import("./pages/barang/editBarang"));
+const TambahBarang = lazy(() => import("./pages/barang/tambahBarang"));
+const LogBarang = lazy(() => import("./pages/barang/logBarang"));
+const LogSemuaBarang = lazy(() => import("./pages/barang/logSemuaBarang"));
+
+// Lazy import untuk halaman pelanggan
+const DaftarPelanggan = lazy(() => import("./pages/pelanggan/daftarPelanggan"));
+const TambahPelanggan = lazy(() => import("./pages/pelanggan/tambahPelanggan"));
+const LogPelanggan = lazy(() => import("./pages/pelanggan/logPelanggan"));
+const LogSemuaPelanggan = lazy(
+  () => import("./pages/pelanggan/logSemuaPelanggan")
+);
+const EditPelanggan = lazy(() => import("./pages/pelanggan/editPelanggan"));
+const DetailPelanggan = lazy(() => import("./pages/pelanggan/detailPelanggan"));
+
+// Lazy import untuk halaman armada
+const DaftarArmada = lazy(() => import("./pages/armada/daftarArmada"));
+const TambahArmada = lazy(() => import("./pages/armada/tambahArmada"));
+const LogArmada = lazy(() => import("./pages/armada/logArmada"));
+const LogSemuaArmada = lazy(() => import("./pages/armada/logSemuaArmada"));
+const EditArmada = lazy(() => import("./pages/armada/editArmada"));
+const DetailArmada = lazy(() => import("./pages/armada/detailArmada"));
+
+// Lazy import untuk halaman DO
+const DaftarDo = lazy(() => import("./pages/do/daftarDo"));
+const TambahDo = lazy(() => import("./pages/do/tambahDo"));
+const LogDo = lazy(() => import("./pages/do/logDo"));
+const ArsipDo = lazy(() => import("./pages/do/arsipDo"));
+const EditDo = lazy(() => import("./pages/do/editDo"));
+const DetailDo = lazy(() => import("./pages/do/detailDo"));
+const LogSemuaDo = lazy(() => import("./pages/do/logSemuaDo"));
+
+// Lazy import untuk halaman pengiriman
+const DaftarPengiriman = lazy(
+  () => import("./pages/pengiriman/daftarPengiriman")
+);
+const LogPengiriman = lazy(() => import("./pages/pengiriman/logPengiriman"));
+const DetailPengiriman = lazy(
+  () => import("./pages/pengiriman/detailPengiriman")
+);
+const EditPengiriman = lazy(() => import("./pages/pengiriman/editPengiriman"));
+const TambahPengiriman = lazy(
+  () => import("./pages/pengiriman/tambahPengiriman")
+);
+const LogSemuaPengiriman = lazy(
+  () => import("./pages/pengiriman/logSemuaPengiriman")
+);
+const ArsipPengiriman = lazy(
+  () => import("./pages/pengiriman/arsipPengiriman")
+);
 
 interface ProtectedRouteConfig {
   path: string;
@@ -471,60 +505,62 @@ export default function App() {
   ];
   return (
     <BrowserRouter>
-      <Routes>
-        {}
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<Login />} />
-        </Route>
-
-        {}
-        <Route element={<BaseLayout />}>
-          {}
-          <Route index element={<Dashboard />} />
-
-          {}
-          <Route path="/pengguna">
-            {userRoutes.map((route) => createProtectedRoute(route))}
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          {/* Route untuk autentikasi */}
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<Login />} />
           </Route>
 
-          {}
-          <Route path="/peran">
-            {roleRoutes.map((route) => createProtectedRoute(route))}
+          {/* Route untuk halaman utama */}
+          <Route element={<BaseLayout />}>
+            {/* Dashboard */}
+            <Route index element={<Dashboard />} />
+
+            {/* Route untuk pengguna */}
+            <Route path="/pengguna">
+              {userRoutes.map((route) => createProtectedRoute(route))}
+            </Route>
+
+            {/* Route untuk peran */}
+            <Route path="/peran">
+              {roleRoutes.map((route) => createProtectedRoute(route))}
+            </Route>
+
+            {/* Route untuk gudang */}
+            <Route path="/gudang">
+              {gudangRoutes.map((route) => createProtectedRoute(route))}
+            </Route>
+
+            {/* Route untuk barang */}
+            <Route path="/barang">
+              {barangRoutes.map((route) => createProtectedRoute(route))}
+            </Route>
+
+            {/* Route untuk pelanggan */}
+            <Route path="/pelanggan">
+              {pelangganRoutes.map((route) => createProtectedRoute(route))}
+            </Route>
+
+            {/* Route untuk armada */}
+            <Route path="/armada">
+              {armadaRoutes.map((route) => createProtectedRoute(route))}
+            </Route>
+
+            {/* Route untuk DO */}
+            <Route path="/do">
+              {doRoutes.map((route) => createProtectedRoute(route))}
+            </Route>
+
+            {/* Route untuk pengiriman */}
+            <Route path="/pengiriman">
+              {shipmentRoutes.map((route) => createProtectedRoute(route))}
+            </Route>
           </Route>
 
-          {}
-          <Route path="/gudang">
-            {gudangRoutes.map((route) => createProtectedRoute(route))}
-          </Route>
-
-          {}
-          <Route path="/barang">
-            {barangRoutes.map((route) => createProtectedRoute(route))}
-          </Route>
-
-          {}
-          <Route path="/pelanggan">
-            {pelangganRoutes.map((route) => createProtectedRoute(route))}
-          </Route>
-
-          {}
-          <Route path="/armada">
-            {armadaRoutes.map((route) => createProtectedRoute(route))}
-          </Route>
-
-          {}
-          <Route path="/do">
-            {doRoutes.map((route) => createProtectedRoute(route))}
-          </Route>
-
-          {}
-          <Route path="/pengiriman">
-            {shipmentRoutes.map((route) => createProtectedRoute(route))}
-          </Route>
-        </Route>
-
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
