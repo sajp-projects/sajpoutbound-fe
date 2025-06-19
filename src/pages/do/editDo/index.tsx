@@ -1,39 +1,39 @@
-import { joiResolver } from '@hookform/resolvers/joi';
-import Joi from 'joi';
-import { ArrowLeft, Loader2, Plus, Save } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
-import { Link, useNavigate, useParams } from 'react-router';
+import { joiResolver } from "@hookform/resolvers/joi";
+import Joi from "joi";
+import { ArrowLeft, Edit, Loader2, Plus, Save, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { Link, useNavigate, useParams } from "react-router";
 
-import { LoadingState } from '@/components/LoadingState';
-import { Button } from '@/components/ui/button';
+import { LoadingState } from "@/components/LoadingState";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Combobox, ComboboxItem } from '@/components/ui/combobox';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useProducts } from '@/hooks/barang';
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Combobox, ComboboxItem } from "@/components/ui/combobox";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useProducts } from "@/hooks/barang";
 import {
   deliveryOrderKeys,
   useDeliveryOrder,
   useUpdateDeliveryOrder,
-} from '@/hooks/do';
-import { useCustomers } from '@/hooks/pelanggan';
-import { shipmentKeys } from '@/hooks/pengiriman';
-import { cn } from '@/lib/utils';
+} from "@/hooks/do";
+import { useCustomers } from "@/hooks/pelanggan";
+import { shipmentKeys } from "@/hooks/pengiriman";
+import { cn } from "@/lib/utils";
 import {
   CreateDeliveryOrderProduct,
   UpdateDeliveryOrderInput,
-} from '@/types/do';
-import { formatNumber } from '@/utils/formatNumber';
-import { showErrorAlert, showSuccessAlert } from '@/utils/sweetAlert';
-import { useQueryClient } from '@tanstack/react-query';
+} from "@/types/do";
+import { formatNumber } from "@/utils/formatNumber";
+import { showErrorAlert, showSuccessAlert } from "@/utils/sweetAlert";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ExtendedProduct extends CreateDeliveryOrderProduct {
   id?: string;
@@ -44,59 +44,59 @@ interface ExtendedProduct extends CreateDeliveryOrderProduct {
 const itemSchema = Joi.object({
   id: Joi.string().optional().optional(),
   productId: Joi.string().required().messages({
-    'string.empty': 'Barang harus dipilih',
-    'any.required': 'Barang harus dipilih',
+    "string.empty": "Barang harus dipilih",
+    "any.required": "Barang harus dipilih",
   }),
   quantity: Joi.number().integer().min(1).required().messages({
-    'number.base': 'Kuantitas harus berupa angka',
-    'number.integer': 'Kuantitas harus berupa bilangan bulat',
-    'number.min': 'Kuantitas minimal 1',
-    'any.required': 'Kuantitas harus diisi',
+    "number.base": "Kuantitas harus berupa angka",
+    "number.integer": "Kuantitas harus berupa bilangan bulat",
+    "number.min": "Kuantitas minimal 1",
+    "any.required": "Kuantitas harus diisi",
   }),
-  productName: Joi.string().allow('').optional(),
-  productSatuan: Joi.string().allow('').optional(),
+  productName: Joi.string().allow("").optional(),
+  productSatuan: Joi.string().allow("").optional(),
 });
 
 const schema = Joi.object({
   customerId: Joi.string().required().messages({
-    'string.empty': 'Pelanggan harus dipilih',
-    'any.required': 'Pelanggan harus dipilih',
+    "string.empty": "Pelanggan harus dipilih",
+    "any.required": "Pelanggan harus dipilih",
   }),
-  customerName: Joi.string().allow('').optional(),
+  customerName: Joi.string().allow("").optional(),
   address: Joi.string().required().messages({
-    'string.empty': 'Alamat pengiriman tidak boleh kosong',
-    'any.required': 'Alamat pengiriman harus diisi',
+    "string.empty": "Alamat pengiriman tidak boleh kosong",
+    "any.required": "Alamat pengiriman harus diisi",
   }),
-  internalNote: Joi.string().allow('').optional(),
+  internalNote: Joi.string().allow("").optional(),
   items: Joi.array().min(1).items(itemSchema).required().messages({
-    'array.min': 'Minimal harus ada 1 barang',
-    'any.required': 'Daftar barang harus diisi',
+    "array.min": "Minimal harus ada 1 barang",
+    "any.required": "Daftar barang harus diisi",
   }),
-  tempProduct: Joi.string().allow('').optional().strip(),
-  tempProductId: Joi.string().allow('').optional().strip(),
+  tempProduct: Joi.string().allow("").optional().strip(),
+  tempProductId: Joi.string().allow("").optional().strip(),
   tempQuantity: Joi.number()
     .min(1)
     .messages({
-      'number.base': 'Kuantitas harus berupa angka',
-      'number.min': 'Kuantitas minimal 1',
+      "number.base": "Kuantitas harus berupa angka",
+      "number.min": "Kuantitas minimal 1",
     })
     .optional()
     .strip(),
-  tempItemId: Joi.string().allow('').optional().strip(),
+  tempItemId: Joi.string().allow("").optional().strip(),
 });
 
 export default function EditDo() {
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const deliveryOrderId = id || '';
+  const deliveryOrderId = id || "";
   const [showItems, setShowItems] = useState(true);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [useCustomerAddress, setUseCustomerAddress] = useState(false);
-  const [customerSearchQuery, setCustomerSearchQuery] = useState('');
-  const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [customerSearchQuery, setCustomerSearchQuery] = useState("");
+  const [productSearchQuery, setProductSearchQuery] = useState("");
   const inputClassName = cn(
-    'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm'
+    "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
   );
 
   const {
@@ -119,25 +119,25 @@ export default function EditDo() {
   >({
     resolver: joiResolver(schema),
     defaultValues: {
-      customerId: '',
-      customerName: '',
-      address: '',
-      internalNote: '',
+      customerId: "",
+      customerName: "",
+      address: "",
+      internalNote: "",
       items: [],
-      tempProduct: '',
-      tempProductId: '',
+      tempProduct: "",
+      tempProductId: "",
       tempQuantity: undefined,
-      tempItemId: '',
+      tempItemId: "",
     },
   });
 
   const { append, remove, update, replace } = useFieldArray({
     control,
-    name: 'items',
+    name: "items",
   });
 
-  const watchItems = watch('items');
-  const watchCustomerId = watch('customerId');
+  const watchItems = watch("items");
+  const watchCustomerId = watch("customerId");
 
   const {
     data: customersData,
@@ -212,20 +212,20 @@ export default function EditDo() {
       });
 
       showSuccessAlert(
-        'Berhasil!',
-        'Delivery Order telah berhasil diperbarui.'
+        "Berhasil!",
+        "Delivery Order telah berhasil diperbarui."
       );
       navigate(`/do/${data.id}`);
     },
     onError: (error) => {
-      let errorMessage = 'Terjadi kesalahan saat memperbarui Delivery Order.';
+      let errorMessage = "Terjadi kesalahan saat memperbarui Delivery Order.";
       try {
         const parsedError = JSON.parse(error.message);
         errorMessage = parsedError.message || errorMessage;
       } catch (error: unknown) {
         errorMessage = error instanceof Error ? error.message : errorMessage;
       }
-      showErrorAlert('Gagal Memperbarui DO', errorMessage);
+      showErrorAlert("Gagal Memperbarui DO", errorMessage);
     },
   });
 
@@ -267,11 +267,11 @@ export default function EditDo() {
   const handleCustomerSelect = (item: ComboboxItem) => {
     const customer = customers.find((c) => c.id === item.value);
     if (customer) {
-      setValue('customerId', customer.id, { shouldValidate: true });
-      setValue('customerName', customer.name);
+      setValue("customerId", customer.id, { shouldValidate: true });
+      setValue("customerName", customer.name);
 
       if (useCustomerAddress && customer.address) {
-        setValue('address', customer.address, { shouldValidate: true });
+        setValue("address", customer.address, { shouldValidate: true });
       }
     }
   };
@@ -280,11 +280,11 @@ export default function EditDo() {
     setUseCustomerAddress(checked);
 
     if (checked) {
-      const customerId = watch('customerId');
+      const customerId = watch("customerId");
       if (customerId) {
         const selectedCustomer = customers.find((c) => c.id === customerId);
         if (selectedCustomer && selectedCustomer.address) {
-          setValue('address', selectedCustomer.address, {
+          setValue("address", selectedCustomer.address, {
             shouldValidate: true,
           });
         }
@@ -293,21 +293,22 @@ export default function EditDo() {
   };
 
   const resetItemForm = () => {
-    setValue('tempProduct', '');
-    setValue('tempProductId', '');
-    setValue('tempQuantity', undefined);
-    setValue('tempItemId', '');
+    setValue("tempProduct", "");
+    setValue("tempProductId", "");
+    setValue("tempQuantity", undefined);
+    setValue("tempItemId", "");
+    setEditingItemIndex(null);
     const quantityInput = document.querySelector(
       'input[name="tempQuantity"]'
     ) as HTMLInputElement;
     if (quantityInput) {
-      quantityInput.value = '';
+      quantityInput.value = "";
     }
   };
 
   const handleAddItem = (product: (typeof products)[0], quantity: number) => {
     if (!quantity || quantity < 1) {
-      showErrorAlert('Validasi Gagal', 'Kuantitas minimal 1');
+      showErrorAlert("Validasi Gagal", "Kuantitas minimal 1");
       return;
     }
 
@@ -320,8 +321,8 @@ export default function EditDo() {
 
     if (isDuplicate) {
       showErrorAlert(
-        'Validasi Gagal',
-        'Barang ini sudah ada dalam daftar. Tidak dapat menambahkan barang yang sama.'
+        "Validasi Gagal",
+        "Barang ini sudah ada dalam daftar. Tidak dapat menambahkan barang yang sama."
       );
       return;
     }
@@ -338,10 +339,10 @@ export default function EditDo() {
 
   const handleEditItem = (index: number) => {
     setEditingItemIndex(index);
-    setValue('tempProduct', watchItems[index].productName || '');
-    setValue('tempProductId', watchItems[index].productId);
-    setValue('tempQuantity', watchItems[index].quantity);
-    setValue('tempItemId', watchItems[index].id || '');
+    setValue("tempProduct", watchItems[index].productName || "");
+    setValue("tempProductId", watchItems[index].productId);
+    setValue("tempQuantity", watchItems[index].quantity);
+    setValue("tempItemId", watchItems[index].id || "");
   };
 
   const handleUpdateItem = (
@@ -349,7 +350,7 @@ export default function EditDo() {
     quantity: number
   ) => {
     if (!quantity || quantity < 1) {
-      showErrorAlert('Validasi Gagal', 'Kuantitas minimal 1');
+      showErrorAlert("Validasi Gagal", "Kuantitas minimal 1");
       return;
     }
 
@@ -361,8 +362,8 @@ export default function EditDo() {
 
       if (isDuplicate) {
         showErrorAlert(
-          'Validasi Gagal',
-          'Barang ini sudah ada dalam daftar. Tidak dapat menambahkan barang yang sama.'
+          "Validasi Gagal",
+          "Barang ini sudah ada dalam daftar. Tidak dapat menambahkan barang yang sama."
         );
         return;
       }
@@ -394,11 +395,11 @@ export default function EditDo() {
     );
 
     if (validItems.length === 0) {
-      setError('items', {
-        type: 'manual',
-        message: 'Tambahkan minimal satu barang',
+      setError("items", {
+        type: "manual",
+        message: "Tambahkan minimal satu barang",
       });
-      showErrorAlert('Validasi Gagal', 'Tambahkan minimal satu barang.');
+      showErrorAlert("Validasi Gagal", "Tambahkan minimal satu barang.");
       return;
     }
 
@@ -409,8 +410,8 @@ export default function EditDo() {
 
     if (hasDuplicates) {
       showErrorAlert(
-        'Validasi Gagal',
-        'Terdapat barang duplikat dalam daftar. Hapus barang duplikat sebelum melanjutkan.'
+        "Validasi Gagal",
+        "Terdapat barang duplikat dalam daftar. Hapus barang duplikat sebelum melanjutkan."
       );
       return;
     }
@@ -431,14 +432,14 @@ export default function EditDo() {
   const handleProductSelect = (item: ComboboxItem) => {
     const product = products.find((p) => p.id === item.value);
     if (product) {
-      setValue('tempProductId', product.id);
-      setValue('tempProduct', product.name);
+      setValue("tempProductId", product.id);
+      setValue("tempProduct", product.name);
     }
   };
 
   const handleProductAction = () => {
-    const productId = watch('tempProductId');
-    const quantity = watch('tempQuantity');
+    const productId = watch("tempProductId");
+    const quantity = watch("tempQuantity");
 
     if (productId) {
       const selectedProduct = products.find((p) => p.id === productId);
@@ -455,9 +456,9 @@ export default function EditDo() {
   console.log({
     errors,
     isDirty: isDirty,
-    tempProductId: watch('tempProductId'),
-    tempQuantity: watch('tempQuantity'),
-    items: watch('items'),
+    tempProductId: watch("tempProductId"),
+    tempQuantity: watch("tempQuantity"),
+    items: watch("items"),
   });
 
   if (isLoadingDeliveryOrder) {
@@ -466,7 +467,7 @@ export default function EditDo() {
 
   if (deliveryOrderError || !deliveryOrder) {
     return (
-      <div className="p-8 rounded-lg bg-red-50">
+      <div className="p-8 bg-red-50 rounded-lg">
         <div className="text-center">
           <h2 className="mb-2 text-lg font-semibold text-red-700">
             Delivery Order tidak ditemukan
@@ -488,7 +489,7 @@ export default function EditDo() {
       <div className="flex items-center">
         <Link to={`/do/${deliveryOrderId}`}>
           <Button variant="ghost" size="sm" className="mr-4 text-gray-700">
-            <ArrowLeft className="w-4 h-4 mr-1" />
+            <ArrowLeft className="mr-1 w-4 h-4" />
             Kembali
           </Button>
         </Link>
@@ -516,9 +517,9 @@ export default function EditDo() {
                 <div className="space-y-4">
                   <Combobox
                     items={customerOptions}
-                    value={watchCustomerId || ''}
+                    value={watchCustomerId || ""}
                     onValueChange={(value) => {
-                      setValue('customerId', value, { shouldValidate: true });
+                      setValue("customerId", value, { shouldValidate: true });
                     }}
                     onSelect={handleCustomerSelect}
                     placeholder="Masukkan nama pelanggan"
@@ -530,9 +531,9 @@ export default function EditDo() {
                     required
                     helpText="Ketik untuk mencari pelanggan"
                     onClear={() => {
-                      setValue('customerId', '', { shouldValidate: true });
-                      setValue('customerName', '');
-                      setValue('address', '', { shouldValidate: true });
+                      setValue("customerId", "", { shouldValidate: true });
+                      setValue("customerName", "");
+                      setValue("address", "", { shouldValidate: true });
                     }}
                     onSearch={handleCustomerSearch}
                     useServerSearch
@@ -544,7 +545,7 @@ export default function EditDo() {
                         htmlFor="address"
                         className="block text-sm font-medium text-gray-700"
                       >
-                        Alamat Pengiriman{' '}
+                        Alamat Pengiriman{" "}
                         <span className="text-red-500">*</span>
                       </label>
                       <Controller
@@ -558,7 +559,7 @@ export default function EditDo() {
                             placeholder="Masukkan alamat pengiriman"
                             className={cn(
                               inputClassName,
-                              errors.address && 'border-red-500'
+                              errors.address && "border-red-500"
                             )}
                           />
                         )}
@@ -597,7 +598,7 @@ export default function EditDo() {
                 </h3>
 
                 <div className="grid grid-cols-12 gap-2 mb-4">
-                  <div className="flex items-center col-span-12 sm:col-span-7">
+                  <div className="flex col-span-12 items-center sm:col-span-7">
                     <div className="w-full">
                       <div className="min-h-[40px]">
                         <Controller
@@ -606,17 +607,17 @@ export default function EditDo() {
                           render={({ field: { value, onChange } }) => (
                             <Combobox
                               items={productOptions}
-                              value={value || ''}
+                              value={value || ""}
                               onValueChange={onChange}
                               onSelect={handleProductSelect}
                               placeholder="Masukkan nama barang"
                               searchPlaceholder="Cari barang..."
                               isLoading={loadingProducts}
-                              error={errors.items ? ' ' : ''}
+                              error={errors.items ? " " : ""}
                               name="tempProductId"
                               onClear={() => {
-                                onChange('');
-                                setValue('tempProduct', '');
+                                onChange("");
+                                setValue("tempProduct", "");
                               }}
                               onSearch={handleProductSearch}
                               useServerSearch
@@ -627,7 +628,7 @@ export default function EditDo() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center col-span-8 sm:col-span-3">
+                  <div className="flex col-span-8 items-center sm:col-span-3">
                     <div className="w-full">
                       <div className="min-h-[40px]">
                         <Controller
@@ -641,21 +642,21 @@ export default function EditDo() {
                                 placeholder="Masukkan jumlah"
                                 className={cn(
                                   (errors.tempQuantity || errors.items) &&
-                                    'border-red-500',
-                                  'h-10'
+                                    "border-red-500",
+                                  "h-10"
                                 )}
                                 value={
-                                  field.value ? formatNumber(field.value) : ''
+                                  field.value ? formatNumber(field.value) : ""
                                 }
                                 onChange={(e) => {
                                   const numValue =
                                     parseInt(
-                                      e.target.value.replace(/\D/g, '')
+                                      e.target.value.replace(/\D/g, "")
                                     ) || undefined;
                                   field.onChange(numValue);
                                 }}
                               />
-                              {errors.tempQuantity && watch('tempQuantity') && (
+                              {errors.tempQuantity && watch("tempQuantity") && (
                                 <p className="mt-1 text-sm text-red-500">
                                   {errors.tempQuantity.message}
                                 </p>
@@ -666,7 +667,7 @@ export default function EditDo() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center col-span-4 pt-1 sm:col-span-2">
+                  <div className="flex col-span-4 gap-2 items-center pt-1 sm:col-span-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -674,8 +675,23 @@ export default function EditDo() {
                       onClick={handleProductAction}
                       className="w-10 h-10 text-blue-600 bg-white border border-blue-600 hover:bg-blue-50"
                     >
-                      <Plus className="w-5 h-5" />
+                      {editingItemIndex !== null ? (
+                        <Edit className="w-5 h-5" />
+                      ) : (
+                        <Plus className="w-5 h-5" />
+                      )}
                     </Button>
+                    {editingItemIndex !== null && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={resetItemForm}
+                        className="w-10 h-10 text-gray-600 bg-white border border-gray-300 hover:bg-gray-50"
+                      >
+                        <X className="w-5 h-5" />
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -688,8 +704,8 @@ export default function EditDo() {
                 )}
 
                 {showItems && (
-                  <div className="mt-4 overflow-hidden border border-gray-200 rounded-md">
-                    <div className="overflow-auto overflow-x-auto ">
+                  <div className="overflow-hidden mt-4 rounded-md border border-gray-200">
+                    <div className="overflow-auto overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
@@ -720,7 +736,7 @@ export default function EditDo() {
                               <tr
                                 key={index}
                                 className={
-                                  index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
                                 }
                               >
                                 <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
@@ -731,7 +747,7 @@ export default function EditDo() {
                                     {item.productName}
                                     {item.productSatuan
                                       ? ` (${item.productSatuan})`
-                                      : ''}
+                                      : ""}
                                   </Link>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
@@ -744,7 +760,7 @@ export default function EditDo() {
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => handleEditItem(index)}
-                                      className="flex items-center justify-center w-8 h-8 p-1 text-white bg-yellow-500 rounded-md hover:bg-yellow-600"
+                                      className="flex justify-center items-center p-1 w-8 h-8 text-white bg-yellow-500 rounded-md hover:bg-yellow-600"
                                     >
                                       <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -764,7 +780,7 @@ export default function EditDo() {
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => remove(index)}
-                                      className="flex items-center justify-center w-8 h-8 p-1 text-white bg-red-500 rounded-md hover:bg-red-600"
+                                      className="flex justify-center items-center p-1 w-8 h-8 text-white bg-red-500 rounded-md hover:bg-red-600"
                                     >
                                       <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -805,15 +821,15 @@ export default function EditDo() {
                 {!showItems && (
                   <div
                     className={cn(
-                      'p-6 text-center border border-dashed rounded-lg',
+                      "p-6 text-center border border-dashed rounded-lg",
                       errors.items
-                        ? 'border-red-300 bg-red-50'
-                        : 'border-gray-300'
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
                     )}
                   >
                     <p
                       className={cn(
-                        errors.items ? 'text-red-500' : 'text-gray-500'
+                        errors.items ? "text-red-500" : "text-gray-500"
                       )}
                     >
                       Belum ada barang yang ditambahkan. Masukkan barang dan
@@ -851,7 +867,7 @@ export default function EditDo() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
               <Link to={`/do/${deliveryOrderId}`}>
                 <Button
                   type="button"
@@ -868,12 +884,12 @@ export default function EditDo() {
               >
                 {updateDeliveryOrder.isPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                     Memperbarui...
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4 mr-2" />
+                    <Save className="mr-2 w-4 h-4" />
                     Perbarui
                   </>
                 )}
