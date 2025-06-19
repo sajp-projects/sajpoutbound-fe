@@ -147,6 +147,7 @@ export interface DeliveryOrder {
 
 export interface ChosenProduct {
   id: string;
+  code: string;
   shipmentId: string;
   productId: string;
   product: {

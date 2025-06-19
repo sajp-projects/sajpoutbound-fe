@@ -1,10 +1,10 @@
-import { useUploadPlatePhoto, useVerifyPlateNumber } from "@/hooks/media";
+import { useUploadPlatePhoto, useVerifyPlateNumber } from '@/hooks/media';
 import {
   useChooseProduct,
   useDeleteShipment,
   useShipment,
   useShipmentChosenProducts,
-} from "@/hooks/pengiriman";
+} from '@/hooks/pengiriman';
 import {
   Archive,
   ArrowLeft,
@@ -23,19 +23,19 @@ import {
   ShoppingCart,
   Upload,
   X,
-} from "lucide-react";
-import { Link, useLocation, useNavigate, useParams } from "react-router";
+} from 'lucide-react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
 
-import { ErrorState } from "@/components/ErrorState";
-import { LoadingState } from "@/components/LoadingState";
+import { ErrorState } from '@/components/ErrorState';
+import { LoadingState } from '@/components/LoadingState';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -43,8 +43,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { FilePreviewModal } from "@/components/ui/file-preview-modal";
+} from '@/components/ui/dialog';
+import { FilePreviewModal } from '@/components/ui/file-preview-modal';
 import {
   Table,
   TableBody,
@@ -52,29 +52,29 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { PERMISSION } from "@/constant/PERMISSION";
-import { useAuth } from "@/hooks/auth";
-import { useRolePermissions } from "@/hooks/izin";
-import { cn } from "@/lib/utils";
-import { FilePreview } from "@/types/media";
-import { ShipmentStatus } from "@/types/pengiriman";
+} from '@/components/ui/table';
+import { PERMISSION } from '@/constant/PERMISSION';
+import { useAuth } from '@/hooks/auth';
+import { useRolePermissions } from '@/hooks/izin';
+import { cn } from '@/lib/utils';
+import { FilePreview } from '@/types/media';
+import { ShipmentStatus } from '@/types/pengiriman';
 import {
   SHIPMENT_STATUS_LABELS,
   SHIPMENT_TYPE_LABELS,
-} from "@/utils/constants";
-import { formatDate } from "@/utils/date";
-import { FormErrorData } from "@/utils/errorHandler";
-import { formatNumber } from "@/utils/formatNumber";
-import { hasPermission } from "@/utils/permission";
-import { getRoleId } from "@/utils/storage";
+} from '@/utils/constants';
+import { formatDate } from '@/utils/date';
+import { FormErrorData } from '@/utils/errorHandler';
+import { formatNumber } from '@/utils/formatNumber';
+import { hasPermission } from '@/utils/permission';
+import { getRoleId } from '@/utils/storage';
 import {
   isConfirmed,
   showConfirmationAlert,
   showErrorAlert,
   showSuccessAlert,
-} from "@/utils/sweetAlert";
-import { useEffect, useState } from "react";
+} from '@/utils/sweetAlert';
+import { useEffect, useState } from 'react';
 
 interface StatusBadgeProps {
   status: ShipmentStatus;
@@ -83,23 +83,23 @@ interface StatusBadgeProps {
 function StatusBadge({ status }: StatusBadgeProps) {
   const getStatusColor = (status: ShipmentStatus) => {
     switch (status) {
-      case "PENDING":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "PROSES":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "COMPLETED":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "SELESAI":
-        return "bg-green-100 text-green-800 border-green-200";
+      case 'PENDING':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'PROSES':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'COMPLETED':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'SELESAI':
+        return 'bg-green-100 text-green-800 border-green-200';
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   return (
     <Badge
       variant="outline"
-      className={cn("font-medium px-2.5 py-0.5", getStatusColor(status))}
+      className={cn('font-medium px-2.5 py-0.5', getStatusColor(status))}
     >
       {SHIPMENT_STATUS_LABELS[status]}
     </Badge>
@@ -109,6 +109,7 @@ function StatusBadge({ status }: StatusBadgeProps) {
 // Update untuk tipe ChosenProduct
 interface ChosenProductExtended {
   id: string;
+  code: string;
   shipmentId: string;
   productId: string;
   product: {
@@ -223,26 +224,26 @@ export default function DetailPengiriman() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useAuth();
-  const roleId = getRoleId() || "";
+  const roleId = getRoleId() || '';
 
   // Get tab from URL query parameter or default to "info"
-  const getTabFromUrl = (): "info" | "items" | "spmb" | "do" => {
+  const getTabFromUrl = (): 'info' | 'items' | 'spmb' | 'do' => {
     const params = new URLSearchParams(location.search);
-    const tab = params.get("tab");
-    if (tab === "items" || tab === "spmb" || tab === "do") {
+    const tab = params.get('tab');
+    if (tab === 'items' || tab === 'spmb' || tab === 'do') {
       return tab;
     }
-    return "info";
+    return 'info';
   };
 
-  const [activeTab, setActiveTab] = useState<"info" | "items" | "spmb" | "do">(
+  const [activeTab, setActiveTab] = useState<'info' | 'items' | 'spmb' | 'do'>(
     getTabFromUrl()
   );
   const [previewFile, setPreviewFile] = useState<FilePreview | null>(null);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [allItemsCompleted, setAllItemsCompleted] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [selectedProductDOs, setSelectedProductDOs] = useState<
     {
       doId: string;
@@ -260,7 +261,7 @@ export default function DetailPengiriman() {
   >([]);
 
   const { data: permissions } = useRolePermissions(roleId, {
-    enabled: isAuthenticated && !!roleId && roleId !== "",
+    enabled: isAuthenticated && !!roleId && roleId !== '',
   });
 
   const hasPengirimanUpdateAccess = hasPermission(
@@ -275,7 +276,7 @@ export default function DetailPengiriman() {
     PERMISSION.ACTIONS.DELETE
   );
 
-  const shipmentId = id || "";
+  const shipmentId = id || '';
 
   const {
     data: shipment,
@@ -308,7 +309,7 @@ export default function DetailPengiriman() {
       handleCloseProductModal();
       // Tunda alert agar tampil setelah modal tertutup
       setTimeout(() => {
-        showSuccessAlert("Berhasil", "Barang berhasil dipilih");
+        showSuccessAlert('Berhasil', 'Barang berhasil dipilih');
         refetch();
         refetchChosenProducts();
       }, 300);
@@ -323,49 +324,49 @@ export default function DetailPengiriman() {
         try {
           const errorObj = JSON.parse(error.message);
           if (errorObj && errorObj.message) {
-            showErrorAlert("Gagal", errorObj.message);
+            showErrorAlert('Gagal', errorObj.message);
             return;
           }
         } catch {
           // Jika bukan JSON, gunakan pesan error langsung
         }
-        showErrorAlert("Gagal", error.message);
+        showErrorAlert('Gagal', error.message);
       }, 300);
     },
   });
 
   const deleteShipment = useDeleteShipment({
     onSuccess: () => {
-      showSuccessAlert("Berhasil", "Pengiriman berhasil diarsipkan");
-      navigate("/pengiriman");
+      showSuccessAlert('Berhasil', 'Pengiriman berhasil diarsipkan');
+      navigate('/pengiriman');
     },
     onError: (error: FormErrorData) => {
-      showErrorAlert("Gagal", error.message);
+      showErrorAlert('Gagal', error.message);
     },
   });
 
   const uploadPlatePhoto = useUploadPlatePhoto({
     onSuccess: () => {
-      showSuccessAlert("Berhasil", "Foto plat nomor berhasil diunggah");
+      showSuccessAlert('Berhasil', 'Foto plat nomor berhasil diunggah');
       refetch();
     },
     onError: (error: Error) => {
       showErrorAlert(
-        "Gagal",
-        error.message || "Terjadi kesalahan saat mengupload foto plat nomor"
+        'Gagal',
+        error.message || 'Terjadi kesalahan saat mengupload foto plat nomor'
       );
     },
   });
 
   const verifyPlateNumber = useVerifyPlateNumber({
     onSuccess: () => {
-      showSuccessAlert("Berhasil", "Plat nomor berhasil diverifikasi");
+      showSuccessAlert('Berhasil', 'Plat nomor berhasil diverifikasi');
       refetch();
     },
     onError: (error: Error) => {
       showErrorAlert(
-        "Gagal",
-        error.message || "Terjadi kesalahan saat memverifikasi plat nomor"
+        'Gagal',
+        error.message || 'Terjadi kesalahan saat memverifikasi plat nomor'
       );
     },
   });
@@ -380,10 +381,10 @@ export default function DetailPengiriman() {
 
   const handleDelete = (id: string) => {
     showConfirmationAlert(
-      "Konfirmasi Arsip",
-      "Apakah Anda yakin ingin mengarsipkan Pengiriman ini?",
-      "Ya, Arsipkan!",
-      "Batal"
+      'Konfirmasi Arsip',
+      'Apakah Anda yakin ingin mengarsipkan Pengiriman ini?',
+      'Ya, Arsipkan!',
+      'Batal'
     ).then((result) => {
       if (isConfirmed(result)) {
         deleteShipment.mutate({ id });
@@ -398,14 +399,14 @@ export default function DetailPengiriman() {
     if (!file) return;
 
     // Reset input value untuk memungkinkan upload file yang sama
-    event.target.value = "";
+    event.target.value = '';
 
     try {
       // Validasi tipe file
-      if (!file.type.startsWith("image/")) {
+      if (!file.type.startsWith('image/')) {
         showErrorAlert(
-          "Format File Tidak Valid",
-          "Silakan pilih file gambar (JPG, PNG, dll.)"
+          'Format File Tidak Valid',
+          'Silakan pilih file gambar (JPG, PNG, dll.)'
         );
         return;
       }
@@ -416,7 +417,7 @@ export default function DetailPengiriman() {
       if (file.size > maxSizeInBytes) {
         const fileSizeInMB = (file.size / (1024 * 1024)).toFixed(2);
         showErrorAlert(
-          "File Terlalu Besar",
+          'File Terlalu Besar',
           `Ukuran file (${fileSizeInMB}MB) melebihi batas maksimum ${maxSizeInMB}MB. Silakan pilih file yang lebih kecil.`
         );
         return;
@@ -424,10 +425,10 @@ export default function DetailPengiriman() {
 
       handleUploadPlatePhoto(file);
     } catch (error) {
-      console.error("Error processing file:", error);
+      console.error('Error processing file:', error);
       showErrorAlert(
-        "Error",
-        "Terjadi kesalahan saat memproses file. Silakan coba lagi."
+        'Error',
+        'Terjadi kesalahan saat memproses file. Silakan coba lagi.'
       );
     }
   };
@@ -449,7 +450,7 @@ export default function DetailPengiriman() {
       shipment?.isVerified
     )
       return;
-    document.getElementById("platePhotoInput")?.click();
+    document.getElementById('platePhotoInput')?.click();
   };
 
   const handleViewPlatePhoto = () => {
@@ -459,21 +460,21 @@ export default function DetailPengiriman() {
     const fileUrl = `/public${shipment.platePhoto}`;
     setPreviewFile({
       url: fileUrl,
-      name: "Foto Plat Nomor",
-      type: "image/jpeg",
+      name: 'Foto Plat Nomor',
+      type: 'image/jpeg',
     });
     setPreviewModalOpen(true);
   };
 
-  const handleTabChange = (tab: "info" | "items" | "spmb" | "do") => {
+  const handleTabChange = (tab: 'info' | 'items' | 'spmb' | 'do') => {
     setActiveTab(tab);
-    if (tab === "items") {
+    if (tab === 'items') {
       refetchChosenProducts();
     }
 
     // Update URL with the active tab
     const searchParams = new URLSearchParams(location.search);
-    searchParams.set("tab", tab);
+    searchParams.set('tab', tab);
     navigate(`${location.pathname}?${searchParams.toString()}`, {
       replace: true,
     });
@@ -519,12 +520,12 @@ export default function DetailPengiriman() {
 
   const handleCloseProductModal = () => {
     setProductModalOpen(false);
-    setSelectedProductId("");
+    setSelectedProductId('');
     setSelectedProductDOs([]);
   };
 
   useEffect(() => {
-    if (activeTab === "items" && shipmentId) {
+    if (activeTab === 'items' && shipmentId) {
       refetchChosenProducts();
     }
   }, [activeTab, shipmentId, refetchChosenProducts]);
@@ -542,7 +543,7 @@ export default function DetailPengiriman() {
   useEffect(() => {
     if (shipment && shipment.shipmentItems) {
       const allCompleted = shipment.shipmentItems.every(
-        (item) => item.status === "COMPLETED"
+        (item) => item.status === 'COMPLETED'
       );
       setAllItemsCompleted(allCompleted);
     }
@@ -585,7 +586,7 @@ export default function DetailPengiriman() {
             message={
               error instanceof Error
                 ? error.message
-                : "Terjadi kesalahan pada server"
+                : 'Terjadi kesalahan pada server'
             }
             onRetry={refetch}
             retryButtonText="Coba lagi"
@@ -610,36 +611,36 @@ export default function DetailPengiriman() {
             <div className="flex overflow-x-auto border-b border-gray-200 scrollbar-none">
               <button
                 className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
-                  activeTab === "info"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  'px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap',
+                  activeTab === 'info'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 )}
-                onClick={() => handleTabChange("info")}
+                onClick={() => handleTabChange('info')}
               >
                 <Info className="flex-shrink-0 mr-2 w-4 h-4" />
                 Informasi Pengiriman
               </button>
               <button
                 className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
-                  activeTab === "do"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  'px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap',
+                  activeTab === 'do'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 )}
-                onClick={() => handleTabChange("do")}
+                onClick={() => handleTabChange('do')}
               >
                 <ShoppingCart className="flex-shrink-0 mr-2 w-4 h-4" />
                 Delivery Orders & Barang
               </button>
               <button
                 className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
-                  activeTab === "items"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  'px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap',
+                  activeTab === 'items'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 )}
-                onClick={() => handleTabChange("items")}
+                onClick={() => handleTabChange('items')}
               >
                 <Package className="flex-shrink-0 mr-2 w-4 h-4" />
                 Item Pengiriman
@@ -651,12 +652,12 @@ export default function DetailPengiriman() {
               </button>
               <button
                 className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
-                  activeTab === "spmb"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  'px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap',
+                  activeTab === 'spmb'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 )}
-                onClick={() => handleTabChange("spmb")}
+                onClick={() => handleTabChange('spmb')}
               >
                 <FileText className="flex-shrink-0 mr-2 w-4 h-4" />
                 SPMB
@@ -668,7 +669,7 @@ export default function DetailPengiriman() {
               </button>
             </div>
 
-            {activeTab === "info" && (
+            {activeTab === 'info' && (
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-4">
                   <div className="p-4 rounded-lg border border-gray-200">
@@ -685,15 +686,15 @@ export default function DetailPengiriman() {
                       <div>
                         <p className="text-sm text-gray-500">Model Kendaraan</p>
                         <p className="font-medium text-gray-700">
-                          {shipment.type === "ANTAR"
+                          {shipment.type === 'ANTAR'
                             ? shipment.armada?.model
-                            : "Kendaraan Eksternal"}
+                            : 'Kendaraan Eksternal'}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Plat Nomor</p>
                         <p className="font-medium text-gray-700">
-                          {shipment.type === "ANTAR" ? (
+                          {shipment.type === 'ANTAR' ? (
                             <Link
                               to={`/armada/${shipment.armadaId}`}
                               className="text-blue-600 hover:underline"
@@ -720,7 +721,7 @@ export default function DetailPengiriman() {
                                 onClick={handleViewPlatePhoto}
                                 onError={(e) => {
                                   console.error(
-                                    "Error loading image:",
+                                    'Error loading image:',
                                     e.currentTarget.src
                                   );
                                   const parent = e.currentTarget.parentElement;
@@ -817,7 +818,7 @@ export default function DetailPengiriman() {
                                     hasPengirimanUpdateAccess &&
                                     allItemsCompleted &&
                                     document
-                                      .getElementById("platePhotoInput")
+                                      .getElementById('platePhotoInput')
                                       ?.click()
                                   }
                                 >
@@ -831,8 +832,8 @@ export default function DetailPengiriman() {
                                     <p className="text-xs text-gray-500 transition-colors duration-300 group-hover:text-blue-600">
                                       {hasPengirimanUpdateAccess &&
                                       allItemsCompleted
-                                        ? "Klik untuk mengunggah foto"
-                                        : "Tidak ada izin upload"}
+                                        ? 'Klik untuk mengunggah foto'
+                                        : 'Tidak ada izin upload'}
                                     </p>
                                   </div>
                                 </div>
@@ -844,7 +845,7 @@ export default function DetailPengiriman() {
                                         size="sm"
                                         onClick={() =>
                                           document
-                                            .getElementById("platePhotoInput")
+                                            .getElementById('platePhotoInput')
                                             ?.click()
                                         }
                                         disabled={uploadPlatePhoto.isPending}
@@ -856,8 +857,8 @@ export default function DetailPengiriman() {
                                           <Upload className="mr-2 w-4 h-4" />
                                         )}
                                         {uploadPlatePhoto.isPending
-                                          ? "Mengunggah..."
-                                          : "Unggah Foto Plat Nomor"}
+                                          ? 'Mengunggah...'
+                                          : 'Unggah Foto Plat Nomor'}
                                       </Button>
                                       <div className="p-3 mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
                                         <p className="text-xs text-blue-700">
@@ -953,8 +954,8 @@ export default function DetailPengiriman() {
                       {hasPengirimanUpdateAccess &&
                         shipment &&
                         !shipment.deletedAt &&
-                        shipment.status !== "SELESAI" &&
-                        shipment.status !== "COMPLETED" && (
+                        shipment.status !== 'SELESAI' &&
+                        shipment.status !== 'COMPLETED' && (
                           <Link
                             to={`/pengiriman/${shipmentId}/edit`}
                             className="w-full"
@@ -971,8 +972,8 @@ export default function DetailPengiriman() {
                       {hasPengirimanDeleteAccess &&
                         shipment &&
                         !shipment.deletedAt &&
-                        shipment.status !== "SELESAI" &&
-                        shipment.status !== "COMPLETED" && (
+                        shipment.status !== 'SELESAI' &&
+                        shipment.status !== 'COMPLETED' && (
                           <Button
                             variant="outline"
                             className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
@@ -981,8 +982,8 @@ export default function DetailPengiriman() {
                           >
                             <Archive className="mr-2 w-4 h-4" />
                             {deleteShipment.isPending
-                              ? "Mengarsipkan..."
-                              : "Arsipkan Pengiriman"}
+                              ? 'Mengarsipkan...'
+                              : 'Arsipkan Pengiriman'}
                           </Button>
                         )}
                     </div>
@@ -991,7 +992,7 @@ export default function DetailPengiriman() {
               </div>
             )}
 
-            {activeTab === "do" && (
+            {activeTab === 'do' && (
               <div className="p-4 rounded-lg border border-gray-200">
                 <h3 className="flex items-center mb-4 text-lg font-medium text-gray-900">
                   <ShoppingCart className="mr-2 w-5 h-5 text-blue-600" />
@@ -1100,7 +1101,7 @@ export default function DetailPengiriman() {
                                   </Badge>
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                  {formatNumber(product.totalQuantity)}{" "}
+                                  {formatNumber(product.totalQuantity)}{' '}
                                   {product.satuan}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
@@ -1256,9 +1257,9 @@ export default function DetailPengiriman() {
                               </div>
                               <p>
                                 <span className="font-medium">
-                                  Total Kuantitas:{" "}
+                                  Total Kuantitas:{' '}
                                 </span>
-                                {formatNumber(product.totalQuantity)}{" "}
+                                {formatNumber(product.totalQuantity)}{' '}
                                 {product.satuan}
                               </p>
                             </div>
@@ -1406,11 +1407,11 @@ export default function DetailPengiriman() {
                                         <TableCell className="px-4 py-3 text-sm text-gray-600">
                                           <span className="flex items-center">
                                             <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                                            {product.locationType || "GUDANG"}
+                                            {product.locationType || 'GUDANG'}
                                           </span>
                                         </TableCell>
                                         <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                          {formatNumber(product.quantity)}{" "}
+                                          {formatNumber(product.quantity)}{' '}
                                           {product.satuan}
                                         </TableCell>
                                         <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
@@ -1477,24 +1478,24 @@ export default function DetailPengiriman() {
                                       <div className="space-y-1 text-xs text-gray-600">
                                         <p>
                                           <span className="font-medium">
-                                            Gudang:{" "}
+                                            Gudang:{' '}
                                           </span>
                                           {product.warehouse.name}
                                         </p>
                                         <p>
                                           <span className="font-medium">
-                                            Lokasi:{" "}
+                                            Lokasi:{' '}
                                           </span>
                                           <span className="flex items-center">
                                             <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                                            {product.locationType || "GUDANG"}
+                                            {product.locationType || 'GUDANG'}
                                           </span>
                                         </p>
                                         <p>
                                           <span className="font-medium">
-                                            Kuantitas:{" "}
+                                            Kuantitas:{' '}
                                           </span>
-                                          {formatNumber(product.quantity)}{" "}
+                                          {formatNumber(product.quantity)}{' '}
                                           {product.satuan}
                                         </p>
                                       </div>
@@ -1512,7 +1513,7 @@ export default function DetailPengiriman() {
               </div>
             )}
 
-            {activeTab === "items" && (
+            {activeTab === 'items' && (
               <div className="p-4 rounded-lg border border-gray-200">
                 <h3 className="flex items-center mb-4 text-lg font-medium text-gray-900">
                   <Package className="mr-2 w-5 h-5 text-blue-600" />
@@ -1527,7 +1528,7 @@ export default function DetailPengiriman() {
                     message={
                       chosenProductsError instanceof Error
                         ? chosenProductsError.message
-                        : "Terjadi kesalahan pada server"
+                        : 'Terjadi kesalahan pada server'
                     }
                     retryButtonText="Coba lagi"
                     onRetry={refetchChosenProducts}
@@ -1541,7 +1542,7 @@ export default function DetailPengiriman() {
                           <TableHeader>
                             <TableRow className="bg-gray-50 border-b border-gray-200">
                               <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
-                                No
+                                Kode
                               </TableHead>
                               <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
                                 Barang
@@ -1579,10 +1580,10 @@ export default function DetailPengiriman() {
                                 </TableCell>
                               </TableRow>
                             ) : (
-                              chosenProducts.map((item, index) => (
+                              chosenProducts.map((item) => (
                                 <TableRow key={item.id}>
                                   <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                    {index + 1}
+                                    {item.code}
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-gray-600">
                                     <Link
@@ -1598,7 +1599,7 @@ export default function DetailPengiriman() {
                                   <TableCell className="px-4 py-3 text-sm text-gray-600">
                                     <span className="flex items-center">
                                       <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                                      {item.locationType || "GUDANG"}
+                                      {item.locationType || 'GUDANG'}
                                     </span>
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-gray-600">
@@ -1619,12 +1620,12 @@ export default function DetailPengiriman() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                    {formatNumber(item.totalRequestedQuantity)}{" "}
+                                    {formatNumber(item.totalRequestedQuantity)}{' '}
                                     {item.product.satuan}
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                     {item.shipmentItems.every(
-                                      (si) => si.status === "COMPLETED"
+                                      (si) => si.status === 'COMPLETED'
                                     ) ? (
                                       <Badge
                                         variant="outline"
@@ -1699,7 +1700,7 @@ export default function DetailPengiriman() {
                                   </Link>
                                 </div>
                                 {item.shipmentItems.every(
-                                  (si) => si.status === "COMPLETED"
+                                  (si) => si.status === 'COMPLETED'
                                 ) ? (
                                   <Badge
                                     variant="outline"
@@ -1731,7 +1732,7 @@ export default function DetailPengiriman() {
                                   </span>
                                   <span className="flex items-center">
                                     <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                                    {item.locationType || "GUDANG"}
+                                    {item.locationType || 'GUDANG'}
                                   </span>
                                 </div>
                                 <div className="flex items-start">
@@ -1739,7 +1740,7 @@ export default function DetailPengiriman() {
                                     Kuantitas:
                                   </span>
                                   <span>
-                                    {formatNumber(item.totalRequestedQuantity)}{" "}
+                                    {formatNumber(item.totalRequestedQuantity)}{' '}
                                     {item.product.satuan}
                                   </span>
                                 </div>
@@ -1789,7 +1790,7 @@ export default function DetailPengiriman() {
               </div>
             )}
 
-            {activeTab === "spmb" && (
+            {activeTab === 'spmb' && (
               <div className="p-4 rounded-lg border border-gray-200">
                 <h3 className="flex items-center mb-4 text-lg font-medium text-gray-900">
                   <FileText className="mr-2 w-5 h-5 text-blue-600" />
@@ -1855,12 +1856,12 @@ export default function DetailPengiriman() {
                                   <Badge
                                     variant="outline"
                                     className={cn(
-                                      "px-2 py-0.5 rounded-md font-medium text-xs",
-                                      spmb.status === "PENDING"
-                                        ? "bg-yellow-50 text-yellow-600 border-yellow-200"
-                                        : spmb.status === "PROSES"
-                                        ? "bg-blue-50 text-blue-600 border-blue-200"
-                                        : "bg-green-50 text-green-600 border-green-200"
+                                      'px-2 py-0.5 rounded-md font-medium text-xs',
+                                      spmb.status === 'PENDING'
+                                        ? 'bg-yellow-50 text-yellow-600 border-yellow-200'
+                                        : spmb.status === 'PROSES'
+                                        ? 'bg-blue-50 text-blue-600 border-blue-200'
+                                        : 'bg-green-50 text-green-600 border-green-200'
                                     )}
                                   >
                                     {spmb.status}
@@ -1921,12 +1922,12 @@ export default function DetailPengiriman() {
                             <Badge
                               variant="outline"
                               className={cn(
-                                "px-2 py-0.5 rounded-md font-medium text-xs",
-                                spmb.status === "PENDING"
-                                  ? "bg-yellow-50 text-yellow-600 border-yellow-200"
-                                  : spmb.status === "PROSES"
-                                  ? "bg-blue-50 text-blue-600 border-blue-200"
-                                  : "bg-green-50 text-green-600 border-green-200"
+                                'px-2 py-0.5 rounded-md font-medium text-xs',
+                                spmb.status === 'PENDING'
+                                  ? 'bg-yellow-50 text-yellow-600 border-yellow-200'
+                                  : spmb.status === 'PROSES'
+                                  ? 'bg-blue-50 text-blue-600 border-blue-200'
+                                  : 'bg-green-50 text-green-600 border-green-200'
                               )}
                             >
                               {spmb.status}
@@ -1935,7 +1936,7 @@ export default function DetailPengiriman() {
                           <div className="space-y-1 text-xs text-gray-600">
                             <p>
                               <span className="font-medium">
-                                Delivery Order:{" "}
+                                Delivery Order:{' '}
                               </span>
                               <Link
                                 to={`/do/${spmb.deliveryOrderId}`}
@@ -1947,7 +1948,7 @@ export default function DetailPengiriman() {
                             </p>
                             <p>
                               <span className="font-medium">
-                                Tanggal Dibuat:{" "}
+                                Tanggal Dibuat:{' '}
                               </span>
                               {formatDate(spmb.createdAt)}
                             </p>
@@ -2031,7 +2032,7 @@ export default function DetailPengiriman() {
                               (sum, item) => sum + item.product.quantity,
                               0
                             )
-                          )}{" "}
+                          )}{' '}
                           {selectedProductDOs[0].product.satuan}
                         </p>
                       </div>
@@ -2083,7 +2084,7 @@ export default function DetailPengiriman() {
                           <div className="text-right">
                             <p className="text-xs text-gray-500">Kuantitas</p>
                             <p className="text-sm font-semibold text-gray-800">
-                              {formatNumber(doItem.product.quantity)}{" "}
+                              {formatNumber(doItem.product.quantity)}{' '}
                               {doItem.product.satuan}
                             </p>
                           </div>
