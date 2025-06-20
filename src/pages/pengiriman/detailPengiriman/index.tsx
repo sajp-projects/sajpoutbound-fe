@@ -1791,10 +1791,7 @@ export default function DetailPengiriman() {
                               Kode SPMB
                             </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                              ID Delivery Order
-                            </TableHead>
-                            <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                              Status
+                              ID Delivery Order{' '}
                             </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
                               Tanggal Dibuat
@@ -1831,21 +1828,6 @@ export default function DetailPengiriman() {
                                     {spmb.deliveryOrder?.doNumber ||
                                       spmb.deliveryOrderId}
                                   </Link>
-                                </TableCell>
-                                <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                  <Badge
-                                    variant="outline"
-                                    className={cn(
-                                      'px-2 py-0.5 rounded-md font-medium text-xs',
-                                      spmb.status === 'PENDING'
-                                        ? 'bg-yellow-50 text-yellow-600 border-yellow-200'
-                                        : spmb.status === 'PROSES'
-                                        ? 'bg-blue-50 text-blue-600 border-blue-200'
-                                        : 'bg-green-50 text-green-600 border-green-200'
-                                    )}
-                                  >
-                                    {spmb.status}
-                                  </Badge>
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   {formatDate(spmb.createdAt)}
