@@ -238,3 +238,124 @@ export interface ShipmentFromDO {
   };
   shipmentItems: ShipmentItemFromDO[];
 }
+
+export interface StatusBadgeProps {
+  status: ShipmentStatus;
+}
+
+export interface ChosenProductExtended {
+  id: string;
+  code: string;
+  shipmentId: string;
+  productId: string;
+  product: {
+    id: string;
+    name: string;
+    satuan: string;
+    warehouseId: string;
+    warehouse: {
+      id: string;
+      name: string;
+    };
+  };
+  deliveryOrders: {
+    id: string;
+    customerId: string;
+    customer: {
+      id: string;
+      name: string;
+      address?: string;
+    };
+  }[];
+  customers: {
+    id: string;
+    name: string;
+    address?: string;
+  }[];
+  shipmentItems: Array<{
+    id: string;
+    status: string;
+    requestedQuantity: number;
+    weightedQuantity: number | null;
+    locationType: string;
+    weighedAt: string | null;
+  }>;
+  weighings: Array<{
+    id: string;
+    grossWeight: number;
+    netWeight: number;
+    tareWeight: number;
+    notaTimbangan?: {
+      id: string;
+      ticketNumber: string;
+      documentPath: string;
+    };
+  }>;
+  totalGrossWeight: number;
+  totalNetWeight: number;
+  totalTareWeight: number;
+  totalRequestedQuantity: number;
+  locationType: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Interface untuk ShipmentItem dengan locationType
+export interface ShipmentItemExtended {
+  id: string;
+  deliveryOrderId: string;
+  productId: string;
+  requestedQuantity: number;
+  warehouseId: string;
+  chosenProduct: boolean;
+  locationType?: string;
+  product: {
+    id: string;
+    name: string;
+    satuan: string;
+    warehouseId: string;
+    warehouse: {
+      id: string;
+      name: string;
+    };
+  };
+  deliveryOrder: {
+    id: string;
+    customerId: string;
+    customer: {
+      id: string;
+      name: string;
+      address?: string;
+    };
+  };
+  warehouse: {
+    id: string;
+    name: string;
+  };
+}
+
+// Define interfaces for the grouped delivery orders
+export interface ProductItem {
+  id: string;
+  name: string;
+  satuan: string;
+  quantity: number;
+  warehouseId: string;
+  chosenProduct?: boolean;
+  locationType?: string;
+  warehouse: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface GroupedDeliveryOrder {
+  id: string;
+  doNumber: string;
+  customer: {
+    id: string;
+    name: string;
+    address?: string;
+  };
+  products: ProductItem[];
+}

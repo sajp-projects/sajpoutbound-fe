@@ -58,7 +58,15 @@ import { useAuth } from '@/hooks/auth';
 import { useRolePermissions } from '@/hooks/izin';
 import { cn } from '@/lib/utils';
 import { FilePreview } from '@/types/media';
-import { ShipmentStatus, SPMB } from '@/types/pengiriman';
+import {
+  ChosenProductExtended,
+  GroupedDeliveryOrder,
+  ProductItem,
+  ShipmentItemExtended,
+  ShipmentStatus,
+  SPMB,
+  StatusBadgeProps,
+} from '@/types/pengiriman';
 import {
   SHIPMENT_STATUS_LABELS,
   SHIPMENT_TYPE_LABELS,
@@ -75,10 +83,6 @@ import {
   showSuccessAlert,
 } from '@/utils/sweetAlert';
 import { useEffect, useState } from 'react';
-
-interface StatusBadgeProps {
-  status: ShipmentStatus;
-}
 
 function StatusBadge({ status }: StatusBadgeProps) {
   const getStatusColor = (status: ShipmentStatus) => {
@@ -104,124 +108,6 @@ function StatusBadge({ status }: StatusBadgeProps) {
       {SHIPMENT_STATUS_LABELS[status]}
     </Badge>
   );
-}
-
-// Update untuk tipe ChosenProduct
-interface ChosenProductExtended {
-  id: string;
-  code: string;
-  shipmentId: string;
-  productId: string;
-  product: {
-    id: string;
-    name: string;
-    satuan: string;
-    warehouseId: string;
-    warehouse: {
-      id: string;
-      name: string;
-    };
-  };
-  deliveryOrders: {
-    id: string;
-    customerId: string;
-    customer: {
-      id: string;
-      name: string;
-      address?: string;
-    };
-  }[];
-  customers: {
-    id: string;
-    name: string;
-    address?: string;
-  }[];
-  shipmentItems: Array<{
-    id: string;
-    status: string;
-    requestedQuantity: number;
-    weightedQuantity: number | null;
-    locationType: string;
-    weighedAt: string | null;
-  }>;
-  weighings: Array<{
-    id: string;
-    grossWeight: number;
-    netWeight: number;
-    tareWeight: number;
-    notaTimbangan?: {
-      id: string;
-      ticketNumber: string;
-      documentPath: string;
-    };
-  }>;
-  totalGrossWeight: number;
-  totalNetWeight: number;
-  totalTareWeight: number;
-  totalRequestedQuantity: number;
-  locationType: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Interface untuk ShipmentItem dengan locationType
-interface ShipmentItemExtended {
-  id: string;
-  deliveryOrderId: string;
-  productId: string;
-  requestedQuantity: number;
-  warehouseId: string;
-  chosenProduct: boolean;
-  locationType?: string;
-  product: {
-    id: string;
-    name: string;
-    satuan: string;
-    warehouseId: string;
-    warehouse: {
-      id: string;
-      name: string;
-    };
-  };
-  deliveryOrder: {
-    id: string;
-    customerId: string;
-    customer: {
-      id: string;
-      name: string;
-      address?: string;
-    };
-  };
-  warehouse: {
-    id: string;
-    name: string;
-  };
-}
-
-// Define interfaces for the grouped delivery orders
-interface ProductItem {
-  id: string;
-  name: string;
-  satuan: string;
-  quantity: number;
-  warehouseId: string;
-  chosenProduct?: boolean;
-  locationType?: string;
-  warehouse: {
-    id: string;
-    name: string;
-  };
-}
-
-interface GroupedDeliveryOrder {
-  id: string;
-  doNumber: string;
-  customer: {
-    id: string;
-    name: string;
-    address?: string;
-  };
-  products: ProductItem[];
 }
 
 export default function DetailPengiriman() {
