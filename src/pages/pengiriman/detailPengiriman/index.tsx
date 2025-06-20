@@ -58,7 +58,7 @@ import { useAuth } from '@/hooks/auth';
 import { useRolePermissions } from '@/hooks/izin';
 import { cn } from '@/lib/utils';
 import { FilePreview } from '@/types/media';
-import { ShipmentStatus } from '@/types/pengiriman';
+import { ShipmentStatus, SPMB } from '@/types/pengiriman';
 import {
   SHIPMENT_STATUS_LABELS,
   SHIPMENT_TYPE_LABELS,
@@ -149,6 +149,11 @@ interface ChosenProductExtended {
     grossWeight: number;
     netWeight: number;
     tareWeight: number;
+    notaTimbangan?: {
+      id: string;
+      ticketNumber: string;
+      documentPath: string;
+    };
   }>;
   totalGrossWeight: number;
   totalNetWeight: number;
@@ -548,6 +553,29 @@ export default function DetailPengiriman() {
       setAllItemsCompleted(allCompleted);
     }
   }, [shipment]);
+
+  // Handler for SPMB preview:
+  const handlePreviewSpmb = (spmb: SPMB) => {
+    setPreviewFile({
+      url: `/public/${spmb.documentPath}`,
+      name: `${spmb.code}.pdf`,
+      type: 'application/pdf',
+    });
+    setPreviewModalOpen(true);
+  };
+
+  // Handler for Nota Timbangan preview:
+  const handlePreviewNotaTimbangan = (notaTimbangan: {
+    ticketNumber: string;
+    documentPath: string;
+  }) => {
+    setPreviewFile({
+      url: `/public/${notaTimbangan.documentPath}`,
+      name: `Nota Timbangan_${notaTimbangan.ticketNumber}.pdf`,
+      type: 'application/pdf',
+    });
+    setPreviewModalOpen(true);
+  };
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
@@ -1563,6 +1591,9 @@ export default function DetailPengiriman() {
                                 Status Timbangan
                               </TableHead>
                               <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                                Nota Timbangan
+                              </TableHead>
+                              <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
                                 Aksi
                               </TableHead>
                             </TableRow>
@@ -1571,7 +1602,7 @@ export default function DetailPengiriman() {
                             {!chosenProducts || chosenProducts.length === 0 ? (
                               <TableRow>
                                 <TableCell
-                                  colSpan={8}
+                                  colSpan={9}
                                   className="px-4 py-6 text-sm text-center text-gray-500"
                                 >
                                   Tidak ada item yang dipilih dalam pengiriman
@@ -1641,6 +1672,35 @@ export default function DetailPengiriman() {
                                       >
                                         Belum Ditimbang
                                       </Badge>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
+                                    {item.shipmentItems.every(
+                                      (si) => si.status === 'COMPLETED'
+                                    ) &&
+                                    item.weighings &&
+                                    item.weighings.length > 0 &&
+                                    item.weighings[0]?.notaTimbangan ? (
+                                      <button
+                                        type="button"
+                                        className="text-blue-600 hover:underline"
+                                        onClick={() =>
+                                          handlePreviewNotaTimbangan({
+                                            ticketNumber:
+                                              item.weighings[0].notaTimbangan!
+                                                .ticketNumber,
+                                            documentPath:
+                                              item.weighings[0].notaTimbangan!
+                                                .documentPath,
+                                          })
+                                        }
+                                      >
+                                        Lihat Dokumen
+                                      </button>
+                                    ) : (
+                                      <span className="text-gray-400">
+                                        Belum tersedia
+                                      </span>
                                     )}
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
@@ -1760,6 +1820,40 @@ export default function DetailPengiriman() {
                                     ))}
                                   </div>
                                 </div>
+                                <div className="flex items-start">
+                                  <span className="w-20 font-medium">
+                                    Nota Timbangan:
+                                  </span>
+                                  <span>
+                                    {item.shipmentItems.every(
+                                      (si) => si.status === 'COMPLETED'
+                                    ) &&
+                                    item.weighings &&
+                                    item.weighings.length > 0 &&
+                                    item.weighings[0]?.notaTimbangan ? (
+                                      <button
+                                        type="button"
+                                        className="text-blue-600 hover:underline"
+                                        onClick={() =>
+                                          handlePreviewNotaTimbangan({
+                                            ticketNumber:
+                                              item.weighings[0].notaTimbangan!
+                                                .ticketNumber,
+                                            documentPath:
+                                              item.weighings[0].notaTimbangan!
+                                                .documentPath,
+                                          })
+                                        }
+                                      >
+                                        Lihat Dokumen
+                                      </button>
+                                    ) : (
+                                      <span className="text-gray-400">
+                                        Belum tersedia
+                                      </span>
+                                    )}
+                                  </span>
+                                </div>
                               </div>
 
                               {hasPengirimanUpdateAccess &&
@@ -1872,14 +1966,13 @@ export default function DetailPengiriman() {
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                   {spmb.documentPath ? (
-                                    <a
-                                      href={spmb.documentPath}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                    <button
+                                      type="button"
                                       className="text-blue-600 hover:underline"
+                                      onClick={() => handlePreviewSpmb(spmb)}
                                     >
                                       Lihat Dokumen
-                                    </a>
+                                    </button>
                                   ) : (
                                     <span className="text-gray-400">
                                       Tidak tersedia
@@ -1955,14 +2048,13 @@ export default function DetailPengiriman() {
                             <p className="pt-2">
                               <span className="font-medium">Dokumen: </span>
                               {spmb.documentPath ? (
-                                <a
-                                  href={spmb.documentPath}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                <button
+                                  type="button"
                                   className="text-blue-600 hover:underline"
+                                  onClick={() => handlePreviewSpmb(spmb)}
                                 >
                                   Lihat Dokumen
-                                </a>
+                                </button>
                               ) : (
                                 <span className="text-gray-400">
                                   Tidak tersedia

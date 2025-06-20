@@ -175,6 +175,11 @@ export interface ChosenProduct {
     grossWeight: number;
     netWeight: number;
     tareWeight: number;
+    notaTimbangan?: {
+      id: string;
+      ticketNumber: string;
+      documentPath: string;
+    };
   }[];
   totalGrossWeight: number;
   totalNetWeight: number;

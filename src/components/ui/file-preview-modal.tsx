@@ -1,13 +1,13 @@
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { X, Download, ZoomIn, ZoomOut, RotateCw } from "lucide-react";
-import { FilePreview } from "@/types/media";
-import { useState } from "react";
+} from '@/components/ui/dialog';
+import { FilePreview } from '@/types/media';
+import { Download, RotateCw, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { useState } from 'react';
 
 interface FilePreviewModalProps {
   isOpen: boolean;
@@ -34,7 +34,7 @@ export function FilePreviewModal({
   };
 
   const handleDownload = () => {
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = file.url;
     link.download = file.name;
     document.body.appendChild(link);
@@ -56,7 +56,7 @@ export function FilePreviewModal({
 
             {/* Controls - Simplified and responsive */}
             <div className="flex items-center ml-2 space-x-2 sm:ml-4">
-              {file.type.includes("image") && (
+              {file.type.includes('image') && (
                 <>
                   {/* Mobile: Only essential controls */}
                   <div className="flex items-center space-x-1 sm:hidden">
@@ -145,7 +145,7 @@ export function FilePreviewModal({
 
         {/* Content */}
         <div className="flex-1 overflow-auto bg-gray-50">
-          {file.type.includes("image") ? (
+          {file.type.includes('image') ? (
             <div className="flex items-center justify-center min-h-[400px] sm:min-h-[500px] p-4 sm:p-6">
               <div className="relative flex items-center justify-center w-full h-full">
                 <img
@@ -154,12 +154,12 @@ export function FilePreviewModal({
                   className="object-contain max-w-full max-h-full transition-all duration-300 ease-in-out bg-white rounded-lg shadow-lg"
                   style={{
                     transform: `scale(${zoom}) rotate(${rotation}deg)`,
-                    transformOrigin: "center",
-                    maxHeight: "60vh",
+                    transformOrigin: 'center',
+                    maxHeight: '60vh',
                   }}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.style.display = "none";
+                    target.style.display = 'none';
                     const parent = target.parentElement;
                     if (parent) {
                       parent.innerHTML = `
@@ -180,7 +180,7 @@ export function FilePreviewModal({
               </div>
 
               {/* Mobile zoom controls overlay */}
-              {file.type.includes("image") && (
+              {file.type.includes('image') && (
                 <div className="absolute transform -translate-x-1/2 bottom-4 left-1/2 sm:hidden">
                   <div className="flex items-center px-3 py-2 space-x-2 border border-gray-200 rounded-full shadow-lg bg-white/90 backdrop-blur-sm">
                     <Button
@@ -215,6 +215,17 @@ export function FilePreviewModal({
                   </div>
                 </div>
               )}
+            </div>
+          ) : file.type.includes('pdf') ? (
+            <div className="flex items-center justify-center min-h-[400px] sm:min-h-[500px] p-4 sm:p-8">
+              <iframe
+                src={file.url}
+                title={file.name}
+                className="w-full h-[70vh] rounded-lg border border-gray-200 shadow-lg bg-white"
+                style={{ minHeight: 400 }}
+                frameBorder="0"
+                allowFullScreen
+              />
             </div>
           ) : (
             <div className="flex items-center justify-center min-h-[400px] sm:min-h-[500px] p-4 sm:p-8">
