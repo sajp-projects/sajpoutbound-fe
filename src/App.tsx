@@ -1,10 +1,10 @@
-import { BrowserRouter, Route, Routes } from "react-router";
-import { Suspense, lazy } from "react";
+import LoadingFallback from "@/components/LoadingFallback";
 import { PERMISSION } from "@/constant/PERMISSION";
+import { Suspense, lazy } from "react";
+import { BrowserRouter, Route, Routes } from "react-router";
 import AuthLayout from "./layout/AuthLayout";
 import BaseLayout from "./layout/BaseLayout";
 import RBACLayout from "./layout/RBACLayout";
-import LoadingFallback from "@/components/LoadingFallback";
 
 // Lazy import untuk semua komponen halaman
 const Login = lazy(() => import("./pages/auth/login"));
@@ -71,6 +71,19 @@ const ArsipDo = lazy(() => import("./pages/do/arsipDo"));
 const EditDo = lazy(() => import("./pages/do/editDo"));
 const DetailDo = lazy(() => import("./pages/do/detailDo"));
 const LogSemuaDo = lazy(() => import("./pages/do/logSemuaDo"));
+
+// Lazy import untuk halaman pengiriman
+// Lazy import untuk halaman laporan
+const LaporanDashboard = lazy(
+  () => import("./pages/laporan/ringkasanDashboard")
+);
+const LaporanOperasional = lazy(() => import("./pages/laporan/operasional"));
+const LaporanPenugasanPengiriman = lazy(
+  () => import("./pages/laporan/penugasanPengiriman")
+);
+const LaporanOutputHarianDanBulanan = lazy(
+  () => import("./pages/laporan/outputHarianDanBulanan")
+);
 
 // Lazy import untuk halaman pengiriman
 const DaftarPengiriman = lazy(
@@ -452,6 +465,37 @@ export default function App() {
     },
   ];
 
+  const laporanRoutes: ProtectedRouteConfig[] = [
+    {
+      path: "",
+      element: <LaporanDashboard />,
+      resource: PERMISSION.RESOURCES.LAPORAN,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/",
+    },
+    {
+      path: "operasional",
+      element: <LaporanOperasional />,
+      resource: PERMISSION.RESOURCES.LAPORAN,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/laporan",
+    },
+    {
+      path: "pengeluaran",
+      element: <LaporanOutputHarianDanBulanan />,
+      resource: PERMISSION.RESOURCES.LAPORAN,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/laporan",
+    },
+    {
+      path: "penugasan",
+      element: <LaporanPenugasanPengiriman />,
+      resource: PERMISSION.RESOURCES.LAPORAN,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/laporan",
+    },
+  ];
+
   const shipmentRoutes: ProtectedRouteConfig[] = [
     {
       path: "",
@@ -550,6 +594,11 @@ export default function App() {
             {/* Route untuk DO */}
             <Route path="/do">
               {doRoutes.map((route) => createProtectedRoute(route))}
+            </Route>
+
+            {/* Route untuk laporan */}
+            <Route path="/laporan">
+              {laporanRoutes.map((route) => createProtectedRoute(route))}
             </Route>
 
             {/* Route untuk pengiriman */}

@@ -1,11 +1,14 @@
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/izin";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
 import {
   BarChart3,
   ChevronDown,
   FileText,
   Home,
+  Lock,
   LogOut,
   Package,
   PackageCheck,
@@ -15,13 +18,10 @@ import {
   Users,
   Warehouse,
   X,
-  Lock,
 } from "lucide-react";
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useLocation, Link } from "react-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router";
 import { cn } from "../lib/utils";
-import { getRoleId } from "@/utils/storage";
-import { hasPermission } from "@/utils/permission";
 
 interface SubMenuItem {
   name: string;
@@ -322,28 +322,23 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
         resource: PERMISSION.RESOURCES.LAPORAN,
         subItems: [
           {
-            name: "Laporan Gudang",
-            path: "/laporan/gudang",
+            name: "Operasional",
+            path: "/laporan/operasional",
             action: PERMISSION.ACTIONS.READ,
           },
           {
-            name: "Laporan Pengiriman",
-            path: "/laporan/pengiriman",
+            name: "Pengeluaran",
+            path: "/laporan/pengeluaran",
             action: PERMISSION.ACTIONS.READ,
           },
           {
-            name: "Laporan DO",
-            path: "/laporan/do",
+            name: "Penugasan Pengiriman",
+            path: "/laporan/penugasan",
             action: PERMISSION.ACTIONS.READ,
           },
           {
-            name: "Laporan Armada",
-            path: "/laporan/armada",
-            action: PERMISSION.ACTIONS.READ,
-          },
-          {
-            name: "Laporan Custom",
-            path: "/laporan/custom",
+            name: "Ringkasan Dashboard",
+            path: "/laporan",
             action: PERMISSION.ACTIONS.READ,
           },
         ],
