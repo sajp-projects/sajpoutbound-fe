@@ -1,7 +1,12 @@
 // Common types
 export type DailyGroupType = "item" | "customer" | "vehicle" | "warehouse";
-export type ShipmentType = 'ANTAR' | 'JEMPUT';
-export type ShipmentStatus = 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+export type ShipmentType = "ANTAR" | "JEMPUT";
+export type ShipmentStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "SHIPPED"
+  | "DELIVERED"
+  | "CANCELLED";
 
 // Output Report types
 export interface OutputGroupBase {
@@ -11,16 +16,37 @@ export interface OutputGroupBase {
   totalQuantity: number;
   totalWeight: number;
   shipmentCount: number;
-  unit?: string;
+  satuan?: string;
   shipments?: ShipmentItem[];
 }
 
 export interface OutputReportSummary {
   totalGroups: number;
-  totalQuantity: number;
-  totalWeight: number;
   totalShipments: number;
   dateRange?: { start: string; end: string };
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+export interface DailyOutputReportResult {
+  data: OutputGroupBase[];
+  summary: OutputReportSummary;
+  filters: DailyOutputReportFilter;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+  allGroups?: OutputGroupBase[];
 }
 
 export interface MonthlyOutputReportResult {
@@ -32,7 +58,38 @@ export interface MonthlyOutputReportResult {
     monthName: string;
     daysInMonth: number;
   };
+  filters: MonthlyOutputReportFilter;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+  allGroups?: OutputGroupBase[];
 }
+
+// Add missing filter types for output reports
+export type DailyOutputReportFilter = {
+  startDate?: string;
+  endDate?: string;
+  groupBy?: DailyGroupType;
+  warehouseId?: string;
+  customerId?: string;
+  armadaId?: string;
+  productId?: string;
+};
+
+export type MonthlyOutputReportFilter = {
+  year: number;
+  month: number;
+  groupBy?: DailyGroupType;
+  warehouseId?: string;
+  customerId?: string;
+  armadaId?: string;
+  productId?: string;
+};
 
 // Shipment related types
 export interface ShipmentItem {
@@ -65,6 +122,19 @@ export interface ShipmentItem {
   };
 }
 
+// Add ShipmentAssignment type for shipment assignment report
+export interface ShipmentAssignment {
+  armada: {
+    id: string;
+    model: string;
+    plateNumber: string;
+    id_sl?: string;
+    description?: string;
+  };
+  assignments: Record<string, unknown>;
+  summary: { PENDING: number; PROSES: number; SELESAI: number; total: number };
+}
+
 // Report response types
 export interface ReportResponse<T> {
   report: {
@@ -83,7 +153,13 @@ export interface ReportResponse<T> {
       groupBy?: DailyGroupType;
       type?: ShipmentType;
       status?: ShipmentStatus;
-      [key: string]: string | number | boolean | undefined | string[] | number[];
+      [key: string]:
+        | string
+        | number
+        | boolean
+        | undefined
+        | string[]
+        | number[];
     };
     pagination: {
       total: number;
@@ -107,7 +183,10 @@ export interface OperationalReportItem {
   totalWeight: number;
 }
 
-export type OperationalReportData = Record<ShipmentType, OperationalReportItem[]>;
+export type OperationalReportData = Record<
+  ShipmentType,
+  OperationalReportItem[]
+>;
 
 export interface OperationalReportResponse {
   report: {

@@ -1,8 +1,16 @@
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -12,14 +20,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useDailyOutputReport, useMonthlyOutputReport } from "@/hooks/laporan";
-import {
+import { useDailyOutputReport } from "@/hooks/laporan";
+import type {
+  DailyOutputReportResult,
   MonthlyOutputReportResult,
-  OutputGroupBase,
-  OutputReportSummary,
 } from "@/types/report";
-import { CalendarDays, Package, Users, Weight } from "lucide-react";
-import { useState } from "react";
+import { OutputGroupBase, OutputReportSummary } from "@/types/report";
+import { CalendarDays, Package, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Cell, Pie, PieChart } from "recharts";
 
 const COLORS = [
@@ -65,7 +73,7 @@ function DateRangeFilter({
   onChange: (start: string, end: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2 items-center mb-4">
+    <div className="flex flex-wrap gap-2 items-center">
       <Input
         type="date"
         value={start}
@@ -83,28 +91,40 @@ function DateRangeFilter({
   );
 }
 
-function renderSummary(summary: OutputReportSummary) {
+function renderSummary(
+  summary: OutputReportSummary,
+  groups: OutputGroupBase[]
+) {
+  // Find the group with the highest quantity
+  let topGroup = null;
+  if (groups && groups.length > 0) {
+    topGroup = groups.reduce(
+      (max, g) => (g.totalQuantity > (max?.totalQuantity ?? 0) ? g : max),
+      null as OutputGroupBase | null
+    );
+  }
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
       <StatCard
         icon={<Package className="w-5 h-5" />}
         label="Total Grup"
         value={summary.totalGroups}
       />
       <StatCard
-        icon={<Weight className="w-5 h-5" />}
-        label="Total Berat"
-        value={summary.totalWeight}
-      />
-      <StatCard
-        icon={<Users className="w-5 h-5" />}
-        label="Total Kuantitas"
-        value={summary.totalQuantity}
-      />
-      <StatCard
         icon={<CalendarDays className="w-5 h-5" />}
         label="Total Pengiriman"
         value={summary.totalShipments}
+      />
+      <StatCard
+        icon={<Users className="w-5 h-5" />}
+        label="Grup Terbanyak"
+        value={
+          topGroup
+            ? `${topGroup.name} (${topGroup.totalQuantity} ${
+                topGroup.satuan || ""
+              })`
+            : "-"
+        }
       />
     </div>
   );
@@ -116,10 +136,23 @@ function renderPieChart(
   title: string
 ) {
   if (!data || data.length === 0) return null;
-  const chartData = data.map((item, i) => ({
+  // Sort and take top 5, group the rest as 'Lainnya'
+  const sorted = [...data].sort(
+    (a, b) => (b[valueKey] as number) - (a[valueKey] as number)
+  );
+  const top5 = sorted.slice(0, 5);
+  const rest = sorted.slice(5);
+  const chartData = top5.map((item) => ({
     name: item.name,
     value: item[valueKey] as number,
   }));
+  if (rest.length > 0) {
+    const othersValue = rest.reduce(
+      (sum, item) => sum + (item[valueKey] as number),
+      0
+    );
+    chartData.push({ name: "Lainnya", value: othersValue });
+  }
   return (
     <Card className="mb-4">
       <CardHeader>
@@ -184,8 +217,12 @@ function renderTable(data: OutputGroupBase[]) {
               {data.map((row) => (
                 <TableRow key={row.id || row.name}>
                   <TableCell>{row.name}</TableCell>
-                  <TableCell>{row.totalQuantity}</TableCell>
-                  <TableCell>{row.totalWeight}</TableCell>
+                  <TableCell>
+                    {row.totalQuantity} {row.satuan ? row.satuan : ""}
+                  </TableCell>
+                  <TableCell>
+                    {row.totalWeight} {row.satuan ? row.satuan : ""}
+                  </TableCell>
                   <TableCell>{row.shipmentCount}</TableCell>
                 </TableRow>
               ))}
@@ -206,17 +243,20 @@ function isMonthlyResult(
   if (!("report" in d) || typeof d.report !== "object" || d.report === null)
     return false;
   const r = d.report as Record<string, unknown>;
-  return "data" in r && "summary" in r && "monthInfo" in r;
+  return "data" in r && "summary" in r && "monthInfo" in r && "pagination" in r;
 }
-function isDailyResult(data: unknown): data is {
-  report: { data: OutputGroupBase[]; summary: OutputReportSummary };
-} {
-  if (!data || typeof data !== "object" || data === null) return false;
-  const d = data as Record<string, unknown>;
-  if (!("report" in d) || typeof d.report !== "object" || d.report === null)
-    return false;
-  const r = d.report as Record<string, unknown>;
-  return "data" in r && "summary" in r;
+function isDailyResult(
+  data: unknown
+): data is { report: DailyOutputReportResult } {
+  return !!data && typeof data === "object" && "report" in data;
+}
+
+// Helper for error message
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "Terjadi kesalahan";
 }
 
 export default function OutputHarianDanBulanan() {
@@ -224,30 +264,98 @@ export default function OutputHarianDanBulanan() {
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [month, setMonth] = useState((new Date().getMonth() + 1).toString());
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [status, setStatus] = useState("ALL"); // 'ALL' means all statuses
+  const [groupBy, setGroupBy] = useState<
+    "item" | "customer" | "vehicle" | "warehouse"
+  >("item");
 
-  // Build daily report filters, only include non-empty dates
-  const dailyFilters: Record<string, string> = {};
-  if (dateRange.start) dailyFilters.startDate = dateRange.start;
-  if (dateRange.end) dailyFilters.endDate = dateRange.end;
+  // Build filters for summary/allGroups (no page)
+  const summaryFilters: Record<string, string | number | undefined> = {
+    groupBy: tab === "harian" ? groupBy : undefined,
+    year: tab === "bulanan" ? year : undefined,
+    month: tab === "bulanan" ? month : undefined,
+  };
+  if (dateRange.start) summaryFilters.startDate = dateRange.start;
+  if (dateRange.end) summaryFilters.endDate = dateRange.end;
+  if (status && status !== "ALL") summaryFilters.status = status;
 
+  // Query for summary/allGroups (always page 1)
   const {
-    data: dailyData,
-    isLoading: loadingDaily,
-    isError: errorDaily,
-    error: dailyError,
-    refetch: refetchDaily,
-  } = useDailyOutputReport(tab === "harian" ? dailyFilters : {}, {
-    enabled: tab === "harian",
-  });
-  const {
-    data: monthlyData,
-    isLoading: loadingMonthly,
-    isError: errorMonthly,
-    error: monthlyError,
-    refetch: refetchMonthly,
-  } = useMonthlyOutputReport(tab === "bulanan" ? { year, month } : {}, {
-    enabled: tab === "bulanan",
-  });
+    data: summaryData,
+    isLoading: isSummaryLoading,
+    isError: isSummaryError,
+    refetch: refetchSummary,
+  } = useDailyOutputReport(summaryFilters);
+
+  console.log(summaryData, "summaryData");
+
+  // Query for paginated table data (filters + page)
+  const paginatedFilters = { ...summaryFilters, page, limit };
+  const { data: tableData, refetch: refetchTable } =
+    useDailyOutputReport(paginatedFilters);
+
+  // When filters change, reset page to 1
+  useEffect(() => {
+    setPage(1);
+    refetchSummary();
+    refetchTable();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange, tab, year, month, status, groupBy]);
+
+  // Use summaryData for summary and pie chart
+  // Use tableData for the table and pagination controls
+
+  // Reset page when filters change
+  function handleDateChange(s: string, e: string) {
+    setDateRange({ start: s, end: e });
+    setPage(1);
+  }
+  function handleTabChange(v: string) {
+    setTab(v as "harian" | "bulanan");
+    setPage(1);
+  }
+  function handleYearChange(val: string) {
+    setYear(val);
+    setPage(1);
+  }
+  function handleMonthChange(val: string) {
+    setMonth(val);
+    setPage(1);
+  }
+
+  function renderPagination(pagination?: {
+    page: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  }) {
+    if (!pagination) return null;
+    return (
+      <div className="flex items-center justify-between mt-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={!pagination.hasPrev}
+        >
+          Sebelumnya
+        </Button>
+        <span className="text-sm text-gray-600">
+          Halaman {pagination.page} dari {pagination.totalPages}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPage((p) => p + 1)}
+          disabled={!pagination.hasNext}
+        >
+          Berikutnya
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
@@ -257,7 +365,7 @@ export default function OutputHarianDanBulanan() {
       <Tabs
         defaultValue="harian"
         value={tab}
-        onValueChange={(v) => setTab(v as "harian" | "bulanan")}
+        onValueChange={handleTabChange}
         className="w-full"
       >
         <TabsList>
@@ -266,34 +374,78 @@ export default function OutputHarianDanBulanan() {
         </TabsList>
         <TabsContent value="harian">
           <Card className="mb-4 p-4">
-            <DateRangeFilter
-              start={dateRange.start}
-              end={dateRange.end}
-              onChange={(s, e) => setDateRange({ start: s, end: e })}
-            />
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div className="flex flex-1 flex-row items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <DateRangeFilter
+                    start={dateRange.start}
+                    end={dateRange.end}
+                    onChange={handleDateChange}
+                  />
+                  {/* Group By Dropdown */}
+                  <label htmlFor="groupBy" className="text-sm font-medium ml-4">
+                    Group By:
+                  </label>
+                  <Select
+                    value={groupBy}
+                    onValueChange={(v) => setGroupBy(v as typeof groupBy)}
+                  >
+                    <SelectTrigger className="w-36">
+                      <SelectValue placeholder="Group By" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="item">Barang</SelectItem>
+                      <SelectItem value="customer">Pelanggan</SelectItem>
+                      <SelectItem value="vehicle">Armada</SelectItem>
+                      <SelectItem value="warehouse">Gudang</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="status" className="text-sm font-medium">
+                    Status:
+                  </label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Semua" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Semua</SelectItem>
+                      <SelectItem value="PENDING">Pending</SelectItem>
+                      <SelectItem value="PROSES">Proses</SelectItem>
+                      <SelectItem value="SELESAI">Selesai</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardHeader>
           </Card>
-          {loadingDaily ? (
+          {isSummaryLoading ? (
             <LoadingState text="Memuat laporan pengeluaran harian..." />
-          ) : errorDaily ? (
+          ) : isSummaryError ? (
             <ErrorState
               title="Gagal memuat laporan pengeluaran harian"
-              message={
-                dailyError instanceof Error
-                  ? dailyError.message
-                  : "Terjadi kesalahan"
-              }
-              onRetry={() => refetchDaily()}
+              message={getErrorMessage(isSummaryError)}
+              onRetry={() => refetchSummary()}
             />
           ) : (
-            isDailyResult(dailyData) && (
+            isDailyResult(summaryData) && (
               <>
-                {renderSummary(dailyData.report.summary)}
+                {renderSummary(
+                  summaryData.report.summary,
+                  summaryData.report.allGroups ?? []
+                )}
                 {renderPieChart(
-                  dailyData.report.data,
+                  summaryData.report.allGroups ?? [],
                   "totalQuantity",
                   "Distribusi Kuantitas"
                 )}
-                {renderTable(dailyData.report.data)}
+                {isDailyResult(tableData)
+                  ? renderTable(tableData.report.data)
+                  : null}
+                {isDailyResult(tableData)
+                  ? renderPagination(tableData.report.pagination)
+                  : null}
               </>
             )
           )}
@@ -305,13 +457,13 @@ export default function OutputHarianDanBulanan() {
               min="2000"
               max="2100"
               value={year}
-              onChange={(e) => setYear(e.target.value)}
+              onChange={(e) => handleYearChange(e.target.value)}
               className="w-24"
               placeholder="Tahun"
             />
             <select
               value={month}
-              onChange={(e) => setMonth(e.target.value)}
+              onChange={(e) => handleMonthChange(e.target.value)}
               className="border rounded px-2 py-1"
             >
               {[...Array(12)].map((_, i) => (
@@ -321,28 +473,32 @@ export default function OutputHarianDanBulanan() {
               ))}
             </select>
           </Card>
-          {loadingMonthly ? (
+          {isSummaryLoading ? (
             <LoadingState text="Memuat laporan pengeluaran bulanan..." />
-          ) : errorMonthly ? (
+          ) : isSummaryError ? (
             <ErrorState
               title="Gagal memuat laporan pengeluaran bulanan"
-              message={
-                monthlyError instanceof Error
-                  ? monthlyError.message
-                  : "Terjadi kesalahan"
-              }
-              onRetry={() => refetchMonthly()}
+              message={getErrorMessage(isSummaryError)}
+              onRetry={() => refetchSummary()}
             />
           ) : (
-            isMonthlyResult(monthlyData) && (
+            isMonthlyResult(summaryData) && (
               <>
-                {renderSummary(monthlyData.report.summary)}
+                {renderSummary(
+                  summaryData.report.summary,
+                  summaryData.report.allGroups ?? []
+                )}
                 {renderPieChart(
-                  monthlyData.report.data,
+                  summaryData.report.allGroups ?? [],
                   "totalQuantity",
                   "Distribusi Kuantitas"
                 )}
-                {renderTable(monthlyData.report.data)}
+                {isDailyResult(tableData)
+                  ? renderTable(tableData.report.data)
+                  : null}
+                {isDailyResult(tableData)
+                  ? renderPagination(tableData.report.pagination)
+                  : null}
               </>
             )
           )}
