@@ -72,17 +72,16 @@ const EditDo = lazy(() => import("./pages/do/editDo"));
 const DetailDo = lazy(() => import("./pages/do/detailDo"));
 const LogSemuaDo = lazy(() => import("./pages/do/logSemuaDo"));
 
-// Lazy import untuk halaman pengiriman
-// Lazy import untuk halaman laporan
-const LaporanDashboard = lazy(
-  () => import("./pages/laporan/ringkasanDashboard")
-);
 const LaporanOperasional = lazy(() => import("./pages/laporan/operasional"));
 const LaporanPenugasanPengiriman = lazy(
   () => import("./pages/laporan/penugasanPengiriman")
 );
-const LaporanOutputHarianDanBulanan = lazy(
-  () => import("./pages/laporan/outputHarianDanBulanan")
+
+const LaporanPengeluaranHarian = lazy(
+  () => import("./pages/laporan/pengeluaranHarian")
+);
+const LaporanPengeluaranBulanan = lazy(
+  () => import("./pages/laporan/pengeluaranBulanan")
 );
 
 // Lazy import untuk halaman pengiriman
@@ -467,13 +466,6 @@ export default function App() {
 
   const laporanRoutes: ProtectedRouteConfig[] = [
     {
-      path: "",
-      element: <LaporanDashboard />,
-      resource: PERMISSION.RESOURCES.LAPORAN,
-      action: PERMISSION.ACTIONS.READ,
-      redirectTo: "/",
-    },
-    {
       path: "operasional",
       element: <LaporanOperasional />,
       resource: PERMISSION.RESOURCES.LAPORAN,
@@ -481,8 +473,15 @@ export default function App() {
       redirectTo: "/laporan",
     },
     {
-      path: "pengeluaran",
-      element: <LaporanOutputHarianDanBulanan />,
+      path: "pengeluaranHarian",
+      element: <LaporanPengeluaranHarian />,
+      resource: PERMISSION.RESOURCES.LAPORAN,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/laporan",
+    },
+    {
+      path: "pengeluaranBulanan",
+      element: <LaporanPengeluaranBulanan />,
       resource: PERMISSION.RESOURCES.LAPORAN,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/laporan",

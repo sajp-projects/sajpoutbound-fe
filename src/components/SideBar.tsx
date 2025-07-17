@@ -327,18 +327,18 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
             action: PERMISSION.ACTIONS.READ,
           },
           {
-            name: "Pengeluaran",
-            path: "/laporan/pengeluaran",
+            name: "Pengeluaran Harian",
+            path: "/laporan/pengeluaranHarian",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Pengeluaran Bulanan",
+            path: "/laporan/pengeluaranBulanan",
             action: PERMISSION.ACTIONS.READ,
           },
           {
             name: "Penugasan Pengiriman",
             path: "/laporan/penugasan",
-            action: PERMISSION.ACTIONS.READ,
-          },
-          {
-            name: "Ringkasan Dashboard",
-            path: "/laporan",
             action: PERMISSION.ACTIONS.READ,
           },
         ],

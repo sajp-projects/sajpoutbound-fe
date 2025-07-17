@@ -1,25 +1,28 @@
-import { BASE_URL } from '@/constant/baseUrl';
-import { ApiResponse } from '@/types/api';
-import { MonthlyOutputReportResult } from '@/types/report';
-import { fetchApi } from '@/utils/api';
-import { handleApiError } from '@/utils/errorHandler';
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router';
+import { BASE_URL } from "@/constant/baseUrl";
+import { ApiResponse } from "@/types/api";
+import {
+  DailyOutputReportResult,
+  MonthlyOutputReportResult,
+} from "@/types/report";
+import { fetchApi } from "@/utils/api";
+import { handleApiError } from "@/utils/errorHandler";
+import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
+import { useSearchParams } from "react-router";
 
 /**
  * Query keys for all report-related queries
  */
 export const reportKeys = {
-  all: ['reports'] as const,
+  all: ["reports"] as const,
   operational: (filters: Record<string, unknown>) =>
-    [...reportKeys.all, 'operational', { filters }] as const,
+    [...reportKeys.all, "operational", { filters }] as const,
   dailyOutput: (filters: Record<string, unknown>) =>
-    [...reportKeys.all, 'daily-output', { filters }] as const,
+    [...reportKeys.all, "daily-output", { filters }] as const,
   monthlyOutput: (filters: Record<string, unknown>) =>
-    [...reportKeys.all, 'monthly-output', { filters }] as const,
+    [...reportKeys.all, "monthly-output", { filters }] as const,
   shipmentAssignment: (filters: Record<string, unknown>) =>
-    [...reportKeys.all, 'shipment-assignment', { filters }] as const,
-  dashboardSummary: () => [...reportKeys.all, 'dashboard-summary'] as const,
+    [...reportKeys.all, "shipment-assignment", { filters }] as const,
+  dashboardSummary: () => [...reportKeys.all, "dashboard-summary"] as const,
 };
 
 /**
@@ -31,8 +34,8 @@ function useDefaultFilters(
   const [searchParams] = useSearchParams();
 
   const base: Record<string, string | number | null | undefined> = {
-    page: searchParams.get('page') || '1',
-    limit: searchParams.get('limit') || '10',
+    page: searchParams.get("page") || "1",
+    limit: searchParams.get("limit") || "10",
   };
 
   return { ...base, ...overrides };
@@ -47,7 +50,7 @@ export function useOperationalReport(
       unknown,
       ReturnType<typeof reportKeys.operational>
     >,
-    'queryKey' | 'queryFn'
+    "queryKey" | "queryFn"
   >
 ) {
   const filters = useDefaultFilters(overrides);
@@ -71,7 +74,7 @@ export function useOperationalReport(
       if (!result.success) {
         handleApiError(
           result,
-          'Terjadi kesalahan saat mengambil laporan operasional'
+          "Terjadi kesalahan saat mengambil laporan operasional"
         );
       }
 
@@ -86,12 +89,12 @@ export function useDailyOutputReport(
   overrides: Record<string, string | number | null | undefined> = {},
   options?: Omit<
     UseQueryOptions<
-      unknown,
+      DailyOutputReportResult,
       Error,
-      unknown,
+      DailyOutputReportResult,
       ReturnType<typeof reportKeys.dailyOutput>
     >,
-    'queryKey' | 'queryFn'
+    "queryKey" | "queryFn"
   >
 ) {
   const filters = useDefaultFilters(overrides);
@@ -110,16 +113,20 @@ export function useDailyOutputReport(
         );
       }
 
-      const result: ApiResponse<unknown> = await response.json();
+      const result: ApiResponse<{ report: DailyOutputReportResult }> =
+        await response.json();
 
       if (!result.success) {
         handleApiError(
           result,
-          'Terjadi kesalahan saat mengambil laporan pengeluaran harian'
+          "Terjadi kesalahan saat mengambil laporan pengeluaran harian"
         );
       }
 
-      return result.data;
+      if (!result.data) {
+        throw new Error("No data returned from daily output report API");
+      }
+      return result.data.report;
     },
     refetchOnWindowFocus: true,
     ...options,
@@ -135,7 +142,7 @@ export function useMonthlyOutputReport(
       MonthlyOutputReportResult,
       ReturnType<typeof reportKeys.monthlyOutput>
     >,
-    'queryKey' | 'queryFn'
+    "queryKey" | "queryFn"
   >
 ) {
   const filters = useDefaultFilters(overrides);
@@ -154,17 +161,20 @@ export function useMonthlyOutputReport(
         );
       }
 
-      const result: ApiResponse<MonthlyOutputReportResult> =
+      const result: ApiResponse<{ report: MonthlyOutputReportResult }> =
         await response.json();
 
       if (!result.success) {
         handleApiError(
           result,
-          'Terjadi kesalahan saat mengambil laporan pengeluaran bulanan'
+          "Terjadi kesalahan saat mengambil laporan pengeluaran bulanan"
         );
       }
 
-      return result.data as MonthlyOutputReportResult;
+      if (!result.data) {
+        throw new Error("No data returned from monthly output report API");
+      }
+      return result.data.report;
     },
     refetchOnWindowFocus: true,
     ...options,
@@ -180,7 +190,7 @@ export function useShipmentAssignmentReport(
       unknown,
       ReturnType<typeof reportKeys.shipmentAssignment>
     >,
-    'queryKey' | 'queryFn'
+    "queryKey" | "queryFn"
   >
 ) {
   const filters = useDefaultFilters(overrides);
@@ -204,7 +214,7 @@ export function useShipmentAssignmentReport(
       if (!result.success) {
         handleApiError(
           result,
-          'Terjadi kesalahan saat mengambil laporan penugasan pengiriman'
+          "Terjadi kesalahan saat mengambil laporan penugasan pengiriman"
         );
       }
 
@@ -223,7 +233,7 @@ export function useDashboardSummary(
       unknown,
       ReturnType<typeof reportKeys.dashboardSummary>
     >,
-    'queryKey' | 'queryFn'
+    "queryKey" | "queryFn"
   >
 ) {
   return useQuery({
@@ -242,7 +252,7 @@ export function useDashboardSummary(
       if (!result.success) {
         handleApiError(
           result,
-          'Terjadi kesalahan saat mengambil ringkasan dashboard'
+          "Terjadi kesalahan saat mengambil ringkasan dashboard"
         );
       }
 

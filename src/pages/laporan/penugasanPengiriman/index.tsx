@@ -10,20 +10,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useShipmentAssignmentReport } from "@/hooks/laporan";
-import type { ShipmentAssignment } from "@/types/report";
-
-// Types for shipment assignment report
-interface ShipmentAssignmentReportSummary {
-  totalArmada: number;
-  totalAssignments: number;
-  byStatus: { PENDING: number; PROSES: number; SELESAI: number };
-}
-interface ShipmentAssignmentReportResponse {
-  report: {
-    data: unknown[];
-    summary: ShipmentAssignmentReportSummary;
-  };
-}
+import type {
+  ShipmentAssignment,
+  ShipmentAssignmentKPI,
+  ShipmentAssignmentReportResult,
+} from "@/types/report";
+import { AlertCircle, BarChart3, Timer, Truck } from "lucide-react";
 
 function ShipmentAssignmentTable({ data }: { data: ShipmentAssignment[] }) {
   if (!data || data.length === 0) {
@@ -62,14 +54,14 @@ function ShipmentAssignmentTable({ data }: { data: ShipmentAssignment[] }) {
 export default function LaporanPenugasanPengiriman() {
   const { data, isLoading, isError, error, refetch } =
     useShipmentAssignmentReport() as {
-      data?: ShipmentAssignmentReportResponse;
+      data?: { report: ShipmentAssignmentReportResult };
       isLoading: boolean;
       isError: boolean;
       error: unknown;
       refetch: () => void;
     };
 
-  console.log(data, "data");
+  const kpi: ShipmentAssignmentKPI | undefined = data?.report.kpi;
 
   if (isLoading) {
     return <LoadingState text="Memuat laporan penugasan pengiriman..." />;
@@ -90,6 +82,79 @@ export default function LaporanPenugasanPengiriman() {
       <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl mb-2">
         Laporan Penugasan Pengiriman
       </h1>
+      {/* KPI Stat Cards */}
+      {kpi && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center p-4">
+              <Truck className="w-6 h-6 text-blue-600 mb-2" />
+              <div className="text-xs text-gray-500 font-medium uppercase">
+                Total Hari Ini
+              </div>
+              <div className="text-lg font-bold">{kpi.totalAssignedToday}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center p-4">
+              <Timer className="w-6 h-6 text-blue-600 mb-2" />
+              <div className="text-xs text-gray-500 font-medium uppercase">
+                Total Minggu Ini
+              </div>
+              <div className="text-lg font-bold">{kpi.totalAssignedWeek}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center p-4">
+              <BarChart3 className="w-6 h-6 text-blue-600 mb-2" />
+              <div className="text-xs text-gray-500 font-medium uppercase">
+                Total Bulan Ini
+              </div>
+              <div className="text-lg font-bold">{kpi.totalAssignedMonth}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center p-4">
+              <AlertCircle className="w-6 h-6 text-yellow-500 mb-2" />
+              <div className="text-xs text-gray-500 font-medium uppercase">
+                Pengiriman Pending
+              </div>
+              <div className="text-lg font-bold">{kpi.pendingAssignments}</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      {/* Most Active Armada */}
+      {kpi?.mostActiveArmada && (
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Armada Teraktif</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center">
+            <div className="text-lg font-bold text-blue-700">
+              {kpi.mostActiveArmada.plateNumber} - {kpi.mostActiveArmada.model}
+            </div>
+            <div className="text-sm text-gray-500">
+              {kpi.mostActiveArmada.count} penugasan
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {/* Average Shipments per Armada per Day */}
+      {kpi && (
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Rata-rata Penugasan per Armada per Hari</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center">
+            <div className="text-2xl font-bold text-blue-700">
+              {kpi.avgShipmentsPerArmadaPerDay.toFixed(2)}
+            </div>
+            <div className="text-sm text-gray-500">
+              penugasan / armada / hari
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Data Penugasan Pengiriman</CardTitle>
