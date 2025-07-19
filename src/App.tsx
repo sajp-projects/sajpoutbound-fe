@@ -77,14 +77,7 @@ const LaporanPenugasanPengiriman = lazy(
   () => import("./pages/laporan/penugasanPengiriman")
 );
 
-const LaporanPengeluaranHarian = lazy(
-  () => import("./pages/laporan/pengeluaranHarian")
-);
-const LaporanPengeluaranBulanan = lazy(
-  () => import("./pages/laporan/pengeluaranBulanan")
-);
-
-// Lazy import untuk halaman pengiriman
+const LaporanPengeluaran = lazy(() => import("./pages/laporan/pengeluaran"));
 const DaftarPengiriman = lazy(
   () => import("./pages/pengiriman/daftarPengiriman")
 );
@@ -473,19 +466,13 @@ export default function App() {
       redirectTo: "/laporan",
     },
     {
-      path: "pengeluaranHarian",
-      element: <LaporanPengeluaranHarian />,
+      path: "pengeluaran",
+      element: <LaporanPengeluaran />,
       resource: PERMISSION.RESOURCES.LAPORAN,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/laporan",
     },
-    {
-      path: "pengeluaranBulanan",
-      element: <LaporanPengeluaranBulanan />,
-      resource: PERMISSION.RESOURCES.LAPORAN,
-      action: PERMISSION.ACTIONS.READ,
-      redirectTo: "/laporan",
-    },
+
     {
       path: "penugasan",
       element: <LaporanPenugasanPengiriman />,

@@ -37,7 +37,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
         <label className="text-sm text-gray-600 font-medium">{label}</label>
       )}
       <button
-        className="border rounded px-2 py-1 text-sm bg-white hover:bg-gray-50 flex items-center"
+        className="border border-gray-300 rounded-md p-2 text-sm bg-white hover:bg-gray-50 flex items-center"
         onClick={() => setShowDatePicker((v) => !v)}
         type="button"
       >

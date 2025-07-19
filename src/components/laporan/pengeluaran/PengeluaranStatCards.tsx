@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { OutputReportSummary } from "@/types/report";
+import { OutputReportSummary } from "@/types/laporan";
 import {
   Calendar,
   CalendarDays,
@@ -22,7 +22,7 @@ function StatCard({
   value: React.ReactNode;
 }) {
   return (
-    <Card className="flex flex-row items-center gap-4 p-4">
+    <Card className="flex bg-white border-gray-100 flex-row items-center gap-4 p-4">
       <div className="p-2 rounded-full bg-blue-100 text-blue-600">{icon}</div>
       <div>
         <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">

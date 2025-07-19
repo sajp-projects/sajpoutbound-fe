@@ -1,5 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { DateRangeFilter } from "@/components/ui/DateRangeFilter";
 import {
   Select,
@@ -16,7 +14,7 @@ interface PengeluaranFilterBarProps {
   onGroupByChange: (v: string) => void;
   status: string;
   onStatusChange: (v: string) => void;
-  onReset: () => void;
+  onReset?: () => void;
   mode?: "range" | "month";
 }
 
@@ -27,7 +25,6 @@ export function PengeluaranFilterBar({
   onGroupByChange,
   status,
   onStatusChange,
-  onReset,
   mode = "range",
 }: PengeluaranFilterBarProps) {
   // For month mode
@@ -58,108 +55,94 @@ export function PengeluaranFilterBar({
   }
 
   return (
-    <Card className="mb-4 p-4 shadow-sm rounded-xl">
+    <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6 w-full">
       <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6 w-full">
-        <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6 w-full">
-          <div className="flex items-center gap-2">
-            {mode === "range" ? (
-              <DateRangeFilter
-                startDate={dateRange.start}
-                endDate={dateRange.end}
-                onChange={({ startDate, endDate }) =>
-                  onDateChange(startDate, endDate)
-                }
-              />
-            ) : (
-              <>
-                <span className="text-sm text-gray-600 font-medium">
-                  Bulan:
-                </span>
-                <Select
-                  value={String(selectedMonth)}
-                  onValueChange={(m) => {
-                    const newStart = `${selectedYear}-${m.padStart(2, "0")}-01`;
-                    onDateChange(newStart, newStart);
-                  }}
-                >
-                  <SelectTrigger className="w-28">
-                    <SelectValue placeholder="Bulan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map((m) => (
-                      <SelectItem key={m.value} value={String(m.value)}>
-                        {m.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <span className="text-sm text-gray-600 font-medium ml-2">
-                  Tahun:
-                </span>
-                <Select
-                  value={String(selectedYear)}
-                  onValueChange={(y) => {
-                    const newStart = `${y}-${String(selectedMonth).padStart(
-                      2,
-                      "0"
-                    )}-01`;
-                    onDateChange(newStart, newStart);
-                  }}
-                >
-                  <SelectTrigger className="w-24">
-                    <SelectValue placeholder="Tahun" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((y) => (
-                      <SelectItem key={y} value={String(y)}>
-                        {y}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">Group By:</span>
-            <Select value={groupBy} onValueChange={onGroupByChange}>
-              <SelectTrigger className="w-36">
-                <SelectValue placeholder="Group By" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="item">Barang</SelectItem>
-                <SelectItem value="customer">Pelanggan</SelectItem>
-                <SelectItem value="vehicle">Armada</SelectItem>
-                <SelectItem value="warehouse">Gudang</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">Status:</span>
-            <Select value={status} onValueChange={onStatusChange}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Semua" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Semua</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="PROSES">Proses</SelectItem>
-                <SelectItem value="SELESAI">Selesai</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="flex items-center gap-2">
+          {mode === "range" ? (
+            <DateRangeFilter
+              startDate={dateRange.start}
+              endDate={dateRange.end}
+              onChange={({ startDate, endDate }) =>
+                onDateChange(startDate, endDate)
+              }
+            />
+          ) : (
+            <>
+              <span className="text-sm text-gray-600 font-medium">Bulan:</span>
+              <Select
+                value={String(selectedMonth)}
+                onValueChange={(m) => {
+                  const newStart = `${selectedYear}-${m.padStart(2, "0")}-01`;
+                  onDateChange(newStart, newStart);
+                }}
+              >
+                <SelectTrigger className="w-28">
+                  <SelectValue placeholder="Bulan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map((m) => (
+                    <SelectItem key={m.value} value={String(m.value)}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-gray-600 font-medium ml-2">
+                Tahun:
+              </span>
+              <Select
+                value={String(selectedYear)}
+                onValueChange={(y) => {
+                  const newStart = `${y}-${String(selectedMonth).padStart(
+                    2,
+                    "0"
+                  )}-01`;
+                  onDateChange(newStart, newStart);
+                }}
+              >
+                <SelectTrigger className="w-24">
+                  <SelectValue placeholder="Tahun" />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((y) => (
+                    <SelectItem key={y} value={String(y)}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </>
+          )}
         </div>
-        <div className="flex md:ml-auto items-center mt-2 md:mt-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onReset}
-            className="w-full md:w-auto"
-          >
-            Reset
-          </Button>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-700">Group By:</span>
+          <Select value={groupBy} onValueChange={onGroupByChange}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Group By" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="item">Barang</SelectItem>
+              <SelectItem value="customer">Pelanggan</SelectItem>
+              <SelectItem value="vehicle">Armada</SelectItem>
+              <SelectItem value="warehouse">Gudang</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-700">Status:</span>
+          <Select value={status} onValueChange={onStatusChange}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Semua" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="PROSES">Proses</SelectItem>
+              <SelectItem value="SELESAI">Selesai</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }

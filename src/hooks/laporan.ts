@@ -1,9 +1,11 @@
 import { BASE_URL } from "@/constant/baseUrl";
 import { ApiResponse } from "@/types/api";
 import {
-  DailyOutputReportResult,
-  MonthlyOutputReportResult,
-} from "@/types/report";
+  OperationalReportResponse,
+  OperationalReportTableData,
+  OutputReportResult,
+  OutputReportTableData,
+} from "@/types/laporan";
 import { fetchApi } from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
@@ -16,10 +18,12 @@ export const reportKeys = {
   all: ["reports"] as const,
   operational: (filters: Record<string, unknown>) =>
     [...reportKeys.all, "operational", { filters }] as const,
-  dailyOutput: (filters: Record<string, unknown>) =>
-    [...reportKeys.all, "daily-output", { filters }] as const,
-  monthlyOutput: (filters: Record<string, unknown>) =>
-    [...reportKeys.all, "monthly-output", { filters }] as const,
+  operationalTable: (filters: Record<string, unknown>) =>
+    [...reportKeys.all, "operational-table", { filters }] as const,
+  output: (filters: Record<string, unknown>) =>
+    [...reportKeys.all, "output", { filters }] as const,
+  outputTable: (filters: Record<string, unknown>) =>
+    [...reportKeys.all, "output-table", { filters }] as const,
   shipmentAssignment: (filters: Record<string, unknown>) =>
     [...reportKeys.all, "shipment-assignment", { filters }] as const,
   dashboardSummary: () => [...reportKeys.all, "dashboard-summary"] as const,
@@ -45,9 +49,9 @@ export function useOperationalReport(
   overrides: Record<string, string | number | null | undefined> = {},
   options?: Omit<
     UseQueryOptions<
-      unknown,
+      OperationalReportResponse,
       Error,
-      unknown,
+      OperationalReportResponse,
       ReturnType<typeof reportKeys.operational>
     >,
     "queryKey" | "queryFn"
@@ -69,13 +73,18 @@ export function useOperationalReport(
         );
       }
 
-      const result: ApiResponse<unknown> = await response.json();
+      const result: ApiResponse<OperationalReportResponse> =
+        await response.json();
 
       if (!result.success) {
         handleApiError(
           result,
           "Terjadi kesalahan saat mengambil laporan operasional"
         );
+      }
+
+      if (!result.data) {
+        throw new Error("Data laporan operasional tidak ditemukan");
       }
 
       return result.data;
@@ -85,14 +94,14 @@ export function useOperationalReport(
   });
 }
 
-export function useDailyOutputReport(
+export function useOperationalReportTable(
   overrides: Record<string, string | number | null | undefined> = {},
   options?: Omit<
     UseQueryOptions<
-      DailyOutputReportResult,
+      OperationalReportTableData,
       Error,
-      DailyOutputReportResult,
-      ReturnType<typeof reportKeys.dailyOutput>
+      OperationalReportTableData,
+      ReturnType<typeof reportKeys.operationalTable>
     >,
     "queryKey" | "queryFn"
   >
@@ -100,7 +109,56 @@ export function useDailyOutputReport(
   const filters = useDefaultFilters(overrides);
 
   return useQuery({
-    queryKey: reportKeys.dailyOutput(filters),
+    queryKey: reportKeys.operationalTable(filters),
+    queryFn: async () => {
+      const response = await fetchApi(
+        `${BASE_URL}/reports/operational/table`,
+        filters
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Error fetching operational report table: ${response.statusText}`
+        );
+      }
+
+      const result: ApiResponse<OperationalReportTableData> =
+        await response.json();
+
+      if (!result.success) {
+        handleApiError(
+          result,
+          "Terjadi kesalahan saat mengambil data tabel operasional"
+        );
+      }
+
+      if (!result.data) {
+        throw new Error("Data tabel operasional tidak ditemukan");
+      }
+
+      return result.data;
+    },
+    refetchOnWindowFocus: true,
+    ...options,
+  });
+}
+
+export function useOutputReport(
+  overrides: Record<string, string | number | null | undefined> = {},
+  options?: Omit<
+    UseQueryOptions<
+      OutputReportResult,
+      Error,
+      OutputReportResult,
+      ReturnType<typeof reportKeys.output>
+    >,
+    "queryKey" | "queryFn"
+  >
+) {
+  const filters = useDefaultFilters(overrides);
+
+  return useQuery({
+    queryKey: reportKeys.output(filters),
     queryFn: async () => {
       const response = await fetchApi(
         `${BASE_URL}/reports/daily-output`,
@@ -108,71 +166,21 @@ export function useDailyOutputReport(
       );
 
       if (!response.ok) {
-        throw new Error(
-          `Error fetching daily output report: ${response.statusText}`
-        );
+        throw new Error(`Error fetching output report: ${response.statusText}`);
       }
 
-      const result: ApiResponse<{ report: DailyOutputReportResult }> =
+      const result: ApiResponse<{ report: OutputReportResult }> =
         await response.json();
 
       if (!result.success) {
         handleApiError(
           result,
-          "Terjadi kesalahan saat mengambil laporan pengeluaran harian"
+          "Terjadi kesalahan saat mengambil laporan pengeluaran"
         );
       }
 
       if (!result.data) {
-        throw new Error("No data returned from daily output report API");
-      }
-      return result.data.report;
-    },
-    refetchOnWindowFocus: true,
-    ...options,
-  });
-}
-
-export function useMonthlyOutputReport(
-  overrides: Record<string, string | number | null | undefined> = {},
-  options?: Omit<
-    UseQueryOptions<
-      MonthlyOutputReportResult,
-      Error,
-      MonthlyOutputReportResult,
-      ReturnType<typeof reportKeys.monthlyOutput>
-    >,
-    "queryKey" | "queryFn"
-  >
-) {
-  const filters = useDefaultFilters(overrides);
-
-  return useQuery({
-    queryKey: reportKeys.monthlyOutput(filters),
-    queryFn: async () => {
-      const response = await fetchApi(
-        `${BASE_URL}/reports/monthly-output`,
-        filters
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Error fetching monthly output report: ${response.statusText}`
-        );
-      }
-
-      const result: ApiResponse<{ report: MonthlyOutputReportResult }> =
-        await response.json();
-
-      if (!result.success) {
-        handleApiError(
-          result,
-          "Terjadi kesalahan saat mengambil laporan pengeluaran bulanan"
-        );
-      }
-
-      if (!result.data) {
-        throw new Error("No data returned from monthly output report API");
+        throw new Error("No data returned from output report API");
       }
       return result.data.report;
     },
@@ -216,6 +224,54 @@ export function useShipmentAssignmentReport(
           result,
           "Terjadi kesalahan saat mengambil laporan penugasan pengiriman"
         );
+      }
+
+      return result.data;
+    },
+    refetchOnWindowFocus: true,
+    ...options,
+  });
+}
+
+export function useOutputReportTable(
+  overrides: Record<string, string | number | null | undefined> = {},
+  options?: Omit<
+    UseQueryOptions<
+      OutputReportTableData,
+      Error,
+      OutputReportTableData,
+      ReturnType<typeof reportKeys.outputTable>
+    >,
+    "queryKey" | "queryFn"
+  >
+) {
+  const filters = useDefaultFilters(overrides);
+
+  return useQuery({
+    queryKey: reportKeys.outputTable(filters),
+    queryFn: async () => {
+      const response = await fetchApi(
+        `${BASE_URL}/reports/daily-output/table`,
+        filters
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Error fetching output report table: ${response.statusText}`
+        );
+      }
+
+      const result: ApiResponse<OutputReportTableData> = await response.json();
+
+      if (!result.success) {
+        handleApiError(
+          result,
+          "Terjadi kesalahan saat mengambil data tabel pengeluaran"
+        );
+      }
+
+      if (!result.data) {
+        throw new Error("Data tabel pengeluaran tidak ditemukan");
       }
 
       return result.data;

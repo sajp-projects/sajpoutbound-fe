@@ -14,7 +14,7 @@ import type {
   ShipmentAssignment,
   ShipmentAssignmentKPI,
   ShipmentAssignmentReportResult,
-} from "@/types/report";
+} from "@/types/laporan";
 import { AlertCircle, BarChart3, Timer, Truck } from "lucide-react";
 
 function ShipmentAssignmentTable({ data }: { data: ShipmentAssignment[] }) {

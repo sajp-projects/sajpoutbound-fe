@@ -327,13 +327,8 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
             action: PERMISSION.ACTIONS.READ,
           },
           {
-            name: "Pengeluaran Harian",
-            path: "/laporan/pengeluaranHarian",
-            action: PERMISSION.ACTIONS.READ,
-          },
-          {
-            name: "Pengeluaran Bulanan",
-            path: "/laporan/pengeluaranBulanan",
+            name: "Pengeluaran",
+            path: "/laporan/pengeluaran",
             action: PERMISSION.ACTIONS.READ,
           },
           {

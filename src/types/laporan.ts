@@ -1,5 +1,5 @@
 // Common types
-export type DailyGroupType = "item" | "customer" | "vehicle" | "warehouse";
+export type OutputGroupType = "item" | "customer" | "vehicle" | "warehouse";
 export type ShipmentType = "ANTAR" | "JEMPUT";
 export type ShipmentStatus =
   | "PENDING"
@@ -12,7 +12,7 @@ export type ShipmentStatus =
 export interface OutputGroupBase {
   id: string | null;
   name: string;
-  type: DailyGroupType;
+  type: OutputGroupType;
   totalQuantity: number;
   totalWeight: number;
   shipmentCount: number;
@@ -36,31 +36,10 @@ export interface OutputReportSummary {
   };
 }
 
-export interface DailyOutputReportResult {
+export interface OutputReportResult {
   data: OutputGroupBase[];
   summary: OutputReportSummary;
-  filters: DailyOutputReportFilter;
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-  allGroups?: OutputGroupBase[];
-}
-
-export interface MonthlyOutputReportResult {
-  data: OutputGroupBase[];
-  summary: OutputReportSummary;
-  monthInfo: {
-    year: number;
-    month: number;
-    monthName: string;
-    daysInMonth: number;
-  };
-  filters: MonthlyOutputReportFilter;
+  filters: OutputReportFilter;
   pagination: {
     total: number;
     page: number;
@@ -73,24 +52,18 @@ export interface MonthlyOutputReportResult {
 }
 
 // Add missing filter types for output reports
-export type DailyOutputReportFilter = {
+export type OutputReportFilter = {
+  period?: "daily" | "monthly" | "yearly";
   startDate?: string;
   endDate?: string;
-  groupBy?: DailyGroupType;
+  year?: number;
+  month?: number;
+  groupBy?: OutputGroupType;
   warehouseId?: string;
   customerId?: string;
   armadaId?: string;
   productId?: string;
-};
-
-export type MonthlyOutputReportFilter = {
-  year: number;
-  month: number;
-  groupBy?: DailyGroupType;
-  warehouseId?: string;
-  customerId?: string;
-  armadaId?: string;
-  productId?: string;
+  status?: string;
 };
 
 // Shipment related types
@@ -187,7 +160,7 @@ export interface ReportResponse<T> {
       };
     };
     filters: {
-      groupBy?: DailyGroupType;
+      groupBy?: OutputGroupType;
       type?: ShipmentType;
       status?: ShipmentStatus;
       [key: string]:
@@ -235,6 +208,7 @@ export interface OperationalReportSummary {
   JEMPUT: { PENDING: number; PROSES: number; SELESAI: number; total: number };
   overall: { PENDING: number; PROSES: number; SELESAI: number; total: number };
 }
+
 // Update the type for the API response to include the new 'kpi' field
 export interface OperationalReportKPI {
   totalShipmentsCreatedToday: number;
@@ -247,12 +221,12 @@ export interface OperationalReportKPI {
     satuan: string;
     totalQuantity: number;
   }>;
-  mostActiveVehicle: {
+  mostActiveVehicle: Array<{
     id: string;
     model: string;
     plateNumber: string;
     shipmentCount: number;
-  } | null;
+  }>;
   topCustomersByShipmentCount: Array<{
     id: string;
     name: string;
@@ -267,6 +241,7 @@ export interface OperationalReportKPI {
   trendline7Days: Array<{ date: string; shipmentCount: number }>;
   unitsUsed: string[];
 }
+
 export interface OperationalReportResponse {
   report: {
     data: Record<string, Record<string, Array<OperationalReportItem>>>;
@@ -280,5 +255,74 @@ export interface OperationalReportResponse {
       hasNext: boolean;
       hasPrev: boolean;
     };
+  };
+}
+
+// UseQueryOptions types for hooks
+export interface OutputReportTableData {
+  data: Array<{
+    id: string | null;
+    name: string;
+    type: "item" | "customer" | "vehicle" | "warehouse";
+    totalQuantity: number;
+    totalWeight: number;
+    shipmentCount: number;
+    satuan?: string;
+    shipments: Array<{
+      shipmentId: string;
+      shipmentNumber: string;
+      type: string;
+      verifiedAt: Date | null;
+      item: {
+        id: string;
+        product: {
+          id: string;
+          name: string;
+          satuan: string;
+        };
+        warehouse: {
+          id: string;
+          name: string;
+        };
+        requestedQuantity: number;
+        weightedQuantity: number | null;
+        status: string;
+        locationType: string;
+      };
+      armada: {
+        id: string;
+        model: string;
+        plateNumber: string;
+      } | null;
+      plateNumber: string;
+    }>;
+  }>;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+export interface OperationalReportTableData {
+  data: Array<{
+    id: string;
+    shipmentNumber: string;
+    type: "ANTAR" | "JEMPUT";
+    status: "PENDING" | "PROSES" | "SELESAI";
+    plateNumber: string;
+    totalItems: number;
+    totalWeight: number;
+  }>;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
   };
 }

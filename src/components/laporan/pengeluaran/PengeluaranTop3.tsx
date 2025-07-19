@@ -1,123 +1,121 @@
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DailyGroupType, OutputGroupBase } from "@/types/report";
+import { OutputGroupBase, OutputGroupType } from "@/types/laporan";
+import { Building, Package, Truck, Users } from "lucide-react";
 
 interface PengeluaranTop3Props {
   groups: OutputGroupBase[];
-  groupBy: DailyGroupType;
+  groupBy: OutputGroupType;
 }
 
-const groupByLabel: Record<DailyGroupType, string> = {
+const groupByLabel: Record<OutputGroupType, string> = {
   item: "Barang",
   customer: "Pelanggan",
   warehouse: "Gudang",
   vehicle: "Armada",
 };
 
-// Custom badge for larger, centered count
-function BigBadge({ children }: { children: React.ReactNode }) {
-  return (
-    <Badge
-      variant="outline"
-      className="mx-auto block text-base px-4 py-2 font-bold sm:mx-0 sm:inline-flex sm:text-sm sm:px-2 sm:py-1"
-    >
-      {children}
-    </Badge>
-  );
-}
+const groupByIcon: Record<OutputGroupType, React.ReactNode> = {
+  item: <Package className="w-4 h-4" />,
+  customer: <Users className="w-4 h-4" />,
+  vehicle: <Truck className="w-4 h-4" />,
+  warehouse: <Building className="w-4 h-4" />,
+};
 
 export function PengeluaranTop3({ groups, groupBy }: PengeluaranTop3Props) {
   if (!groups || groups.length === 0) return null;
 
-  if (groupBy === "item") {
-    // Top 3 by Quantity
-    const topQuantity = [...groups]
-      .sort((a, b) => b.totalQuantity - a.totalQuantity)
-      .slice(0, 3);
-    // Top 3 by Weight
-    const topWeight = [...groups]
-      .sort((a, b) => b.totalWeight - a.totalWeight)
-      .slice(0, 3);
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>{`Top 3 Barang (Kuantitas)`}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ol className="list-decimal">
-              {topQuantity.map((g: OutputGroupBase) => (
-                <li
-                  key={g.id || g.name}
-                  className="flex flex-col items-center sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2 mb-2"
-                >
-                  <span className="font-semibold min-w-[120px] text-center sm:text-left">
-                    {g.name}
-                  </span>
-                  <BigBadge>
-                    {g.totalQuantity} {g.satuan || ""}
-                  </BigBadge>
-                </li>
-              ))}
-            </ol>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{`Top 3 Barang (Berat)`}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ol className="list-decimal">
-              {topWeight.map((g: OutputGroupBase) => (
-                <li
-                  key={g.id || g.name}
-                  className="flex flex-col items-center sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2 mb-2"
-                >
-                  <span className="font-semibold min-w-[120px] text-center sm:text-left">
-                    {g.name}
-                  </span>
-                  <BigBadge>
-                    {g.totalWeight} {g.satuan || ""}
-                  </BigBadge>
-                </li>
-              ))}
-            </ol>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // For other groupings, show Top 3 by usage (shipmentCount)
   const label = groupByLabel[groupBy] || "Barang";
-  const top = [...groups]
-    .sort((a, b) => b.shipmentCount - a.shipmentCount)
-    .slice(0, 3);
+
+  // For items, show by quantity; for others, show by shipment count
+  const top =
+    groupBy === "item"
+      ? [...groups]
+          .sort((a, b) => b.totalQuantity - a.totalQuantity)
+          .slice(0, 3)
+      : [...groups]
+          .sort((a, b) => b.shipmentCount - a.shipmentCount)
+          .slice(0, 3);
+
+  // Calculate total shipments from unique shipment IDs across all groups
+  const allShipmentIds = new Set<string>();
+  groups.forEach((group) => {
+    group.shipments?.forEach((shipment) => {
+      allShipmentIds.add(shipment.shipmentId);
+    });
+  });
+  const totalShipments = allShipmentIds.size;
+
   return (
-    <div className="mb-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>{`Top 3 ${label}`}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ol className="list-decimal">
-            {top.map((g: OutputGroupBase) => (
-              <li
-                key={g.id || g.name}
-                className="flex flex-col items-center sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2 mb-2"
-              >
-                <span className="font-semibold min-w-[120px] text-center sm:text-left">
-                  {g.name}
-                </span>
-                <BigBadge>
-                  {g.shipmentCount}{" "}
-                  <span className="ml-1 text-xs text-gray-500">Penggunaan</span>
-                </BigBadge>
-              </li>
-            ))}
-          </ol>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="mb-4 bg-white border-gray-100 h-full shadow-sm hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          {groupByIcon[groupBy]}
+          {groupBy === "item" ? `Top 3 ${label} (Kuantitas)` : `Top 3 ${label}`}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="h-[120px] sm:h-[140px] flex flex-col p-2 sm:p-4">
+        {/* Header + Items Container */}
+        <div className="flex-1 flex flex-col justify-end">
+          {/* Top 3 List */}
+          <div className="min-w-[150px] sm:min-w-[200px] w-full -mt-10">
+            <ul className="space-y-1 sm:space-y-2">
+              {top.map((g: OutputGroupBase) => {
+                return (
+                  <li
+                    key={g.id || g.name}
+                    className="flex items-center justify-between gap-2 sm:gap-4 py-1"
+                  >
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                      <span className="font-bold text-blue-700 flex-shrink-0 text-xs sm:text-sm">
+                        {top.indexOf(g) + 1}.
+                      </span>
+                      <span className="font-semibold truncate text-xs sm:text-sm">
+                        {g.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                      <span className="text-xs sm:text-sm font-semibold text-gray-900">
+                        {groupBy === "item"
+                          ? g.totalQuantity.toLocaleString()
+                          : g.shipmentCount}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {groupBy === "item"
+                          ? g.satuan || ""
+                          : groupBy === "customer"
+                          ? "pengiriman"
+                          : "penggunaan"}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+
+        {/* Summary Container */}
+        <div className="pt-2 border-t space-y-2 border-gray-100 mt-12 sm:mt-12 lg:mt-12 xl:mt-14">
+          <div className="flex items-center justify-between text-xs text-gray-600">
+            <span>Total {label}:</span>
+            <span className="font-semibold">
+              {groups.length.toLocaleString()}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-xs text-gray-500 mt-1">
+            <span>
+              {groupBy === "item"
+                ? "Rata-rata item per pengiriman:"
+                : `Rata-rata pengiriman per ${label.toLowerCase()}:`}
+            </span>
+            <span>
+              {groupBy === "item"
+                ? Math.round((groups.length / totalShipments) * 100) / 100
+                : (totalShipments / groups.length).toFixed(1)}
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

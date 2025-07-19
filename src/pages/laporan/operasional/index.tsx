@@ -1,6 +1,7 @@
 import { ErrorState } from "@/components/ErrorState";
+import DataOperasionalTable from "@/components/laporan/DataOperasionalTable";
+import StatCard from "@/components/laporan/StatCard";
 import { LoadingState } from "@/components/LoadingState";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateRangeFilter } from "@/components/ui/DateRangeFilter";
 import {
@@ -10,23 +11,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useOperationalReport } from "@/hooks/laporan";
-import { OperationalReportResponse } from "@/types/report";
+import { cn } from "@/lib/utils";
+import { OperationalReportResponse } from "@/types/laporan";
 import { Inbox, Package, Truck, Weight } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import {
   Bar,
   BarChart,
+  CartesianGrid,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -39,24 +34,25 @@ export default function LaporanOperasional() {
     startDate: string;
     endDate: string;
   }>({
-    startDate: new Date(new Date().setHours(0, 0, 0, 0))
+    startDate: new Date(new Date().setHours(23, 59, 59, 999))
       .toISOString()
       .slice(0, 10),
     endDate: new Date(new Date().setHours(23, 59, 59, 999))
       .toISOString()
       .slice(0, 10),
   });
-  // Pagination state
-  const [page, setPage] = useState(1);
   // Status filter state
   const [status, setStatus] = useState("ALL");
+  // Add shipment type filter state
+  const [shipmentType, setShipmentType] = useState<"ALL" | "ANTAR" | "JEMPUT">(
+    "ALL"
+  );
 
   const { data, isLoading, isError, error, refetch } = useOperationalReport({
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
-    page,
-    limit: 5,
     status: status === "ALL" ? undefined : status,
+    type: shipmentType === "ALL" ? undefined : shipmentType,
   }) as {
     data?: OperationalReportResponse;
     isLoading: boolean;
@@ -64,6 +60,8 @@ export default function LaporanOperasional() {
     error: unknown;
     refetch: () => void;
   };
+
+  console.log(data, "data operasional");
 
   if (isLoading) {
     return <LoadingState text="Memuat laporan operasional..." />;
@@ -79,108 +77,30 @@ export default function LaporanOperasional() {
     );
   }
 
-  // Flatten the nested data structure for the table
-  const tableData = (() => {
-    try {
-      if (!data || typeof data !== "object" || !("report" in data)) return [];
-
-      const report = data.report;
-      if (!report || typeof report !== "object" || !("data" in report)) {
-        return [];
-      }
-
-      const reportData = report.data;
-      if (typeof reportData !== "object" || reportData === null) {
-        return [];
-      }
-
-      // Process the nested structure: { ANTAR: { PENDING: [], PROSES: [], SELESAI: [] }, JEMPUT: {...} }
-      return Object.entries(reportData).flatMap(
-        ([shipmentType, statusGroups]) => {
-          if (typeof statusGroups !== "object" || statusGroups === null) {
-            return [];
-          }
-
-          return Object.entries(statusGroups).flatMap(([status, shipments]) => {
-            if (!Array.isArray(shipments)) {
-              return [];
-            }
-
-            return shipments.map((shipment) => ({
-              tipe: shipmentType,
-              status: status,
-              nomor: shipment.shipmentNumber || "-",
-              plat:
-                shipment.plateNumber ||
-                shipment.armada?.plateNumber ||
-                shipment.vehicle?.plateNumber ||
-                "-",
-              totalBarang: shipment.totalItems || 0,
-              totalBerat: shipment.totalWeight || 0,
-            }));
-          });
-        }
-      );
-    } catch (error) {
-      console.error("Error processing report data:", error);
-      return [];
-    }
-  })();
-
-  // Get pagination info from backend
-  const pagination = data?.report?.pagination;
-
-  // StatCard and PieChart helpers
-  function StatCard({
-    icon,
-    label,
-    value,
-  }: {
-    icon: React.ReactNode;
-    label: string;
-    value: string | number;
-  }) {
-    return (
-      <Card className="flex flex-row items-center gap-4 p-4">
-        <div className="p-2 rounded-full bg-blue-100 text-blue-600">{icon}</div>
-        <div>
-          <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-            {label}
-          </div>
-          <div className="text-lg font-bold text-gray-900">{value}</div>
-        </div>
-      </Card>
-    );
-  }
-
   // Extract summary and pie chart data
   const kpi = data?.report?.kpi;
 
   return (
-    <div className="flex flex-col w-full min-h-full px-2 space-y-6 sm:space-y-8 sm:px-4 md:px-0">
-      <div className="mb-2 flex flex-col md:flex-row md:items-end md:justify-between gap-2 md:gap-4 w-full">
+    <div className="flex flex-col px-2 space-y-4 w-full min-h-full sm:space-y-6 sm:px-4 md:px-0">
+      {/* Outer header: title/subtitle left, filters right */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 md:gap-4 w-full">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
             Laporan Operasional
           </h1>
-          <p className="text-gray-500 mt-1">
-            Snapshot performa harian dan insight pengiriman gudang Anda.
-          </p>
         </div>
-        <div className="flex flex-wrap w-full md:w-auto items-center gap-2 gap-y-2 justify-start md:justify-end relative">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto items-start sm:items-center justify-start sm:justify-end">
           <DateRangeFilter
             startDate={dateRange.startDate}
             endDate={dateRange.endDate}
             onChange={(range) => {
               setDateRange(range);
-              setPage(1);
             }}
           />
           <Select
             value={status}
             onValueChange={(v) => {
               setStatus(v);
-              setPage(1);
             }}
           >
             <SelectTrigger className="w-32">
@@ -195,64 +115,172 @@ export default function LaporanOperasional() {
           </Select>
         </div>
       </div>
-      {/* KPI Cards */}
-      {kpi && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard
-            icon={<Truck className="w-5 h-5" />}
-            label="Pengiriman Dibuat Hari Ini"
-            value={kpi.totalShipmentsCreatedToday}
-          />
-          <StatCard
-            icon={<Weight className="w-5 h-5" />}
-            label="Pengiriman Diverifikasi Hari Ini"
-            value={kpi.totalShipmentsVerifiedToday}
-          />
-          <StatCard
-            icon={<Package className="w-5 h-5" />}
-            label="Produk Unik Terkirim"
-            value={kpi.uniqueProductsMoved}
-          />
-          <StatCard
-            icon={<Truck className="w-5 h-5" />}
-            label="Armada Aktif"
-            value={kpi.vehicleUsageCount}
-          />
-        </div>
-      )}
-      {/* 7-day trendline bar chart */}
-      {kpi && (
-        <Card className="mb-2">
-          <CardHeader>
-            <CardTitle>Tren Pengiriman 7 Hari Terakhir</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="w-full h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={kpi.trendline7Days}
-                  margin={{ top: 16, right: 24, left: 8, bottom: 16 }}
+      {/* Main card/container for operational report */}
+      <div className="overflow-hidden p-3 w-full bg-white rounded-lg shadow border border-gray-100 sm:p-4 md:p-6">
+        {/* Internal header: title left, segmented control right */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 mt-2 gap-2">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">
+              Laporan Operasional
+            </h2>
+            <p className="text-gray-500 mt-1">
+              Snapshot performa harian dan insight pengiriman gudang Anda.
+            </p>
+          </div>
+          <div className="flex justify-center sm:justify-end">
+            <div className="inline-flex rounded-lg bg-gray-100 p-1 shadow-sm border border-gray-200">
+              {[
+                { label: "Semua", value: "ALL" },
+                { label: "Antar", value: "ANTAR" },
+                { label: "Jemput", value: "JEMPUT" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  className={cn(
+                    "px-5 py-2 text-sm font-semibold rounded-md transition-colors focus:outline-none",
+                    shipmentType === opt.value
+                      ? "bg-white text-blue-700 shadow border border-blue-200"
+                      : "bg-transparent text-gray-600 hover:bg-white/70"
+                  )}
+                  onClick={() => {
+                    setShipmentType(opt.value as typeof shipmentType);
+                  }}
+                  type="button"
                 >
-                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-                  <Tooltip />
-                  <Bar
-                    dataKey="shipmentCount"
-                    fill="#2563eb"
-                    radius={[6, 6, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+                  {opt.label}
+                </button>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
-      {/* Insights Section */}
-      {kpi && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left: Top products, dispatched totals, campuran */}
-          <div className="flex flex-col gap-4">
-            <Card>
+          </div>
+        </div>
+        {/* KPI Cards */}
+        {kpi && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <StatCard
+              title="Pengiriman Dibuat"
+              value={kpi.totalShipmentsCreatedToday}
+              icon={<Truck className="w-5 h-5" />}
+              color="bg-blue-100 text-blue-600"
+            />
+            <StatCard
+              title="Pengiriman Diverifikasi"
+              value={kpi.totalShipmentsVerifiedToday}
+              icon={<Weight className="w-5 h-5" />}
+              color="bg-green-100 text-green-600"
+            />
+            <StatCard
+              title="Produk Unik Terkirim"
+              value={kpi.uniqueProductsMoved}
+              icon={<Package className="w-5 h-5" />}
+              color="bg-purple-100 text-purple-600"
+            />
+            <StatCard
+              title="Armada Aktif"
+              value={kpi.vehicleUsageCount}
+              icon={<Truck className="w-5 h-5" />}
+              color="bg-yellow-100 text-yellow-600"
+            />
+          </div>
+        )}
+        {/* 7-day trendline bar chart */}
+        {kpi && (
+          <Card className="mb-6 bg-white border-gray-100">
+            <CardHeader>
+              <CardTitle>Tren Pengiriman 7 Hari Terakhir</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="w-full h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={kpi.trendline7Days}
+                    margin={{ top: 24, right: 32, left: 8, bottom: 24 }}
+                    barCategoryGap={24}
+                  >
+                    <defs>
+                      <linearGradient id="barAntar" x1="0" y1="0" x2="0" y2="1">
+                        <stop
+                          offset="0%"
+                          stopColor="#10b981"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#10b981"
+                          stopOpacity={0.3}
+                        />
+                      </linearGradient>
+                      <linearGradient
+                        id="barJemput"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#2563eb"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#2563eb"
+                          stopOpacity={0.3}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      fontSize={13}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      fontSize={13}
+                      tickLine={false}
+                      axisLine={false}
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: 8,
+                        border: "none",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                        background: "#fff",
+                      }}
+                      labelStyle={{ fontWeight: 600, color: "#2563eb" }}
+                    />
+                    <Bar
+                      dataKey="antar"
+                      fill="url(#barAntar)"
+                      radius={[8, 8, 0, 0]}
+                      barSize={28}
+                      name="Antar"
+                    />
+                    <Bar
+                      dataKey="shipmentCount"
+                      fill="url(#barJemput)"
+                      radius={[8, 8, 0, 0]}
+                      barSize={28}
+                      name={
+                        shipmentType === "ANTAR"
+                          ? "Antar"
+                          : shipmentType === "JEMPUT"
+                          ? "Jemput"
+                          : "Semua"
+                      }
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {/* Insights Section */}
+        {kpi && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-gray-100 mb-6">
+            {/* Top products */}
+            <Card className="bg-white border-gray-100">
               <CardHeader>
                 <CardTitle>Top 3 Produk Terkirim</CardTitle>
               </CardHeader>
@@ -260,14 +288,24 @@ export default function LaporanOperasional() {
                 {kpi.topShippedProducts.length > 0 ? (
                   <ul className="space-y-2">
                     {kpi.topShippedProducts.map((prod, idx) => (
-                      <li key={prod.id} className="flex items-center gap-2">
-                        <span className="font-bold text-blue-700">
-                          {idx + 1}.
-                        </span>
-                        <span>{prod.name}</span>
-                        <Badge variant="outline">
-                          {prod.totalQuantity.toLocaleString()} {prod.satuan}
-                        </Badge>
+                      <li
+                        key={prod.id}
+                        className="flex items-center justify-between gap-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-blue-700">
+                            {idx + 1}.
+                          </span>
+                          <span>{prod.name}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {prod.totalQuantity.toLocaleString()}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {prod.satuan}
+                          </span>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -281,53 +319,39 @@ export default function LaporanOperasional() {
                 )}
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Total Pengiriman per Satuan</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {kpi.dispatchedTotalsByUnit.length > 0 ? (
-                  <ul className="space-y-2">
-                    {kpi.dispatchedTotalsByUnit.map((unit) => (
-                      <li key={unit.satuan} className="flex items-center gap-2">
-                        <span className="font-bold">{unit.satuan}:</span>
-                        <Badge variant="outline">
-                          {unit.totalQuantity.toLocaleString()}
-                        </Badge>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-24 py-4">
-                    <Inbox className="w-8 h-8 text-gray-300 mb-2" />
-                    <div className="text-gray-500 font-semibold text-base mb-1">
-                      Tidak ada data satuan
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          {/* Right: Most active vehicle, top customers */}
-          <div className="flex flex-col gap-4">
-            <Card>
+            {/* Most active vehicle */}
+            <Card className="bg-white border-gray-100">
               <CardHeader>
                 <CardTitle>Armada Paling Aktif</CardTitle>
               </CardHeader>
               <CardContent>
-                {kpi.mostActiveVehicle ? (
-                  <div className="flex items-center gap-2">
-                    <Truck className="w-5 h-5 text-blue-600" />
-                    <span className="font-semibold">
-                      {kpi.mostActiveVehicle.model}
-                    </span>
-                    <Badge variant="outline">
-                      {kpi.mostActiveVehicle.plateNumber}
-                    </Badge>
-                    <span className="ml-2 text-sm text-gray-500">
-                      {kpi.mostActiveVehicle.shipmentCount} pengiriman
-                    </span>
-                  </div>
+                {kpi.mostActiveVehicle.length > 0 ? (
+                  <ul className="space-y-2">
+                    {kpi.mostActiveVehicle.map((vehicle, idx) => (
+                      <li
+                        key={vehicle.id}
+                        className="flex items-center justify-between gap-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-blue-700">
+                            {idx + 1}.
+                          </span>
+                          <span className="font-semibold">{vehicle.model}</span>
+                          <span className="text-sm text-gray-500">
+                            {vehicle.plateNumber}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {vehicle.shipmentCount}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            pengiriman
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-24 py-4">
                     <Inbox className="w-8 h-8 text-gray-300 mb-2" />
@@ -338,7 +362,8 @@ export default function LaporanOperasional() {
                 )}
               </CardContent>
             </Card>
-            <Card>
+            {/* Top customers by shipment count */}
+            <Card className="bg-white border-gray-100">
               <CardHeader>
                 <CardTitle>Pelanggan Terbanyak (Jumlah barang)</CardTitle>
               </CardHeader>
@@ -346,12 +371,17 @@ export default function LaporanOperasional() {
                 {kpi.topCustomersByShipmentCount.length > 0 ? (
                   <ul className="space-y-2">
                     {kpi.topCustomersByShipmentCount.map((cust) => (
-                      <li key={cust.id} className="flex items-center gap-2">
-                        <span className="font-bold"></span>
+                      <li
+                        key={cust.id}
+                        className="flex items-center justify-between gap-2"
+                      >
                         <span>{cust.name}</span>
-                        <Badge variant="outline">
-                          {cust.shipmentCount} barang
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {cust.shipmentCount}
+                          </span>
+                          <span className="text-xs text-gray-500">barang</span>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -365,7 +395,8 @@ export default function LaporanOperasional() {
                 )}
               </CardContent>
             </Card>
-            <Card>
+            {/* Top customers by volume */}
+            <Card className="bg-white border-gray-100">
               <CardHeader>
                 <CardTitle>Pelanggan Terbanyak (Volume)</CardTitle>
               </CardHeader>
@@ -373,12 +404,16 @@ export default function LaporanOperasional() {
                 {kpi.topCustomersByVolume.length > 0 ? (
                   <ul className="space-y-2">
                     {kpi.topCustomersByVolume.map((cust) => (
-                      <li key={cust.id} className="flex items-center gap-2">
-                        <span className="font-bold"></span>
+                      <li
+                        key={cust.id}
+                        className="flex items-center justify-between gap-2"
+                      >
                         <span>{cust.name}</span>
-                        <Badge variant="outline">
-                          {cust.totalQuantity.toLocaleString()}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {cust.totalQuantity.toLocaleString()}
+                          </span>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -393,99 +428,15 @@ export default function LaporanOperasional() {
               </CardContent>
             </Card>
           </div>
-        </div>
-      )}
-      {/* Data Table */}
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full">
-          <CardTitle>Data Operasional</CardTitle>
-          <div className="flex flex-wrap w-full sm:w-auto items-center gap-2 gap-y-2 justify-start sm:justify-end">
-            <button
-              className="px-2 py-1 rounded border text-sm disabled:opacity-50"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={!pagination || page <= 1}
-            >
-              Prev
-            </button>
-            <span className="text-sm text-gray-600">
-              Halaman {pagination ? pagination.page : page} /{" "}
-              {pagination ? pagination.totalPages : 1}
-            </span>
-            <button
-              className="px-2 py-1 rounded border text-sm disabled:opacity-50"
-              onClick={() =>
-                setPage((p) => (pagination && pagination.hasNext ? p + 1 : p))
-              }
-              disabled={!pagination || !pagination.hasNext}
-            >
-              Next
-            </button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="font-semibold text-gray-600">
-                    Tipe
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-600">
-                    Status
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-600">
-                    No. Pengiriman
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-600">
-                    No. Polisi
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-600">
-                    Total Barang
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-600">
-                    Total Berat (kg)
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tableData.length > 0 ? (
-                  tableData.map((row, index) => (
-                    <TableRow
-                      key={`${row.tipe}-${index}`}
-                      className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                    >
-                      <TableCell>{row.tipe}</TableCell>
-                      <TableCell>{row.status}</TableCell>
-                      <TableCell>{row.nomor}</TableCell>
-                      <TableCell>{row.plat}</TableCell>
-                      <TableCell>{row.totalBarang.toLocaleString()}</TableCell>
-                      <TableCell>{row.totalBerat.toLocaleString()}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="h-48 text-center align-middle"
-                    >
-                      <div className="flex flex-col items-center justify-center h-full py-8">
-                        <Inbox className="w-10 h-10 text-gray-300 mb-2" />
-                        <div className="text-gray-500 font-semibold text-lg mb-1">
-                          Tidak ada data operasional
-                        </div>
-                        <div className="text-gray-400 text-sm">
-                          Belum ada pengiriman yang selesai/diverifikasi pada
-                          periode ini.
-                        </div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+        )}
+        {/* Data Table */}
+        <DataOperasionalTable
+          startDate={dateRange.startDate}
+          endDate={dateRange.endDate}
+          status={status}
+          shipmentType={shipmentType}
+        />
+      </div>
     </div>
   );
 }
