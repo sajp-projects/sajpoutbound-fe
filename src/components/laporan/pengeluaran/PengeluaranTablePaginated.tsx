@@ -1,3 +1,5 @@
+import { EmptyState } from "@/components/EmptyState";
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -9,6 +11,7 @@ import {
 import { useOutputReportTable } from "@/hooks/laporan";
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/utils/formatNumber";
+import { Table as TableIcon } from "lucide-react";
 import { useState } from "react";
 
 interface PengeluaranTablePaginatedProps {
@@ -77,9 +80,13 @@ export default function PengeluaranTablePaginated({
 
   if (!data?.data || data.data.length === 0) {
     return (
-      <div className="p-4 text-center">
-        <p className="text-gray-500">Tidak ada data untuk ditampilkan</p>
-      </div>
+      <Card className="p-6 border-gray-100">
+        <EmptyState
+          title="Tidak ada data untuk ditampilkan"
+          message="Pastikan filter yang Anda gunakan sesuai dengan data yang tersedia."
+          icon={<TableIcon className="h-12 w-12 text-gray-400" />}
+        />
+      </Card>
     );
   }
 

@@ -93,26 +93,13 @@ export default function Pengeluaran() {
     }
   }
 
-  const getPeriodLabel = () => {
-    switch (period) {
-      case "daily":
-        return "Harian";
-      case "monthly":
-        return "Bulanan";
-      case "yearly":
-        return "Tahunan";
-      default:
-        return "Harian";
-    }
-  };
-
   return (
     <div className="flex flex-col px-2 space-y-4 w-full min-h-full sm:space-y-6 sm:px-4 md:px-0">
       {/* Outer header: title/subtitle left, filters right */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 md:gap-4 w-full">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Laporan Pengeluaran {getPeriodLabel()}
+            Laporan Pengeluaran
           </h1>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto items-start sm:items-center justify-start sm:justify-end">
@@ -221,16 +208,11 @@ export default function Pengeluaran() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 mt-2 gap-2">
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-              Laporan Pengeluaran {getPeriodLabel()}
+              Laporan Pengeluaran
             </h2>
             <p className="text-sm sm:text-base text-gray-500 mt-1">
-              Analisis pengeluaran{" "}
-              {period === "daily"
-                ? "harian"
-                : period === "monthly"
-                ? "bulanan"
-                : "tahunan"}{" "}
-              berdasarkan item, pelanggan, armada, atau gudang.
+              Analisis pengeluaran berdasarkan barang, pelanggan, armada, atau
+              gudang.
             </p>
           </div>
           {/* Group By Filter */}
