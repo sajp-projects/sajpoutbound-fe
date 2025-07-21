@@ -1,25 +1,18 @@
-import { useState, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router";
-import { Link } from "react-router";
-import Joi from "joi";
-import { joiResolver } from "@hookform/resolvers/joi";
-import { useForm, useFieldArray } from "react-hook-form";
-import { Loader2, Plus, Save, Trash } from "lucide-react";
-import { shipmentKeys, useCreateShipment } from "@/hooks/pengiriman";
 import {
-  useDeliveryOrders,
-  useDeliveryOrder,
-  deliveryOrderKeys,
-} from "@/hooks/do";
-import { useArmadas } from "@/hooks/armada";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Form,
   FormControl,
@@ -29,6 +22,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -37,20 +31,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { LOCATION_TYPE } from "@/utils/constants";
-import { showSuccessAlert, showErrorAlert } from "@/utils/sweetAlert";
-import { CreateShipmentInput, Shipment } from "@/types/pengiriman";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Combobox } from "@/components/ui/combobox";
-import { formatNumber } from "@/utils/formatNumber";
-import { cn } from "@/lib/utils";
+import { useArmadas } from "@/hooks/armada";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+  deliveryOrderKeys,
+  useDeliveryOrder,
+  useDeliveryOrders,
+} from "@/hooks/do";
+import { shipmentKeys, useCreateShipment } from "@/hooks/pengiriman";
+import { cn } from "@/lib/utils";
+import { CreateShipmentInput, Shipment } from "@/types/pengiriman";
+import { LOCATION_TYPE } from "@/utils/constants";
+import { formatNumber } from "@/utils/formatNumber";
+import { showErrorAlert, showSuccessAlert } from "@/utils/sweetAlert";
+import { joiResolver } from "@hookform/resolvers/joi";
 import { useQueryClient } from "@tanstack/react-query";
+import Joi from "joi";
+import { Loader2, Plus, Save, Trash } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router";
 
 // Validasi plat nomor Indonesia
 const plateNumberRegex = /^[A-Z]{1,2}\s?\d{1,4}\s?[A-Z]{1,3}$/;
@@ -388,16 +387,10 @@ export default function TambahPengiriman() {
         );
         if (
           selectedProduct &&
-          product.requestedQuantity > selectedProduct.quantity
+          product.requestedQuantity > selectedProduct.pendingQuantity
         ) {
           errors.push(
-            `DO ${doIndex + 1}, Barang ${
-              selectedProduct.name
-            }: Jumlah yang diminta (${formatNumber(
-              product.requestedQuantity
-            )}) melebihi kuantitas tersedia (${formatNumber(
-              selectedProduct.quantity
-            )} ${selectedProduct.satuan})`
+            "Jumlah yang diminta melebihi stok tersedia. Tolong cek kembali."
           );
         }
       });
@@ -1147,14 +1140,14 @@ export default function TambahPengiriman() {
                                                               }
                                                               className={cn(
                                                                 field.value >
-                                                                  product.quantity &&
+                                                                  product.pendingQuantity &&
                                                                   "border-orange-500"
                                                               )}
                                                             />
                                                           </FormControl>
                                                           <div className="min-h-[20px]">
                                                             {field.value >
-                                                              product.quantity && (
+                                                              product.pendingQuantity && (
                                                               <p className="text-xs text-orange-500">
                                                                 Nilai melebihi
                                                                 stok tersedia
