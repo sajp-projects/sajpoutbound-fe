@@ -1,6 +1,8 @@
 import { BASE_URL } from "@/constant/baseUrl";
 import { ApiResponse } from "@/types/api";
 import {
+  DashboardSummaryFilter,
+  DashboardSummaryResult,
   OperationalReportResponse,
   OperationalReportTableData,
   OutputReportResult,
@@ -26,7 +28,8 @@ export const reportKeys = {
     [...reportKeys.all, "output-table", { filters }] as const,
   shipmentAssignment: (filters: Record<string, unknown>) =>
     [...reportKeys.all, "shipment-assignment", { filters }] as const,
-  dashboardSummary: () => [...reportKeys.all, "dashboard-summary"] as const,
+  dashboardSummary: (filters: Record<string, unknown>) =>
+    [...reportKeys.all, "dashboard-summary", { filters }] as const,
 };
 
 /**
@@ -282,20 +285,29 @@ export function useOutputReportTable(
 }
 
 export function useDashboardSummary(
+  filters: DashboardSummaryFilter = {},
   options?: Omit<
     UseQueryOptions<
-      unknown,
+      DashboardSummaryResult,
       Error,
-      unknown,
+      DashboardSummaryResult,
       ReturnType<typeof reportKeys.dashboardSummary>
     >,
     "queryKey" | "queryFn"
   >
 ) {
+  // Convert filters to a plain object with only defined string/number values for query params
+  const queryFilters: Record<string, string | number | null | undefined> = {};
+  if (filters.startDate) queryFilters.startDate = filters.startDate;
+  if (filters.endDate) queryFilters.endDate = filters.endDate;
+
   return useQuery({
-    queryKey: reportKeys.dashboardSummary(),
+    queryKey: reportKeys.dashboardSummary(queryFilters),
     queryFn: async () => {
-      const response = await fetchApi(`${BASE_URL}/reports/dashboard-summary`);
+      const response = await fetchApi(
+        `${BASE_URL}/reports/dashboard-summary`,
+        queryFilters
+      );
 
       if (!response.ok) {
         throw new Error(
@@ -303,7 +315,8 @@ export function useDashboardSummary(
         );
       }
 
-      const result: ApiResponse<unknown> = await response.json();
+      const result: ApiResponse<{ summary: DashboardSummaryResult }> =
+        await response.json();
 
       if (!result.success) {
         handleApiError(
@@ -312,7 +325,11 @@ export function useDashboardSummary(
         );
       }
 
-      return result.data;
+      if (!result.data) {
+        throw new Error("Data ringkasan dashboard tidak ditemukan");
+      }
+
+      return result.data.summary;
     },
     refetchOnWindowFocus: true,
     ...options,

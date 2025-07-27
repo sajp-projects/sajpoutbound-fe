@@ -326,3 +326,75 @@ export interface OperationalReportTableData {
     hasPrev: boolean;
   };
 }
+
+// Dashboard Summary Types
+export interface DashboardSummaryFilter {
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface RecentActivity {
+  id: string;
+  shipmentNumber: string;
+  status: "PENDING" | "PROSES" | "SELESAI";
+  createdAt: string;
+}
+
+export interface PerformanceMetrics {
+  completionRate: number;
+  verificationRate: number;
+  totalShipmentsCreated: number;
+  totalShipmentsVerified: number;
+  totalShipmentsCompleted: number;
+  distributionAnalysis: {
+    antarTotal: number;
+    jemputTotal: number;
+    antarPercentage: number;
+    jemputPercentage: number;
+  };
+}
+
+export interface ArmadaInfo {
+  id: string;
+  model: string;
+  plateNumber: string;
+  id_sl?: string;
+}
+
+export interface DashboardSummaryResult {
+  kpi: {
+    totalDOsActive: number;
+    totalShipmentsCreatedToday: number;
+    totalShipmentsVerifiedToday: number;
+    totalArmadas: number;
+    uniqueProductsMoved: number;
+    vehicleUsageCount: number;
+    mostActiveVehicle: Array<{
+      id: string;
+      model: string;
+      plateNumber: string;
+      shipmentCount: number;
+    }>;
+    trendline7Days: Array<{ date: string; shipmentCount: number }>;
+  };
+  doSummary: OperationalReportSummary;
+  recentActivities: RecentActivity[];
+  performance: PerformanceMetrics;
+  armada: {
+    total: number;
+    usageCount: number;
+    mostActive: {
+      id: string;
+      model: string;
+      plateNumber: string;
+      shipmentCount: number;
+    } | null;
+    list: ArmadaInfo[];
+  };
+  filters: DashboardSummaryFilter;
+  generatedAt: string;
+  dateRange: {
+    start: string;
+    end: string;
+  };
+}

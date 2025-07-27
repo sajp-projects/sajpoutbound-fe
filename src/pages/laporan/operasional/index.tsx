@@ -15,7 +15,8 @@ import { useOperationalReport } from "@/hooks/laporan";
 import { cn } from "@/lib/utils";
 import { OperationalReportResponse } from "@/types/laporan";
 import { Inbox, Package, Truck, Weight } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import {
@@ -29,24 +30,43 @@ import {
 } from "recharts";
 
 export default function LaporanOperasional() {
-  // Date range state
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Initialize states from URL parameters
   const [dateRange, setDateRange] = useState<{
     startDate: string;
     endDate: string;
-  }>({
-    startDate: new Date(new Date().setHours(23, 59, 59, 999))
+  }>(() => {
+    const today = new Date(new Date().setHours(23, 59, 59, 999))
       .toISOString()
-      .slice(0, 10),
-    endDate: new Date(new Date().setHours(23, 59, 59, 999))
-      .toISOString()
-      .slice(0, 10),
+      .slice(0, 10);
+    return {
+      startDate: searchParams.get("startDate") || today,
+      endDate: searchParams.get("endDate") || today,
+    };
   });
+  
   // Status filter state
-  const [status, setStatus] = useState("ALL");
-  // Add shipment type filter state
-  const [shipmentType, setShipmentType] = useState<"ALL" | "ANTAR" | "JEMPUT">(
-    "ALL"
+  const [status, setStatus] = useState(() => 
+    searchParams.get("status") || "ALL"
   );
+  
+  // Add shipment type filter state - initialize from URL
+  const [shipmentType, setShipmentType] = useState<"ALL" | "ANTAR" | "JEMPUT">(() => {
+    const typeParam = searchParams.get("type");
+    return (typeParam === "ANTAR" || typeParam === "JEMPUT") ? typeParam : "ALL";
+  });
+
+  // Sync URL parameters with state changes
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set("startDate", dateRange.startDate);
+    params.set("endDate", dateRange.endDate);
+    if (status !== "ALL") params.set("status", status);
+    if (shipmentType !== "ALL") params.set("type", shipmentType);
+    
+    setSearchParams(params, { replace: true });
+  }, [dateRange, status, shipmentType, setSearchParams]);
 
   const { data, isLoading, isError, error, refetch } = useOperationalReport({
     startDate: dateRange.startDate,
