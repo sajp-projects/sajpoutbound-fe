@@ -7,16 +7,12 @@ interface ResourceGroupProps {
   resource: string;
   permissions: Permission[];
   isPermissionSelected: (id: string) => boolean;
-  togglePermission: (id: string) => void;
-  isPermissionChanged: (id: string) => boolean;
 }
 
 export const ResourceGroup = ({
   resource,
   permissions,
   isPermissionSelected,
-  togglePermission,
-  isPermissionChanged,
 }: ResourceGroupProps) => (
   <div className="overflow-hidden border border-gray-200 rounded-lg">
     <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
@@ -33,8 +29,6 @@ export const ResourceGroup = ({
           <PermissionsTable
             permissions={permissions}
             isPermissionSelected={isPermissionSelected}
-            togglePermission={togglePermission}
-            isPermissionChanged={isPermissionChanged}
           />
         </div>
       </div>
@@ -47,8 +41,6 @@ export const ResourceGroup = ({
           key={permission.id}
           permission={permission}
           isSelected={isPermissionSelected(permission.id)}
-          onToggle={togglePermission}
-          isChanged={isPermissionChanged(permission.id)}
         />
       ))}
     </div>

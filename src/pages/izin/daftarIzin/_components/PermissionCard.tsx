@@ -7,31 +7,21 @@ import { Check } from "lucide-react";
 interface PermissionCardProps {
   permission: Permission;
   isSelected: boolean;
-  onToggle: (id: string) => void;
-  isChanged: boolean;
 }
 
 export const PermissionCard = ({
   permission,
   isSelected,
-  onToggle,
-  isChanged,
 }: PermissionCardProps) => {
   return (
-    <div
-      className={`border-b border-gray-100 last:border-0 p-4 ${
-        isChanged ? "bg-blue-50" : ""
-      }`}
-    >
+    <div className="border-b border-gray-100 last:border-0 p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-3">
           <input
             type="checkbox"
-            className={`h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${
-              isChanged ? "ring-2 ring-blue-400" : ""
-            }`}
+            className="h-5 w-5 rounded border-gray-300 text-blue-600 bg-gray-100 cursor-not-allowed"
             checked={isSelected}
-            onChange={() => onToggle(permission.id)}
+            disabled
             id={`mobile-permission-${permission.id}`}
           />
           <span
@@ -47,12 +37,6 @@ export const PermissionCard = ({
         {isSelected && (
           <span className="p-1 text-green-600 rounded-full bg-green-50">
             <Check className="w-4 h-4" />
-          </span>
-        )}
-
-        {isChanged && (
-          <span className="text-xs text-blue-600 font-medium bg-blue-100 px-2 py-0.5 rounded-full ml-1">
-            Diubah
           </span>
         )}
       </div>

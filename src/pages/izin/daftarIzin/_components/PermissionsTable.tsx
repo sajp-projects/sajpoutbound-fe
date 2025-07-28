@@ -14,15 +14,11 @@ import { formatDate } from "@/utils/date";
 interface PermissionsTableProps {
   permissions: Permission[];
   isPermissionSelected: (id: string) => boolean;
-  togglePermission: (id: string) => void;
-  isPermissionChanged: (id: string) => boolean;
 }
 
 export const PermissionsTable = ({
   permissions,
   isPermissionSelected,
-  togglePermission,
-  isPermissionChanged,
 }: PermissionsTableProps) => {
   return (
     <Table>
@@ -43,33 +39,25 @@ export const PermissionsTable = ({
           <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
             Dibuat
           </TableHead>
-          <TableHead className="w-[10%] py-3 px-3 text-center font-semibold text-gray-700 text-sm hidden md:table-cell">
-            Status
-          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {permissions.map((permission, idx) => {
-          const wasChanged = isPermissionChanged(permission.id);
           return (
             <TableRow
               key={permission.id}
               className={cn(
                 idx % 2 === 0 ? "bg-white" : "bg-gray-50",
-                wasChanged && "bg-blue-50/70",
                 "border-b border-gray-200 last:border-b-0"
               )}
             >
-              <TableCell className="py-2.5 px-3 text-center">
-                <div className="flex items-center justify-center">
+              <TableCell className="py-2.5 px-3 text-left">
+                <div className="flex items-center justify-start">
                   <input
                     type="checkbox"
-                    className={cn(
-                      "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500",
-                      wasChanged && "ring-2 ring-blue-400"
-                    )}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 bg-gray-100 cursor-not-allowed"
                     checked={isPermissionSelected(permission.id)}
-                    onChange={() => togglePermission(permission.id)}
+                    disabled
                     id={`permission-${permission.id}`}
                   />
                 </div>
@@ -96,13 +84,6 @@ export const PermissionsTable = ({
               </TableCell>
               <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
                 {formatDate(permission.createdAt)}
-              </TableCell>
-              <TableCell className="py-2.5 px-3 text-center hidden md:table-cell">
-                {wasChanged && (
-                  <span className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-full">
-                    Diubah
-                  </span>
-                )}
               </TableCell>
             </TableRow>
           );
