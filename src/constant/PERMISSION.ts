@@ -4,6 +4,8 @@ export const PERMISSION = {
     READ: 'READ',
     UPDATE: 'UPDATE',
     DELETE: 'DELETE',
+    WEIGH: 'WEIGH',
+    VERIFY_PLATE: 'VERIFY_PLATE',
   },
   RESOURCES: {
     DASHBOARD: 'dashboard',

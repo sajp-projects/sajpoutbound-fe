@@ -1,5 +1,5 @@
-export type ShipmentType = 'ANTAR' | 'JEMPUT';
-export type ShipmentStatus = 'PENDING' | 'PROSES' | 'SELESAI' | 'COMPLETED';
+export type ShipmentType = "ANTAR" | "JEMPUT";
+export type ShipmentStatus = "PENDING" | "PROSES" | "SELESAI" | "COMPLETED";
 
 export interface ShipmentItem {
   id: string;
@@ -358,4 +358,12 @@ export interface GroupedDeliveryOrder {
     address?: string;
   };
   products: ProductItem[];
+}
+
+export interface BulkWeighShipmentInput {
+  shipmentId: string;
+  productId: string;
+  grossWeight: number;
+  netWeight?: number;
+  tareWeight?: number;
 }

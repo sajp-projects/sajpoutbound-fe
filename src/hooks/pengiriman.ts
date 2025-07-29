@@ -1,27 +1,28 @@
-import { BASE_URL } from '@/constant/baseUrl';
-import { ApiErrorResult, ApiResponse } from '@/types/api';
+import { BASE_URL } from "@/constant/baseUrl";
+import { ApiErrorResult, ApiResponse } from "@/types/api";
 import {
+  BulkWeighShipmentInput,
   ChosenProductsResponse,
   CreateShipmentInput,
   Shipment,
   ShipmentPagination,
   UpdateShipmentInput,
-} from '@/types/pengiriman';
-import { fetchApi } from '@/utils/api';
-import { createErrorResponse, handleApiError } from '@/utils/errorHandler';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { deliveryOrderKeys } from './do';
+} from "@/types/pengiriman";
+import { fetchApi } from "@/utils/api";
+import { createErrorResponse, handleApiError } from "@/utils/errorHandler";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deliveryOrderKeys } from "./do";
 
 export const shipmentKeys = {
-  all: ['shipments'] as const,
-  lists: () => [...shipmentKeys.all, 'list'] as const,
+  all: ["shipments"] as const,
+  lists: () => [...shipmentKeys.all, "list"] as const,
   list: (filters: Record<string, unknown>) =>
     [...shipmentKeys.lists(), { filters }] as const,
-  details: () => [...shipmentKeys.all, 'detail'] as const,
+  details: () => [...shipmentKeys.all, "detail"] as const,
   detail: (id: string) => [...shipmentKeys.details(), id] as const,
-  archived: () => [...shipmentKeys.all, 'archived'] as const,
+  archived: () => [...shipmentKeys.all, "archived"] as const,
   chosenProducts: (shipmentId: string) =>
-    [...shipmentKeys.all, 'chosenProducts', shipmentId] as const,
+    [...shipmentKeys.all, "chosenProducts", shipmentId] as const,
 };
 
 export function useShipments(options = {}) {
@@ -39,7 +40,7 @@ export function useShipments(options = {}) {
       if (!result.success) {
         handleApiError(
           result,
-          'Terjadi kesalahan saat mengambil data pengiriman'
+          "Terjadi kesalahan saat mengambil data pengiriman"
         );
       }
 
@@ -50,7 +51,7 @@ export function useShipments(options = {}) {
 }
 
 export function useShipmentsWithParams(
-  { page = 1, limit = 10, search = '', status = '', type = '' } = {},
+  { page = 1, limit = 10, search = "", status = "", type = "" } = {},
   options = {}
 ) {
   const filters = {
@@ -75,7 +76,7 @@ export function useShipmentsWithParams(
       if (!result.success) {
         handleApiError(
           result,
-          'Terjadi kesalahan saat mengambil data pengiriman'
+          "Terjadi kesalahan saat mengambil data pengiriman"
         );
       }
 
@@ -105,17 +106,17 @@ export function useShipment({ id }: { id: string }, options = {}) {
         if (!result.success) {
           throw new Error(
             result.message ||
-              'Terjadi kesalahan saat mengambil detail pengiriman'
+              "Terjadi kesalahan saat mengambil detail pengiriman"
           );
         }
 
         if (!result.data) {
-          throw new Error('Detail pengiriman tidak ditemukan');
+          throw new Error("Detail pengiriman tidak ditemukan");
         }
 
         return result.data;
       } catch (error) {
-        console.error('Error in useShipment:', error);
+        console.error("Error in useShipment:", error);
         throw error;
       }
     },
@@ -141,7 +142,7 @@ export function useArchivedShipments(options = {}) {
       if (!result.success) {
         handleApiError(
           result,
-          'Terjadi kesalahan saat mengambil data pengiriman yang diarsipkan'
+          "Terjadi kesalahan saat mengambil data pengiriman yang diarsipkan"
         );
       }
 
@@ -160,7 +161,7 @@ export function useCreateShipment(options = {}) {
         `${BASE_URL}/shipments`,
         {},
         {
-          method: 'POST',
+          method: "POST",
           body: JSON.stringify(data),
         }
       );
@@ -170,14 +171,14 @@ export function useCreateShipment(options = {}) {
       if (!result.success) {
         throw new Error(
           JSON.stringify(
-            createErrorResponse(result, 'Gagal membuat pengiriman')
+            createErrorResponse(result, "Gagal membuat pengiriman")
           )
         );
       }
 
       if (!result.data) {
         throw new Error(
-          JSON.stringify({ message: 'Data pengiriman tidak ditemukan' })
+          JSON.stringify({ message: "Data pengiriman tidak ditemukan" })
         );
       }
 
@@ -203,7 +204,7 @@ export function useUpdateShipment(options = {}) {
         `${BASE_URL}/shipments/${id}`,
         {},
         {
-          method: 'PUT',
+          method: "PUT",
           body: JSON.stringify(data),
         }
       );
@@ -213,7 +214,7 @@ export function useUpdateShipment(options = {}) {
       if (!result.success) {
         throw new Error(
           JSON.stringify(
-            createErrorResponse(result, 'Gagal memperbarui pengiriman')
+            createErrorResponse(result, "Gagal memperbarui pengiriman")
           )
         );
       }
@@ -221,7 +222,7 @@ export function useUpdateShipment(options = {}) {
       if (!result.data) {
         throw new Error(
           JSON.stringify({
-            message: 'Data pengiriman yang diperbarui tidak ditemukan',
+            message: "Data pengiriman yang diperbarui tidak ditemukan",
           })
         );
       }
@@ -247,14 +248,14 @@ export function useDeleteShipment(options = {}) {
         `${BASE_URL}/shipments/${id}`,
         {},
         {
-          method: 'DELETE',
+          method: "DELETE",
         }
       );
 
       const result: ApiResponse<void> = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Gagal menghapus pengiriman');
+        throw new Error(result.message || "Gagal menghapus pengiriman");
       }
     },
     onSuccess: () => {
@@ -263,7 +264,7 @@ export function useDeleteShipment(options = {}) {
       queryClient.invalidateQueries({ queryKey: deliveryOrderKeys.lists() });
       queryClient.invalidateQueries({ queryKey: deliveryOrderKeys.all });
       queryClient.invalidateQueries({ queryKey: deliveryOrderKeys.details() });
-      queryClient.invalidateQueries({ queryKey: ['deliveryOrders'] });
+      queryClient.invalidateQueries({ queryKey: ["deliveryOrders"] });
     },
     ...options,
   });
@@ -314,7 +315,7 @@ export function useChooseProduct(options = {}) {
         `${BASE_URL}/shipments/${data.shipmentId}/choosen-product`,
         {},
         {
-          method: 'POST',
+          method: "POST",
           body: JSON.stringify(data),
         }
       );
@@ -323,7 +324,7 @@ export function useChooseProduct(options = {}) {
 
       if (!result.success) {
         throw new Error(
-          JSON.stringify(createErrorResponse(result, 'Gagal memilih barang'))
+          JSON.stringify(createErrorResponse(result, "Gagal memilih barang"))
         );
       }
 
@@ -352,7 +353,7 @@ export function useShipmentChosenProducts(shipmentId: string, options = {}) {
           `${BASE_URL}/shipments/${shipmentId}/choosen-product`,
           {},
           {
-            method: 'GET',
+            method: "GET",
           }
         );
 
@@ -369,13 +370,13 @@ export function useShipmentChosenProducts(shipmentId: string, options = {}) {
 
         if (!result.success) {
           throw new Error(
-            result.message || 'Gagal mendapatkan barang terpilih'
+            result.message || "Gagal mendapatkan barang terpilih"
           );
         }
 
         return result.data?.chosenProducts || [];
       } catch (error) {
-        console.error('Error fetching chosen products:', error);
+        console.error("Error fetching chosen products:", error);
         throw error;
       }
     },
@@ -399,14 +400,14 @@ export function useDeleteShipmentItems(options = {}) {
         `${BASE_URL}/shipments/${shipmentId}/items/${deliveryOrderId}`,
         {},
         {
-          method: 'DELETE',
+          method: "DELETE",
         }
       );
 
       const result: ApiResponse<void> = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Gagal menghapus item pengiriman');
+        throw new Error(result.message || "Gagal menghapus item pengiriman");
       }
     },
     onSuccess: (_, variables) => {
@@ -425,20 +426,57 @@ export function useShipmentsByDeliveryOrderId(
   options = {}
 ) {
   return useQuery({
-    queryKey: ['shipmentsByDeliveryOrderId', deliveryOrderId],
+    queryKey: ["shipmentsByDeliveryOrderId", deliveryOrderId],
     queryFn: async () => {
       if (!deliveryOrderId) return [];
       const response = await fetchApi(
         `/delivery-orders/${deliveryOrderId}/shipments`,
         {},
-        { method: 'GET' }
+        { method: "GET" }
       );
       const result = await response.json();
       if (!result.success)
-        throw new Error(result.message || 'Gagal mengambil data pengiriman');
+        throw new Error(result.message || "Gagal mengambil data pengiriman");
       return result.data?.shipments || [];
     },
     enabled: !!deliveryOrderId,
+    ...options,
+  });
+}
+
+export function useBulkWeighShipmentItems(options = {}) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: BulkWeighShipmentInput) => {
+      const response = await fetchApi(
+        `${BASE_URL}/shipments/${data.shipmentId}/manual-weigh-items`,
+        {},
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        }
+      );
+      const result = (await response.json()) as ApiErrorResult;
+      if (!result.success) {
+        throw new Error(
+          JSON.stringify(
+            createErrorResponse(result, "Gagal melakukan penimbangan item")
+          )
+        );
+      }
+      return result.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.detail(variables.shipmentId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.chosenProducts(variables.shipmentId),
+      });
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.lists() });
+    },
     ...options,
   });
 }
