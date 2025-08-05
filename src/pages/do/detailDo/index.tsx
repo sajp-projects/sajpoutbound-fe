@@ -106,6 +106,7 @@ export default function DetailDo() {
     PERMISSION.ACTIONS.DELETE
   );
 
+
   const deliveryOrderId = id || "";
 
   const {
@@ -421,6 +422,7 @@ export default function DetailDo() {
                               : "Arsipkan DO"}
                           </Button>
                         )}
+
                     </div>
                   </div>
                 </div>
@@ -831,6 +833,7 @@ export default function DetailDo() {
           </div>
         )}
       </div>
+
     </div>
   );
 }

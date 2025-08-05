@@ -20,16 +20,20 @@ import {
   MapPin,
   Navigation,
   Package,
+  Pencil,
   RefreshCw,
   Scale,
   ShoppingCart,
   Upload,
+  UserCheck,
   X,
 } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 
+import { ChangeCustomerModal } from "@/components/ChangeCustomerModal";
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
+import { ReviseDOModal } from "@/components/ReviseDOModal";
 import {
   Accordion,
   AccordionContent,
@@ -57,8 +61,10 @@ import {
 } from "@/components/ui/table";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
+import { useDeliveryOrder } from "@/hooks/do";
 import { useRolePermissions } from "@/hooks/izin";
 import { cn } from "@/lib/utils";
+import { DeliveryOrder } from "@/types/do";
 import { FilePreview } from "@/types/media";
 import {
   ChosenProductExtended,
@@ -161,6 +167,29 @@ export default function DetailPengiriman() {
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
   });
+
+  // Permission checks for customer change and DO revision
+  const hasChangeCustomerAfterWeighAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PENGIRIMAN,
+    PERMISSION.ACTIONS.CHANGE_CUSTOMER
+  );
+
+  const hasReviseDoAfterWeighAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PENGIRIMAN,
+    PERMISSION.ACTIONS.REVISE_DO
+  );
+
+  // Modal states for customer change and DO revision
+  const [showChangeCustomerModal, setShowChangeCustomerModal] = useState(false);
+  const [showReviseModal, setShowReviseModal] = useState(false);
+  const [fullDeliveryOrder, setFullDeliveryOrder] =
+    useState<DeliveryOrder | null>(null);
+  const [selectedDoId, setSelectedDoId] = useState<string>("");
+  const [modalIntent, setModalIntent] = useState<
+    "change-customer" | "revise" | null
+  >(null);
 
   const hasPengirimanUpdateAccess = hasPermission(
     permissions,
@@ -269,6 +298,45 @@ export default function DetailPengiriman() {
       );
     },
   });
+
+  // Hook to fetch full delivery order data for modals
+  const {
+    data: fullDeliveryOrderData,
+    isLoading: isLoadingFullDOHook,
+    error: deliveryOrderError,
+  } = useDeliveryOrder(
+    { id: selectedDoId },
+    {
+      enabled: !!selectedDoId, // Only fetch when we have a selectedDoId
+      staleTime: 0, // Always fetch fresh data
+      retry: 1,
+    }
+  );
+
+  // Update fullDeliveryOrder when data is fetched and open appropriate modal
+  useEffect(() => {
+    if (fullDeliveryOrderData && modalIntent) {
+      setFullDeliveryOrder(fullDeliveryOrderData);
+
+      // Open the appropriate modal based on intent
+      if (modalIntent === "change-customer") {
+        setShowChangeCustomerModal(true);
+      } else if (modalIntent === "revise") {
+        setShowReviseModal(true);
+      }
+
+      // Reset modal intent after opening
+      setModalIntent(null);
+    }
+  }, [fullDeliveryOrderData, modalIntent]);
+
+  // Handle delivery order fetch error
+  useEffect(() => {
+    if (deliveryOrderError) {
+      showErrorAlert("Gagal", "Terjadi kesalahan saat memuat data DO");
+      setSelectedDoId(""); // Reset to stop further attempts
+    }
+  }, [deliveryOrderError]);
 
   const verifyPlateNumber = useVerifyPlateNumber({
     onSuccess: () => {
@@ -384,6 +452,33 @@ export default function DetailPengiriman() {
     )
       return;
     document.getElementById("platePhotoInput")?.click();
+  };
+
+  // Helper functions for DO modal operations
+  const handleOpenChangeCustomerModal = (
+    deliveryOrder: GroupedDeliveryOrder
+  ) => {
+    setSelectedDoId(deliveryOrder.id);
+    setModalIntent("change-customer");
+  };
+
+  const handleOpenReviseModal = (deliveryOrder: GroupedDeliveryOrder) => {
+    setSelectedDoId(deliveryOrder.id);
+    setModalIntent("revise");
+  };
+
+  const handleCloseChangeCustomerModal = () => {
+    setShowChangeCustomerModal(false);
+    setFullDeliveryOrder(null);
+    setSelectedDoId("");
+    setModalIntent(null);
+  };
+
+  const handleCloseReviseModal = () => {
+    setShowReviseModal(false);
+    setFullDeliveryOrder(null);
+    setSelectedDoId("");
+    setModalIntent(null);
   };
 
   const handleViewPlatePhoto = () => {
@@ -1403,7 +1498,7 @@ export default function DetailPengiriman() {
                           className="overflow-hidden rounded-lg border border-gray-200"
                         >
                           <AccordionTrigger className="px-4 py-3 bg-gray-50 hover:bg-gray-100 hover:no-underline">
-                            <div className="flex items-start text-left">
+                            <div className="flex items-center justify-between w-full text-left">
                               <div>
                                 <h4 className="font-medium text-gray-900">
                                   <Link
@@ -1418,6 +1513,59 @@ export default function DetailPengiriman() {
                                   {deliveryOrder.customer.name}
                                 </p>
                               </div>
+
+                              {/* Action buttons for customer change and DO revision */}
+                              {shipment.status === "PROSES" && (
+                                <div
+                                  className="flex gap-2"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {hasChangeCustomerAfterWeighAccess && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenChangeCustomerModal(
+                                          deliveryOrder
+                                        );
+                                      }}
+                                      disabled={isLoadingFullDOHook}
+                                    >
+                                      {isLoadingFullDOHook ? (
+                                        <Loader2 className="mr-1 w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <UserCheck className="mr-1 w-3 h-3" />
+                                      )}
+                                      {isLoadingFullDOHook
+                                        ? "Loading..."
+                                        : "Ubah Customer"}
+                                    </Button>
+                                  )}
+                                  {hasReviseDoAfterWeighAccess && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-green-600 border-green-200 hover:bg-green-50 mr-1"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenReviseModal(deliveryOrder);
+                                      }}
+                                      disabled={isLoadingFullDOHook}
+                                    >
+                                      {isLoadingFullDOHook ? (
+                                        <Loader2 className="mr-1 w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <Pencil className="mr-1 w-3 h-3" />
+                                      )}
+                                      {isLoadingFullDOHook
+                                        ? "Loading..."
+                                        : "Revisi DO"}
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </AccordionTrigger>
                           <AccordionContent className="p-0">
@@ -2340,6 +2488,30 @@ export default function DetailPengiriman() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Customer Change and DO Revision Modals */}
+      {fullDeliveryOrder && (
+        <>
+          <ChangeCustomerModal
+            isOpen={showChangeCustomerModal}
+            onClose={handleCloseChangeCustomerModal}
+            deliveryOrder={fullDeliveryOrder}
+            onSuccess={() => {
+              refetch();
+              refetchChosenProducts();
+            }}
+          />
+          <ReviseDOModal
+            isOpen={showReviseModal}
+            onClose={handleCloseReviseModal}
+            deliveryOrder={fullDeliveryOrder}
+            onSuccess={() => {
+              refetch();
+              refetchChosenProducts();
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }
