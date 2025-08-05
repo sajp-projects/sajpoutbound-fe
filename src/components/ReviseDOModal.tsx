@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useReviseDeliveryOrderAfterWeighing } from "@/hooks/do";
-import { DeliveryOrder } from "@/types/do";
+import { DeliveryOrder, RevisedItem } from "@/types/do";
 import { formatNumber } from "@/utils/formatNumber";
 import {
   isConfirmed,
@@ -46,18 +46,6 @@ const reviseFormSchema = Joi.object({
     "any.required": "Items harus diisi",
   }),
 });
-
-interface RevisedItem {
-  id: string;
-  productName: string;
-  originalQuantity: number;
-  revisedQuantity: number;
-  completedQuantity: number;
-  processingQuantity: number;
-  pendingQuantity: number;
-  unit: string;
-  estimatedWeight?: number;
-}
 
 interface ReviseDOModalProps {
   isOpen: boolean;
@@ -245,17 +233,34 @@ export function ReviseDOModal({
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50 border-b border-gray-200">
-                  <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">Produk</TableHead>
-                  <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">Qty Asli</TableHead>
-                  <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">Qty Baru</TableHead>
-                  <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">Selesai</TableHead>
-                  <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">Proses</TableHead>
-                  <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">Pending</TableHead>
+                  <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                    Produk
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                    Qty Asli
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                    Qty Baru
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                    Selesai
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                    Proses
+                  </TableHead>
+                  <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                    Pending
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {revisedItems.map((item, index) => (
-                  <TableRow key={item.id} className={`border-b border-gray-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-gray-100`}>
+                  <TableRow
+                    key={item.id}
+                    className={`border-b border-gray-200 ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    } hover:bg-gray-100`}
+                  >
                     <TableCell className="px-4 py-3 text-sm text-gray-600 font-medium">
                       {item.productName}
                       <div className="text-xs text-gray-500">

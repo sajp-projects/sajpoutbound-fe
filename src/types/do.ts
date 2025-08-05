@@ -64,3 +64,15 @@ export interface UpdateDeliveryOrderInput {
   internalNote?: string;
   items?: CreateDeliveryOrderProduct[];
 }
+
+export interface RevisedItem {
+  id: string;
+  productName: string;
+  originalQuantity: number;
+  revisedQuantity: number;
+  completedQuantity: number;
+  processingQuantity: number;
+  pendingQuantity: number;
+  unit: string;
+  estimatedWeight?: number;
+}
