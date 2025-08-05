@@ -40,12 +40,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useArmadas } from "@/hooks/armada";
+import { useInfiniteArmadas } from "@/hooks/armada";
 import {
   deliveryOrderKeys,
   useDeliveryOrder,
-  useDeliveryOrders,
   useDeliveryOrdersByIds,
+  useInfiniteDeliveryOrders,
 } from "@/hooks/do";
 import {
   shipmentKeys,
@@ -175,22 +175,26 @@ export default function EditPengiriman() {
   const {
     data: armadasData,
     isLoading: loadingArmadas,
-    refetch: refetchArmadas,
-  } = useArmadas({
-    staleTime: 300000,
-    refetchOnWindowFocus: false,
+    fetchNextPage: fetchNextArmadas,
+    hasNextPage: hasNextArmadas,
+    isFetchingNextPage: isFetchingNextArmadas,
+  } = useInfiniteArmadas({
     searchQuery: armadaSearchQuery,
+    limit: 10,
+    enabled: true,
   });
 
   const {
     data: deliveryOrdersData,
     isLoading: loadingDeliveryOrders,
-    refetch: refetchDeliveryOrders,
-  } = useDeliveryOrders({
-    staleTime: 300000,
-    refetchOnWindowFocus: false,
+    fetchNextPage: fetchNextDeliveryOrders,
+    hasNextPage: hasNextDeliveryOrders,
+    isFetchingNextPage: isFetchingNextDeliveryOrders,
+  } = useInfiniteDeliveryOrders({
     searchQuery: deliveryOrderSearchQuery,
     availableOnly: true,
+    limit: 10,
+    enabled: true,
   });
 
   // Hook untuk mendapatkan detail DO yang sedang aktif dipilih
@@ -209,11 +213,13 @@ export default function EditPengiriman() {
 
   // Convert data dari API ke format ComboboxItem
   const armadas =
-    armadasData?.armadas?.map((armada) => ({
-      label: `${armada.model} - ${armada.plateNumber}`,
-      value: armada.id,
-      secondary: armada.description,
-    })) || [];
+    armadasData?.pages
+      .flatMap((page) => page.armadas)
+      ?.map((armada) => ({
+        label: `${armada.model} - ${armada.plateNumber}`,
+        value: armada.id,
+        secondary: armada.description,
+      })) || [];
 
   // --- Fetch attached DOs if not in available list ---
   const attachedDOIds = (() => {
@@ -222,7 +228,9 @@ export default function EditPengiriman() {
       new Set(shipment.shipmentItems.map((item) => item.deliveryOrderId))
     );
     const availableDOIds =
-      deliveryOrdersData?.deliveryOrders?.map((do_item) => do_item.id) || [];
+      deliveryOrdersData?.pages
+        .flatMap((page) => page.deliveryOrders)
+        ?.map((do_item) => do_item.id) || [];
     return attached.filter((id) => !availableDOIds.includes(id));
   })();
 
@@ -230,12 +238,12 @@ export default function EditPengiriman() {
 
   // --- Merge available DOs and attached DOs for select options ---
   const deliveryOrders = [
-    ...(deliveryOrdersData?.deliveryOrders || []),
+    ...(deliveryOrdersData?.pages.flatMap((page) => page.deliveryOrders) || []),
     ...attachedDOs.filter(
       (do_item) =>
-        !(deliveryOrdersData?.deliveryOrders || []).some(
-          (d) => d.id === do_item.id
-        )
+        !(
+          deliveryOrdersData?.pages.flatMap((page) => page.deliveryOrders) || []
+        ).some((d) => d.id === do_item.id)
     ),
   ].map((do_item) => ({
     label: `${do_item.doNumber} - ${do_item.customer.name}`,
@@ -319,7 +327,20 @@ export default function EditPengiriman() {
     [shipment]
   );
 
-  // Helper function untuk mengecek apakah ada barang yang sudah dimuat
+  // Helper function untuk mengecek apakah ada barang yang sudah dimuat untuk DO tertentu
+  const hasChosenProductsForDO = useCallback(
+    (deliveryOrderId: string) => {
+      if (!shipment?.shipmentItems) return false;
+      return shipment.shipmentItems.some(
+        (item) =>
+          item.deliveryOrderId === deliveryOrderId &&
+          item.chosenProduct === true
+      );
+    },
+    [shipment]
+  );
+
+  // Helper function untuk mengecek apakah ada barang yang sudah dimuat secara global
   const hasChosenProducts = useCallback(() => {
     if (!shipment?.shipmentItems) return false;
     return shipment.shipmentItems.some((item) => item.chosenProduct === true);
@@ -400,9 +421,8 @@ export default function EditPengiriman() {
 
   // Refetch data saat komponen pertama kali dimuat
   useEffect(() => {
-    refetchArmadas();
-    refetchDeliveryOrders();
-  }, [refetchArmadas, refetchDeliveryOrders]);
+    // Data will be loaded automatically by the infinite query
+  }, []);
 
   // Update products ketika data DO berhasil dimuat
   useEffect(() => {
@@ -512,21 +532,13 @@ export default function EditPengiriman() {
     });
   }, [watchDeliveryOrders, selectedDOProducts, loadDOProducts]);
 
-  const handleDeliveryOrderSearch = useCallback(
-    (query: string) => {
-      setDeliveryOrderSearchQuery(query);
-      refetchDeliveryOrders();
-    },
-    [refetchDeliveryOrders]
-  );
+  const handleDeliveryOrderSearch = useCallback((query: string) => {
+    setDeliveryOrderSearchQuery(query);
+  }, []);
 
-  const handleArmadaSearch = useCallback(
-    (query: string) => {
-      setArmadaSearchQuery(query);
-      refetchArmadas();
-    },
-    [refetchArmadas]
-  );
+  const handleArmadaSearch = useCallback((query: string) => {
+    setArmadaSearchQuery(query);
+  }, []);
 
   const handleDeliveryOrderChange = useCallback(
     (value: string, index: number) => {
@@ -971,6 +983,9 @@ export default function EditPengiriman() {
                                       onClear={() => field.onChange("")}
                                       onSearch={handleArmadaSearch}
                                       useServerSearch
+                                      hasMore={hasNextArmadas}
+                                      onLoadMore={fetchNextArmadas}
+                                      isLoadingMore={isFetchingNextArmadas}
                                     />
                                   </div>
                                 </FormControl>
@@ -1033,7 +1048,7 @@ export default function EditPengiriman() {
                         const doItem = watchDeliveryOrders[index];
 
                         // Cek apakah ada barang dalam DO ini yang sudah chosen
-                        const hasChosenProducts =
+                        const isThisDoLocked =
                           doItem?.deliveryOrderId &&
                           doItem?.products?.length > 0 &&
                           doItem?.products?.some((product) => {
@@ -1052,7 +1067,7 @@ export default function EditPengiriman() {
                             value={`do-${index}`}
                             className={cn(
                               "overflow-hidden mb-4 rounded-lg border",
-                              hasChosenProducts
+                              isThisDoLocked
                                 ? "bg-green-50 border-green-300"
                                 : "bg-gray-50 border-gray-200"
                             )}
@@ -1062,14 +1077,14 @@ export default function EditPengiriman() {
                                 <h4 className="font-medium text-gray-900">
                                   #Delivery Order {index + 1}
                                 </h4>
-                                {hasChosenProducts && (
+                                {isThisDoLocked && (
                                   <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
                                     Ada Barang Dimuat
                                   </span>
                                 )}
                               </div>
                               <div className="flex gap-2 items-center">
-                                {fields.length > 1 && !hasChosenProducts && (
+                                {fields.length > 1 && !isThisDoLocked && (
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -1099,24 +1114,9 @@ export default function EditPengiriman() {
                                       <FormControl>
                                         <div
                                           className={cn(
-                                            // Hanya disable jika DO sudah dipilih DAN SEMUA produk dalam DO sudah chosen
                                             doItem?.deliveryOrderId &&
-                                              doItem?.products?.length > 0 &&
-                                              doItem?.products?.every(
-                                                (product) => {
-                                                  const shipmentItem =
-                                                    shipment?.shipmentItems.find(
-                                                      (si) =>
-                                                        si.deliveryOrderId ===
-                                                          doItem.deliveryOrderId &&
-                                                        si.productId ===
-                                                          product.productId
-                                                    );
-                                                  return (
-                                                    shipmentItem?.chosenProduct ===
-                                                    true
-                                                  );
-                                                }
+                                              hasChosenProductsForDO(
+                                                doItem.deliveryOrderId
                                               ) &&
                                               "opacity-50 pointer-events-none"
                                           )}
@@ -1143,6 +1143,11 @@ export default function EditPengiriman() {
                                             }}
                                             onSearch={handleDeliveryOrderSearch}
                                             useServerSearch
+                                            hasMore={hasNextDeliveryOrders}
+                                            onLoadMore={fetchNextDeliveryOrders}
+                                            isLoadingMore={
+                                              isFetchingNextDeliveryOrders
+                                            }
                                           />
                                         </div>
                                       </FormControl>

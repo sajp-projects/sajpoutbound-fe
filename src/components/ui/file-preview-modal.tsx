@@ -217,14 +217,36 @@ export function FilePreviewModal({
               )}
             </div>
           ) : file.type.includes('pdf') ? (
-            <div className="flex items-center justify-center min-h-[400px] sm:min-h-[500px] p-4 sm:p-8">
+            <div className="flex items-center justify-center min-h-[300px] sm:min-h-[500px] p-2 sm:p-8">
               <iframe
                 src={file.url}
                 title={file.name}
-                className="w-full h-[70vh] rounded-lg border border-gray-200 shadow-lg bg-white"
-                style={{ minHeight: 400 }}
+                className="w-full min-h-[300px] h-[50vh] sm:min-h-[400px] sm:h-[70vh] rounded-lg border border-gray-200 shadow-lg bg-white"
                 frameBorder="0"
                 allowFullScreen
+                onError={(e) => {
+                  console.error('PDF loading error:', e);
+                  const iframe = e.target as HTMLIFrameElement;
+                  if (iframe.parentElement) {
+                    iframe.parentElement.innerHTML = `
+                      <div class="max-w-sm p-6 mx-auto text-center bg-white border border-gray-200 shadow-lg rounded-xl sm:p-12">
+                        <div class="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full sm:w-20 sm:h-20 bg-red-50 sm:mb-6">
+                          <svg class="w-6 h-6 text-red-500 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                          </svg>
+                        </div>
+                        <h3 class="mb-2 text-sm font-semibold text-gray-900 sm:text-xl sm:mb-3">PDF Tidak Dapat Dimuat</h3>
+                        <p class="mb-3 text-xs leading-relaxed text-gray-600 sm:text-sm sm:mb-6">File PDF mungkin rusak atau tidak dapat diakses. Silakan coba unduh file untuk melihat isinya.</p>
+                        <button onclick="(function(){ const link = document.createElement('a'); link.href = '${file.url}'; link.download = '${file.name}'; document.body.appendChild(link); link.click(); document.body.removeChild(link); })()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 text-sm rounded-lg transition-colors flex items-center justify-center sm:py-2.5">
+                          <svg class="w-3 h-3 mr-1 sm:w-4 sm:h-4 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                          </svg>
+                          Unduh PDF
+                        </button>
+                      </div>
+                    `;
+                  }
+                }}
               />
             </div>
           ) : (

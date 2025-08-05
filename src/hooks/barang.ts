@@ -1,11 +1,15 @@
-import { ApiResponse, ApiErrorResult } from "@/types/api";
+import { BASE_URL } from "@/constant/baseUrl";
+import { ApiErrorResult, ApiResponse } from "@/types/api";
 import {
   CreateProductInput,
   Product,
   ProductsResponse,
   UpdateProductInput,
 } from "@/types/barang";
+import { fetchApi } from "@/utils/api";
+import { createErrorResponse, handleApiError } from "@/utils/errorHandler";
 import {
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -13,15 +17,14 @@ import {
   type UseQueryOptions,
 } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
-import { fetchApi } from "@/utils/api";
-import { handleApiError, createErrorResponse } from "@/utils/errorHandler";
-import { BASE_URL } from "@/constant/baseUrl";
 
 export const productKeys = {
   all: ["products"] as const,
   lists: () => [...productKeys.all, "list"] as const,
   list: (filters: Record<string, unknown>) =>
     [...productKeys.lists(), { filters }] as const,
+  infinite: (filters: Record<string, unknown>) =>
+    [...productKeys.lists(), "infinite", { filters }] as const,
   details: () => [...productKeys.all, "detail"] as const,
   detail: (id: string) => [...productKeys.details(), id] as const,
   logs: () => [...productKeys.all, "logs"] as const,
@@ -75,6 +78,51 @@ export function useProducts(
     },
     refetchOnWindowFocus: true,
     ...options,
+  });
+}
+
+export function useInfiniteProducts(options?: {
+  searchQuery?: string;
+  limit?: number;
+  enabled?: boolean;
+}) {
+  const { searchQuery = "", limit = 10, enabled = true } = options || {};
+
+  return useInfiniteQuery({
+    queryKey: productKeys.infinite({ search: searchQuery, limit }),
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
+      const response = await fetchApi(`${BASE_URL}/products`, {
+        page: pageParam.toString(),
+        limit: limit.toString(),
+        search: searchQuery,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching products: ${response.statusText}`);
+      }
+
+      const result: ApiResponse<ProductsResponse> = await response.json();
+
+      if (!result.success) {
+        handleApiError(result, "Terjadi kesalahan saat mengambil data barang");
+      }
+
+      if (!result.data) {
+        throw new Error("Data barang tidak ditemukan");
+      }
+
+      return result.data;
+    },
+    getNextPageParam: (lastPage: ProductsResponse, allPages) => {
+      const currentPage = allPages.length;
+      const totalPages = Math.ceil(lastPage.pagination.total / limit);
+
+      return currentPage < totalPages ? currentPage + 1 : undefined;
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 }
 

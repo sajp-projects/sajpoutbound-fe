@@ -305,7 +305,7 @@ export default function DetailPengiriman() {
     isLoading: isLoadingFullDOHook,
     error: deliveryOrderError,
   } = useDeliveryOrder(
-    { id: selectedDoId },
+    { id: selectedDoId, shipmentId: shipment?.id },
     {
       enabled: !!selectedDoId, // Only fetch when we have a selectedDoId
       staleTime: 0, // Always fetch fresh data
@@ -1180,14 +1180,14 @@ export default function DetailPengiriman() {
                                   {product.isChosen ? (
                                     <Badge
                                       variant="outline"
-                                      className="text-green-700 bg-green-50 border-green-200"
+                                      className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap"
                                     >
                                       Sudah Dimuat
                                     </Badge>
                                   ) : (
                                     <Badge
                                       variant="outline"
-                                      className="text-yellow-700 bg-yellow-50 border-yellow-200"
+                                      className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap"
                                     >
                                       Belum Dimuat
                                     </Badge>
@@ -1365,14 +1365,14 @@ export default function DetailPengiriman() {
                               {product.isChosen ? (
                                 <Badge
                                   variant="outline"
-                                  className="text-green-700 bg-green-50 border-green-200"
+                                  className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap"
                                 >
                                   Sudah Dimuat
                                 </Badge>
                               ) : (
                                 <Badge
                                   variant="outline"
-                                  className="text-yellow-700 bg-yellow-50 border-yellow-200"
+                                  className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap"
                                 >
                                   Belum Dimuat
                                 </Badge>
@@ -1517,14 +1517,14 @@ export default function DetailPengiriman() {
                               {/* Action buttons for customer change and DO revision */}
                               {shipment.status === "PROSES" && (
                                 <div
-                                  className="flex gap-2"
+                                  className="flex flex-wrap gap-1 sm:gap-2"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {hasChangeCustomerAfterWeighAccess && (
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                      className="text-blue-600 border-blue-200 hover:bg-blue-50 flex-shrink-0"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleOpenChangeCustomerModal(
@@ -1532,36 +1532,42 @@ export default function DetailPengiriman() {
                                         );
                                       }}
                                       disabled={isLoadingFullDOHook}
+                                      title="Ubah Customer" // Tooltip for icon-only view
                                     >
                                       {isLoadingFullDOHook ? (
-                                        <Loader2 className="mr-1 w-3 h-3 animate-spin" />
+                                        <Loader2 className="w-3 h-3 animate-spin sm:mr-1" />
                                       ) : (
-                                        <UserCheck className="mr-1 w-3 h-3" />
+                                        <UserCheck className="w-3 h-3 sm:mr-1" />
                                       )}
-                                      {isLoadingFullDOHook
-                                        ? "Loading..."
-                                        : "Ubah Customer"}
+                                      <span className="hidden sm:inline ml-1">
+                                        {isLoadingFullDOHook
+                                          ? "Loading..."
+                                          : "Ubah Customer"}
+                                      </span>
                                     </Button>
                                   )}
                                   {hasReviseDoAfterWeighAccess && (
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="text-green-600 border-green-200 hover:bg-green-50 mr-1"
+                                      className="text-green-600 border-green-200 hover:bg-green-50 flex-shrink-0"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         handleOpenReviseModal(deliveryOrder);
                                       }}
                                       disabled={isLoadingFullDOHook}
+                                      title="Revisi DO" // Tooltip for icon-only view
                                     >
                                       {isLoadingFullDOHook ? (
-                                        <Loader2 className="mr-1 w-3 h-3 animate-spin" />
+                                        <Loader2 className="w-3 h-3 animate-spin sm:mr-1" />
                                       ) : (
-                                        <Pencil className="mr-1 w-3 h-3" />
+                                        <Pencil className="w-3 h-3 sm:mr-1" />
                                       )}
-                                      {isLoadingFullDOHook
-                                        ? "Loading..."
-                                        : "Revisi DO"}
+                                      <span className="hidden sm:inline ml-1">
+                                        {isLoadingFullDOHook
+                                          ? "Loading..."
+                                          : "Revisi DO"}
+                                      </span>
                                     </Button>
                                   )}
                                 </div>
@@ -1841,15 +1847,14 @@ export default function DetailPengiriman() {
                                     ) ? (
                                       <Badge
                                         variant="outline"
-                                        className="flex gap-1 justify-center items-center text-green-700 bg-green-50 border-green-200"
+                                        className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap"
                                       >
-                                        <Scale className="w-3 h-3" />
                                         Sudah Ditimbang
                                       </Badge>
                                     ) : (
                                       <Badge
                                         variant="outline"
-                                        className="text-yellow-700 bg-yellow-50 border-yellow-200"
+                                        className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap"
                                       >
                                         Belum Ditimbang
                                       </Badge>
@@ -1945,15 +1950,14 @@ export default function DetailPengiriman() {
                                 ) ? (
                                   <Badge
                                     variant="outline"
-                                    className="flex gap-1 items-center text-green-700 bg-green-50 border-green-200"
+                                    className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap"
                                   >
-                                    <Scale className="w-3 h-3" />
                                     Sudah Ditimbang
                                   </Badge>
                                 ) : (
                                   <Badge
                                     variant="outline"
-                                    className="text-yellow-700 bg-yellow-50 border-yellow-200"
+                                    className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap"
                                   >
                                     Belum Ditimbang
                                   </Badge>
@@ -2175,19 +2179,6 @@ export default function DetailPengiriman() {
                                 {spmb.code}
                               </span>
                             </div>
-                            <Badge
-                              variant="outline"
-                              className={cn(
-                                "px-2 py-0.5 rounded-md font-medium text-xs",
-                                spmb.status === "PENDING"
-                                  ? "bg-yellow-50 text-yellow-600 border-yellow-200"
-                                  : spmb.status === "PROSES"
-                                  ? "bg-blue-50 text-blue-600 border-blue-200"
-                                  : "bg-green-50 text-green-600 border-green-200"
-                              )}
-                            >
-                              {spmb.status}
-                            </Badge>
                           </div>
                           <div className="space-y-1 text-xs text-gray-600">
                             <p>

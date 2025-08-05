@@ -1,11 +1,15 @@
-import { ApiResponse, ApiErrorResult } from "@/types/api";
+import { BASE_URL } from "@/constant/baseUrl";
+import { ApiErrorResult, ApiResponse } from "@/types/api";
 import {
   Customer,
   CustomerInput,
   CustomerUpdateInput,
   CustomersResponse,
 } from "@/types/pelanggan";
+import { fetchApi } from "@/utils/api";
+import { createErrorResponse, handleApiError } from "@/utils/errorHandler";
 import {
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -13,15 +17,14 @@ import {
   type UseQueryOptions,
 } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
-import { fetchApi } from "@/utils/api";
-import { handleApiError, createErrorResponse } from "@/utils/errorHandler";
-import { BASE_URL } from "@/constant/baseUrl";
 
 export const customerKeys = {
   all: ["customers"] as const,
   lists: () => [...customerKeys.all, "list"] as const,
   list: (filters: Record<string, unknown>) =>
     [...customerKeys.lists(), { filters }] as const,
+  infinite: (filters: Record<string, unknown>) =>
+    [...customerKeys.lists(), "infinite", { filters }] as const,
   details: () => [...customerKeys.all, "detail"] as const,
   detail: (id: string) => [...customerKeys.details(), id] as const,
 };
@@ -122,6 +125,51 @@ export function useCustomers(
     },
     refetchOnWindowFocus: true,
     ...options,
+  });
+}
+
+export function useInfiniteCustomers(options?: {
+  searchQuery?: string;
+  limit?: number;
+  enabled?: boolean;
+}) {
+  const { searchQuery = "", limit = 10, enabled = true } = options || {};
+
+  return useInfiniteQuery({
+    queryKey: customerKeys.infinite({ search: searchQuery, limit }),
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
+      const response = await fetchApi(`${BASE_URL}/customers`, {
+        page: pageParam.toString(),
+        limit: limit.toString(),
+        search: searchQuery,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error fetching customers: ${response.statusText}`);
+      }
+
+      const result: ApiResponse<CustomersResponse> = await response.json();
+
+      if (!result.success) {
+        handleApiError(result, "Terjadi kesalahan");
+      }
+
+      if (!result.data) {
+        throw new Error("Data pelanggan tidak ditemukan");
+      }
+
+      return result.data;
+    },
+    getNextPageParam: (lastPage: CustomersResponse, allPages) => {
+      const currentPage = allPages.length;
+      const totalPages = Math.ceil(lastPage.pagination.total / limit);
+
+      return currentPage < totalPages ? currentPage + 1 : undefined;
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 }
 

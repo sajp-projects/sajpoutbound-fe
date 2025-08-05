@@ -9,6 +9,7 @@ import {
 import { fetchApi } from "@/utils/api";
 import { createErrorResponse, handleApiError } from "@/utils/errorHandler";
 import {
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -16,7 +17,6 @@ import {
   type UseQueryOptions,
 } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
-import { shipmentKeys } from "./pengiriman";
 
 export const deliveryOrderKeys = {
   all: ["deliveryOrders"] as const,
@@ -24,6 +24,8 @@ export const deliveryOrderKeys = {
   list: (filters: Record<string, unknown>) =>
     [...deliveryOrderKeys.lists(), { filters }] as const,
   details: () => [...deliveryOrderKeys.all, "detail"] as const,
+  infinite: (filters: Record<string, unknown>) =>
+    [...deliveryOrderKeys.lists(), "infinite", { filters }] as const,
   detail: (id: string) => [...deliveryOrderKeys.details(), id] as const,
   archived: (filters: Record<string, unknown>) =>
     [...deliveryOrderKeys.lists(), "archived", { filters }] as const,
@@ -93,6 +95,65 @@ export function useDeliveryOrders(
   });
 }
 
+export function useInfiniteDeliveryOrders(options?: {
+  searchQuery?: string;
+  statusFilter?: string;
+  availableOnly?: boolean;
+  limit?: number;
+  enabled?: boolean;
+}) {
+  const {
+    searchQuery = "",
+    statusFilter = "",
+    availableOnly = false,
+    limit = 10,
+    enabled = true,
+  } = options || {};
+
+  return useInfiniteQuery({
+    queryKey: deliveryOrderKeys.infinite({
+      search: searchQuery,
+      status: statusFilter,
+      availableOnly: availableOnly.toString(),
+      limit,
+    }),
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }: { pageParam: number }) => {
+      const response = await fetchApi(`${BASE_URL}/delivery-orders`, {
+        page: pageParam.toString(),
+        limit: limit.toString(),
+        search: searchQuery,
+        status: statusFilter,
+        ...(availableOnly && { availableOnly: availableOnly.toString() }),
+      });
+
+      const result: ApiResponse<DeliveryOrdersResponse> = await response.json();
+
+      if (!result.success || !response.ok) {
+        handleApiError(result, "Terjadi kesalahan saat mengambil data DO");
+      }
+
+      if (!result.data) {
+        throw new Error("Data delivery order tidak ditemukan");
+      }
+
+      return result.data;
+    },
+    getNextPageParam: (
+      lastPage: DeliveryOrdersResponse,
+      allPages: DeliveryOrdersResponse[]
+    ) => {
+      const currentPage = allPages.length;
+      const totalPages = Math.ceil(lastPage.pagination.total / limit);
+
+      return currentPage < totalPages ? currentPage + 1 : undefined;
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+}
+
 export function useArchivedDeliveryOrders(
   options?: Omit<
     UseQueryOptions<
@@ -145,7 +206,7 @@ export function useArchivedDeliveryOrders(
 }
 
 export function useDeliveryOrder(
-  { id }: { id: string },
+  { id, shipmentId }: { id: string; shipmentId?: string },
   options?: Omit<
     UseQueryOptions<
       DeliveryOrder,
@@ -160,7 +221,17 @@ export function useDeliveryOrder(
     queryKey: deliveryOrderKeys.detail(id),
     queryFn: async () => {
       try {
-        const response = await fetchApi(`${BASE_URL}/delivery-orders/${id}`);
+        // Build query parameters
+        const queryParams = new URLSearchParams();
+        if (shipmentId) {
+          queryParams.append("shipmentId", shipmentId);
+        }
+
+        const url = shipmentId
+          ? `${BASE_URL}/delivery-orders/${id}?${queryParams.toString()}`
+          : `${BASE_URL}/delivery-orders/${id}`;
+
+        const response = await fetchApi(url);
 
         if (!response.ok) {
           const errorResult = await response.json();
@@ -370,115 +441,6 @@ export function useDeliveryOrdersByIds(ids: string[], options = {}) {
       return result.data?.deliveryOrders as DeliveryOrder[];
     },
     enabled: !!ids && ids.length > 0,
-    ...options,
-  });
-}
-
-export function useChangeCustomerAfterWeighing(
-  options?: Omit<
-    UseMutationOptions<
-      ApiResponse<{ deliveryOrder: DeliveryOrder }>,
-      ApiErrorResult,
-      { deliveryOrderId: string; customerId: string }
-    >,
-    "mutationFn"
-  >
-) {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    ApiResponse<{ deliveryOrder: DeliveryOrder }>,
-    ApiErrorResult,
-    { deliveryOrderId: string; customerId: string }
-  >({
-    mutationFn: async ({ deliveryOrderId, customerId }) => {
-      const response = await fetchApi(
-        `${BASE_URL}/delivery-orders/${deliveryOrderId}/change-customer`,
-        {},
-        {
-          method: "PATCH",
-          body: JSON.stringify({ customerId }),
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.message || "Gagal mengubah customer");
-      }
-      return result;
-    },
-    onSuccess: (_, variables) => {
-      // Invalidate and refetch delivery order detail
-      queryClient.invalidateQueries({
-        queryKey: deliveryOrderKeys.detail(variables.deliveryOrderId),
-      });
-      // Invalidate delivery orders list
-      queryClient.invalidateQueries({
-        queryKey: deliveryOrderKeys.lists(),
-      });
-      // Invalidate all shipment queries since customer data is embedded in shipment items
-      // This ensures the customer name updates everywhere it's displayed
-      queryClient.invalidateQueries({
-        queryKey: shipmentKeys.all,
-      });
-    },
-    ...options,
-  });
-}
-
-export function useReviseDeliveryOrderAfterWeighing(
-  options?: Omit<
-    UseMutationOptions<
-      ApiResponse<{ deliveryOrder: DeliveryOrder }>,
-      ApiErrorResult,
-      {
-        deliveryOrderId: string;
-        items: Array<{ id: string; quantity: number }>;
-      }
-    >,
-    "mutationFn"
-  >
-) {
-  const queryClient = useQueryClient();
-
-  return useMutation<
-    ApiResponse<{ deliveryOrder: DeliveryOrder }>,
-    ApiErrorResult,
-    { deliveryOrderId: string; items: Array<{ id: string; quantity: number }> }
-  >({
-    mutationFn: async ({ deliveryOrderId, items }) => {
-      const response = await fetchApi(
-        `${BASE_URL}/delivery-orders/${deliveryOrderId}/revise-items`,
-        {},
-        {
-          method: "PATCH",
-          body: JSON.stringify({ items }),
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.message || "Gagal merevisi DO");
-      }
-      return result;
-    },
-    onSuccess: (_, variables) => {
-      // Invalidate and refetch delivery order detail
-      queryClient.invalidateQueries({
-        queryKey: deliveryOrderKeys.detail(variables.deliveryOrderId),
-      });
-      // Invalidate delivery orders list
-      queryClient.invalidateQueries({
-        queryKey: deliveryOrderKeys.lists(),
-      });
-      // Invalidate all shipment queries since quantity revisions affect shipment item data
-      // This ensures the revised quantities are reflected in the shipment display
-      queryClient.invalidateQueries({
-        queryKey: shipmentKeys.all,
-      });
-    },
     ...options,
   });
 }

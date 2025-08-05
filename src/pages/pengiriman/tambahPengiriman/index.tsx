@@ -31,11 +31,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useArmadas } from "@/hooks/armada";
+import { useInfiniteArmadas } from "@/hooks/armada";
 import {
   deliveryOrderKeys,
   useDeliveryOrder,
-  useDeliveryOrders,
+  useInfiniteDeliveryOrders,
 } from "@/hooks/do";
 import { shipmentKeys, useCreateShipment } from "@/hooks/pengiriman";
 import { cn } from "@/lib/utils";
@@ -164,22 +164,26 @@ export default function TambahPengiriman() {
   const {
     data: armadasData,
     isLoading: loadingArmadas,
-    refetch: refetchArmadas,
-  } = useArmadas({
-    staleTime: 300000,
-    refetchOnWindowFocus: false,
+    fetchNextPage: fetchNextArmadas,
+    hasNextPage: hasNextArmadas,
+    isFetchingNextPage: isFetchingNextArmadas,
+  } = useInfiniteArmadas({
     searchQuery: armadaSearchQuery,
+    limit: 10,
+    enabled: true,
   });
 
   const {
     data: deliveryOrdersData,
     isLoading: loadingDeliveryOrders,
-    refetch: refetchDeliveryOrders,
-  } = useDeliveryOrders({
-    staleTime: 300000,
-    refetchOnWindowFocus: false,
+    fetchNextPage: fetchNextDeliveryOrders,
+    hasNextPage: hasNextDeliveryOrders,
+    isFetchingNextPage: isFetchingNextDeliveryOrders,
+  } = useInfiniteDeliveryOrders({
     searchQuery: deliveryOrderSearchQuery,
     availableOnly: true,
+    limit: 10,
+    enabled: true,
   });
 
   // Hook untuk mendapatkan detail DO yang sedang aktif dipilih
@@ -198,21 +202,25 @@ export default function TambahPengiriman() {
 
   // Convert data dari API ke format ComboboxItem
   const armadas =
-    armadasData?.armadas?.map((armada) => ({
-      label: `${armada.model} - ${armada.plateNumber}`,
-      value: armada.id,
-      secondary: armada.description,
-    })) || [];
+    armadasData?.pages
+      .flatMap((page) => page.armadas)
+      ?.map((armada) => ({
+        label: `${armada.model} - ${armada.plateNumber}`,
+        value: armada.id,
+        secondary: armada.description,
+      })) || [];
 
   // Convert DO data ke format ComboboxItem (filtering sudah dilakukan di backend)
   const deliveryOrders =
-    deliveryOrdersData?.deliveryOrders?.map((do_item) => ({
-      label: `${do_item.doNumber} - ${do_item.customer.name}`,
-      value: do_item.id,
-      secondary: `${do_item.address} - ${
-        do_item.items.filter((item) => item.pendingQuantity > 0).length
-      } barang tersedia`,
-    })) || [];
+    deliveryOrdersData?.pages
+      .flatMap((page) => page.deliveryOrders)
+      ?.map((do_item) => ({
+        label: `${do_item.doNumber} - ${do_item.customer.name}`,
+        value: do_item.id,
+        secondary: `${do_item.address} - ${
+          do_item.items.filter((item) => item.pendingQuantity > 0).length
+        } barang tersedia`,
+      })) || [];
 
   const createShipment = useCreateShipment({
     onSuccess: (data: Shipment) => {
@@ -336,15 +344,12 @@ export default function TambahPengiriman() {
 
   // Inisialisasi halaman
   useEffect(() => {
-    refetchArmadas();
-    refetchDeliveryOrders();
-
     // Pastikan DO pertama selalu terbuka
     setOpenAccordions((prev) => ({
       ...prev,
       "do-0": true,
     }));
-  }, [refetchArmadas, refetchDeliveryOrders]);
+  }, []);
 
   const isDOLoading = useCallback(
     (doId: string) => loadingActiveDO && activeDOId === doId,
@@ -568,21 +573,13 @@ export default function TambahPengiriman() {
     setOpenAccordions(newAccordionStates);
   };
 
-  const handleDeliveryOrderSearch = useCallback(
-    (query: string) => {
-      setDeliveryOrderSearchQuery(query);
-      refetchDeliveryOrders();
-    },
-    [refetchDeliveryOrders]
-  );
+  const handleDeliveryOrderSearch = useCallback((query: string) => {
+    setDeliveryOrderSearchQuery(query);
+  }, []);
 
-  const handleArmadaSearch = useCallback(
-    (query: string) => {
-      setArmadaSearchQuery(query);
-      refetchArmadas();
-    },
-    [refetchArmadas]
-  );
+  const handleArmadaSearch = useCallback((query: string) => {
+    setArmadaSearchQuery(query);
+  }, []);
 
   const handleDeliveryOrderChange = useCallback(
     (value: string, index: number) => {
@@ -847,6 +844,9 @@ export default function TambahPengiriman() {
                                     onClear={() => field.onChange("")}
                                     onSearch={handleArmadaSearch}
                                     useServerSearch
+                                    hasMore={hasNextArmadas}
+                                    onLoadMore={fetchNextArmadas}
+                                    isLoadingMore={isFetchingNextArmadas}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -966,6 +966,11 @@ export default function TambahPengiriman() {
                                         }}
                                         onSearch={handleDeliveryOrderSearch}
                                         useServerSearch
+                                        hasMore={hasNextDeliveryOrders}
+                                        onLoadMore={fetchNextDeliveryOrders}
+                                        isLoadingMore={
+                                          isFetchingNextDeliveryOrders
+                                        }
                                       />
                                     </FormControl>
                                     <div className="min-h-[20px]">

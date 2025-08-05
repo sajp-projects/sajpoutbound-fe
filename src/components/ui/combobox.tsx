@@ -1,6 +1,3 @@
-import * as React from "react";
-import { Check, ChevronsUpDown, X, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -15,6 +12,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
+import * as React from "react";
 
 export interface ComboboxItem {
   label: string;
@@ -41,6 +41,10 @@ interface ComboboxProps {
   popoverClassName?: string;
   onSearch?: (query: string) => void;
   useServerSearch?: boolean;
+  // Infinite scroll props
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+  isLoadingMore?: boolean;
 }
 
 export function Combobox({
@@ -62,20 +66,36 @@ export function Combobox({
   popoverClassName,
   onSearch,
   useServerSearch = false,
+  hasMore = false,
+  onLoadMore,
+  isLoadingMore = false,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [searching, setSearching] = React.useState(false);
   const searchTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const listRef = React.useRef<HTMLDivElement>(null);
 
-  // Filter items locally if not using server search
+  // Filter items locally if not using server search and deduplicate
   const filteredItems = React.useMemo(() => {
-    if (useServerSearch) return items;
+    let itemsToFilter = items;
 
-    if (searchQuery === "") return items;
+    // Deduplicate items by value to prevent duplicate keys
+    if (useServerSearch) {
+      const seen = new Set();
+      itemsToFilter = items.filter((item) => {
+        if (seen.has(item.value)) {
+          return false;
+        }
+        seen.add(item.value);
+        return true;
+      });
+    }
+
+    if (searchQuery === "") return itemsToFilter;
 
     const lowercaseQuery = searchQuery.toLowerCase().trim();
-    return items.filter((item) => {
+    return itemsToFilter.filter((item) => {
       // Cek apakah query ada di label (case insensitive)
       const itemLabel = item.label.toLowerCase();
       if (itemLabel.includes(lowercaseQuery)) return true;
@@ -112,12 +132,25 @@ export function Combobox({
         // Set new timer for debounce (wait 300ms before sending query)
         searchTimerRef.current = setTimeout(() => {
           onSearch(query);
+          setSearching(false);
           searchTimerRef.current = null;
         }, 300);
       }
     },
     [useServerSearch, onSearch]
   );
+
+  // Handle infinite scroll
+  const handleScroll = React.useCallback(() => {
+    if (!listRef.current || !hasMore || isLoadingMore) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = listRef.current;
+    const threshold = 50; // pixels from bottom
+
+    if (scrollTop + clientHeight >= scrollHeight - threshold) {
+      onLoadMore?.();
+    }
+  }, [hasMore, isLoadingMore, onLoadMore]);
 
   // Clean up timer on unmount
   React.useEffect(() => {
@@ -146,7 +179,7 @@ export function Combobox({
         </label>
       )}
       <div className="relative">
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={setOpen} modal={true}>
           <PopoverTrigger asChild>
             <Button
               id={name}
@@ -184,7 +217,7 @@ export function Combobox({
           </PopoverTrigger>
           <PopoverContent
             className={cn(
-              "w-full p-0 bg-white shadow-lg border border-gray-200",
+              "w-[var(--radix-popover-trigger-width)] min-w-[200px] max-w-[400px] p-0 bg-white shadow-lg border border-gray-200",
               popoverClassName
             )}
             align="start"
@@ -197,7 +230,11 @@ export function Combobox({
                 onValueChange={handleSearchChange}
                 className="border-none focus:ring-0"
               />
-              <CommandList>
+              <CommandList
+                ref={listRef}
+                onScroll={handleScroll}
+                className="max-h-60 overflow-y-auto"
+              >
                 {isLoading ? (
                   <div className="flex items-center justify-center p-4 text-sm text-gray-500">
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -216,18 +253,40 @@ export function Combobox({
                             if (onSelect) onSelect(item);
                             setOpen(false);
                           }}
+                          className="flex items-center"
                         >
                           <Check
                             className={cn(
-                              "mr-2 h-4 w-4",
+                              "mr-2 h-4 w-4 shrink-0",
                               value === item.value ? "opacity-100" : "opacity-0"
                             )}
                           />
-                          {item.label}
-                          {item.secondary ? ` (${item.secondary})` : ""}
+                          <div className="flex-1 min-w-0">
+                            <div className="truncate">{item.label}</div>
+                            {item.secondary && (
+                              <div className="text-xs text-gray-500 truncate">
+                                {item.secondary}
+                              </div>
+                            )}
+                          </div>
                         </CommandItem>
                       ))}
                     </CommandGroup>
+                    {/* Load more indicator */}
+                    {hasMore && (
+                      <div className="p-2 border-t border-gray-100">
+                        {isLoadingMore ? (
+                          <div className="flex items-center justify-center p-2 text-sm text-gray-500">
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Memuat lebih banyak...
+                          </div>
+                        ) : (
+                          <div className="text-center p-2 text-sm text-gray-500">
+                            Scroll untuk memuat lebih banyak
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </CommandList>

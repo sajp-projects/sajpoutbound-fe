@@ -18,13 +18,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox, ComboboxItem } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useProducts } from "@/hooks/barang";
+import { useInfiniteProducts } from "@/hooks/barang";
 import {
   deliveryOrderKeys,
   useDeliveryOrder,
   useUpdateDeliveryOrder,
 } from "@/hooks/do";
-import { useCustomers } from "@/hooks/pelanggan";
+import { useInfiniteCustomers } from "@/hooks/pelanggan";
 import { shipmentKeys } from "@/hooks/pengiriman";
 import { cn } from "@/lib/utils";
 import {
@@ -142,25 +142,31 @@ export default function EditDo() {
   const {
     data: customersData,
     isLoading: loadingCustomers,
-    refetch: refetchCustomers,
-  } = useCustomers({
-    staleTime: 300000,
-    refetchOnWindowFocus: false,
+    fetchNextPage: fetchNextCustomers,
+    hasNextPage: hasNextCustomers,
+    isFetchingNextPage: isFetchingNextCustomers,
+  } = useInfiniteCustomers({
     searchQuery: customerSearchQuery,
+    limit: 10,
+    enabled: true,
   });
 
   const {
     data: productsData,
     isLoading: loadingProducts,
-    refetch: refetchProducts,
-  } = useProducts({
-    staleTime: 300000,
-    refetchOnWindowFocus: false,
+    fetchNextPage: fetchNextProducts,
+    hasNextPage: hasNextProducts,
+    isFetchingNextPage: isFetchingNextProducts,
+  } = useInfiniteProducts({
     searchQuery: productSearchQuery,
+    limit: 10,
+    enabled: true,
   });
 
-  const customers = customersData?.customers || [];
-  const products = productsData?.products || [];
+  // Flatten all customers from infinite query pages
+  const customers =
+    customersData?.pages.flatMap((page) => page.customers) || [];
+  const products = productsData?.pages.flatMap((page) => page.products) || [];
 
   // Ubah ke format combobox item
   const customerOptions: ComboboxItem[] = customers.map((customer) => ({
@@ -174,21 +180,13 @@ export default function EditDo() {
     secondary: product.satuan,
   }));
 
-  const handleCustomerSearch = useCallback(
-    (query: string) => {
-      setCustomerSearchQuery(query);
-      refetchCustomers();
-    },
-    [refetchCustomers]
-  );
+  const handleCustomerSearch = useCallback((query: string) => {
+    setCustomerSearchQuery(query);
+  }, []);
 
-  const handleProductSearch = useCallback(
-    (query: string) => {
-      setProductSearchQuery(query);
-      refetchProducts();
-    },
-    [refetchProducts]
-  );
+  const handleProductSearch = useCallback((query: string) => {
+    setProductSearchQuery(query);
+  }, []);
 
   const {
     data: deliveryOrder,
@@ -537,6 +535,9 @@ export default function EditDo() {
                     }}
                     onSearch={handleCustomerSearch}
                     useServerSearch
+                    hasMore={hasNextCustomers}
+                    onLoadMore={fetchNextCustomers}
+                    isLoadingMore={isFetchingNextCustomers}
                   />
 
                   <div className="space-y-2">
@@ -621,6 +622,9 @@ export default function EditDo() {
                               }}
                               onSearch={handleProductSearch}
                               useServerSearch
+                              hasMore={hasNextProducts}
+                              onLoadMore={fetchNextProducts}
+                              isLoadingMore={isFetchingNextProducts}
                               className="h-10"
                             />
                           )}

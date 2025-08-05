@@ -1,10 +1,14 @@
+import { BASE_URL } from "@/constant/baseUrl";
 import {
   Armada,
   ArmadasResponse,
   CreateArmadaInput,
   UpdateArmadaInput,
 } from "@/types/armada";
+import { fetchApi } from "@/utils/api";
+import { handleApiError } from "@/utils/errorHandler";
 import {
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -12,14 +16,14 @@ import {
   type UseQueryOptions,
 } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
-import { fetchApi } from "@/utils/api";
-import { BASE_URL } from "@/constant/baseUrl";
 
 export const armadaKeys = {
   all: ["armadas"] as const,
   lists: () => [...armadaKeys.all, "list"] as const,
   list: (filters: Record<string, unknown>) =>
     [...armadaKeys.lists(), { filters }] as const,
+  infinite: (filters: Record<string, unknown>) =>
+    [...armadaKeys.lists(), "infinite", { filters }] as const,
   details: () => [...armadaKeys.all, "detail"] as const,
   detail: (id: string) => [...armadaKeys.details(), id] as const,
   logs: () => [...armadaKeys.all, "logs"] as const,
@@ -73,6 +77,46 @@ export function useArmadas(
     },
     refetchOnWindowFocus: true,
     ...options,
+  });
+}
+
+export function useInfiniteArmadas(options?: {
+  searchQuery?: string;
+  limit?: number;
+  enabled?: boolean;
+}) {
+  const { searchQuery = "", limit = 10, enabled = true } = options || {};
+
+  return useInfiniteQuery({
+    queryKey: armadaKeys.infinite({ search: searchQuery, limit }),
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
+      const response = await fetchApi(`${BASE_URL}/armadas`, {
+        page: pageParam.toString(),
+        limit: limit.toString(),
+        search: searchQuery,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        handleApiError(
+          result,
+          `Error fetching armadas: ${response.statusText}`
+        );
+      }
+
+      return result.data;
+    },
+    getNextPageParam: (lastPage: ArmadasResponse, allPages) => {
+      const currentPage = allPages.length;
+      const totalPages = Math.ceil(lastPage.pagination.total / limit);
+
+      return currentPage < totalPages ? currentPage + 1 : undefined;
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 }
 

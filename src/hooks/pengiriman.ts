@@ -10,7 +10,12 @@ import {
 } from "@/types/pengiriman";
 import { fetchApi } from "@/utils/api";
 import { createErrorResponse, handleApiError } from "@/utils/errorHandler";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationOptions,
+} from "@tanstack/react-query";
 import { deliveryOrderKeys } from "./do";
 
 export const shipmentKeys = {
@@ -476,6 +481,104 @@ export function useBulkWeighShipmentItems(options = {}) {
         queryKey: shipmentKeys.chosenProducts(variables.shipmentId),
       });
       queryClient.invalidateQueries({ queryKey: shipmentKeys.lists() });
+    },
+    ...options,
+  });
+}
+
+export function useChangeCustomerAfterWeighing(
+  options?: UseMutationOptions<
+    ApiErrorResult,
+    Error,
+    { deliveryOrderId: string; customerId: string }
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiErrorResult,
+    Error,
+    { deliveryOrderId: string; customerId: string }
+  >({
+    mutationFn: async ({ deliveryOrderId, customerId }) => {
+      const response = await fetchApi(
+        `${BASE_URL}/shipments/${deliveryOrderId}/change-customer`,
+        {},
+        {
+          method: "PATCH",
+          body: JSON.stringify({ customerId }),
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || "Gagal mengubah customer");
+      }
+      return result;
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate and refetch delivery order detail
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.detail(variables.deliveryOrderId),
+      });
+      // Invalidate delivery orders list
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.lists(),
+      });
+      // Invalidate all shipment queries since customer data is embedded in shipment items
+      // This ensures the customer name updates everywhere it's displayed
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all,
+      });
+    },
+    ...options,
+  });
+}
+
+export function useReviseDeliveryOrderAfterWeighing(
+  options?: UseMutationOptions<
+    ApiErrorResult,
+    Error,
+    { deliveryOrderId: string; items: Array<{ id: string; quantity: number }> }
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiErrorResult,
+    Error,
+    { deliveryOrderId: string; items: Array<{ id: string; quantity: number }> }
+  >({
+    mutationFn: async ({ deliveryOrderId, items }) => {
+      const response = await fetchApi(
+        `${BASE_URL}/shipments/${deliveryOrderId}/revise-items`,
+        {},
+        {
+          method: "PATCH",
+          body: JSON.stringify({ items }),
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || "Gagal merevisi DO");
+      }
+      return result;
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate and refetch delivery order detail
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.detail(variables.deliveryOrderId),
+      });
+      // Invalidate delivery orders list
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.lists(),
+      });
+      // Invalidate all shipment queries since quantity revisions affect shipment item data
+      // This ensures the revised quantities are reflected in the shipment display
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all,
+      });
     },
     ...options,
   });

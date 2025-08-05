@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useReviseDeliveryOrderAfterWeighing } from "@/hooks/do";
+import { useReviseDeliveryOrderAfterWeighing } from "@/hooks/pengiriman";
 import { DeliveryOrder, RevisedItem } from "@/types/do";
 import { formatNumber } from "@/utils/formatNumber";
 import {

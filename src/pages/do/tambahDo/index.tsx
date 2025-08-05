@@ -1,32 +1,32 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate, Link } from "react-router";
-import { Plus, Save, Loader2 } from "lucide-react";
-import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { joiResolver } from "@hookform/resolvers/joi";
 import Joi from "joi";
+import { Loader2, Plus, Save } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router";
 
-import { useCreateDeliveryOrder } from "@/hooks/do";
-import { useCustomers } from "@/hooks/pelanggan";
-import { useProducts } from "@/hooks/barang";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Combobox, ComboboxItem } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useInfiniteProducts } from "@/hooks/barang";
+import { useCreateDeliveryOrder } from "@/hooks/do";
+import { useInfiniteCustomers } from "@/hooks/pelanggan";
+import { cn } from "@/lib/utils";
 import {
   CreateDeliveryOrderInput,
   CreateDeliveryOrderProduct,
 } from "@/types/do";
-import { showSuccessAlert, showErrorAlert } from "@/utils/sweetAlert";
-import { cn } from "@/lib/utils";
 import { formatNumber } from "@/utils/formatNumber";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Combobox, ComboboxItem } from "@/components/ui/combobox";
+import { showErrorAlert, showSuccessAlert } from "@/utils/sweetAlert";
 
 interface ExtendedProduct extends CreateDeliveryOrderProduct {
   productName?: string;
@@ -125,25 +125,29 @@ export default function TambahDo() {
   const {
     data: customersData,
     isLoading: loadingCustomers,
-    refetch: refetchCustomers,
-  } = useCustomers({
-    staleTime: 300000,
-    refetchOnWindowFocus: false,
+    fetchNextPage: fetchNextCustomers,
+    hasNextPage: hasNextCustomers,
+    isFetchingNextPage: isFetchingNextCustomers,
+  } = useInfiniteCustomers({
     searchQuery: customerSearchQuery,
+    limit: 10,
   });
 
   const {
     data: productsData,
     isLoading: loadingProducts,
-    refetch: refetchProducts,
-  } = useProducts({
-    staleTime: 300000,
-    refetchOnWindowFocus: false,
+    fetchNextPage: fetchNextProducts,
+    hasNextPage: hasNextProducts,
+    isFetchingNextPage: isFetchingNextProducts,
+  } = useInfiniteProducts({
     searchQuery: productSearchQuery,
+    limit: 10,
   });
 
-  const customers = customersData?.customers || [];
-  const products = productsData?.products || [];
+  // Flatten all customers and products from infinite query pages
+  const customers =
+    customersData?.pages.flatMap((page) => page.customers) || [];
+  const products = productsData?.pages.flatMap((page) => page.products) || [];
 
   const customerOptions: ComboboxItem[] = customers.map((customer) => ({
     label: customer.name,
@@ -156,21 +160,15 @@ export default function TambahDo() {
     secondary: product.satuan,
   }));
 
-  const handleCustomerSearch = useCallback(
-    (query: string) => {
-      setCustomerSearchQuery(query);
-      refetchCustomers();
-    },
-    [refetchCustomers]
-  );
+  const handleCustomerSearch = useCallback((query: string) => {
+    setCustomerSearchQuery(query);
+    // Search is handled by the infinite query hook
+  }, []);
 
-  const handleProductSearch = useCallback(
-    (query: string) => {
-      setProductSearchQuery(query);
-      refetchProducts();
-    },
-    [refetchProducts]
-  );
+  const handleProductSearch = useCallback((query: string) => {
+    setProductSearchQuery(query);
+    // Search is handled by the infinite query hook
+  }, []);
 
   const createDeliveryOrder = useCreateDeliveryOrder({
     onSuccess: (data) => {
@@ -427,6 +425,9 @@ export default function TambahDo() {
                     }}
                     onSearch={handleCustomerSearch}
                     useServerSearch
+                    hasMore={hasNextCustomers}
+                    onLoadMore={fetchNextCustomers}
+                    isLoadingMore={isFetchingNextCustomers}
                   />
 
                   <div className="space-y-2">
@@ -512,6 +513,9 @@ export default function TambahDo() {
                               }}
                               onSearch={handleProductSearch}
                               useServerSearch
+                              hasMore={hasNextProducts}
+                              onLoadMore={fetchNextProducts}
+                              isLoadingMore={isFetchingNextProducts}
                               className="h-10"
                             />
                           )}

@@ -480,7 +480,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
                         {item.subItems && (
                           <ul
                             className={cn(
-                              "mt-1 ml-6 sm:ml-8 space-y-0.5 sm:space-y-1 overflow-hidden transition-all max-h-0",
+                              "mt-2 ml-6 sm:ml-8 space-y-1 sm:space-y-1 overflow-hidden transition-all max-h-0 border-l border-gray-200 pl-3 sm:pl-4",
                               openMenus.includes(item.name) && "max-h-96"
                             )}
                           >
@@ -494,7 +494,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
                                         handleLinkClick();
                                       }}
                                       className={cn(
-                                        "block px-2 sm:px-3 py-1 sm:py-2 text-xs text-gray-600 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors",
+                                        "block px-3 sm:px-3 py-2 sm:py-2 text-xs sm:text-sm text-gray-600 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors min-h-[40px] sm:min-h-[36px] flex items-center",
                                         isSubMenuActive(subItem.path) &&
                                           "bg-blue-50 text-blue-600 font-medium"
                                       )}

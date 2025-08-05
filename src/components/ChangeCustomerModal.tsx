@@ -6,25 +6,269 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useChangeCustomerAfterWeighing } from "@/hooks/do";
-import { useCustomers } from "@/hooks/pelanggan";
+import { useInfiniteCustomers } from "@/hooks/pelanggan";
+import { useChangeCustomerAfterWeighing } from "@/hooks/pengiriman";
+import { cn } from "@/lib/utils";
 import { DeliveryOrder } from "@/types/do";
-import { 
+import { Customer } from "@/types/pelanggan";
+import {
   isConfirmed,
   showConfirmationAlert,
-  showErrorAlert, 
-  showSuccessAlert 
+  showErrorAlert,
+  showSuccessAlert,
 } from "@/utils/sweetAlert";
-import { useEffect, useState } from "react";
+import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ErrorState } from "./ErrorState";
 import { LoadingState } from "./LoadingState";
+
+// Specialized Combobox for modal use - avoids modal-in-modal conflicts
+function ModalCombobox({
+  items,
+  value,
+  onValueChange,
+  placeholder,
+  searchPlaceholder = "Cari...",
+  isLoading,
+  name,
+  onClear,
+  onSearch,
+  useServerSearch = false,
+}: {
+  items: { label: string; value: string; secondary?: string }[];
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder: string;
+  searchPlaceholder?: string;
+  isLoading?: boolean;
+  name: string;
+  onClear?: () => void;
+  onSearch?: (query: string) => void;
+  useServerSearch?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const selectedItem = items.find((item) => item.value === value);
+
+  const handleSearchChange = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+
+      if (useServerSearch && onSearch) {
+        setSearching(true);
+
+        if (searchTimerRef.current) {
+          clearTimeout(searchTimerRef.current);
+        }
+
+        searchTimerRef.current = setTimeout(() => {
+          onSearch(query);
+          setSearching(false);
+          searchTimerRef.current = null;
+        }, 300);
+      }
+    },
+    [useServerSearch, onSearch]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (open && inputRef.current) {
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
+  const handleSelect = (item: {
+    label: string;
+    value: string;
+    secondary?: string;
+  }) => {
+    onValueChange(item.value);
+    setOpen(false);
+    // Don't clear search query to preserve it for next open
+  };
+
+  const filteredItems = useServerSearch
+    ? items
+    : items.filter((item) => {
+        if (searchQuery === "") return true;
+        const lowercaseQuery = searchQuery.toLowerCase().trim();
+        return (
+          item.label.toLowerCase().includes(lowercaseQuery) ||
+          (item.secondary &&
+            item.secondary.toLowerCase().includes(lowercaseQuery)) ||
+          item.value.toLowerCase().includes(lowercaseQuery)
+        );
+      });
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <Button
+        id={name}
+        variant="outline"
+        role="combobox"
+        aria-expanded={open}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen(!open);
+        }}
+        className="w-full justify-between h-10 text-left font-normal"
+        type="button"
+      >
+        {selectedItem ? selectedItem.label : placeholder}
+        <div className="flex ml-2">
+          {value && onClear && (
+            <div
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClear();
+                setOpen(false);
+              }}
+              className="flex items-center justify-center w-4 h-4 p-0 mr-1 text-gray-400 cursor-pointer hover:text-gray-500"
+            >
+              <X className="w-4 h-4" />
+            </div>
+          )}
+          {isLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin opacity-70" />
+          ) : (
+            <ChevronsUpDown className="w-4 h-4 opacity-50 shrink-0" />
+          )}
+        </div>
+      </Button>
+
+      {open && (
+        <div
+          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {/* Search Input */}
+          <div
+            className="flex items-center gap-2 px-3 py-2 border-b border-gray-100"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder={searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="flex-1 text-sm outline-none border-none bg-transparent placeholder:text-gray-400"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  if (filteredItems.length > 0) {
+                    handleSelect(filteredItems[0]);
+                  }
+                }
+              }}
+              onKeyPress={(e) => {
+                e.stopPropagation();
+              }}
+              onKeyUp={(e) => {
+                e.stopPropagation();
+              }}
+              onInput={(e) => {
+                e.stopPropagation();
+              }}
+            />
+            {searching && (
+              <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+            )}
+          </div>
+
+          {/* Items List */}
+          <div
+            className="max-h-48 overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center p-4 text-sm text-gray-500">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Memuat...
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="p-4 text-sm text-center text-gray-500">
+                Tidak ada data yang cocok
+              </div>
+            ) : (
+              <div>
+                {filteredItems.map((item) => (
+                  <div
+                    key={item.value}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSelect(item);
+                    }}
+                    className={cn(
+                      "flex items-center px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 transition-colors",
+                      value === item.value && "bg-blue-50 text-blue-600"
+                    )}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === item.value ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium">{item.label}</div>
+                      {item.secondary && (
+                        <div className="text-xs text-gray-500">
+                          {item.secondary}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface ChangeCustomerModalProps {
   isOpen: boolean;
@@ -42,12 +286,15 @@ export function ChangeCustomerModal({
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
 
   const {
-    data: customersResponse,
+    data: customersData,
     isLoading: isLoadingCustomers,
     error: customersError,
-    refetch: refetchCustomers,
-  } = useCustomers({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteCustomers({
     enabled: isOpen,
+    limit: 10,
   });
 
   const changeCustomerMutation = useChangeCustomerAfterWeighing({
@@ -82,7 +329,7 @@ export function ChangeCustomerModal({
     }
 
     // Get selected customer name for confirmation
-    const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
+    const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
     const selectedCustomerName = selectedCustomer?.name || "Customer";
 
     // Close modal first to show SweetAlert properly
@@ -104,9 +351,16 @@ export function ChangeCustomerModal({
     });
   };
 
-  const customers = customersResponse?.customers || [];
+  // Flatten all customers from infinite query pages
+  const customers =
+    customersData?.pages.flatMap((page) => page.customers) || [];
+  const customerItems = customers.map((customer: Customer) => ({
+    label: customer.name,
+    value: customer.id,
+    secondary: customer.address,
+  }));
   const currentCustomer = customers.find(
-    (c) => c.id === deliveryOrder.customerId
+    (c: Customer) => c.id === deliveryOrder.customerId
   );
 
   // Set current customer as default selection when modal opens
@@ -118,7 +372,13 @@ export function ChangeCustomerModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] bg-white border-0 rounded-lg shadow-lg">
+      <DialogContent
+        className="sm:max-w-[600px] bg-white border-0 rounded-lg shadow-lg"
+        onOpenAutoFocus={(e) => {
+          // Prevent auto-focus on modal open to allow combobox to work properly
+          e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Ubah Customer</DialogTitle>
         </DialogHeader>
@@ -153,32 +413,24 @@ export function ChangeCustomerModal({
               <ErrorState
                 title="Gagal Memuat Customer"
                 message="Terjadi kesalahan saat memuat daftar customer"
-                onRetry={refetchCustomers}
+                onRetry={() => window.location.reload()}
                 retryButtonText="Coba Lagi"
               />
             ) : (
-              <Select
+              <ModalCombobox
+                items={customerItems}
                 value={selectedCustomerId}
                 onValueChange={setSelectedCustomerId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih customer baru..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id}>
-                      <div>
-                        <div className="font-medium">{customer.name}</div>
-                        {customer.address && (
-                          <div className="text-sm text-gray-500">
-                            {customer.address}
-                          </div>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Pilih customer baru..."
+                searchPlaceholder="Cari customer..."
+                isLoading={isLoadingCustomers}
+                name="customerId"
+                onClear={() => setSelectedCustomerId("")}
+                useServerSearch={false}
+                hasMore={hasNextPage}
+                onLoadMore={fetchNextPage}
+                isLoadingMore={isFetchingNextPage}
+              />
             )}
           </div>
 
