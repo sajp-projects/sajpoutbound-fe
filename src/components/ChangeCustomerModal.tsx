@@ -6,17 +6,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useInfiniteCustomers } from "@/hooks/customer";
 import { useChangeCustomerAfterWeighing } from "@/hooks/shipment";
-import { useStableCustomerSearch } from "@/hooks/useStableCustomerSearch";
 import { Customer } from "@/types/customer";
 import { DeliveryOrder } from "@/types/do";
+import { fetchApi } from "@/utils/api";
 import {
   isConfirmed,
   showConfirmationAlert,
   showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorState } from "./ErrorState";
 import { LoadingState } from "./LoadingState";
 import { Combobox } from "./ui/combobox";
@@ -35,22 +36,86 @@ export const ChangeCustomerModal = memo(function ChangeCustomerModal({
   onSuccess,
 }: ChangeCustomerModalProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // Use stable customer search hook
+  // Base query for initial data load
   const {
-    customers: allCustomers,
+    data: customersData,
     isLoading: isLoadingCustomers,
-    isSearching,
     error: customersError,
-    hasNextPage,
     fetchNextPage,
+    hasNextPage,
     isFetchingNextPage,
-    onSearch: handleSearch,
-    resetSearch,
-  } = useStableCustomerSearch({
+  } = useInfiniteCustomers({
     enabled: isOpen,
     limit: 20,
+    searchQuery: "", // Keep empty for stable query
   });
+
+  // Update allCustomers when base data changes
+  const baseCustomers = useMemo(() => {
+    return customersData?.pages.flatMap((page) => page.customers) || [];
+  }, [customersData]);
+
+  useEffect(() => {
+    if (baseCustomers.length > 0 && !searchQuery) {
+      setAllCustomers(baseCustomers);
+    }
+  }, [baseCustomers, searchQuery]);
+
+  // Handle search with manual API call
+  const performSearch = useCallback(
+    async (query: string) => {
+      if (!query.trim()) {
+        // Reset to original data when search is cleared
+        setAllCustomers(baseCustomers);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        // Manual API call for search using fetchApi utility
+        const response = await fetchApi("/customers", {
+          search: query,
+          limit: "50",
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            setAllCustomers(result.data.customers);
+          }
+        }
+      } catch (error) {
+        console.error("Search error:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [baseCustomers]
+  );
+
+  // Search handler for combobox
+  const handleSearch = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+      performSearch(query);
+    },
+    [performSearch]
+  );
+
+  const resetSearch = useCallback(() => {
+    setSearchQuery("");
+    setAllCustomers(baseCustomers);
+  }, [baseCustomers]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      resetSearch();
+    }
+  }, [isOpen, resetSearch]);
 
   const changeCustomerMutation = useChangeCustomerAfterWeighing({
     onSuccess: () => {
@@ -58,7 +123,7 @@ export const ChangeCustomerModal = memo(function ChangeCustomerModal({
         "Berhasil!",
         "Customer berhasil diubah setelah penimbangan"
       );
-      onSuccess?.(); // Call parent callback to trigger refetch
+      onSuccess?.();
       onClose();
     },
     onError: (error) => {
@@ -83,13 +148,11 @@ export const ChangeCustomerModal = memo(function ChangeCustomerModal({
       return;
     }
 
-    // Get selected customer name for confirmation
     const selectedCustomer = allCustomers.find(
       (c) => c.id === selectedCustomerId
     );
     const selectedCustomerName = selectedCustomer?.name || "Customer";
 
-    // Close modal first to show SweetAlert properly
     onClose();
 
     showConfirmationAlert(
@@ -104,11 +167,9 @@ export const ChangeCustomerModal = memo(function ChangeCustomerModal({
           customerId: selectedCustomerId,
         });
       }
-      // Note: If user cancels, modal stays closed (acceptable UX)
     });
   };
 
-  // Use stable allCustomers state instead of reactive query data
   const customerItems = useMemo(() => {
     return allCustomers.map((customer: Customer) => ({
       label: customer.name,
@@ -117,9 +178,7 @@ export const ChangeCustomerModal = memo(function ChangeCustomerModal({
     }));
   }, [allCustomers]);
 
-  // Keep current customer stable - don't depend on search results
   const currentCustomer = useMemo(() => {
-    // Always use the customer info from deliveryOrder, not from search results
     if (deliveryOrder.customer) {
       return {
         id: deliveryOrder.customerId,
@@ -127,12 +186,7 @@ export const ChangeCustomerModal = memo(function ChangeCustomerModal({
         address: deliveryOrder.customer.address,
       } as Customer;
     }
-
-    // Fallback: try to find in allCustomers if deliveryOrder.customer is missing
-    return allCustomers.find(
-      (c: Customer) => c.id === deliveryOrder.customerId
-    );
-  }, [deliveryOrder.customerId, deliveryOrder.customer, allCustomers]);
+  }, [deliveryOrder.customerId, deliveryOrder.customer]);
 
   // Set current customer as default selection when modal opens
   useEffect(() => {
@@ -141,12 +195,38 @@ export const ChangeCustomerModal = memo(function ChangeCustomerModal({
     }
   }, [isOpen, deliveryOrder.customerId, selectedCustomerId]);
 
-  // Reset search when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      resetSearch();
+  // Ensure selected customer is always in the items list
+  const finalCustomerItems = useMemo(() => {
+    const items = [...customerItems];
+
+    // If we have a selected customer that's not in the current items list,
+    // add it to ensure the combobox can display the selected value
+    if (
+      selectedCustomerId &&
+      !items.find((item) => item.value === selectedCustomerId)
+    ) {
+      const selectedCustomer =
+        currentCustomer ||
+        baseCustomers.find((c) => c.id === selectedCustomerId) ||
+        allCustomers.find((c) => c.id === selectedCustomerId);
+
+      if (selectedCustomer) {
+        items.unshift({
+          label: selectedCustomer.name,
+          value: selectedCustomer.id,
+          secondary: selectedCustomer.address,
+        });
+      }
     }
-  }, [isOpen, resetSearch]);
+
+    return items;
+  }, [
+    customerItems,
+    selectedCustomerId,
+    currentCustomer,
+    baseCustomers,
+    allCustomers,
+  ]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -191,7 +271,7 @@ export const ChangeCustomerModal = memo(function ChangeCustomerModal({
                 />
               ) : (
                 <Combobox
-                  items={customerItems}
+                  items={finalCustomerItems}
                   value={selectedCustomerId}
                   onValueChange={setSelectedCustomerId}
                   placeholder="Pilih customer baru..."
