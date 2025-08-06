@@ -6,10 +6,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useInfiniteCustomers } from "@/hooks/pelanggan";
-import { useChangeCustomerAfterWeighing } from "@/hooks/pengiriman";
+import { useInfiniteCustomers } from "@/hooks/customer";
+import { useChangeCustomerAfterWeighing } from "@/hooks/shipment";
+import { Customer } from "@/types/customer";
 import { DeliveryOrder } from "@/types/do";
-import { Customer } from "@/types/pelanggan";
 import {
   isConfirmed,
   showConfirmationAlert,

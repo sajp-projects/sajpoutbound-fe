@@ -1,6 +1,6 @@
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
-import { useRolePermissions } from "@/hooks/izin";
+import { useRolePermissions } from "@/hooks/permission";
 import { hasPermission } from "@/utils/permission";
 import { getRoleId } from "@/utils/storage";
 import {

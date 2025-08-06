@@ -24,11 +24,11 @@ import {
 } from "@/components/ui/table";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
-import { useRolePermissions } from "@/hooks/izin";
-import { useShipmentsByDeliveryOrderId } from "@/hooks/pengiriman";
+import { useRolePermissions } from "@/hooks/permission";
+import { useShipmentsByDeliveryOrderId } from "@/hooks/shipment";
 import { cn } from "@/lib/utils";
 import { DeliveryOrderStatus } from "@/types/do";
-import { ShipmentFromDO, ShipmentItemFromDO } from "@/types/pengiriman";
+import { ShipmentFromDO, ShipmentItemFromDO } from "@/types/shipment";
 import { formatDate } from "@/utils/date";
 import { formatNumber } from "@/utils/formatNumber";
 import { hasPermission } from "@/utils/permission";
@@ -105,7 +105,6 @@ export default function DetailDo() {
     PERMISSION.RESOURCES.DO,
     PERMISSION.ACTIONS.DELETE
   );
-
 
   const deliveryOrderId = id || "";
 
@@ -422,7 +421,6 @@ export default function DetailDo() {
                               : "Arsipkan DO"}
                           </Button>
                         )}
-
                     </div>
                   </div>
                 </div>
@@ -833,7 +831,6 @@ export default function DetailDo() {
           </div>
         )}
       </div>
-
     </div>
   );
 }

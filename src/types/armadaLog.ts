@@ -1,6 +1,6 @@
-import { Pagination } from "./user";
-import { UserMinimal } from "./gudang";
 import { Armada } from "./armada";
+import { Pagination } from "./user";
+import { UserMinimal } from "./warehouse";
 
 export interface ArmadaLog {
   id: string;

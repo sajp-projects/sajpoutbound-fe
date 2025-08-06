@@ -12,92 +12,80 @@ const Dashboard = lazy(() => import("./pages/dashboard"));
 const NotFound = lazy(() => import("./pages/notFound"));
 
 // Lazy import untuk halaman pengguna
-const ArsipPengguna = lazy(() => import("./pages/pengguna/arsipPengguna"));
-const Pengguna = lazy(() => import("./pages/pengguna/daftarPengguna"));
-const DetailPengguna = lazy(() => import("./pages/pengguna/detailPengguna"));
-const EditPengguna = lazy(() => import("./pages/pengguna/editPengguna"));
-const LogPengguna = lazy(() => import("./pages/pengguna/logPengguna"));
-const TambahPengguna = lazy(() => import("./pages/pengguna/tambahPengguna"));
-const LogSemuaPengguna = lazy(
-  () => import("./pages/pengguna/logSemuaPengguna")
-);
+const ArsipPengguna = lazy(() => import("./pages/user/archiveUser"));
+const Pengguna = lazy(() => import("./pages/user/listUser"));
+const DetailPengguna = lazy(() => import("./pages/user/detailUser"));
+const EditPengguna = lazy(() => import("./pages/user/editUser"));
+const LogPengguna = lazy(() => import("./pages/user/logUser"));
+const TambahPengguna = lazy(() => import("./pages/user/addUser"));
+const LogSemuaPengguna = lazy(() => import("./pages/user/logAllUser"));
 
 // Lazy import untuk halaman peran
-const Role = lazy(() => import("./pages/peran/daftarPeran"));
-const DetailPeran = lazy(() => import("./pages/peran/detailPeran"));
-const EditPeran = lazy(() => import("./pages/peran/editPeran"));
-const TambahPeran = lazy(() => import("./pages/peran/tambahPeran"));
+const Role = lazy(() => import("./pages/role/listRole"));
+const DetailPeran = lazy(() => import("./pages/role/detailRole"));
+const EditPeran = lazy(() => import("./pages/role/editRole"));
+const TambahPeran = lazy(() => import("./pages/role/addRole"));
 
 // Lazy import untuk halaman izin
-const DaftarIzin = lazy(() => import("./pages/izin/daftarIzin"));
-const IzinPeran = lazy(() => import("./pages/peran/izinPeran"));
+const DaftarIzin = lazy(() => import("./pages/permission/permissionList"));
+const IzinPeran = lazy(() => import("./pages/role/permissionOfRole"));
 
 // Lazy import untuk halaman gudang
-const DaftarGudang = lazy(() => import("./pages/gudang/daftarGudang"));
-const DetailGudang = lazy(() => import("./pages/gudang/detailGudang"));
-const EditGudang = lazy(() => import("./pages/gudang/editGudang"));
-const TambahGudang = lazy(() => import("./pages/gudang/tambahGudang"));
-const LogGudang = lazy(() => import("./pages/gudang/logGudang"));
-const LogSemuaGudang = lazy(() => import("./pages/gudang/logSemuaGudang"));
+const DaftarGudang = lazy(() => import("./pages/warehouse/listWarehouse"));
+const DetailGudang = lazy(() => import("./pages/warehouse/detailWarehouse"));
+const EditGudang = lazy(() => import("./pages/warehouse/editWarehouse"));
+const TambahGudang = lazy(() => import("./pages/warehouse/addWarehouse"));
+const LogGudang = lazy(() => import("./pages/warehouse/logWarehouse"));
+const LogSemuaGudang = lazy(() => import("./pages/warehouse/logAllWarehouse"));
 
 // Lazy import untuk halaman barang
-const DaftarBarang = lazy(() => import("./pages/barang/daftarBarang"));
-const DetailBarang = lazy(() => import("./pages/barang/detailBarang"));
-const EditBarang = lazy(() => import("./pages/barang/editBarang"));
-const TambahBarang = lazy(() => import("./pages/barang/tambahBarang"));
-const LogBarang = lazy(() => import("./pages/barang/logBarang"));
-const LogSemuaBarang = lazy(() => import("./pages/barang/logSemuaBarang"));
+const DaftarBarang = lazy(() => import("./pages/product/listProduct"));
+const DetailBarang = lazy(() => import("./pages/product/detailProduct"));
+const EditBarang = lazy(() => import("./pages/product/editProduct"));
+const TambahBarang = lazy(() => import("./pages/product/addProduct"));
+const LogBarang = lazy(() => import("./pages/product/logProduct"));
+const LogSemuaBarang = lazy(() => import("./pages/product/logAllProduct"));
 
 // Lazy import untuk halaman pelanggan
-const DaftarPelanggan = lazy(() => import("./pages/pelanggan/daftarPelanggan"));
-const TambahPelanggan = lazy(() => import("./pages/pelanggan/tambahPelanggan"));
-const LogPelanggan = lazy(() => import("./pages/pelanggan/logPelanggan"));
-const LogSemuaPelanggan = lazy(
-  () => import("./pages/pelanggan/logSemuaPelanggan")
-);
-const EditPelanggan = lazy(() => import("./pages/pelanggan/editPelanggan"));
-const DetailPelanggan = lazy(() => import("./pages/pelanggan/detailPelanggan"));
+const DaftarPelanggan = lazy(() => import("./pages/customer/listCustomer"));
+const TambahPelanggan = lazy(() => import("./pages/customer/addCustomer"));
+const LogPelanggan = lazy(() => import("./pages/customer/logCustomer"));
+const LogSemuaPelanggan = lazy(() => import("./pages/customer/logAllCustomer"));
+const EditPelanggan = lazy(() => import("./pages/customer/editCustomer"));
+const DetailPelanggan = lazy(() => import("./pages/customer/detailCustomer"));
 
 // Lazy import untuk halaman armada
-const DaftarArmada = lazy(() => import("./pages/armada/daftarArmada"));
-const TambahArmada = lazy(() => import("./pages/armada/tambahArmada"));
+const DaftarArmada = lazy(() => import("./pages/armada/listArmada"));
+const TambahArmada = lazy(() => import("./pages/armada/addArmada"));
 const LogArmada = lazy(() => import("./pages/armada/logArmada"));
-const LogSemuaArmada = lazy(() => import("./pages/armada/logSemuaArmada"));
+const LogSemuaArmada = lazy(() => import("./pages/armada/logAllArmada"));
 const EditArmada = lazy(() => import("./pages/armada/editArmada"));
 const DetailArmada = lazy(() => import("./pages/armada/detailArmada"));
 
 // Lazy import untuk halaman DO
-const DaftarDo = lazy(() => import("./pages/do/daftarDo"));
-const TambahDo = lazy(() => import("./pages/do/tambahDo"));
+const DaftarDo = lazy(() => import("./pages/do/listDo"));
+const TambahDo = lazy(() => import("./pages/do/addDo"));
 const LogDo = lazy(() => import("./pages/do/logDo"));
-const ArsipDo = lazy(() => import("./pages/do/arsipDo"));
+const ArsipDo = lazy(() => import("./pages/do/archiveDo"));
 const EditDo = lazy(() => import("./pages/do/editDo"));
 const DetailDo = lazy(() => import("./pages/do/detailDo"));
-const LogSemuaDo = lazy(() => import("./pages/do/logSemuaDo"));
+const LogSemuaDo = lazy(() => import("./pages/do/logAllDo"));
 
-const LaporanOperasional = lazy(() => import("./pages/laporan/operasional"));
+const LaporanOperasional = lazy(() => import("./pages/report/operational"));
 const LaporanPenugasanPengiriman = lazy(
-  () => import("./pages/laporan/penugasanPengiriman")
+  () => import("./pages/report/deliveryAssignment")
 );
 
-const LaporanPengeluaran = lazy(() => import("./pages/laporan/pengeluaran"));
-const DaftarPengiriman = lazy(
-  () => import("./pages/pengiriman/daftarPengiriman")
-);
-const LogPengiriman = lazy(() => import("./pages/pengiriman/logPengiriman"));
-const DetailPengiriman = lazy(
-  () => import("./pages/pengiriman/detailPengiriman")
-);
-const EditPengiriman = lazy(() => import("./pages/pengiriman/editPengiriman"));
-const TambahPengiriman = lazy(
-  () => import("./pages/pengiriman/tambahPengiriman")
-);
+const LaporanPengeluaran = lazy(() => import("./pages/report/expenditure"));
+const DaftarPengiriman = lazy(() => import("./pages/shipment/listShipment"));
+const LogPengiriman = lazy(() => import("./pages/shipment/logShipment"));
+const DetailPengiriman = lazy(() => import("./pages/shipment/detailShipment"));
+const EditPengiriman = lazy(() => import("./pages/shipment/editShipment"));
+const TambahPengiriman = lazy(() => import("./pages/shipment/addShipment"));
 const LogSemuaPengiriman = lazy(
-  () => import("./pages/pengiriman/logSemuaPengiriman")
+  () => import("./pages/shipment/logAllShipment")
 );
-const ArsipPengiriman = lazy(
-  () => import("./pages/pengiriman/arsipPengiriman")
-);
+const ArsipPengiriman = lazy(() => import("./pages/shipment/archiveShipment"));
 
 interface ProtectedRouteConfig {
   path: string;

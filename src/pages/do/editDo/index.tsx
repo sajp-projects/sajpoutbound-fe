@@ -18,14 +18,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox, ComboboxItem } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useInfiniteProducts } from "@/hooks/barang";
+import { useInfiniteCustomers } from "@/hooks/customer";
 import {
   deliveryOrderKeys,
   useDeliveryOrder,
   useUpdateDeliveryOrder,
 } from "@/hooks/do";
-import { useInfiniteCustomers } from "@/hooks/pelanggan";
-import { shipmentKeys } from "@/hooks/pengiriman";
+import { useInfiniteProducts } from "@/hooks/product";
+import { shipmentKeys } from "@/hooks/shipment";
 import { cn } from "@/lib/utils";
 import {
   CreateDeliveryOrderProduct,

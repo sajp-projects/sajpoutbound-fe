@@ -1,23 +1,23 @@
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 import { Button } from "@/components/ui/button";
-import { useDeleteArmada, useArmada } from "@/hooks/armada";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { useArmada, useDeleteArmada } from "@/hooks/armada";
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/permission";
+import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/date";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
 import {
   isConfirmed,
   showDeleteConfirmationAlert,
   showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
-import { ArrowLeft, Edit, History, Trash2, Info } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router";
+import { ArrowLeft, Edit, History, Info, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/auth";
-import { useRolePermissions } from "@/hooks/izin";
-import { PERMISSION } from "@/constant/PERMISSION";
-import { hasPermission } from "@/utils/permission";
-import { getRoleId } from "@/utils/storage";
+import { Link, useNavigate, useParams } from "react-router";
 
 export default function DetailArmada() {
   const { id } = useParams<{ id: string }>();

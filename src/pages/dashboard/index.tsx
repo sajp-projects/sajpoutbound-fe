@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateRangeFilter } from "@/components/ui/DateRangeFilter";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDashboardSummary } from "@/hooks/laporan";
+import { useDashboardSummary } from "@/hooks/report";
 import { formatDate } from "@/utils/date";
 import {
   Activity,
@@ -866,62 +866,60 @@ export default function Dashboard() {
 
                       {/* Cards for smaller screens */}
                       <div className="md:hidden space-y-3">
-                        {recentActivities
-                          .slice(0, 6)
-                          .map((activity, index) => {
-                            // For demo purposes, we'll use alternating armada data since we don't have it in recentActivities
-                            // In real implementation, this should come from the backend
-                            const demoArmadaModels = [
-                              "Truk Fuso",
-                              "Pickup L300",
-                              "Truk Colt Diesel",
-                            ];
-                            const demoPlateNumbers = [
-                              "B 1234 CD",
-                              "B 5678 EF",
-                              "B 9012 GH",
-                            ];
+                        {recentActivities.slice(0, 6).map((activity, index) => {
+                          // For demo purposes, we'll use alternating armada data since we don't have it in recentActivities
+                          // In real implementation, this should come from the backend
+                          const demoArmadaModels = [
+                            "Truk Fuso",
+                            "Pickup L300",
+                            "Truk Colt Diesel",
+                          ];
+                          const demoPlateNumbers = [
+                            "B 1234 CD",
+                            "B 5678 EF",
+                            "B 9012 GH",
+                          ];
 
-                            return (
-                              <div
-                                key={activity.id}
-                                className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
-                              >
-                                <div className="flex items-start justify-between mb-3">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-medium text-gray-900 mb-1">
-                                      {activity.shipmentNumber}
-                                    </div>
-                                    <div className="text-xs text-gray-500">
-                                      {formatDate(activity.createdAt)}
-                                    </div>
+                          return (
+                            <div
+                              key={activity.id}
+                              className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
+                            >
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium text-gray-900 mb-1">
+                                    {activity.shipmentNumber}
                                   </div>
-                                  <Badge
-                                    variant="outline"
-                                    className={`${getStatusBadgeClass(
-                                      activity.status
-                                    )} text-xs`}
-                                  >
-                                    {activity.status}
-                                  </Badge>
+                                  <div className="text-xs text-gray-500">
+                                    {formatDate(activity.createdAt)}
+                                  </div>
                                 </div>
-                                <div className="space-y-2 text-sm">
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Armada:</span>
-                                    <span className="font-medium text-gray-900">
-                                      {demoArmadaModels[index % 3]}
-                                    </span>
-                                  </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">Plat:</span>
-                                    <span className="text-gray-900">
-                                      {demoPlateNumbers[index % 3]}
-                                    </span>
-                                  </div>
+                                <Badge
+                                  variant="outline"
+                                  className={`${getStatusBadgeClass(
+                                    activity.status
+                                  )} text-xs`}
+                                >
+                                  {activity.status}
+                                </Badge>
+                              </div>
+                              <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Armada:</span>
+                                  <span className="font-medium text-gray-900">
+                                    {demoArmadaModels[index % 3]}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">Plat:</span>
+                                  <span className="text-gray-900">
+                                    {demoPlateNumbers[index % 3]}
+                                  </span>
                                 </div>
                               </div>
-                            );
-                          })}
+                            </div>
+                          );
+                        })}
                       </div>
 
                       {recentActivities.length > 6 && (
