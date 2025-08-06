@@ -82,3 +82,35 @@ export const useVerifyPlateNumber = (options?: {
     onError: options?.onError,
   });
 };
+
+export const useManualVerifyPlateNumber = (options?: {
+  onSuccess?: (data: PlateVerificationResponse) => void;
+  onError?: (error: Error) => void;
+}) => {
+  return useMutation({
+    mutationFn: async (shipmentId: string) => {
+      const response = await fetchApi(
+        `/shipments/${shipmentId}/verify-plate-manual`,
+        {},
+        {
+          method: "PATCH",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorResponse = createErrorResponse(
+          errorData,
+          "Gagal memverifikasi plat nomor secara manual"
+        );
+        throw new Error(errorResponse.message);
+      }
+
+      const result: ApiResponse<PlateVerificationResponse> =
+        await response.json();
+      return result.data!;
+    },
+    onSuccess: options?.onSuccess,
+    onError: options?.onError,
+  });
+};

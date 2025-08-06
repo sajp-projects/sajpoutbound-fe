@@ -86,6 +86,9 @@ const LogSemuaPengiriman = lazy(
   () => import("./pages/shipment/logAllShipment")
 );
 const ArsipPengiriman = lazy(() => import("./pages/shipment/archiveShipment"));
+const VerifikasiPlatManual = lazy(
+  () => import("./pages/shipment/verifyPlateManual")
+);
 
 interface ProtectedRouteConfig {
   path: string;
@@ -531,6 +534,13 @@ export default function App() {
       element: <LogSemuaPengiriman />,
       resource: PERMISSION.RESOURCES.PENGIRIMAN,
       action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/pengiriman",
+    },
+    {
+      path: "verifikasi-plat-manual",
+      element: <VerifikasiPlatManual />,
+      resource: PERMISSION.RESOURCES.PENGIRIMAN,
+      action: PERMISSION.ACTIONS.VERIFY_PLATE_MANUAL,
       redirectTo: "/pengiriman",
     },
   ];

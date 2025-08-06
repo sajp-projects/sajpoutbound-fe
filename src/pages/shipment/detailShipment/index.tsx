@@ -229,7 +229,6 @@ export default function DetailPengiriman() {
     { id: shipmentId },
     {
       enabled: !!shipmentId,
-      refetchOnWindowFocus: false,
     }
   );
 
@@ -824,19 +823,18 @@ export default function DetailPengiriman() {
                               </div>
                             </div>
                             <div className="p-4 mt-3 space-y-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
-                              <div className="flex justify-between items-center">
+                              <div className="flex flex-col gap-3 lg:flex-row lg:justify-between lg:items-center">
                                 <div className="flex items-center">
                                   {shipment.isVerified ? (
                                     <div className="flex items-center px-3 py-1.5 bg-green-100 rounded-full border border-green-200">
-                                      <CheckCircle className="mr-2 w-4 h-4 text-green-600" />
-                                      <span className="text-sm font-medium text-green-700">
+                                      <CheckCircle className="mr-2 w-4 h-4 text-green-600 flex-shrink-0" />
+                                      <span className="text-sm font-medium text-green-700 whitespace-nowrap">
                                         Terverifikasi
                                       </span>
                                     </div>
                                   ) : (
                                     <div className="flex items-center px-3 py-1.5 bg-orange-100 rounded-full border border-orange-200">
-                                      <div className="mr-2 w-4 h-4 bg-orange-400 rounded-full"></div>
-                                      <span className="text-sm font-medium text-orange-700">
+                                      <span className="text-sm font-medium text-orange-700 whitespace-nowrap">
                                         Belum diverifikasi
                                       </span>
                                     </div>
@@ -844,20 +842,22 @@ export default function DetailPengiriman() {
                                 </div>
                                 {hasPengirimanVerifyPlateAccess &&
                                   !shipment.isVerified && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={handleVerifyPlateNumber}
-                                      disabled={verifyPlateNumber.isPending}
-                                      className="text-blue-600 border-blue-200 transition-all duration-200 hover:bg-blue-50 hover:border-blue-300"
-                                    >
-                                      {verifyPlateNumber.isPending ? (
-                                        <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <CheckCircle className="mr-2 w-4 h-4" />
-                                      )}
-                                      Verifikasi
-                                    </Button>
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleVerifyPlateNumber}
+                                        disabled={verifyPlateNumber.isPending}
+                                        className="text-blue-600 border-blue-200 transition-all duration-200 hover:bg-blue-50 hover:border-blue-300 whitespace-nowrap"
+                                      >
+                                        {verifyPlateNumber.isPending ? (
+                                          <Loader2 className="mr-2 w-4 h-4 animate-spin flex-shrink-0" />
+                                        ) : (
+                                          <CheckCircle className="mr-2 w-4 h-4 flex-shrink-0" />
+                                        )}
+                                        Verifikasi
+                                      </Button>
+                                    </div>
                                   )}
                               </div>
 
@@ -1508,7 +1508,8 @@ export default function DetailPengiriman() {
                               </div>
 
                               {/* Action buttons for customer change and DO revision */}
-                              {shipment.status === "PROSES" &&
+                              {(shipment.status === "PROSES" ||
+                                shipment.status === "SELESAI") &&
                                 deliveryOrder.products.some(
                                   (product) => product.chosenProduct
                                 ) && (

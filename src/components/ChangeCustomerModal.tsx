@@ -6,8 +6,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useInfiniteCustomers } from "@/hooks/customer";
 import { useChangeCustomerAfterWeighing } from "@/hooks/shipment";
+import { useStableCustomerSearch } from "@/hooks/useStableCustomerSearch";
 import { Customer } from "@/types/customer";
 import { DeliveryOrder } from "@/types/do";
 import {
@@ -16,7 +16,7 @@ import {
   showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { ErrorState } from "./ErrorState";
 import { LoadingState } from "./LoadingState";
 import { Combobox } from "./ui/combobox";
@@ -28,7 +28,7 @@ interface ChangeCustomerModalProps {
   onSuccess?: () => void;
 }
 
-export function ChangeCustomerModal({
+export const ChangeCustomerModal = memo(function ChangeCustomerModal({
   isOpen,
   onClose,
   deliveryOrder,
@@ -36,16 +36,20 @@ export function ChangeCustomerModal({
 }: ChangeCustomerModalProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
 
+  // Use stable customer search hook
   const {
-    data: customersData,
+    customers: allCustomers,
     isLoading: isLoadingCustomers,
+    isSearching,
     error: customersError,
-    fetchNextPage,
     hasNextPage,
+    fetchNextPage,
     isFetchingNextPage,
-  } = useInfiniteCustomers({
+    onSearch: handleSearch,
+    resetSearch,
+  } = useStableCustomerSearch({
     enabled: isOpen,
-    limit: 10,
+    limit: 20,
   });
 
   const changeCustomerMutation = useChangeCustomerAfterWeighing({
@@ -80,7 +84,9 @@ export function ChangeCustomerModal({
     }
 
     // Get selected customer name for confirmation
-    const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
+    const selectedCustomer = allCustomers.find(
+      (c) => c.id === selectedCustomerId
+    );
     const selectedCustomerName = selectedCustomer?.name || "Customer";
 
     // Close modal first to show SweetAlert properly
@@ -102,17 +108,31 @@ export function ChangeCustomerModal({
     });
   };
 
-  // Flatten all customers from infinite query pages
-  const customers =
-    customersData?.pages.flatMap((page) => page.customers) || [];
-  const customerItems = customers.map((customer: Customer) => ({
-    label: customer.name,
-    value: customer.id,
-    secondary: customer.address,
-  }));
-  const currentCustomer = customers.find(
-    (c: Customer) => c.id === deliveryOrder.customerId
-  );
+  // Use stable allCustomers state instead of reactive query data
+  const customerItems = useMemo(() => {
+    return allCustomers.map((customer: Customer) => ({
+      label: customer.name,
+      value: customer.id,
+      secondary: customer.address,
+    }));
+  }, [allCustomers]);
+
+  // Keep current customer stable - don't depend on search results
+  const currentCustomer = useMemo(() => {
+    // Always use the customer info from deliveryOrder, not from search results
+    if (deliveryOrder.customer) {
+      return {
+        id: deliveryOrder.customerId,
+        name: deliveryOrder.customer.name,
+        address: deliveryOrder.customer.address,
+      } as Customer;
+    }
+
+    // Fallback: try to find in allCustomers if deliveryOrder.customer is missing
+    return allCustomers.find(
+      (c: Customer) => c.id === deliveryOrder.customerId
+    );
+  }, [deliveryOrder.customerId, deliveryOrder.customer, allCustomers]);
 
   // Set current customer as default selection when modal opens
   useEffect(() => {
@@ -121,15 +141,16 @@ export function ChangeCustomerModal({
     }
   }, [isOpen, deliveryOrder.customerId, selectedCustomerId]);
 
+  // Reset search when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      resetSearch();
+    }
+  }, [isOpen, resetSearch]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className="sm:max-w-[600px] bg-white border-0 rounded-lg shadow-lg"
-        onOpenAutoFocus={(e) => {
-          // Prevent auto-focus on modal open to allow combobox to work properly
-          e.preventDefault();
-        }}
-      >
+      <DialogContent className="w-[95vw] h-[550px] sm:w-[480px] sm:h-[520px] max-w-none bg-white">
         <DialogHeader>
           <DialogTitle>Ubah Customer</DialogTitle>
         </DialogHeader>
@@ -158,31 +179,34 @@ export function ChangeCustomerModal({
               Pilih Customer Baru:
             </label>
 
-            {isLoadingCustomers ? (
-              <LoadingState text="Memuat daftar customer..." />
-            ) : customersError ? (
-              <ErrorState
-                title="Gagal Memuat Customer"
-                message="Terjadi kesalahan saat memuat daftar customer"
-                onRetry={() => window.location.reload()}
-                retryButtonText="Coba Lagi"
-              />
-            ) : (
-              <Combobox
-                items={customerItems}
-                value={selectedCustomerId}
-                onValueChange={setSelectedCustomerId}
-                placeholder="Pilih customer baru..."
-                searchPlaceholder="Cari customer..."
-                isLoading={isLoadingCustomers}
-                name="customerId"
-                onClear={() => setSelectedCustomerId("")}
-                useServerSearch={false}
-                hasMore={hasNextPage}
-                onLoadMore={fetchNextPage}
-                isLoadingMore={isFetchingNextPage}
-              />
-            )}
+            <div>
+              {isLoadingCustomers && allCustomers.length === 0 ? (
+                <LoadingState text="Memuat daftar customer..." />
+              ) : customersError ? (
+                <ErrorState
+                  title="Gagal Memuat Customer"
+                  message="Terjadi kesalahan saat memuat daftar customer"
+                  onRetry={() => window.location.reload()}
+                  retryButtonText="Coba Lagi"
+                />
+              ) : (
+                <Combobox
+                  items={customerItems}
+                  value={selectedCustomerId}
+                  onValueChange={setSelectedCustomerId}
+                  placeholder="Pilih customer baru..."
+                  searchPlaceholder="Cari customer..."
+                  isLoading={isSearching}
+                  name="customerId"
+                  onClear={() => setSelectedCustomerId("")}
+                  useServerSearch={true}
+                  onSearch={handleSearch}
+                  hasMore={hasNextPage}
+                  onLoadMore={fetchNextPage}
+                  isLoadingMore={isFetchingNextPage}
+                />
+              )}
+            </div>
           </div>
 
           {/* Warning */}
@@ -214,4 +238,4 @@ export function ChangeCustomerModal({
       </DialogContent>
     </Dialog>
   );
-}
+});

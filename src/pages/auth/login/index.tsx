@@ -1,11 +1,19 @@
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useAuth } from "@/hooks/auth";
+import { LoginError, LoginFormData } from "@/types/auth";
 import { joiResolver } from "@hookform/resolvers/joi";
 import Joi from "joi";
-import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
-import { useAuth } from "@/hooks/auth";
-import { LoginFormData, LoginError } from "@/types/auth";
+import { ArrowUp, Eye, EyeOff, Lock, LogIn, Mail } from "lucide-react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -15,16 +23,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 const schema = Joi.object({
   email: Joi.string().required().messages({
@@ -39,6 +39,7 @@ const schema = Joi.object({
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isCapsLockOn, setIsCapsLockOn] = useState(false);
   const { loginMutation, checkAuthRedirect } = useAuth();
   const [generalError, setGeneralError] = useState<string | null>(null);
 
@@ -106,6 +107,32 @@ export default function Login() {
     checkAuthRedirect(false, "/");
   }, [checkAuthRedirect]);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.getModifierState && event.getModifierState("CapsLock")) {
+        setIsCapsLockOn(true);
+      }
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.getModifierState && event.getModifierState("CapsLock")) {
+        setIsCapsLockOn(true);
+      } else {
+        setIsCapsLockOn(false);
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
   return (
     <div className="relative flex flex-col items-center justify-center w-full h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50">
       <div className="absolute top-0 left-0 w-full h-64 bg-blue-600 rounded-b-[30%] opacity-5" />
@@ -156,9 +183,9 @@ export default function Login() {
                         </div>
                         <FormControl>
                           <Input
-                            placeholder="masukkan email anda"
+                            placeholder="Masukkan email anda"
                             className={cn(
-                              "pl-10",
+                              "pl-10 placeholder:text-sm sm:placeholder:text-base",
                               form.formState.errors.email &&
                                 "border-red-300 focus:border-red-500 focus:ring-red-500"
                             )}
@@ -194,15 +221,28 @@ export default function Login() {
                         <FormControl>
                           <Input
                             type={showPassword ? "text" : "password"}
-                            placeholder="masukkan password anda"
+                            placeholder="Masukkan password anda"
                             className={cn(
-                              "pl-10",
+                              "pl-10 placeholder:text-sm sm:placeholder:text-base",
+                              isCapsLockOn ? "pr-14" : "pr-10",
                               form.formState.errors.password &&
                                 "border-red-300 focus:border-red-500 focus:ring-red-500"
                             )}
                             {...field}
                           />
                         </FormControl>
+                        {/* Caps Lock Indicator */}
+                        {isCapsLockOn && (
+                          <div className="absolute inset-y-0 right-8 flex items-center">
+                            <div
+                              className="flex items-center justify-center w-5 h-5 text-gray-600  rounded  transition-colors"
+                              title="Caps Lock is on"
+                            >
+                              <ArrowUp className="w-3 h-3 hover:text-gray-700" />
+                            </div>
+                          </div>
+                        )}
+                        {/* Password Visibility Toggle */}
                         <button
                           type="button"
                           className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"

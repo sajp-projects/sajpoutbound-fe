@@ -28,6 +28,7 @@ export const shipmentKeys = {
   archived: () => [...shipmentKeys.all, "archived"] as const,
   chosenProducts: (shipmentId: string) =>
     [...shipmentKeys.all, "chosenProducts", shipmentId] as const,
+  unverified: () => [...shipmentKeys.all, "unverified"] as const,
 };
 
 export function useShipments(options = {}) {
@@ -581,5 +582,43 @@ export function useReviseDeliveryOrderAfterWeighing(
       });
     },
     ...options,
+  });
+}
+
+export function useUnverifiedShipments() {
+  return useQuery({
+    queryKey: shipmentKeys.unverified(),
+    queryFn: async () => {
+      const response = await fetchApi(`${BASE_URL}/shipments`, {
+        unverified: "true", // Filter for shipments with uploaded photos but not verified
+        limit: "50", // Get more results since this is a specialized view
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Error fetching unverified shipments: ${response.statusText}`
+        );
+      }
+
+      const result: ApiResponse<ShipmentPagination> = await response.json();
+
+      if (!result.success) {
+        handleApiError(
+          result,
+          "Terjadi kesalahan saat mengambil data pengiriman yang belum diverifikasi"
+        );
+      }
+
+      if (!result.data) {
+        throw new Error(
+          "Data pengiriman yang belum diverifikasi tidak ditemukan"
+        );
+      }
+
+      // Backend already filters for unverified shipments
+      return result.data.shipments;
+    },
+    staleTime: 30 * 1000, // 30 seconds - refresh more frequently for this critical view
+    refetchInterval: 60 * 1000, // Auto-refresh every minute
   });
 }

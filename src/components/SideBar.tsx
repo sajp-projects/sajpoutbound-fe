@@ -314,6 +314,11 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
             path: "/pengiriman/log",
             action: PERMISSION.ACTIONS.READ,
           },
+          {
+            name: "Verifikasi Plat Manual",
+            path: "/pengiriman/verifikasi-plat-manual",
+            action: PERMISSION.ACTIONS.VERIFY_PLATE_MANUAL,
+          },
         ],
       },
       {
