@@ -1,14 +1,7 @@
-import { useState } from "react";
-import { Link } from "react-router";
-import {
-  Menu,
-  User as UserIcon,
-  Settings,
-  LogOut,
-  ChevronDown,
-} from "lucide-react";
-import { cn } from "../lib/utils";
 import { useAuth } from "@/hooks/auth";
+import { ChevronDown, LogOut, Menu, User as UserIcon } from "lucide-react";
+import { useState } from "react";
+import { cn } from "../lib/utils";
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -70,20 +63,7 @@ export default function Navbar({ toggleSidebar }: NavbarProps) {
                     {user?.email || "email@contoh.com"}
                   </p>
                 </div>
-                <Link
-                  to="/profile"
-                  className="group flex items-center px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                >
-                  <UserIcon className="w-4 h-4 mr-2 text-gray-400 sm:mr-3 sm:h-5 sm:w-5 group-hover:text-blue-500" />
-                  Profil Saya
-                </Link>
-                <Link
-                  to="/settings"
-                  className="group flex items-center px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-                >
-                  <Settings className="w-4 h-4 mr-2 text-gray-400 sm:mr-3 sm:h-5 sm:w-5 group-hover:text-blue-500" />
-                  Pengaturan Akun
-                </Link>
+
                 <div className="border-t border-gray-100"></div>
                 <button
                   onClick={logout}

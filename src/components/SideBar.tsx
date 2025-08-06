@@ -169,7 +169,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
         subItems: [
           {
             name: "Daftar Izin",
-            path: roleId ? `/peran/${roleId}/izin` : "/",
+            path: "/izin",
             action: PERMISSION.ACTIONS.READ,
           },
         ],
@@ -339,7 +339,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
         ],
       },
     ],
-    [roleId]
+    []
   );
 
   const getActiveMenuName = useCallback(() => {
@@ -494,7 +494,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
                                         handleLinkClick();
                                       }}
                                       className={cn(
-                                        "block px-3 sm:px-3 py-2 sm:py-2 text-xs sm:text-sm text-gray-600 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors min-h-[40px] sm:min-h-[36px] flex items-center",
+                                        "px-3 sm:px-3 py-2 sm:py-2 text-xs sm:text-sm text-gray-600 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-colors min-h-[40px] sm:min-h-[36px] flex items-center",
                                         isSubMenuActive(subItem.path) &&
                                           "bg-blue-50 text-blue-600 font-medium"
                                       )}

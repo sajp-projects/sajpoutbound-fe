@@ -26,8 +26,11 @@ const LogSemuaPengguna = lazy(
 const Role = lazy(() => import("./pages/peran/daftarPeran"));
 const DetailPeran = lazy(() => import("./pages/peran/detailPeran"));
 const EditPeran = lazy(() => import("./pages/peran/editPeran"));
-const IzinPeran = lazy(() => import("./pages/izin/daftarIzin"));
 const TambahPeran = lazy(() => import("./pages/peran/tambahPeran"));
+
+// Lazy import untuk halaman izin
+const DaftarIzin = lazy(() => import("./pages/izin/daftarIzin"));
+const IzinPeran = lazy(() => import("./pages/peran/izinPeran"));
 
 // Lazy import untuk halaman gudang
 const DaftarGudang = lazy(() => import("./pages/gudang/daftarGudang"));
@@ -207,8 +210,18 @@ export default function App() {
       path: ":id/izin",
       element: <IzinPeran />,
       resource: PERMISSION.RESOURCES.PERMISSION,
-      action: PERMISSION.ACTIONS.READ,
+      action: PERMISSION.ACTIONS.UPDATE,
       redirectTo: "/peran",
+    },
+  ];
+
+  const izinRoutes: ProtectedRouteConfig[] = [
+    {
+      path: "",
+      element: <DaftarIzin />,
+      resource: PERMISSION.RESOURCES.PERMISSION,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/",
     },
   ];
 
@@ -555,6 +568,11 @@ export default function App() {
             {/* Route untuk peran */}
             <Route path="/peran">
               {roleRoutes.map((route) => createProtectedRoute(route))}
+            </Route>
+
+            {/* Route untuk izin */}
+            <Route path="/izin">
+              {izinRoutes.map((route) => createProtectedRoute(route))}
             </Route>
 
             {/* Route untuk gudang */}

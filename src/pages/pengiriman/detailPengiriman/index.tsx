@@ -862,7 +862,7 @@ export default function DetailPengiriman() {
                               </div>
 
                               {/* Tombol Aksi Foto */}
-                              {hasPengirimanUpdateAccess &&
+                              {hasPengirimanVerifyPlateAccess &&
                                 allItemsCompleted &&
                                 !shipment.isVerified && (
                                   <div className="flex gap-2 items-center pt-2 border-t border-gray-200">
@@ -882,13 +882,11 @@ export default function DetailPengiriman() {
                           </div>
                         ) : (
                           <div className="mt-2">
-                            {allItemsCompleted ? (
+                            {allItemsCompleted && hasPengirimanVerifyPlateAccess ? (
                               <>
                                 <div
                                   className="flex justify-center items-center w-full h-40 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-gray-300 border-dashed transition-all duration-300 cursor-pointer hover:from-blue-50 hover:to-blue-100 hover:border-blue-300 group"
                                   onClick={() =>
-                                    hasPengirimanUpdateAccess &&
-                                    allItemsCompleted &&
                                     document
                                       .getElementById("platePhotoInput")
                                       ?.click()
@@ -902,45 +900,39 @@ export default function DetailPengiriman() {
                                       Belum ada foto plat nomor
                                     </p>
                                     <p className="text-xs text-gray-500 transition-colors duration-300 group-hover:text-blue-600">
-                                      {hasPengirimanUpdateAccess &&
-                                      allItemsCompleted
-                                        ? "Klik untuk mengunggah foto"
-                                        : "Tidak ada izin upload"}
+                                      Klik untuk mengunggah foto
                                     </p>
                                   </div>
                                 </div>
-                                {hasPengirimanUpdateAccess &&
-                                  allItemsCompleted && (
-                                    <div className="mt-4">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                          document
-                                            .getElementById("platePhotoInput")
-                                            ?.click()
-                                        }
-                                        disabled={uploadPlatePhoto.isPending}
-                                        className="w-full text-blue-600 border-blue-200 transition-all duration-200 hover:bg-blue-50 hover:border-blue-300"
-                                      >
-                                        {uploadPlatePhoto.isPending ? (
-                                          <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                                        ) : (
-                                          <Upload className="mr-2 w-4 h-4" />
-                                        )}
-                                        {uploadPlatePhoto.isPending
-                                          ? "Mengunggah..."
-                                          : "Unggah Foto Plat Nomor"}
-                                      </Button>
-                                      <div className="p-3 mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-                                        <p className="text-xs text-blue-700">
-                                          <strong>Format:</strong> JPG, PNG
-                                          <br />
-                                          <strong>Ukuran maksimal:</strong> 10MB
-                                        </p>
-                                      </div>
-                                    </div>
-                                  )}
+                                <div className="mt-4">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      document
+                                        .getElementById("platePhotoInput")
+                                        ?.click()
+                                    }
+                                    disabled={uploadPlatePhoto.isPending}
+                                    className="w-full text-blue-600 border-blue-200 transition-all duration-200 hover:bg-blue-50 hover:border-blue-300"
+                                  >
+                                    {uploadPlatePhoto.isPending ? (
+                                      <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Upload className="mr-2 w-4 h-4" />
+                                    )}
+                                    {uploadPlatePhoto.isPending
+                                      ? "Mengunggah..."
+                                      : "Unggah Foto Plat Nomor"}
+                                  </Button>
+                                  <div className="p-3 mt-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+                                    <p className="text-xs text-blue-700">
+                                      <strong>Format:</strong> JPG, PNG
+                                      <br />
+                                      <strong>Ukuran maksimal:</strong> 10MB
+                                    </p>
+                                  </div>
+                                </div>
                               </>
                             ) : null}
                           </div>
@@ -1499,25 +1491,26 @@ export default function DetailPengiriman() {
                         >
                           <AccordionTrigger className="px-4 py-3 bg-gray-50 hover:bg-gray-100 hover:no-underline">
                             <div className="flex items-center justify-between w-full text-left">
-                              <div>
+                              <div className="min-w-0 flex-1 mr-2">
                                 <h4 className="font-medium text-gray-900">
                                   <Link
                                     to={`/do/${deliveryOrder.id}`}
-                                    className="text-blue-600 hover:underline"
+                                    className="text-blue-600 hover:underline inline"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     {deliveryOrder.doNumber}
                                   </Link>
                                 </h4>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-gray-500 truncate">
                                   {deliveryOrder.customer.name}
                                 </p>
                               </div>
 
                               {/* Action buttons for customer change and DO revision */}
-                              {shipment.status === "PROSES" && (
+                              {shipment.status === "PROSES" && 
+                               deliveryOrder.products.some(product => product.chosenProduct) && (
                                 <div
-                                  className="flex flex-wrap gap-1 sm:gap-2"
+                                  className="flex gap-1 sm:gap-2 flex-shrink-0"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {hasChangeCustomerAfterWeighAccess && (

@@ -7,6 +7,7 @@ import {
   OperationalReportTableData,
   OutputReportResult,
   OutputReportTableData,
+  ShipmentAssignmentReportResult,
 } from "@/types/laporan";
 import { fetchApi } from "@/utils/api";
 import { handleApiError } from "@/utils/errorHandler";
@@ -196,9 +197,29 @@ export function useShipmentAssignmentReport(
   overrides: Record<string, string | number | null | undefined> = {},
   options?: Omit<
     UseQueryOptions<
-      unknown,
+      {
+        report: ShipmentAssignmentReportResult;
+        pagination?: {
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+          hasNext: boolean;
+          hasPrev: boolean;
+        };
+      },
       Error,
-      unknown,
+      {
+        report: ShipmentAssignmentReportResult;
+        pagination?: {
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+          hasNext: boolean;
+          hasPrev: boolean;
+        };
+      },
       ReturnType<typeof reportKeys.shipmentAssignment>
     >,
     "queryKey" | "queryFn"
@@ -220,13 +241,27 @@ export function useShipmentAssignmentReport(
         );
       }
 
-      const result: ApiResponse<unknown> = await response.json();
+      const result: ApiResponse<{
+        report: ShipmentAssignmentReportResult;
+        pagination?: {
+          total: number;
+          page: number;
+          limit: number;
+          totalPages: number;
+          hasNext: boolean;
+          hasPrev: boolean;
+        };
+      }> = await response.json();
 
       if (!result.success) {
         handleApiError(
           result,
           "Terjadi kesalahan saat mengambil laporan penugasan pengiriman"
         );
+      }
+
+      if (!result.data) {
+        throw new Error("Data laporan penugasan pengiriman tidak ditemukan");
       }
 
       return result.data;

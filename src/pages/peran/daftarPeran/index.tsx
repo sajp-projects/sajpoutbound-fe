@@ -82,7 +82,7 @@ export default function Role() {
     hasPermission(
       permissions,
       PERMISSION.RESOURCES.PERMISSION,
-      PERMISSION.ACTIONS.READ
+      PERMISSION.ACTIONS.UPDATE
     );
 
   const hasRoleCreateAccess = hasPermission(

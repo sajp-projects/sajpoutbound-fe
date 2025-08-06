@@ -1,23 +1,23 @@
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 import { Button } from "@/components/ui/button";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { useAuth } from "@/hooks/auth";
 import { useDeleteProduct, useProduct } from "@/hooks/barang";
+import { useRolePermissions } from "@/hooks/izin";
+import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/date";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
 import {
   isConfirmed,
   showDeleteConfirmationAlert,
   showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
-import { ArrowLeft, Edit, History, Trash2, Info } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router";
-import { useAuth } from "@/hooks/auth";
-import { useRolePermissions } from "@/hooks/izin";
-import { PERMISSION } from "@/constant/PERMISSION";
-import { hasPermission } from "@/utils/permission";
-import { getRoleId } from "@/utils/storage";
+import { ArrowLeft, Edit, History, Info, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { Link, useNavigate, useParams } from "react-router";
 
 export default function DetailBarang() {
   const { id } = useParams<{ id: string }>();
@@ -161,10 +161,12 @@ export default function DetailBarang() {
                       <div>
                         <p className="text-sm text-gray-500">ID</p>
                         <p
-                          className="p-1 font-mono font-medium text-gray-900 rounded bg-gray-50 wrap-text break-all"
+                          className={`p-1 font-mono font-medium text-gray-900 rounded wrap-text break-all ${
+                            barang?.id_sl ? "bg-gray-50" : "w-max bg-white"
+                          }`}
                           title={barang?.id_sl}
                         >
-                          {barang?.id_sl}
+                          {barang?.id_sl ? barang?.id_sl : "-"}
                         </p>
                       </div>
                       <div>
