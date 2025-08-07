@@ -292,13 +292,6 @@ export default function DaftarDo() {
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<Download className="w-3 h-3 sm:h-4 sm:w-4" />}
-            >
-              Export
-            </Button>
           </div>
         </div>
 

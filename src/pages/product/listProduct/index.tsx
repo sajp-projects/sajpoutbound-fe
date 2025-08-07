@@ -172,15 +172,6 @@ export default function DaftarBarang() {
               Manajemen data barang
             </p>
           </div>
-          <div className="flex flex-wrap items-center w-full gap-2 sm:gap-3 sm:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<Download className="w-3 h-3 sm:h-4 sm:w-4" />}
-            >
-              Export
-            </Button>
-          </div>
         </div>
 
         <div className="w-full mb-4 sm:mb-6">

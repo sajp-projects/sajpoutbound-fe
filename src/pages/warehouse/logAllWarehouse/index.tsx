@@ -391,16 +391,6 @@ export default function LogSemuaGudang() {
               Riwayat perubahan data gudang di sistem
             </p>
           </div>
-          <div className="flex flex-wrap items-center w-full gap-3 sm:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 min-w-[100px] bg-white text-gray-700 border-gray-300 hover:bg-gray-50 text-xs sm:text-sm flex items-center px-3"
-            >
-              <Download className="w-3 h-3 mr-1 sm:h-4 sm:w-4 sm:mr-2" />
-              Export
-            </Button>
-          </div>
         </div>
 
         {isLoading ? (
