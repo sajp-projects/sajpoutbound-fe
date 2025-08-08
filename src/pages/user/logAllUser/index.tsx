@@ -1,8 +1,10 @@
 import { useSearchParams } from "react-router";
-import { Download } from "lucide-react";
 
 import { useAllUserLogs } from "@/hooks/userLog";
 
+import { EmptyState } from "@/components/EmptyState";
+import { LoadingState } from "@/components/LoadingState";
+import { Pagination } from "@/components/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,12 +16,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { formatDate, formatDateShort } from "@/utils/date";
-import { Pagination } from "@/components/Pagination";
-import { Link } from "react-router";
-import { LoadingState } from "@/components/LoadingState";
-import { EmptyState } from "@/components/EmptyState";
 import { getActionLabel } from "@/utils/badges";
+import { formatDate, formatDateShort } from "@/utils/date";
+import { Link } from "react-router";
 
 interface UserLog {
   id: string;
@@ -69,28 +68,40 @@ export default function LogSemuaPengguna() {
     if (newData && !oldData) {
       return (
         <div>
-          <div className="text-xs font-medium text-gray-600 mb-1">Data pengguna yang dibuat:</div>
+          <div className="text-xs font-medium text-gray-600 mb-1">
+            Data pengguna yang dibuat:
+          </div>
           <div className="overflow-x-auto w-full">
             <table className="w-full text-xs border-collapse">
               <tbody>
                 <tr>
-                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Nama</td>
-                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">{newData.name as string}</td>
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                    Nama
+                  </td>
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                    {newData.name as string}
+                  </td>
                 </tr>
                 <tr>
-                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Email</td>
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                    Email
+                  </td>
                   <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {newData.email as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Peran</td>
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                    Peran
+                  </td>
                   <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {newData.roleId as string}
                   </td>
                 </tr>
                 <tr>
-                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Gudang</td>
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                    Gudang
+                  </td>
                   <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                     {newData.warehouseId as string}
                   </td>
@@ -119,7 +130,9 @@ export default function LogSemuaPengguna() {
               <table className="w-full text-xs border-collapse">
                 <tbody>
                   <tr>
-                    <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Status</td>
+                    <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                      Status
+                    </td>
                     <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
                       {isRestore ? "Dipulihkan" : "Diarsipkan"}
                     </td>
@@ -178,12 +191,16 @@ export default function LogSemuaPengguna() {
 
       return (
         <div>
-          <div className="text-xs font-medium text-gray-600 mb-1">Perubahan:</div>
+          <div className="text-xs font-medium text-gray-600 mb-1">
+            Perubahan:
+          </div>
           <div className="overflow-x-auto w-full">
             <table className="w-full text-xs border-collapse">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">Field</th>
+                  <th className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                    Field
+                  </th>
                   <th className="px-2 py-1 font-medium text-left border border-gray-200">
                     Nilai Lama
                   </th>
@@ -195,9 +212,15 @@ export default function LogSemuaPengguna() {
               <tbody>
                 {changes.map((change, idx) => (
                   <tr key={idx}>
-                    <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">{change.field}</td>
-                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">{change.oldValue}</td>
-                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">{change.newValue}</td>
+                    <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                      {change.field}
+                    </td>
+                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                      {change.oldValue}
+                    </td>
+                    <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
+                      {change.newValue}
+                    </td>
                   </tr>
                 ))}
               </tbody>

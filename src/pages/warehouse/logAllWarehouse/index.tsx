@@ -1,4 +1,3 @@
-import { Download } from "lucide-react";
 import { useSearchParams } from "react-router";
 
 import { useWarehouseLogs } from "@/hooks/warehouseLog";

@@ -1,4 +1,3 @@
-import { Download } from "lucide-react";
 import { useSearchParams } from "react-router";
 
 import { useAllCustomerLogs } from "@/hooks/customerLog";

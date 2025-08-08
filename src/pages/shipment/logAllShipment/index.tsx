@@ -1,5 +1,4 @@
 import { useShipmentLogs } from "@/hooks/shipmentLog";
-import { Download } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 
 import { EmptyState } from "@/components/EmptyState";

@@ -1,5 +1,5 @@
 import { useArmadas, useDeleteArmada } from "@/hooks/armada";
-import { Download, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 
 import { ActionButtons, ActionType } from "@/components/ActionButtons";
