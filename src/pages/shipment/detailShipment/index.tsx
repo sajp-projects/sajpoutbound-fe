@@ -89,7 +89,7 @@ import {
   showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 function StatusBadge({ status }: StatusBadgeProps) {
   const getStatusColor = (status: ShipmentStatus) => {
@@ -267,10 +267,10 @@ export default function DetailPengiriman() {
     isLoadingManualProducts || isLoadingVendorProducts;
   const isChosenProductsError = isManualProductsError || isVendorProductsError;
   const chosenProductsError = manualProductsError || vendorProductsError;
-  const refetchChosenProducts = () => {
+  const refetchChosenProducts = useCallback(() => {
     refetchManualProducts();
     refetchVendorProducts();
-  };
+  }, [refetchManualProducts, refetchVendorProducts]);
 
   const chooseProduct = useChooseProduct({
     onSuccess: () => {
