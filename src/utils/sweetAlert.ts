@@ -7,6 +7,7 @@ export const showSuccessAlert = (title: string, text?: string) => {
     text,
     timer: 1500,
     showConfirmButton: false,
+    zIndex: 10000,
   });
 };
 
@@ -16,6 +17,7 @@ export const showErrorAlert = (title: string, text?: string) => {
     title,
     text,
     confirmButtonText: "Tutup",
+    zIndex: 10000,
   });
 };
 
@@ -25,6 +27,7 @@ export const showWarningAlert = (title: string, text: string) => {
     title,
     text,
     confirmButtonText: "Tutup",
+    zIndex: 10000,
   });
 };
 
@@ -43,6 +46,7 @@ export const showConfirmationAlert = (
     cancelButtonColor: "#d33",
     confirmButtonText,
     cancelButtonText,
+    zIndex: 10000, // Higher than modal z-index
   });
 };
 
@@ -59,6 +63,7 @@ export const showDeleteConfirmationAlert = (
     cancelButtonColor: "#3085d6",
     confirmButtonText: "Ya, Hapus",
     cancelButtonText: "Batal",
+    zIndex: 10000,
   });
 };
 

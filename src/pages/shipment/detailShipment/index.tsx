@@ -18,7 +18,6 @@ import {
   Info,
   Loader2,
   MapPin,
-  Navigation,
   Package,
   Pencil,
   RefreshCw,
@@ -158,8 +157,14 @@ export default function DetailPengiriman() {
       };
     }[]
   >([]);
+  const [selectedWeighingMethod, setSelectedWeighingMethod] = useState<
+    "MANUAL" | "VENDOR" | null
+  >(null);
   const [weighingProductId, setWeighingProductId] = useState<string>("");
   const [weighingModalOpen, setWeighingModalOpen] = useState(false);
+  const [vendorWaitingModalOpen, setVendorWaitingModalOpen] = useState(false);
+  const [selectedVendorProduct, _setSelectedVendorProduct] =
+    useState<string>("");
   const [grossWeight, setGrossWeight] = useState("");
   const [netWeight, setNetWeight] = useState("");
   const [tareWeight, setTareWeight] = useState("");
@@ -232,16 +237,40 @@ export default function DetailPengiriman() {
     }
   );
 
+  // Get manual weighing products
   const {
-    data: chosenProducts = [] as ChosenProductExtended[],
-    isLoading: isLoadingChosenProducts,
-    error: chosenProductsError,
-    isError: isChosenProductsError,
-    refetch: refetchChosenProducts,
-  } = useShipmentChosenProducts(shipmentId, {
+    data: manualProducts = [] as ChosenProductExtended[],
+    isLoading: isLoadingManualProducts,
+    error: manualProductsError,
+    isError: isManualProductsError,
+    refetch: refetchManualProducts,
+  } = useShipmentChosenProducts(shipmentId, "MANUAL", {
     enabled: !!shipmentId,
     refetchOnWindowFocus: false,
   });
+
+  // Get vendor weighing products
+  const {
+    data: vendorProducts = [] as ChosenProductExtended[],
+    isLoading: isLoadingVendorProducts,
+    error: vendorProductsError,
+    isError: isVendorProductsError,
+    refetch: refetchVendorProducts,
+  } = useShipmentChosenProducts(shipmentId, "VENDOR", {
+    enabled: !!shipmentId,
+    refetchOnWindowFocus: false,
+  });
+
+  // Combined for backward compatibility
+  const chosenProducts = [...manualProducts, ...vendorProducts];
+  const isLoadingChosenProducts =
+    isLoadingManualProducts || isLoadingVendorProducts;
+  const isChosenProductsError = isManualProductsError || isVendorProductsError;
+  const chosenProductsError = manualProductsError || vendorProductsError;
+  const refetchChosenProducts = () => {
+    refetchManualProducts();
+    refetchVendorProducts();
+  };
 
   const chooseProduct = useChooseProduct({
     onSuccess: () => {
@@ -371,11 +400,16 @@ export default function DetailPengiriman() {
     },
   });
 
-  const handleChooseProduct = (deliveryOrderId: string, productId: string) => {
+  const handleChooseProduct = (
+    deliveryOrderId: string,
+    productId: string,
+    weighingMethod: "MANUAL" | "VENDOR"
+  ) => {
     chooseProduct.mutate({
       shipmentId,
       deliveryOrderId,
       productId,
+      weighingMethod,
     });
   };
 
@@ -549,6 +583,7 @@ export default function DetailPengiriman() {
     setProductModalOpen(false);
     setSelectedProductId("");
     setSelectedProductDOs([]);
+    setSelectedWeighingMethod(null); // Reset to no selection
   };
 
   const handleOpenWeighingModal = (productId: string) => {
@@ -559,6 +594,16 @@ export default function DetailPengiriman() {
   const handleCloseWeighingModal = () => {
     setWeighingModalOpen(false);
     setWeighingProductId("");
+  };
+
+  // Helper function to get weighing method for a product
+  const getProductWeighingMethod = (
+    productId: string
+  ): "MANUAL" | "VENDOR" | null => {
+    const chosenProduct = chosenProducts.find(
+      (cp) => cp.productId === productId
+    );
+    return chosenProduct?.weighingMethod || null;
   };
 
   const handleWeighSubmit = () => {
@@ -1236,46 +1281,27 @@ export default function DetailPengiriman() {
                                               <Check className="mr-2 w-4 h-4" />
                                               Sudah ditimbang
                                             </Button>
-                                          ) : (
-                                            /* ── BELUM SELESAI (two buttons) ── */
-                                            <>
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="text-blue-600 border-blue-200 hover:bg-purple-50"
-                                                onClick={() =>
-                                                  handleOpenWeighingModal(
-                                                    product.id
-                                                  )
-                                                }
-                                                disabled={
-                                                  bulkWeighItems.isPending
-                                                }
-                                              >
-                                                <Scale className="mr-2 w-4 h-4" />
-                                                Timbang
-                                              </Button>
-
-                                              <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="text-blue-600 border-blue-200 hover:bg-purple-50"
-                                                onClick={() =>
-                                                  window.open(
-                                                    `${
-                                                      import.meta.env
-                                                        .VITE_WEIGHING_URL
-                                                    }`,
-                                                    "_blank",
-                                                    "noopener,noreferrer"
-                                                  )
-                                                }
-                                              >
-                                                <Navigation className="mr-2 w-4 h-4" />
-                                                API
-                                              </Button>
-                                            </>
-                                          )}
+                                          ) : getProductWeighingMethod(
+                                              product.id
+                                            ) === "MANUAL" ? (
+                                            /* ── MANUAL PRODUCT - Show Timbang button only ── */
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="text-blue-600 border-blue-200 hover:bg-purple-50"
+                                              onClick={() =>
+                                                handleOpenWeighingModal(
+                                                  product.id
+                                                )
+                                              }
+                                              disabled={
+                                                bulkWeighItems.isPending
+                                              }
+                                            >
+                                              <Scale className="mr-2 w-4 h-4" />
+                                              Timbang
+                                            </Button>
+                                          ) : null}
                                         </>
                                       )}
                                   </div>
@@ -1424,7 +1450,9 @@ export default function DetailPengiriman() {
                                     </Button>
                                   )}
                                 {hasPengirimanWeighAccess &&
-                                  product.isChosen && (
+                                  product.isChosen &&
+                                  getProductWeighingMethod(product.id) ===
+                                    "MANUAL" && (
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -2295,6 +2323,68 @@ export default function DetailPengiriman() {
                     </div>
                   </div>
 
+                  <div className="p-4 mb-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
+                    <h3 className="mb-3 text-base font-medium text-green-800">
+                      Pilih Metode Penimbangan
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center">
+                        <input
+                          id="manual-weighing"
+                          name="weighing-method"
+                          type="radio"
+                          value="MANUAL"
+                          checked={selectedWeighingMethod === "MANUAL"}
+                          onChange={(e) =>
+                            setSelectedWeighingMethod(
+                              e.target.value as "MANUAL" | "VENDOR"
+                            )
+                          }
+                          className="w-4 h-4 text-green-600 border-gray-300"
+                        />
+                        <label
+                          htmlFor="manual-weighing"
+                          className="ml-3 text-sm"
+                        >
+                          <span className="font-medium text-gray-900">
+                            Penimbangan Manual
+                          </span>
+                          <p className="text-xs text-gray-600">
+                            Penimbangan dilakukan secara manual melalui sistem
+                            internal
+                          </p>
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          id="vendor-weighing"
+                          name="weighing-method"
+                          type="radio"
+                          value="VENDOR"
+                          checked={selectedWeighingMethod === "VENDOR"}
+                          onChange={(e) =>
+                            setSelectedWeighingMethod(
+                              e.target.value as "MANUAL" | "VENDOR"
+                            )
+                          }
+                          className="w-4 h-4 text-green-600 border-gray-300"
+                        />
+                        <label
+                          htmlFor="vendor-weighing"
+                          className="ml-3 text-sm"
+                        >
+                          <span className="font-medium text-gray-900">
+                            Penimbangan Vendor (API)
+                          </span>
+                          <p className="text-xs text-gray-600">
+                            Penimbangan dilakukan melalui sistem vendor pihak
+                            ketiga
+                          </p>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
                   <h3 className="mb-3 text-base font-medium text-gray-800">
                     Delivery Orders Terkait
                   </h3>
@@ -2354,16 +2444,42 @@ export default function DetailPengiriman() {
                 <Button
                   onClick={() => {
                     if (selectedProductId && selectedProductDOs.length > 0) {
-                      // Tidak perlu try-catch di sini karena handleChooseProduct menggunakan
-                      // useMutation yang menangani error melalui onError callback
-                      handleChooseProduct(
-                        selectedProductDOs[0].doId,
-                        selectedProductId
-                      );
-                      // Modal akan ditutup di onSuccess atau onError callback pada chooseProduct
+                      // Store the data we need for the confirmation
+                      const methodText =
+                        selectedWeighingMethod === "MANUAL"
+                          ? "Manual"
+                          : "Vendor";
+                      const productName = selectedProductDOs[0].product.name;
+                      const doId = selectedProductDOs[0].doId;
+                      const productId = selectedProductId;
+                      const weighingMethod = selectedWeighingMethod;
+
+                      // Close modal first to avoid z-index issues
+                      setProductModalOpen(false);
+
+                      // Show confirmation dialog after modal is closed
+                      setTimeout(() => {
+                        showConfirmationAlert(
+                          "Konfirmasi Metode Penimbangan",
+                          `Apakah Anda yakin ingin memuat barang "${productName}" dengan metode penimbangan ${methodText}? Pilihan ini tidak dapat diubah setelah dikonfirmasi.`,
+                          "Ya, Muat Barang!",
+                          "Batal"
+                        ).then((result) => {
+                          if (isConfirmed(result)) {
+                            handleChooseProduct(
+                              doId,
+                              productId,
+                              weighingMethod as "MANUAL" | "VENDOR"
+                            );
+                          } else {
+                            // If user cancels, reopen the modal
+                            setProductModalOpen(true);
+                          }
+                        });
+                      }, 100); // Small delay to ensure modal is closed
                     }
                   }}
-                  disabled={chooseProduct.isPending}
+                  disabled={chooseProduct.isPending || !selectedWeighingMethod}
                   className="flex-1 text-white bg-blue-600 shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg"
                 >
                   {chooseProduct.isPending ? (
@@ -2470,6 +2586,73 @@ export default function DetailPengiriman() {
                       Simpan Penimbangan
                     </>
                   )}
+                </Button>
+              </div>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Vendor Waiting Modal */}
+      <Dialog
+        open={vendorWaitingModalOpen}
+        onOpenChange={setVendorWaitingModalOpen}
+      >
+        <DialogContent className="sm:max-w-[500px] bg-white border-0 p-0 rounded-lg shadow-lg">
+          <div className="p-6">
+            <DialogHeader className="pb-4">
+              <DialogTitle className="flex items-center text-xl font-semibold text-gray-900">
+                <Package className="mr-2 w-5 h-5 text-orange-600" />
+                Penimbangan Vendor (API)
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Produk ini menggunakan sistem penimbangan vendor pihak ketiga
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="py-4">
+              <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-100">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <Package className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <div className="ml-3">
+                    <h4 className="text-sm font-medium text-orange-900">
+                      Menunggu Penimbangan Vendor
+                    </h4>
+                    <div className="mt-2 text-sm text-orange-800">
+                      <p>
+                        Produk <strong>"{selectedVendorProduct}"</strong> telah
+                        dimuat dan sedang menunggu proses penimbangan dari
+                        sistem vendor pihak ketiga.
+                      </p>
+                      <ul className="mt-3 list-disc list-inside space-y-1">
+                        <li>
+                          Data penimbangan akan diproses secara otomatis oleh
+                          vendor
+                        </li>
+                        <li>
+                          Status akan diperbarui ketika vendor menyelesaikan
+                          penimbangan
+                        </li>
+                        <li>
+                          Anda dapat memantau status di tab "Item Pengiriman"
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="pt-4 mt-4 border-t border-gray-100">
+              <div className="flex gap-3 w-full">
+                <Button
+                  type="button"
+                  onClick={() => setVendorWaitingModalOpen(false)}
+                  className="flex-1 text-white bg-orange-600 shadow-md transition-all duration-200 hover:bg-orange-700 hover:shadow-lg"
+                >
+                  Mengerti
                 </Button>
               </div>
             </DialogFooter>

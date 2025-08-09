@@ -1,5 +1,6 @@
 export type ShipmentType = "ANTAR" | "JEMPUT";
 export type ShipmentStatus = "PENDING" | "PROSES" | "SELESAI" | "COMPLETED";
+export type WeighingMethod = "MANUAL" | "VENDOR";
 
 export interface ShipmentItem {
   id: string;
@@ -150,6 +151,7 @@ export interface ChosenProduct {
   code: string;
   shipmentId: string;
   productId: string;
+  weighingMethod: WeighingMethod;
   product: {
     id: string;
     name: string;
@@ -248,6 +250,7 @@ export interface ChosenProductExtended {
   code: string;
   shipmentId: string;
   productId: string;
+  weighingMethod: WeighingMethod;
   product: {
     id: string;
     name: string;

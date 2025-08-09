@@ -316,6 +316,7 @@ export function useChooseProduct(options = {}) {
       shipmentId: string;
       deliveryOrderId: string;
       productId: string;
+      weighingMethod: "MANUAL" | "VENDOR";
     }) => {
       const response = await fetchApi(
         `${BASE_URL}/shipments/${data.shipmentId}/choosen-product`,
@@ -348,16 +349,25 @@ export function useChooseProduct(options = {}) {
   });
 }
 
-export function useShipmentChosenProducts(shipmentId: string, options = {}) {
+export function useShipmentChosenProducts(
+  shipmentId: string,
+  weighingMethod?: "MANUAL" | "VENDOR",
+  options = {}
+) {
+  const queryKey = weighingMethod
+    ? [...shipmentKeys.chosenProducts(shipmentId), weighingMethod]
+    : shipmentKeys.chosenProducts(shipmentId);
+
   return useQuery({
-    queryKey: shipmentKeys.chosenProducts(shipmentId),
+    queryKey,
     queryFn: async () => {
       if (!shipmentId) return [];
 
       try {
+        const params = weighingMethod ? { method: weighingMethod } : {};
         const response = await fetchApi(
           `${BASE_URL}/shipments/${shipmentId}/choosen-product`,
-          {},
+          params,
           {
             method: "GET",
           }
