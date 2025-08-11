@@ -3,6 +3,7 @@ import {
   useBulkWeighShipmentItems,
   useChooseProduct,
   useDeleteShipment,
+  useNotaTimbanganForProduct,
   useShipment,
   useShipmentChosenProducts,
 } from "@/hooks/shipment";
@@ -169,6 +170,9 @@ export default function DetailPengiriman() {
   const [netWeight, setNetWeight] = useState("");
   const [tareWeight, setTareWeight] = useState("");
 
+  // States for nota timbangan modal
+  const [currentNotaIndex, setCurrentNotaIndex] = useState(0);
+
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
   });
@@ -236,6 +240,13 @@ export default function DetailPengiriman() {
       enabled: !!shipmentId,
     }
   );
+
+  // Fetch nota timbangan data when product is selected
+  const { data: notaTimbanganData, refetch: refetchNotaTimbangan } =
+    useNotaTimbanganForProduct(shipmentId!, selectedProductId!, {
+      enabled: !!selectedProductId && selectedProductId !== "" && !!shipmentId,
+      staleTime: 0,
+    });
 
   // Get manual weighing products
   const {
@@ -385,6 +396,10 @@ export default function DetailPengiriman() {
       setWeighingModalOpen(false);
       refetch();
       refetchChosenProducts();
+      // Ensure Nota Timbangan list refreshes for currently selected product
+      if (selectedProductId) {
+        refetchNotaTimbangan();
+      }
     },
     onError: (error: FormErrorData) => {
       try {
@@ -558,9 +573,9 @@ export default function DetailPengiriman() {
       };
     }[] = [];
 
-    // Collect all DOs containing this product
+    // Collect only UNCHOSEN DOs containing this product
     shipment.shipmentItems.forEach((item) => {
-      if (item.productId === productId) {
+      if (item.productId === productId && !item.chosenProduct) {
         productDOs.push({
           doId: item.deliveryOrderId,
           customer: item.deliveryOrder.customer,
@@ -663,6 +678,52 @@ export default function DetailPengiriman() {
       type: "application/pdf",
     });
     setPreviewModalOpen(true);
+  };
+
+  // Handler for multiple Nota Timbangan preview:
+  const handleOpenNotaTimbanganModal = (item: ChosenProductExtended) => {
+    setSelectedProductId(item.productId);
+    setCurrentNotaIndex(0);
+    // Force refresh of Nota Timbangan list for the product before navigating
+    refetchNotaTimbangan();
+    // Directly open the first nota timbangan in preview
+    const firstNota = item.weighings.find(
+      (w) => w.notaTimbangan
+    )?.notaTimbangan;
+    if (firstNota) {
+      handlePreviewNotaTimbangan({
+        ticketNumber: firstNota.ticketNumber,
+        documentPath: firstNota.documentPath,
+      });
+    }
+  };
+
+  // Handler to navigate between nota timbangan documents
+  const handleNextNota = () => {
+    if (
+      notaTimbanganData &&
+      currentNotaIndex < notaTimbanganData.notaTimbanganList.length - 1
+    ) {
+      const newIndex = currentNotaIndex + 1;
+      setCurrentNotaIndex(newIndex);
+      const currentNota = notaTimbanganData.notaTimbanganList[newIndex];
+      handlePreviewNotaTimbangan({
+        ticketNumber: currentNota.ticketNumber,
+        documentPath: currentNota.documentPath,
+      });
+    }
+  };
+
+  const handlePrevNota = () => {
+    if (currentNotaIndex > 0) {
+      const newIndex = currentNotaIndex - 1;
+      setCurrentNotaIndex(newIndex);
+      const currentNota = notaTimbanganData?.notaTimbanganList[newIndex];
+      handlePreviewNotaTimbangan({
+        ticketNumber: currentNota?.ticketNumber || "",
+        documentPath: currentNota?.documentPath || "",
+      });
+    }
   };
 
   return (
@@ -1174,13 +1235,38 @@ export default function DetailPengiriman() {
                                 doIds: new Set([item.deliveryOrderId]),
                                 totalQuantity: item.requestedQuantity,
                                 isChosen: item.chosenProduct || false,
+                                hasPendingItems: !item.chosenProduct,
+                              } as {
+                                id: string;
+                                name: string;
+                                satuan: string;
+                                warehouseId: string;
+                                warehouse: { id: string; name: string };
+                                doIds: Set<string>;
+                                totalQuantity: number;
+                                isChosen: boolean;
+                                hasPendingItems: boolean;
                               });
                             } else {
-                              const product = productMap.get(productId)!;
+                              const product = productMap.get(productId)! as {
+                                id: string;
+                                name: string;
+                                satuan: string;
+                                warehouseId: string;
+                                warehouse: { id: string; name: string };
+                                doIds: Set<string>;
+                                totalQuantity: number;
+                                isChosen: boolean;
+                                hasPendingItems: boolean;
+                              };
                               product.doIds.add(item.deliveryOrderId);
                               product.totalQuantity += item.requestedQuantity;
                               if (item.chosenProduct) {
                                 product.isChosen = true;
+                              }
+                              // Track if there are any pending items for this product
+                              if (!item.chosenProduct) {
+                                product.hasPendingItems = true;
                               }
                             }
                           });
@@ -1215,63 +1301,102 @@ export default function DetailPengiriman() {
                                   {product.satuan}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                                  {product.isChosen ? (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap"
-                                    >
-                                      Sudah Dimuat
-                                    </Badge>
-                                  ) : (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap"
-                                    >
-                                      Belum Dimuat
-                                    </Badge>
-                                  )}
+                                  {(() => {
+                                    const chosenCount =
+                                      shipment.shipmentItems.filter(
+                                        (si) =>
+                                          si.productId === product.id &&
+                                          si.chosenProduct
+                                      ).length;
+                                    const totalCount =
+                                      shipment.shipmentItems.filter(
+                                        (si) => si.productId === product.id
+                                      ).length;
+
+                                    if (chosenCount === 0) {
+                                      return (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap"
+                                        >
+                                          Belum Dimuat
+                                        </Badge>
+                                      );
+                                    } else if (chosenCount === totalCount) {
+                                      return (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap"
+                                        >
+                                          Sudah Dimuat
+                                        </Badge>
+                                      );
+                                    } else {
+                                      return (
+                                        <div className="space-y-1">
+                                          <Badge
+                                            variant="outline"
+                                            className="text-blue-700 bg-blue-50 border-blue-200 whitespace-nowrap"
+                                          >
+                                            Sebagian Dimuat
+                                          </Badge>
+                                          <p className="text-xs text-gray-500">
+                                            {chosenCount}/{totalCount} item
+                                          </p>
+                                        </div>
+                                      );
+                                    }
+                                  })()}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                   <div className="flex justify-center space-x-2">
-                                    {hasPengirimanUpdateAccess &&
-                                      !product.isChosen && (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                                          onClick={() =>
-                                            handleOpenProductModal(product.id)
-                                          }
-                                          disabled={chooseProduct.isPending}
-                                        >
-                                          <Package className="mr-2 w-4 h-4" />
-                                          Muat Barang
-                                        </Button>
-                                      )}
-                                    {hasPengirimanUpdateAccess &&
-                                      product.isChosen && (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="text-green-600 border-green-200 hover:bg-green-50"
-                                          disabled={true}
-                                        >
-                                          <Check className="mr-2 w-4 h-4" />
-                                          Barang Sudah Dimuat
-                                        </Button>
-                                      )}
-                                    {hasPengirimanWeighAccess &&
-                                      product.isChosen && (
-                                        <>
-                                          {shipment.shipmentItems
-                                            .filter(
-                                              (si) =>
-                                                si.productId === product.id
-                                            )
-                                            .every(
-                                              (si) => si.status === "COMPLETED"
-                                            ) ? (
-                                            /* ── SUDAH DITIMBANG (one disabled button) ── */
+                                    {(() => {
+                                      const chosenCount =
+                                        shipment.shipmentItems.filter(
+                                          (si) =>
+                                            si.productId === product.id &&
+                                            si.chosenProduct
+                                        ).length;
+                                      const totalCount =
+                                        shipment.shipmentItems.filter(
+                                          (si) => si.productId === product.id
+                                        ).length;
+                                      const allWeighed = shipment.shipmentItems
+                                        .filter(
+                                          (si) =>
+                                            si.productId === product.id &&
+                                            si.chosenProduct
+                                        )
+                                        .every(
+                                          (si) => si.status === "COMPLETED"
+                                        );
+
+                                      const weighingMethod =
+                                        getProductWeighingMethod(product.id);
+
+                                      // If no items chosen yet
+                                      if (chosenCount === 0) {
+                                        return hasPengirimanUpdateAccess ? (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                            onClick={() =>
+                                              handleOpenProductModal(product.id)
+                                            }
+                                            disabled={chooseProduct.isPending}
+                                          >
+                                            <Package className="mr-2 w-4 h-4" />
+                                            Muat Barang
+                                          </Button>
+                                        ) : null;
+                                      }
+
+                                      // If all items chosen
+                                      if (chosenCount === totalCount) {
+                                        // All chosen, check if all weighed
+                                        if (allWeighed) {
+                                          return (
                                             <Button
                                               variant="outline"
                                               size="sm"
@@ -1279,16 +1404,18 @@ export default function DetailPengiriman() {
                                               disabled
                                             >
                                               <Check className="mr-2 w-4 h-4" />
-                                              Sudah ditimbang
+                                              Sudah Ditimbang
                                             </Button>
-                                          ) : getProductWeighingMethod(
-                                              product.id
-                                            ) === "MANUAL" ? (
-                                            /* ── MANUAL PRODUCT - Show Timbang button only ── */
+                                          );
+                                        } else if (
+                                          weighingMethod === "MANUAL" &&
+                                          hasPengirimanWeighAccess
+                                        ) {
+                                          return (
                                             <Button
                                               variant="outline"
                                               size="sm"
-                                              className="text-blue-600 border-blue-200 hover:bg-purple-50"
+                                              className="text-purple-600 border-purple-200 hover:bg-purple-50"
                                               onClick={() =>
                                                 handleOpenWeighingModal(
                                                   product.id
@@ -1301,9 +1428,86 @@ export default function DetailPengiriman() {
                                               <Scale className="mr-2 w-4 h-4" />
                                               Timbang
                                             </Button>
-                                          ) : null}
-                                        </>
-                                      )}
+                                          );
+                                        } else {
+                                          return (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="text-green-600 border-green-200 hover:bg-green-50"
+                                              disabled={true}
+                                            >
+                                              <Check className="mr-2 w-4 h-4" />
+                                              Semua Dimuat
+                                            </Button>
+                                          );
+                                        }
+                                      }
+
+                                      // Partial chosen - show both buttons
+                                      const buttons = [];
+                                      if (hasPengirimanUpdateAccess) {
+                                        buttons.push(
+                                          <Button
+                                            key="muat"
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                            onClick={() =>
+                                              handleOpenProductModal(product.id)
+                                            }
+                                            disabled={chooseProduct.isPending}
+                                          >
+                                            <Package className="mr-2 w-4 h-4" />
+                                            Muat Sisa (
+                                            {totalCount - chosenCount})
+                                          </Button>
+                                        );
+                                      }
+
+                                      if (
+                                        weighingMethod === "MANUAL" &&
+                                        hasPengirimanWeighAccess &&
+                                        chosenCount > 0
+                                      ) {
+                                        const chosenItems =
+                                          shipment.shipmentItems.filter(
+                                            (si) =>
+                                              si.productId === product.id &&
+                                              si.chosenProduct
+                                          );
+                                        const unweighedCount =
+                                          chosenItems.filter(
+                                            (si) => si.status !== "COMPLETED"
+                                          ).length;
+
+                                        if (unweighedCount > 0) {
+                                          buttons.push(
+                                            <Button
+                                              key="timbang"
+                                              variant="outline"
+                                              size="sm"
+                                              className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                                              onClick={() =>
+                                                handleOpenWeighingModal(
+                                                  product.id
+                                                )
+                                              }
+                                              disabled={
+                                                bulkWeighItems.isPending
+                                              }
+                                            >
+                                              <Scale className="mr-2 w-4 h-4" />
+                                              Timbang ({unweighedCount})
+                                            </Button>
+                                          );
+                                        }
+                                      }
+
+                                      return buttons.length > 0
+                                        ? buttons
+                                        : null;
+                                    })()}
                                   </div>
                                 </TableCell>
                               </TableRow>
@@ -1337,6 +1541,7 @@ export default function DetailPengiriman() {
                           doIds: Set<string>;
                           totalQuantity: number;
                           isChosen: boolean;
+                          hasPendingItems: boolean;
                         }
                       >();
 
@@ -1352,6 +1557,7 @@ export default function DetailPengiriman() {
                             doIds: new Set([item.deliveryOrderId]),
                             totalQuantity: item.requestedQuantity,
                             isChosen: item.chosenProduct || false,
+                            hasPendingItems: !item.chosenProduct,
                           });
                         } else {
                           const product = productMap.get(productId)!;
@@ -1423,7 +1629,7 @@ export default function DetailPengiriman() {
                               hasPengirimanWeighAccess) && (
                               <div className="pt-3 mt-3 space-y-2 border-t border-gray-100">
                                 {hasPengirimanUpdateAccess &&
-                                  !product.isChosen && (
+                                  product.hasPendingItems && (
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -1886,28 +2092,56 @@ export default function DetailPengiriman() {
                                     )}
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                                    {item.shipmentItems.every(
+                                    {item.shipmentItems.some(
                                       (si) => si.status === "COMPLETED"
                                     ) &&
                                     item.weighings &&
                                     item.weighings.length > 0 &&
-                                    item.weighings[0]?.notaTimbangan ? (
-                                      <button
-                                        type="button"
-                                        className="text-blue-600 hover:underline"
-                                        onClick={() =>
-                                          handlePreviewNotaTimbangan({
-                                            ticketNumber:
-                                              item.weighings[0].notaTimbangan!
-                                                .ticketNumber,
-                                            documentPath:
-                                              item.weighings[0].notaTimbangan!
-                                                .documentPath,
-                                          })
-                                        }
-                                      >
-                                        Lihat Dokumen
-                                      </button>
+                                    item.weighings.some(
+                                      (w) => w.notaTimbangan
+                                    ) ? (
+                                      <>
+                                        {item.weighings.filter(
+                                          (w) => w.notaTimbangan
+                                        ).length === 1 ? (
+                                          <button
+                                            type="button"
+                                            className="text-blue-600 hover:underline"
+                                            onClick={() => {
+                                              const firstNota =
+                                                item.weighings.find(
+                                                  (w) => w.notaTimbangan
+                                                )?.notaTimbangan;
+                                              if (firstNota) {
+                                                handlePreviewNotaTimbangan({
+                                                  ticketNumber:
+                                                    firstNota.ticketNumber,
+                                                  documentPath:
+                                                    firstNota.documentPath,
+                                                });
+                                              }
+                                            }}
+                                          >
+                                            Lihat Dokumen
+                                          </button>
+                                        ) : (
+                                          <button
+                                            type="button"
+                                            className="text-blue-600 hover:underline"
+                                            onClick={() =>
+                                              handleOpenNotaTimbanganModal(item)
+                                            }
+                                          >
+                                            Lihat Semua (
+                                            {
+                                              item.weighings.filter(
+                                                (w) => w.notaTimbangan
+                                              ).length
+                                            }
+                                            )
+                                          </button>
+                                        )}
+                                      </>
                                     ) : (
                                       <span className="text-gray-400">
                                         Belum tersedia
@@ -2035,28 +2269,56 @@ export default function DetailPengiriman() {
                                     Nota Timbangan:
                                   </span>
                                   <span>
-                                    {item.shipmentItems.every(
+                                    {item.shipmentItems.some(
                                       (si) => si.status === "COMPLETED"
                                     ) &&
                                     item.weighings &&
                                     item.weighings.length > 0 &&
-                                    item.weighings[0]?.notaTimbangan ? (
-                                      <button
-                                        type="button"
-                                        className="text-blue-600 hover:underline"
-                                        onClick={() =>
-                                          handlePreviewNotaTimbangan({
-                                            ticketNumber:
-                                              item.weighings[0].notaTimbangan!
-                                                .ticketNumber,
-                                            documentPath:
-                                              item.weighings[0].notaTimbangan!
-                                                .documentPath,
-                                          })
-                                        }
-                                      >
-                                        Lihat Dokumen
-                                      </button>
+                                    item.weighings.some(
+                                      (w) => w.notaTimbangan
+                                    ) ? (
+                                      <>
+                                        {item.weighings.filter(
+                                          (w) => w.notaTimbangan
+                                        ).length === 1 ? (
+                                          <button
+                                            type="button"
+                                            className="text-blue-600 hover:underline"
+                                            onClick={() => {
+                                              const firstNota =
+                                                item.weighings.find(
+                                                  (w) => w.notaTimbangan
+                                                )?.notaTimbangan;
+                                              if (firstNota) {
+                                                handlePreviewNotaTimbangan({
+                                                  ticketNumber:
+                                                    firstNota.ticketNumber,
+                                                  documentPath:
+                                                    firstNota.documentPath,
+                                                });
+                                              }
+                                            }}
+                                          >
+                                            Lihat Dokumen
+                                          </button>
+                                        ) : (
+                                          <button
+                                            type="button"
+                                            className="text-blue-600 hover:underline"
+                                            onClick={() =>
+                                              handleOpenNotaTimbanganModal(item)
+                                            }
+                                          >
+                                            Lihat Semua (
+                                            {
+                                              item.weighings.filter(
+                                                (w) => w.notaTimbangan
+                                              ).length
+                                            }
+                                            )
+                                          </button>
+                                        )}
+                                      </>
                                     ) : (
                                       <span className="text-gray-400">
                                         Belum tersedia
@@ -2257,6 +2519,17 @@ export default function DetailPengiriman() {
         isOpen={previewModalOpen}
         onClose={() => setPreviewModalOpen(false)}
         file={previewFile}
+        pagination={
+          previewFile?.name?.includes("Nota Timbangan") && notaTimbanganData
+            ? {
+                currentIndex: currentNotaIndex,
+                totalCount: notaTimbanganData.notaTimbanganList.length,
+                onNext: handleNextNota,
+                onPrevious: handlePrevNota,
+                itemType: "Nota Timbangan",
+              }
+            : undefined
+        }
       />
 
       {/* Hidden file input for photo replacement */}
@@ -2502,7 +2775,7 @@ export default function DetailPengiriman() {
 
       {/* Weighing Modal */}
       <Dialog open={weighingModalOpen} onOpenChange={setWeighingModalOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-white border-0 p-0 rounded-lg shadow-lg">
+        <DialogContent className="sm:max-w-[600px] bg-white border-0 p-0 rounded-lg shadow-lg">
           <div className="p-6">
             <DialogHeader className="pb-4">
               <DialogTitle className="flex items-center text-xl font-semibold text-gray-900">
@@ -2515,6 +2788,92 @@ export default function DetailPengiriman() {
             </DialogHeader>
 
             <div className="py-4">
+              {/* Product Information */}
+              {weighingProductId && shipment && (
+                <>
+                  {(() => {
+                    // Find all chosen items for this product
+                    const chosenItems = shipment.shipmentItems.filter(
+                      (item) =>
+                        item.productId === weighingProductId &&
+                        item.chosenProduct
+                    );
+
+                    // Find unweighed items (those that need weighing)
+                    const unweighedItems = chosenItems.filter(
+                      (item) => item.status !== "COMPLETED"
+                    );
+
+                    if (chosenItems.length === 0) return null;
+
+                    const productName = chosenItems[0].product.name;
+                    const productSatuan = chosenItems[0].product.satuan;
+
+                    // Calculate total quantities
+                    // const totalChosenQuantity = chosenItems.reduce(
+                    //   (sum, item) => sum + item.requestedQuantity,
+                    //   0
+                    // );
+                    const totalUnweighedQuantity = unweighedItems.reduce(
+                      (sum, item) => sum + item.requestedQuantity,
+                      0
+                    );
+
+                    return (
+                      <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+                        <h3 className="text-base font-medium text-blue-800 mb-3">
+                          {productName} - Total:{" "}
+                          {formatNumber(totalUnweighedQuantity)} {productSatuan}
+                        </h3>
+
+                        {/* Show delivery orders involved */}
+                        {unweighedItems.length > 0 && (
+                          <div className="space-y-2">
+                            {(() => {
+                              // Group unweighed items by DO
+                              const doGroups = unweighedItems.reduce(
+                                (acc, item) => {
+                                  const doId = item.deliveryOrderId;
+                                  if (!acc[doId]) {
+                                    acc[doId] = {
+                                      doNumber: item.deliveryOrder.doNumber,
+                                      quantity: 0,
+                                    };
+                                  }
+                                  acc[doId].quantity += item.requestedQuantity;
+                                  return acc;
+                                },
+                                {} as Record<
+                                  string,
+                                  { doNumber: string; quantity: number }
+                                >
+                              );
+
+                              return Object.entries(doGroups).map(
+                                ([doId, doInfo]) => (
+                                  <div
+                                    key={doId}
+                                    className="flex items-center justify-between p-2 bg-white rounded border border-blue-200"
+                                  >
+                                    <span className="text-sm font-medium text-gray-800">
+                                      {doInfo.doNumber}
+                                    </span>
+                                    <span className="text-sm font-semibold text-gray-800">
+                                      {formatNumber(doInfo.quantity)}{" "}
+                                      {productSatuan}
+                                    </span>
+                                  </div>
+                                )
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </>
+              )}
+
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">
@@ -2523,7 +2882,7 @@ export default function DetailPengiriman() {
                   <input
                     type="number"
                     step="0.01"
-                    className="w-full px-3 py-2 mt-1 text-sm border border-gray-300 rounded-md focus:outline-none  focus:border-blue-500"
+                    className="w-full px-3 py-2 mt-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
                     placeholder="Masukkan berat kotor"
                     value={grossWeight}
                     onChange={(e) => setGrossWeight(e.target.value)}

@@ -3,9 +3,9 @@ module.exports = {
     {
       name: "vite-frontend",
       script: "npm",
-      args: "run dev",
+      args: "run preview -- --port 5173 --host 0.0.0.0",
       interpreter: "node", // or leave it default (usually works)
-      cwd: "/root/outmanage-frontend",
+      cwd: "/home/deploy/apps/outmanage-frontend",
       env: {
         NODE_ENV: "production",
       },

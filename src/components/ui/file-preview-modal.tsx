@@ -6,19 +6,28 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { FilePreview } from '@/types/media';
-import { Download, RotateCw, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { Download, RotateCw, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 interface FilePreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   file: FilePreview | null;
+  // Optional pagination props for nota timbangan
+  pagination?: {
+    currentIndex: number;
+    totalCount: number;
+    onNext: () => void;
+    onPrevious: () => void;
+    itemType?: string; // e.g., "Nota Timbangan"
+  };
 }
 
 export function FilePreviewModal({
   isOpen,
   onClose,
   file,
+  pagination,
 }: FilePreviewModalProps) {
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -52,7 +61,40 @@ export function FilePreviewModal({
               <DialogTitle className="text-sm font-semibold text-gray-900 truncate sm:text-lg">
                 {file.name}
               </DialogTitle>
+              {pagination && (
+                <div className="flex items-center mt-1 text-xs text-gray-500 sm:text-sm">
+                  <span>
+                    {pagination.itemType || 'Dokumen'} {pagination.currentIndex + 1} dari {pagination.totalCount}
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* Pagination Controls */}
+            {pagination && pagination.totalCount > 1 && (
+              <div className="flex items-center mx-2 space-x-1 sm:mx-4 sm:space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={pagination.onPrevious}
+                  disabled={pagination.currentIndex === 0}
+                  className="w-8 h-8 p-0 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Dokumen Sebelumnya"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={pagination.onNext}
+                  disabled={pagination.currentIndex >= pagination.totalCount - 1}
+                  className="w-8 h-8 p-0 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Dokumen Selanjutnya"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
 
             {/* Controls - Simplified and responsive */}
             <div className="flex items-center ml-2 space-x-2 sm:ml-4">

@@ -29,6 +29,8 @@ export const shipmentKeys = {
   chosenProducts: (shipmentId: string) =>
     [...shipmentKeys.all, "chosenProducts", shipmentId] as const,
   unverified: () => [...shipmentKeys.all, "unverified"] as const,
+  notaTimbangan: (shipmentId: string, productId: string) =>
+    [...shipmentKeys.all, "notaTimbangan", shipmentId, productId] as const,
 };
 
 export function useShipments(options = {}) {
@@ -491,6 +493,13 @@ export function useBulkWeighShipmentItems(options = {}) {
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.chosenProducts(variables.shipmentId),
       });
+      // Ensure Nota Timbangan list for this product refreshes immediately
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.notaTimbangan(
+          variables.shipmentId,
+          variables.productId
+        ),
+      });
       queryClient.invalidateQueries({ queryKey: shipmentKeys.lists() });
     },
     ...options,
@@ -630,5 +639,79 @@ export function useUnverifiedShipments() {
     },
     staleTime: 30 * 1000, // 30 seconds - refresh more frequently for this critical view
     refetchInterval: 60 * 1000, // Auto-refresh every minute
+  });
+}
+
+export function useNotaTimbanganForProduct(
+  shipmentId: string,
+  productId: string,
+  options = {}
+) {
+  return useQuery({
+    queryKey: shipmentKeys.notaTimbangan(shipmentId, productId),
+    queryFn: async () => {
+      const response = await fetchApi(
+        `${BASE_URL}/shipments/${shipmentId}/nota-timbangan/${productId}`
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Error fetching nota timbangan: ${response.statusText}`
+        );
+      }
+
+      const result: ApiResponse<{
+        notaTimbanganList: Array<{
+          id: string;
+          ticketNumber: string;
+          documentPath: string;
+          createdAt: string;
+          updatedAt: string;
+          weighing: {
+            id: string;
+            grossWeight: number;
+            netWeight: number;
+            tareWeight: number;
+            timeIn: string | null;
+            timeOut: string | null;
+          };
+          product: {
+            id: string;
+            name: string;
+            satuan: string;
+          };
+          shipment: {
+            id: string;
+            shipmentNumber: string;
+          };
+          deliveryOrders: Array<{
+            id: string;
+            doNumber: string;
+            customer: {
+              id: string;
+              name: string;
+            };
+          }>;
+          primaryDoNumber: string;
+        }>;
+        totalCount: number;
+      }> = await response.json();
+
+      if (!result.success) {
+        handleApiError(
+          result,
+          "Terjadi kesalahan saat mengambil data nota timbangan"
+        );
+      }
+
+      if (!result.data) {
+        throw new Error("Data nota timbangan tidak ditemukan");
+      }
+
+      return result.data;
+    },
+    enabled:
+      !!shipmentId && !!productId && shipmentId !== "" && productId !== "",
+    ...options,
   });
 }
