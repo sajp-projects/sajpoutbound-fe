@@ -135,20 +135,20 @@ export default function App() {
       path: "arsip",
       element: <ArsipPengguna />,
       resource: PERMISSION.RESOURCES.USER,
-      action: PERMISSION.ACTIONS.READ,
+      action: PERMISSION.ACTIONS.READ_ARCHIVED,
       redirectTo: "/pengguna",
     },
     {
       path: ":id/log",
       element: <LogPengguna />,
-      resource: PERMISSION.RESOURCES.USER,
+      resource: PERMISSION.RESOURCES.USER_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/pengguna",
     },
     {
       path: "log",
       element: <LogSemuaPengguna />,
-      resource: PERMISSION.RESOURCES.USER,
+      resource: PERMISSION.RESOURCES.USER_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/pengguna",
     },
@@ -234,14 +234,14 @@ export default function App() {
     {
       path: ":id/log",
       element: <LogGudang />,
-      resource: PERMISSION.RESOURCES.WAREHOUSE,
+      resource: PERMISSION.RESOURCES.WAREHOUSE_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/gudang",
     },
     {
       path: "log",
       element: <LogSemuaGudang />,
-      resource: PERMISSION.RESOURCES.WAREHOUSE,
+      resource: PERMISSION.RESOURCES.WAREHOUSE_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/gudang",
     },
@@ -279,14 +279,14 @@ export default function App() {
     {
       path: ":id/log",
       element: <LogBarang />,
-      resource: PERMISSION.RESOURCES.PRODUCT,
+      resource: PERMISSION.RESOURCES.PRODUCT_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/barang",
     },
     {
       path: "log",
       element: <LogSemuaBarang />,
-      resource: PERMISSION.RESOURCES.PRODUCT,
+      resource: PERMISSION.RESOURCES.PRODUCT_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/barang",
     },
@@ -324,14 +324,14 @@ export default function App() {
     {
       path: ":id/log",
       element: <LogPelanggan />,
-      resource: PERMISSION.RESOURCES.CUSTOMER,
+      resource: PERMISSION.RESOURCES.CUSTOMER_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/pelanggan",
     },
     {
       path: "log",
       element: <LogSemuaPelanggan />,
-      resource: PERMISSION.RESOURCES.CUSTOMER,
+      resource: PERMISSION.RESOURCES.CUSTOMER_LOG,
       action: PERMISSION.ACTIONS.READ,
     },
     {
@@ -351,7 +351,7 @@ export default function App() {
     {
       path: "log",
       element: <LogSemuaPelanggan />,
-      resource: PERMISSION.RESOURCES.CUSTOMER,
+      resource: PERMISSION.RESOURCES.CUSTOMER_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/pelanggan",
     },
@@ -375,14 +375,14 @@ export default function App() {
     {
       path: ":id/log",
       element: <LogArmada />,
-      resource: PERMISSION.RESOURCES.ARMADA,
+      resource: PERMISSION.RESOURCES.ARMADA_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/armada",
     },
     {
       path: "log",
       element: <LogSemuaArmada />,
-      resource: PERMISSION.RESOURCES.ARMADA,
+      resource: PERMISSION.RESOURCES.ARMADA_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/armada",
     },
@@ -403,7 +403,7 @@ export default function App() {
     {
       path: "log",
       element: <LogSemuaArmada />,
-      resource: PERMISSION.RESOURCES.ARMADA,
+      resource: PERMISSION.RESOURCES.ARMADA_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/armada",
     },
@@ -427,7 +427,7 @@ export default function App() {
     {
       path: ":id/log",
       element: <LogDo />,
-      resource: PERMISSION.RESOURCES.DO,
+      resource: PERMISSION.RESOURCES.DO_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/do",
     },
@@ -435,7 +435,7 @@ export default function App() {
       path: "arsip",
       element: <ArsipDo />,
       resource: PERMISSION.RESOURCES.DO,
-      action: PERMISSION.ACTIONS.READ,
+      action: PERMISSION.ACTIONS.READ_ARCHIVED,
       redirectTo: "/do",
     },
     {
@@ -455,7 +455,7 @@ export default function App() {
     {
       path: "log",
       element: <LogSemuaDo />,
-      resource: PERMISSION.RESOURCES.DO,
+      resource: PERMISSION.RESOURCES.DO_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/do",
     },
@@ -504,7 +504,7 @@ export default function App() {
     {
       path: ":id/log",
       element: <LogPengiriman />,
-      resource: PERMISSION.RESOURCES.PENGIRIMAN,
+      resource: PERMISSION.RESOURCES.PENGIRIMAN_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/pengiriman",
     },
@@ -512,7 +512,7 @@ export default function App() {
       path: "arsip",
       element: <ArsipPengiriman />,
       resource: PERMISSION.RESOURCES.PENGIRIMAN,
-      action: PERMISSION.ACTIONS.READ,
+      action: PERMISSION.ACTIONS.READ_ARCHIVED,
       redirectTo: "/pengiriman",
     },
     {
@@ -532,7 +532,7 @@ export default function App() {
     {
       path: "log",
       element: <LogSemuaPengiriman />,
-      resource: PERMISSION.RESOURCES.PENGIRIMAN,
+      resource: PERMISSION.RESOURCES.PENGIRIMAN_LOG,
       action: PERMISSION.ACTIONS.READ,
       redirectTo: "/pengiriman",
     },

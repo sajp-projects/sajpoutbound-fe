@@ -70,6 +70,12 @@ export default function DaftarArmada() {
     PERMISSION.ACTIONS.DELETE
   );
 
+  const hasArmadaLogAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ARMADA_LOG,
+    PERMISSION.ACTIONS.READ
+  );
+
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
@@ -126,7 +132,9 @@ export default function DaftarArmada() {
       actions.push({ type: ActionType.EDIT });
     }
 
-    actions.push({ type: ActionType.LOG });
+    if (hasArmadaLogAccess) {
+      actions.push({ type: ActionType.LOG });
+    }
 
     if (hasArmadaDeleteAccess) {
       actions.push({

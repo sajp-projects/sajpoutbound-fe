@@ -3,8 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateRangeFilter } from "@/components/ui/DateRangeFilter";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PERMISSION } from "@/constant/PERMISSION";
+import { useAuth } from "@/hooks/auth";
+import { useRolePermissions } from "@/hooks/permission";
 import { useDashboardSummary } from "@/hooks/report";
 import { formatDate } from "@/utils/date";
+import { hasPermission } from "@/utils/permission";
+import { getRoleId } from "@/utils/storage";
 import {
   Activity,
   BarChart3,
@@ -20,6 +25,12 @@ import { useNavigate } from "react-router";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const roleId = getRoleId() || "";
+
+  const { data: permissions } = useRolePermissions(roleId, {
+    enabled: isAuthenticated && roleId !== "",
+  });
 
   // Date range state (copied from laporan/operasional/index.tsx)
   const [dateRange, setDateRange] = useState<{
@@ -97,6 +108,10 @@ export default function Dashboard() {
   // Recent items for limited display
   const recentItems = recentActivities.slice(0, 5) || [];
 
+  // Permission checks
+  const canReadShipments = hasPermission(permissions, PERMISSION.RESOURCES.PENGIRIMAN, PERMISSION.ACTIONS.READ);
+  const canReadArmada = hasPermission(permissions, PERMISSION.RESOURCES.ARMADA, PERMISSION.ACTIONS.READ);
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "PENDING":
@@ -110,25 +125,17 @@ export default function Dashboard() {
     }
   };
 
-  // Navigation functions
-  const handleNavigateToOperationalReport = (type?: "ANTAR" | "JEMPUT") => {
+  const handleNavigateToShipments = (status?: string, type?: "ANTAR" | "JEMPUT") => {
     const params = new URLSearchParams({
       startDate: dateRange.startDate,
       endDate: dateRange.endDate,
     });
+    if (status) {
+      params.set("status", status);
+    }
     if (type) {
       params.set("type", type);
-      // Set active tab for the laporan page
-      params.set("activeTab", type);
     }
-    navigate(`/laporan/operasional?${params.toString()}`);
-  };
-
-  const handleNavigateToShipments = () => {
-    const params = new URLSearchParams({
-      startDate: dateRange.startDate,
-      endDate: dateRange.endDate,
-    });
     navigate(`/pengiriman?${params.toString()}`);
   };
 
@@ -202,18 +209,20 @@ export default function Dashboard() {
                               </span>
                             </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-gray-600 hover:bg-gray-100 text-xs sm:text-sm"
-                            onClick={() =>
-                              handleNavigateToOperationalReport("ANTAR")
-                            }
-                          >
-                            <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                            <span className="hidden sm:inline">Detail</span>
-                            <span className="sm:hidden">•••</span>
-                          </Button>
+                          {canReadShipments && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-gray-600 hover:bg-gray-100 text-xs sm:text-sm"
+                              onClick={() =>
+                                handleNavigateToShipments(undefined, "ANTAR")
+                              }
+                            >
+                              <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                              <span className="hidden sm:inline">Detail</span>
+                              <span className="sm:hidden">•••</span>
+                            </Button>
+                          )}
                         </div>
                       </div>
 
@@ -255,7 +264,12 @@ export default function Dashboard() {
                         ].map((item) => (
                           <div
                             key={`antar-${item.status}`}
-                            className="bg-white border border-gray-200 rounded-lg p-2 sm:p-3 text-center hover:shadow-md transition-all cursor-pointer group min-h-[90px] sm:min-h-[110px] flex flex-col justify-center"
+                            className={`bg-white border border-gray-200 rounded-lg p-2 sm:p-3 text-center transition-all group min-h-[90px] sm:min-h-[110px] flex flex-col justify-center ${
+                              canReadShipments
+                                ? "hover:shadow-md cursor-pointer"
+                                : "cursor-default"
+                            }`}
+                            onClick={canReadShipments ? () => handleNavigateToShipments(item.status, "ANTAR") : undefined}
                           >
                             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-100 rounded-full mx-auto mb-1 sm:mb-2 flex items-center justify-center">
                               {item.icon}
@@ -301,18 +315,20 @@ export default function Dashboard() {
                               </span>
                             </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-gray-600 hover:bg-gray-100 text-xs sm:text-sm"
-                            onClick={() =>
-                              handleNavigateToOperationalReport("JEMPUT")
-                            }
-                          >
-                            <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                            <span className="hidden sm:inline">Detail</span>
-                            <span className="sm:hidden">•••</span>
-                          </Button>
+                          {canReadShipments && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-gray-600 hover:bg-gray-100 text-xs sm:text-sm"
+                              onClick={() =>
+                                handleNavigateToShipments(undefined, "JEMPUT")
+                              }
+                            >
+                              <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                              <span className="hidden sm:inline">Detail</span>
+                              <span className="sm:hidden">•••</span>
+                            </Button>
+                          )}
                         </div>
                       </div>
 
@@ -354,7 +370,12 @@ export default function Dashboard() {
                         ].map((item) => (
                           <div
                             key={`jemput-${item.status}`}
-                            className="bg-white border border-gray-200 rounded-lg p-2 sm:p-3 text-center hover:shadow-md transition-all cursor-pointer group min-h-[90px] sm:min-h-[110px] flex flex-col justify-center"
+                            className={`bg-white border border-gray-200 rounded-lg p-2 sm:p-3 text-center transition-all group min-h-[90px] sm:min-h-[110px] flex flex-col justify-center ${
+                              canReadShipments
+                                ? "hover:shadow-md cursor-pointer"
+                                : "cursor-default"
+                            }`}
+                            onClick={canReadShipments ? () => handleNavigateToShipments(item.status, "JEMPUT") : undefined}
                           >
                             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-100 rounded-full mx-auto mb-1 sm:mb-2 flex items-center justify-center">
                               {item.icon}
@@ -491,13 +512,13 @@ export default function Dashboard() {
                         </div>
                       )}
                     </div>
-                    {recentItems.length > 0 && (
+                    {recentItems.length > 0 && canReadShipments && (
                       <div className="text-center pt-4 mt-auto">
                         <Button
                           variant="ghost"
                           size="sm"
                           className="text-sm text-gray-600"
-                          onClick={handleNavigateToShipments}
+                          onClick={() => handleNavigateToShipments()}
                         >
                           Lihat Semua
                         </Button>
@@ -738,15 +759,17 @@ export default function Dashboard() {
                   </p>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-gray-200 hover:bg-gray-50 w-full sm:w-auto"
-                onClick={handleNavigateToArmada}
-              >
-                <span className="sm:hidden">Kelola</span>
-                <span className="hidden sm:inline">Kelola Armada</span>
-              </Button>
+              {canReadArmada && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-200 hover:bg-gray-50 w-full sm:w-auto"
+                  onClick={handleNavigateToArmada}
+                >
+                  <span className="sm:hidden">Kelola</span>
+                  <span className="hidden sm:inline">Kelola Armada</span>
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -922,13 +945,13 @@ export default function Dashboard() {
                         })}
                       </div>
 
-                      {recentActivities.length > 6 && (
+                      {recentActivities.length > 6 && canReadShipments && (
                         <div className="text-center pt-4">
                           <Button
                             variant="ghost"
                             size="sm"
                             className="text-sm text-gray-600"
-                            onClick={handleNavigateToShipments}
+                            onClick={() => handleNavigateToShipments()}
                           >
                             Lihat Semua Pengiriman
                           </Button>

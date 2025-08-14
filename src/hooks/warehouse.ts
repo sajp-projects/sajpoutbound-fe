@@ -4,7 +4,9 @@ import {
   CreateWarehouseInput,
   UpdateWarehouseInput,
   Warehouse,
+  WarehouseProductsResponse,
   WarehousesResponse,
+  WarehouseUsersResponse,
 } from "@/types/warehouse";
 import { fetchApi } from "@/utils/api";
 import { createErrorResponse, handleApiError } from "@/utils/errorHandler";
@@ -17,6 +19,9 @@ import {
 } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 
+// Import related keys for proper cache invalidation
+import { userKeys } from "./user";
+
 export const warehouseKeys = {
   all: ["warehouses"] as const,
   lists: () => [...warehouseKeys.all, "list"] as const,
@@ -24,6 +29,10 @@ export const warehouseKeys = {
     [...warehouseKeys.lists(), { filters }] as const,
   details: () => [...warehouseKeys.all, "detail"] as const,
   detail: (id: string) => [...warehouseKeys.details(), id] as const,
+  products: (id: string, filters: { page?: number; limit?: number; search?: string }) =>
+    [...warehouseKeys.detail(id), "products", filters] as const,
+  users: (id: string, filters: { page?: number; limit?: number; search?: string }) =>
+    [...warehouseKeys.detail(id), "users", filters] as const,
   logs: () => [...warehouseKeys.all, "logs"] as const,
   allWarehouses: () => [...warehouseKeys.all, "allWarehouses"] as const,
 };
@@ -120,6 +129,125 @@ export function useWarehouse(
   });
 }
 
+export function useWarehouseProducts(
+  { id }: { id: string },
+  options?: Omit<
+    UseQueryOptions<
+      WarehouseProductsResponse,
+      Error,
+      WarehouseProductsResponse,
+      ReturnType<typeof warehouseKeys.products>
+    >,
+    "queryKey" | "queryFn"
+  > & {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }
+) {
+  const [searchParams] = useSearchParams();
+  const { page = parseInt(searchParams.get("page") || "1", 10), limit = 5, search = "", ...restOptions } = options || {};
+
+  return useQuery({
+    queryKey: warehouseKeys.products(id, { page, limit, search }),
+    queryFn: async () => {
+      try {
+        const response = await fetchApi(`${BASE_URL}/warehouses/${id}/products`, {
+          page: page.toString(),
+          limit: limit.toString(),
+          ...(search && { search }),
+        });
+
+        if (!response.ok) {
+          const errorResult = await response.json();
+          throw new Error(
+            errorResult.message ||
+              `Error fetching warehouse products: ${response.statusText}`
+          );
+        }
+
+        const result: ApiResponse<WarehouseProductsResponse> = await response.json();
+
+        if (!result.success) {
+          throw new Error(
+            result.message || "Terjadi kesalahan saat mengambil produk gudang"
+          );
+        }
+
+        if (!result.data) {
+          throw new Error("Data produk gudang tidak ditemukan");
+        }
+
+        return result.data;
+      } catch (error) {
+        console.error("Error in useWarehouseProducts:", error);
+        throw error;
+      }
+    },
+    ...restOptions,
+  });
+}
+
+export function useWarehouseUsers(
+  { id }: { id: string },
+  options?: Omit<
+    UseQueryOptions<
+      WarehouseUsersResponse,
+      Error,
+      WarehouseUsersResponse,
+      ReturnType<typeof warehouseKeys.users>
+    >,
+    "queryKey" | "queryFn"
+  > & {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }
+) {
+  const [searchParams] = useSearchParams();
+  const { page = parseInt(searchParams.get("page") || "1", 10), limit = 10, search = "", ...restOptions } = options || {};
+
+  return useQuery({
+    queryKey: warehouseKeys.users(id, { page, limit, search }),
+    queryFn: async () => {
+      try {
+        const response = await fetchApi(`${BASE_URL}/warehouses/${id}/users`, {
+          page: page.toString(),
+          limit: limit.toString(),
+          ...(search && { search }),
+        });
+
+        if (!response.ok) {
+          const errorResult = await response.json();
+          throw new Error(
+            errorResult.message ||
+              `Error fetching warehouse users: ${response.statusText}`
+          );
+        }
+
+        const result: ApiResponse<WarehouseUsersResponse> = await response.json();
+
+        if (!result.success) {
+          throw new Error(
+            result.message || "Terjadi kesalahan saat mengambil pengguna gudang"
+          );
+        }
+
+        if (!result.data) {
+          throw new Error("Data pengguna gudang tidak ditemukan");
+        }
+
+        return result.data;
+      } catch (error) {
+        console.error("Error in useWarehouseUsers:", error);
+        throw error;
+      }
+    },
+    refetchOnMount: "always",
+    ...restOptions,
+  });
+}
+
 export function useCreateWarehouse(
   options?: UseMutationOptions<Warehouse, Error, CreateWarehouseInput>
 ) {
@@ -211,6 +339,11 @@ export function useUpdateWarehouse(
     onSuccess: (data) => {
       queryClient.setQueryData(warehouseKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: warehouseKeys.lists() });
+      
+      // Invalidate all users since warehouse names are displayed in user details
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.details() });
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
     },
     ...options,
   });
@@ -237,6 +370,10 @@ export function useDeleteWarehouse(
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: warehouseKeys.lists() });
       queryClient.removeQueries({ queryKey: warehouseKeys.detail(id) });
+      
+      // Invalidate all users since they may have been assigned to this warehouse
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.details() });
     },
     ...options,
   });

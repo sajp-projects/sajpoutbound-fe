@@ -12,6 +12,9 @@ import {
 } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 
+// Import warehouse keys for proper cache invalidation
+import { warehouseKeys } from "./warehouse";
+
 export interface UserUpdateInput {
   name?: string;
   email?: string;
@@ -154,6 +157,18 @@ export function useCreateUser(
     onSuccess: (data) => {
       queryClient.setQueryData(userKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+
+      // Invalidate warehouse detail cache if the new user has a warehouse assignment
+      // This will trigger refetch of all warehouse-related data including users
+      if (data.warehouseId) {
+        queryClient.invalidateQueries({
+          queryKey: warehouseKeys.detail(data.warehouseId)
+        });
+        // Also invalidate warehouse users specifically
+        queryClient.invalidateQueries({
+          queryKey: [...warehouseKeys.detail(data.warehouseId), "users"]
+        });
+      }
     },
     ...options,
   });
@@ -207,9 +222,39 @@ export function useUpdateUser(
 
       return result.data as UserWithRole;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.setQueryData(userKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+
+      // Invalidate warehouse detail cache when warehouse assignment changes
+      // This will trigger refetch of all warehouse-related data including users
+      const oldWarehouseId = variables.warehouseId;
+      const newWarehouseId = data.warehouseId;
+
+      // If warehouse assignment changed, invalidate both old and new warehouse detail
+      if (oldWarehouseId !== newWarehouseId) {
+        // Invalidate old warehouse detail (if any)
+        if (oldWarehouseId) {
+          queryClient.invalidateQueries({
+            queryKey: warehouseKeys.detail(oldWarehouseId)
+          });
+          // Also invalidate old warehouse users specifically
+          queryClient.invalidateQueries({
+            queryKey: [...warehouseKeys.detail(oldWarehouseId), "users"]
+          });
+        }
+
+        // Invalidate new warehouse detail (if any)
+        if (newWarehouseId) {
+          queryClient.invalidateQueries({
+            queryKey: warehouseKeys.detail(newWarehouseId)
+          });
+          // Also invalidate new warehouse users specifically
+          queryClient.invalidateQueries({
+            queryKey: [...warehouseKeys.detail(newWarehouseId), "users"]
+          });
+        }
+      }
     },
     ...options,
   });
@@ -237,6 +282,19 @@ export function useDeleteUser(
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.removeQueries({ queryKey: userKeys.detail(id) });
+
+      // Invalidate all warehouse detail caches since we don't know which warehouse the deleted user belonged to
+      // This will trigger refetch of all warehouse-related data including users
+      queryClient.invalidateQueries({
+        queryKey: warehouseKeys.details()
+      });
+      // Also invalidate all warehouse users specifically
+      queryClient.invalidateQueries({
+        queryKey: [...warehouseKeys.all, "detail"]
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...warehouseKeys.all, "users"]
+      });
     },
     ...options,
   });
@@ -313,6 +371,14 @@ export function useRestoreUser(
       queryClient.setQueryData(userKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userKeys.archived() });
+
+      // Invalidate warehouse detail cache if the restored user has a warehouse assignment
+      // This will trigger refetch of all warehouse-related data including users
+      if (data.warehouseId) {
+        queryClient.invalidateQueries({
+          queryKey: warehouseKeys.detail(data.warehouseId)
+        });
+      }
     },
     ...options,
   });

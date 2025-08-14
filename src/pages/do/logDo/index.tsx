@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
-import { formatNumber } from "@/utils/formatNumber";
+import { formatInputNumber, formatNumber } from "@/utils/formatNumber";
 import { Pagination } from "@/components/Pagination";
 import { LoadingState } from "@/components/LoadingState";
 import { EmptyState } from "@/components/EmptyState";
@@ -136,7 +136,7 @@ export default function LogDo() {
                             }[]
                           ).map((item, idx) => (
                             <li key={idx}>
-                              {item.productName}: {formatNumber(item.quantity)}
+                              {item.productName}: {formatInputNumber(item.quantity)}
                             </li>
                           ))}
                         </ul>
@@ -283,7 +283,7 @@ export default function LogDo() {
                             }[]
                           ).map((item, idx) => (
                             <li key={idx}>
-                              {item.productName}: {formatNumber(item.quantity)}
+                              {item.productName}: {formatInputNumber(item.quantity)}
                             </li>
                           ))}
                         </ul>
@@ -303,7 +303,7 @@ export default function LogDo() {
                             }[]
                           ).map((item, idx) => (
                             <li key={idx}>
-                              {item.productName}: {formatNumber(item.quantity)}
+                              {item.productName}: {formatInputNumber(item.quantity)}
                             </li>
                           ))}
                         </ul>

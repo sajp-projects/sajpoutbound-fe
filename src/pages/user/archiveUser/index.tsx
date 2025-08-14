@@ -41,7 +41,7 @@ export default function ArsipPengguna() {
   const hasUserUpdateAccess = hasPermission(
     permissions,
     PERMISSION.RESOURCES.USER,
-    PERMISSION.ACTIONS.UPDATE
+    PERMISSION.ACTIONS.UNARCHIVE
   );
 
   const {

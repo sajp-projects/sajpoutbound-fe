@@ -18,6 +18,11 @@ import {
 } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 
+// Import related keys for proper cache invalidation
+import { warehouseKeys } from "./warehouse";
+import { deliveryOrderKeys } from "./do";
+import { shipmentKeys } from "./shipment";
+
 export const productKeys = {
   all: ["products"] as const,
   lists: () => [...productKeys.all, "list"] as const,
@@ -209,6 +214,25 @@ export function useCreateProduct(
     onSuccess: (data) => {
       queryClient.setQueryData(productKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      
+      // Invalidate warehouse products since this product might be in warehouses
+      queryClient.invalidateQueries({
+        queryKey: [...warehouseKeys.all, "products"]
+      });
+      
+      // Invalidate DOs and shipments since product names are embedded in items
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.lists()
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.lists()
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.details()
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all
+      });
     },
     ...options,
   });
@@ -265,6 +289,25 @@ export function useUpdateProduct(
     onSuccess: (data) => {
       queryClient.setQueryData(productKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      
+      // Invalidate warehouse products since this product might be in warehouses
+      queryClient.invalidateQueries({
+        queryKey: [...warehouseKeys.all, "products"]
+      });
+      
+      // Invalidate DOs and shipments since product names are embedded in items
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.lists()
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.lists()
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.details()
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all
+      });
     },
     ...options,
   });

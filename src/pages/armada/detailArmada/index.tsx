@@ -42,6 +42,12 @@ export default function DetailArmada() {
     PERMISSION.ACTIONS.DELETE
   );
 
+  const hasArmadaLogAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ARMADA_LOG,
+    PERMISSION.ACTIONS.READ
+  );
+
   const {
     data: armada,
     isLoading,
@@ -221,46 +227,50 @@ export default function DetailArmada() {
                     </div>
                   </div>
 
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">
-                      Tindakan
-                    </h3>
-                    <div className="space-y-3">
-                      <Link to={`/armada/${id}/log`} className="w-full">
-                        <Button
-                          variant="outline"
-                          className="justify-start w-full"
-                        >
-                          <History className="w-4 h-4 mr-2" />
-                          Lihat Log Aktivitas
-                        </Button>
-                      </Link>
-                      {hasArmadaUpdateAccess && (
-                        <Link to={`/armada/${id}/edit`} className="w-full">
+                  {(hasArmadaLogAccess || hasArmadaUpdateAccess || hasArmadaDeleteAccess) && (
+                    <div className="p-4 border border-gray-200 rounded-lg">
+                      <h3 className="mb-4 text-lg font-medium text-gray-900">
+                        Tindakan
+                      </h3>
+                      <div className="space-y-3">
+                        {hasArmadaLogAccess && (
+                          <Link to={`/armada/${id}/log`} className="w-full">
+                            <Button
+                              variant="outline"
+                              className="justify-start w-full"
+                            >
+                              <History className="w-4 h-4 mr-2" />
+                              Lihat Log Aktivitas
+                            </Button>
+                          </Link>
+                        )}
+                        {hasArmadaUpdateAccess && (
+                          <Link to={`/armada/${id}/edit`} className="w-full">
+                            <Button
+                              variant="outline"
+                              className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                            >
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit Armada
+                            </Button>
+                          </Link>
+                        )}
+                        {hasArmadaDeleteAccess && (
                           <Button
                             variant="outline"
-                            className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                            className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                            onClick={handleDeleteArmada}
+                            disabled={deleteArmadaMutation.isPending}
                           >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit Armada
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            {deleteArmadaMutation.isPending
+                              ? "Menghapus..."
+                              : "Hapus Armada"}
                           </Button>
-                        </Link>
-                      )}
-                      {hasArmadaDeleteAccess && (
-                        <Button
-                          variant="outline"
-                          className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                          onClick={handleDeleteArmada}
-                          disabled={deleteArmadaMutation.isPending}
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          {deleteArmadaMutation.isPending
-                            ? "Menghapus..."
-                            : "Hapus Armada"}
-                        </Button>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}

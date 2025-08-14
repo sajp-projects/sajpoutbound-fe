@@ -1,5 +1,6 @@
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
+import { Pagination } from "@/components/Pagination";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,7 +13,7 @@ import {
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useRolePermissions } from "@/hooks/permission";
-import { useDeleteWarehouse, useWarehouse } from "@/hooks/warehouse";
+import { useDeleteWarehouse, useWarehouse, useWarehouseProducts, useWarehouseUsers } from "@/hooks/warehouse";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils/date";
 import { hasPermission } from "@/utils/permission";
@@ -24,34 +25,21 @@ import {
   showSuccessAlert,
 } from "@/utils/sweetAlert";
 import {
-  ArrowLeft,
   Edit,
   History,
   Info,
   Package,
   Trash2,
-  User,
+  User
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 
 interface WarehouseUser {
   id: string;
   name: string;
   email: string;
 }
-
-// Update tipe Product jika diperlukan
-// interface Product {
-//   id: string;
-//   name: string;
-//   id_sl?: string;
-//   description?: string;
-//   satuan: string;
-//   warehouseId: string;
-//   createdAt: string;
-//   updatedAt: string;
-// }
 
 declare module "@/types/warehouse" {
   interface Warehouse {
@@ -63,6 +51,7 @@ export default function DetailGudang() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
 
@@ -76,9 +65,46 @@ export default function DetailGudang() {
     return "info";
   };
 
-  const [activeTab, setActiveTab] = useState<"info" | "users" | "products">(
-    getTabFromUrl()
-  );
+  // Use URL state directly for tab management to avoid conflicts
+  const activeTab = getTabFromUrl();
+
+  // Pagination state for products
+  const [productLimit] = useState(5); // Match backend default
+
+  // Pagination state for users
+  const [userLimit] = useState(10); // Match backend default
+
+  // Get current page from URL for products tab
+  const currentPage = activeTab === "products" ? parseInt(searchParams.get("page") || "1", 10) : 1;
+
+  // Get current page from URL for users tab
+  const currentUserPage = activeTab === "users" ? parseInt(searchParams.get("page") || "1", 10) : 1;
+
+  // Reset pagination to page 1 when switching to products tab
+  useEffect(() => {
+    if (activeTab === "products") {
+      const searchParams = new URLSearchParams(location.search);
+      if (searchParams.get("page") !== "1") {
+        searchParams.set("page", "1");
+        navigate(`${location.pathname}?${searchParams.toString()}`, {
+          replace: true,
+        });
+      }
+    }
+  }, [activeTab, location.pathname, navigate, location.search]);
+
+  // Reset pagination to page 1 when switching to users tab
+  useEffect(() => {
+    if (activeTab === "users") {
+      const searchParams = new URLSearchParams(location.search);
+      if (searchParams.get("page") !== "1") {
+        searchParams.set("page", "1");
+        navigate(`${location.pathname}?${searchParams.toString()}`, {
+          replace: true,
+        });
+      }
+    }
+  }, [activeTab, location.pathname, navigate, location.search]);
 
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && roleId !== "",
@@ -110,6 +136,56 @@ export default function DetailGudang() {
     }
   );
 
+  // Get warehouse products with pagination
+  const {
+    data: productsData,
+    isLoading: loadingProducts,
+  } = useWarehouseProducts(
+    { id: id || "" },
+    {
+      page: currentPage,
+      limit: productLimit,
+      search: "",
+      enabled: activeTab === "products" && !!id,
+    }
+  );
+
+  // Get warehouse users with pagination
+  const {
+    data: usersData,
+    isLoading: loadingUsers,
+  } = useWarehouseUsers(
+    { id: id || "" },
+    {
+      page: currentUserPage,
+      limit: userLimit,
+      search: "",
+      enabled: activeTab === "users" && !!id,
+    }
+  );
+
+  const warehouseProducts = productsData?.products || [];
+  const productsPagination = productsData?.pagination || {
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  };
+
+  const warehouseUsers = usersData?.users || [];
+  const usersPagination = usersData?.pagination || {
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  };
+
+  console.log(productsPagination, 'pagination');
+
   const deleteWarehouseMutation = useDeleteWarehouse({
     onSuccess: () => {
       showSuccessAlert("Sukses!", "Gudang berhasil dihapus").then(() => {
@@ -137,25 +213,14 @@ export default function DetailGudang() {
     });
   };
 
-  const handleTabChange = (tab: "info" | "users" | "products") => {
-    setActiveTab(tab);
-
-    // Update URL with the active tab
+  const handleTabChange = useCallback((tab: "info" | "users" | "products") => {
+    // Update URL with the active tab - the component will re-render with the new tab
     const searchParams = new URLSearchParams(location.search);
     searchParams.set("tab", tab);
     navigate(`${location.pathname}?${searchParams.toString()}`, {
       replace: true,
     });
-  };
-
-  // Effect to update tab when URL changes
-  useEffect(() => {
-    const currentTab = getTabFromUrl();
-    if (currentTab !== activeTab) {
-      setActiveTab(currentTab);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search]);
+  }, [location.pathname, navigate, location.search]);
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
@@ -163,7 +228,6 @@ export default function DetailGudang() {
         <div className="flex items-center">
           <Link to="/gudang">
             <Button variant="ghost" size="sm" className="mr-2">
-              <ArrowLeft className="w-4 h-4 mr-1" />
               Kembali
             </Button>
           </Link>
@@ -218,9 +282,9 @@ export default function DetailGudang() {
               >
                 <User className="flex-shrink-0 w-4 h-4 mr-2" />
                 Pengguna Terkait
-                {gudang?.users && gudang.users.length > 0 && (
+                {usersPagination.total > 0 && (
                   <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
-                    {gudang.users.length}
+                    {usersPagination.total}
                   </span>
                 )}
               </button>
@@ -345,18 +409,18 @@ export default function DetailGudang() {
                     <h3 className="text-lg font-medium text-gray-900">
                       Pengguna dengan Akses ke Gudang {gudang?.name}
                     </h3>
-                    {gudang?.users && (
-                      <span className="text-sm text-gray-500">
-                        Total:{" "}
-                        <span className="font-medium text-gray-700">
-                          {gudang.users.length}
-                        </span>{" "}
-                        pengguna
-                      </span>
-                    )}
+                    <span className="text-sm text-gray-500">
+                      Total:{" "}
+                      <span className="font-medium text-gray-700">
+                        {usersPagination.total}
+                      </span>{" "}
+                      pengguna
+                    </span>
                   </div>
 
-                  {!gudang?.users || gudang.users.length === 0 ? (
+                  {loadingUsers ? (
+                    <LoadingState text="Memuat data pengguna..." />
+                  ) : !warehouseUsers || warehouseUsers.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-gray-300 border-dashed rounded-lg">
                       <User className="w-12 h-12 mb-4 text-gray-400" />
                       <p className="font-medium text-gray-600">
@@ -386,18 +450,19 @@ export default function DetailGudang() {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {gudang.users.map(
-                                (user: WarehouseUser, idx: number) => (
+                              {warehouseUsers.map(
+                                (user, idx) => (
                                   <TableRow
                                     key={user.id}
                                     className={cn(
+                                      'border border-gray-200',
                                       idx % 2 === 0 ? "bg-white" : "bg-gray-50"
                                     )}
                                   >
-                                    <TableCell className="font-medium text-center">
-                                      {idx + 1}
+                                    <TableCell className="font-medium text-center py-4">
+                                      {idx + 1 + (usersPagination.page - 1) * usersPagination.limit}
                                     </TableCell>
-                                    <TableCell className="font-medium text-blue-600">
+                                    <TableCell className="font-medium text-blue-600 py-4">
                                       <Link
                                         to={`/pengguna/${user.id}`}
                                         className="hover:underline"
@@ -405,7 +470,7 @@ export default function DetailGudang() {
                                         {user.name}
                                       </Link>
                                     </TableCell>
-                                    <TableCell>{user.email}</TableCell>
+                                    <TableCell className="py-4">{user.email}</TableCell>
                                   </TableRow>
                                 )
                               )}
@@ -415,7 +480,7 @@ export default function DetailGudang() {
                       </div>
 
                       <div className="w-full space-y-3 sm:hidden">
-                        {gudang.users.map((user: WarehouseUser) => (
+                        {warehouseUsers.map((user) => (
                           <div
                             key={user.id}
                             className="w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
@@ -444,6 +509,19 @@ export default function DetailGudang() {
                           </div>
                         ))}
                       </div>
+
+                      {/* Pagination for users */}
+                      {usersPagination.total > usersPagination.limit && (
+                        <Pagination
+                          key={`users-pagination-${activeTab}`}
+                          totalItems={usersPagination.total}
+                          itemsPerPage={usersPagination.limit}
+                          currentPage={usersPagination.page}
+                          totalPages={usersPagination.totalPages}
+                          hasNext={usersPagination.hasNext}
+                          hasPrev={usersPagination.hasPrev}
+                        />
+                      )}
                     </div>
                   )}
                 </div>
@@ -455,20 +533,20 @@ export default function DetailGudang() {
                 <div className="p-4 border border-gray-200 rounded-lg">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium text-gray-900">
-                      Barang di Gudang {gudang?.name}
+                      Barang di {gudang?.name}
                     </h3>
-                    {gudang?.products && (
-                      <span className="text-sm text-gray-500">
-                        Total:{" "}
-                        <span className="font-medium text-gray-700">
-                          {gudang.products.length}
-                        </span>{" "}
-                        barang
-                      </span>
-                    )}
+                    <span className="text-sm text-gray-500">
+                      Total:{" "}
+                      <span className="font-medium text-gray-700">
+                        {productsPagination.total}
+                      </span>{" "}
+                      barang
+                    </span>
                   </div>
 
-                  {!gudang?.products || gudang.products.length === 0 ? (
+                  {loadingProducts ? (
+                    <LoadingState text="Memuat data barang..." />
+                  ) : !warehouseProducts || warehouseProducts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-gray-300 border-dashed rounded-lg">
                       <Package className="w-12 h-12 mb-4 text-gray-400" />
                       <p className="font-medium text-gray-600">
@@ -484,7 +562,7 @@ export default function DetailGudang() {
                         <div className="overflow-x-auto">
                           <Table>
                             <TableHeader>
-                              <TableRow className="border-b border-gray-200 bg-gray-50">
+                              <TableRow className="border border-gray-200 bg-gray-50">
                                 <TableHead className="w-[50px] font-semibold text-gray-700 py-4">
                                   No
                                 </TableHead>
@@ -497,26 +575,21 @@ export default function DetailGudang() {
                                 <TableHead className="py-4 font-semibold text-gray-700">
                                   Satuan
                                 </TableHead>
-                                <TableHead className="hidden py-4 font-semibold text-gray-700 md:table-cell">
-                                  Deskripsi
-                                </TableHead>
-                                <TableHead className="hidden py-4 font-semibold text-gray-700 md:table-cell">
-                                  Tgl. Dibuat
-                                </TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {gudang.products.map((product, idx) => (
+                              {warehouseProducts.map((product, idx) => (
                                 <TableRow
                                   key={product.id}
                                   className={cn(
+                                    'border border-gray-200',
                                     idx % 2 === 0 ? "bg-white" : "bg-gray-50"
                                   )}
                                 >
-                                  <TableCell className="font-medium text-center">
-                                    {idx + 1}
+                                  <TableCell className="font-medium text-center py-4">
+                                    {idx + 1 + (productsPagination.page - 1) * productsPagination.limit}
                                   </TableCell>
-                                  <TableCell className="font-medium text-blue-600">
+                                  <TableCell className="font-medium text-blue-600 py-4">
                                     <Link
                                       to={`/barang/${product.id}`}
                                       className="hover:underline"
@@ -524,19 +597,8 @@ export default function DetailGudang() {
                                       {product.name}
                                     </Link>
                                   </TableCell>
-                                  <TableCell>{product.id_sl || "-"}</TableCell>
-                                  <TableCell>{product.satuan}</TableCell>
-                                  <TableCell className="hidden text-gray-500 md:table-cell">
-                                    <div
-                                      className="max-w-xs truncate"
-                                      title={product.description}
-                                    >
-                                      {product.description || "-"}
-                                    </div>
-                                  </TableCell>
-                                  <TableCell className="hidden text-gray-500 md:table-cell">
-                                    {formatDate(product.createdAt)}
-                                  </TableCell>
+                                  <TableCell className="py-4">{product.id_sl || "-"}</TableCell>
+                                  <TableCell className="py-4">{product.satuan}</TableCell>
                                 </TableRow>
                               ))}
                             </TableBody>
@@ -545,7 +607,7 @@ export default function DetailGudang() {
                       </div>
 
                       <div className="w-full space-y-3 sm:hidden">
-                        {gudang.products.map((product) => (
+                        {warehouseProducts.map((product) => (
                           <div
                             key={product.id}
                             className="w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
@@ -584,6 +646,19 @@ export default function DetailGudang() {
                           </div>
                         ))}
                       </div>
+
+                      {/* Pagination */}
+                      {productsPagination.total > productsPagination.limit && (
+                        <Pagination
+                          key={`products-pagination-${activeTab}`}
+                          totalItems={productsPagination.total}
+                          itemsPerPage={productsPagination.limit}
+                          currentPage={productsPagination.page}
+                          totalPages={productsPagination.totalPages}
+                          hasNext={productsPagination.hasNext}
+                          hasPrev={productsPagination.hasPrev}
+                        />
+                      )}
                     </div>
                   )}
                 </div>

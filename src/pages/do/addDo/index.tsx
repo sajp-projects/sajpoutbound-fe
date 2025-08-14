@@ -1,6 +1,6 @@
 import { joiResolver } from "@hookform/resolvers/joi";
 import Joi from "joi";
-import { Loader2, Plus, Save } from "lucide-react";
+import { AlertTriangle, Loader2, Plus, Save } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
@@ -15,6 +15,14 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox, ComboboxItem } from "@/components/ui/combobox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useInfiniteCustomers } from "@/hooks/customer";
@@ -25,7 +33,7 @@ import {
   CreateDeliveryOrderInput,
   CreateDeliveryOrderProduct,
 } from "@/types/do";
-import { formatNumber } from "@/utils/formatNumber";
+import { formatInputNumber, handleDecimalInput } from "@/utils/formatNumber";
 import { showErrorAlert, showSuccessAlert } from "@/utils/sweetAlert";
 
 interface ExtendedProduct extends CreateDeliveryOrderProduct {
@@ -38,10 +46,9 @@ const itemSchema = Joi.object({
     "string.empty": "Barang harus dipilih",
     "any.required": "Barang harus dipilih",
   }),
-  quantity: Joi.number().integer().min(1).required().messages({
+  quantity: Joi.number().positive().required().messages({
     "number.base": "Kuantitas harus berupa angka",
-    "number.integer": "Kuantitas harus berupa bilangan bulat",
-    "number.min": "Kuantitas minimal 1",
+    "number.positive": "Kuantitas harus lebih dari 0",
     "any.required": "Kuantitas harus diisi",
   }),
   productName: Joi.string().allow("").optional(),
@@ -66,10 +73,10 @@ const schema = Joi.object({
   tempProduct: Joi.string().allow("").optional(),
   tempProductId: Joi.string().allow("").optional(),
   tempQuantity: Joi.number()
-    .min(1)
+    .positive()
     .messages({
       "number.base": "Kuantitas harus berupa angka",
-      "number.min": "Kuantitas minimal 1",
+      "number.positive": "Kuantitas harus lebih dari 0",
     })
     .optional(),
 });
@@ -81,6 +88,12 @@ export default function TambahDo() {
   const [useCustomerAddress, setUseCustomerAddress] = useState(false);
   const [customerSearchQuery, setCustomerSearchQuery] = useState("");
   const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [pendingProduct, setPendingProduct] = useState<{
+    name: string;
+    quantity: number;
+  } | null>(null);
+  const [tempQuantityDisplay, setTempQuantityDisplay] = useState("");
   const inputClassName = cn(
     "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
   );
@@ -231,17 +244,12 @@ export default function TambahDo() {
     setValue("tempProduct", "");
     setValue("tempProductId", "");
     setValue("tempQuantity", undefined);
-    const quantityInput = document.querySelector(
-      'input[name="tempQuantity"]'
-    ) as HTMLInputElement;
-    if (quantityInput) {
-      quantityInput.value = "";
-    }
+    setTempQuantityDisplay("");
   };
 
   const handleAddItem = (product: (typeof products)[0], quantity: number) => {
-    if (!quantity || quantity < 1) {
-      showErrorAlert("Validasi Gagal", "Kuantitas minimal 1");
+    if (!quantity || quantity <= 0) {
+      showErrorAlert("Validasi Gagal", "Kuantitas harus lebih dari 0");
       return;
     }
 
@@ -276,14 +284,15 @@ export default function TambahDo() {
     setValue("tempProduct", item.productName || "");
     setValue("tempProductId", item.productId);
     setValue("tempQuantity", item.quantity);
+    setTempQuantityDisplay(formatInputNumber(item.quantity));
   };
 
   const handleUpdateItem = (
     product: (typeof products)[0],
     quantity: number
   ) => {
-    if (!quantity || quantity < 1) {
-      showErrorAlert("Validasi Gagal", "Kuantitas minimal 1");
+    if (!quantity || quantity <= 0) {
+      showErrorAlert("Validasi Gagal", "Kuantitas harus lebih dari 0");
       return;
     }
 
@@ -319,6 +328,22 @@ export default function TambahDo() {
       items: ExtendedProduct[];
     }
   ) => {
+    // Check if there's a pending product that hasn't been added
+    const tempProductId = watch("tempProductId");
+    const tempQuantity = watch("tempQuantity");
+
+    if (tempProductId && tempQuantity && tempQuantity > 0) {
+      const selectedProduct = products.find((p) => p.id === tempProductId);
+      if (selectedProduct) {
+        setPendingProduct({
+          name: selectedProduct.name,
+          quantity: tempQuantity,
+        });
+        setShowWarningModal(true);
+        return;
+      }
+    }
+
     const validItems = data.items.filter((item) => item.productId);
 
     if (validItems.length === 0) {
@@ -352,6 +377,40 @@ export default function TambahDo() {
         quantity: Number(item.quantity),
       })),
     });
+  };
+
+  const handleProceedWithoutAdding = () => {
+    setShowWarningModal(false);
+    setPendingProduct(null);
+
+    // Reset the temp fields
+    setValue("tempProduct", "");
+    setValue("tempProductId", "");
+    setValue("tempQuantity", undefined);
+    setTempQuantityDisplay("");
+
+    // Submit the form again
+    handleSubmit(onSubmit)();
+  };
+
+  const handleAddPendingProduct = () => {
+    if (pendingProduct) {
+      const tempProductId = watch("tempProductId");
+      const tempQuantity = watch("tempQuantity");
+
+      if (tempProductId && tempQuantity) {
+        const selectedProduct = products.find((p) => p.id === tempProductId);
+        if (selectedProduct) {
+          handleAddItem(selectedProduct, tempQuantity);
+        }
+      }
+    }
+
+    setShowWarningModal(false);
+    setPendingProduct(null);
+
+    // Submit the form again
+    handleSubmit(onSubmit)();
   };
 
   const handleProductSelect = (item: ComboboxItem) => {
@@ -466,19 +525,21 @@ export default function TambahDo() {
                       )}
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="useCustomerAddress"
-                        checked={useCustomerAddress}
-                        onCheckedChange={handleUseCustomerAddressChange}
-                      />
-                      <label
-                        htmlFor="useCustomerAddress"
-                        className="text-sm font-medium text-gray-700 cursor-pointer"
-                      >
-                        Gunakan alamat pelanggan
-                      </label>
-                    </div>
+                    {watchCustomerId && customers.find(c => c.id === watchCustomerId)?.address && (
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="useCustomerAddress"
+                          checked={useCustomerAddress}
+                          onCheckedChange={handleUseCustomerAddressChange}
+                        />
+                        <label
+                          htmlFor="useCustomerAddress"
+                          className="text-sm font-medium text-gray-700 cursor-pointer"
+                        >
+                          Gunakan alamat pelanggan
+                        </label>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -540,15 +601,11 @@ export default function TambahDo() {
                                     "border-red-500",
                                   "h-10"
                                 )}
-                                value={
-                                  field.value ? formatNumber(field.value) : ""
-                                }
+                                value={tempQuantityDisplay}
                                 onChange={(e) => {
-                                  const numValue =
-                                    parseInt(
-                                      e.target.value.replace(/\D/g, "")
-                                    ) || undefined;
-                                  field.onChange(numValue);
+                                  const result = handleDecimalInput(e.target.value);
+                                  setTempQuantityDisplay(result.displayValue);
+                                  field.onChange(result.numericValue);
                                 }}
                               />
                               {errors.tempQuantity && (
@@ -631,7 +688,7 @@ export default function TambahDo() {
                                   </Link>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                  {formatNumber(item.quantity)}
+                                  {formatInputNumber(item.quantity)}
                                 </td>
                                 <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                                   <div className="flex justify-end space-x-2">
@@ -774,6 +831,34 @@ export default function TambahDo() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Warning Modal for Pending Product */}
+      {showWarningModal && (
+        <Dialog open={showWarningModal} onOpenChange={setShowWarningModal}>
+          <DialogContent className="bg-white ">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <AlertTriangle className="w-6 h-6 text-yellow-600 mr-2" />
+                Produk Belum Ditambahkan
+              </DialogTitle>
+              <DialogDescription>
+                Anda telah memilih produk{" "}
+                <strong>{pendingProduct?.name}</strong> dengan jumlah{" "}
+                <strong>{pendingProduct?.quantity}</strong> tetapi belum
+                menekan tombol + untuk menambahkannya.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleProceedWithoutAdding}>
+                Lanjutkan Tanpa Menambahkan
+              </Button>
+              <Button onClick={handleAddPendingProduct}>
+                Tambah dan Lanjutkan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

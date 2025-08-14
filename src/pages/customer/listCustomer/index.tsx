@@ -118,6 +118,12 @@ export default function DaftarPelanggan() {
     PERMISSION.ACTIONS.DELETE
   );
 
+  const hasCustomerLogAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.CUSTOMER_LOG,
+    PERMISSION.ACTIONS.READ
+  );
+
   const getCustomerActions = (customer: Customer) => {
     const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
 
@@ -125,7 +131,9 @@ export default function DaftarPelanggan() {
       actions.push({ type: ActionType.EDIT });
     }
 
-    actions.push({ type: ActionType.LOG });
+    if (hasCustomerLogAccess) {
+      actions.push({ type: ActionType.LOG });
+    }
 
     if (hasCustomerDeleteAccess) {
       actions.push({

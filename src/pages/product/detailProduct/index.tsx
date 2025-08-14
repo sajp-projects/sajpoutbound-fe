@@ -42,6 +42,12 @@ export default function DetailBarang() {
     PERMISSION.ACTIONS.DELETE
   );
 
+  const hasProductLogAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PRODUCT_LOG,
+    PERMISSION.ACTIONS.READ
+  );
+
   const {
     data: barang,
     isLoading,
@@ -240,46 +246,50 @@ export default function DetailBarang() {
                     </div>
                   </div>
 
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">
-                      Tindakan
-                    </h3>
-                    <div className="space-y-3">
-                      <Link to={`/barang/${id}/log`} className="w-full">
-                        <Button
-                          variant="outline"
-                          className="justify-start w-full"
-                        >
-                          <History className="w-4 h-4 mr-2" />
-                          Lihat Log Aktivitas
-                        </Button>
-                      </Link>
-                      {hasProductUpdateAccess && (
-                        <Link to={`/barang/${id}/edit`} className="w-full">
+                  {(hasProductLogAccess || hasProductUpdateAccess || hasProductDeleteAccess) && (
+                    <div className="p-4 border border-gray-200 rounded-lg">
+                      <h3 className="mb-4 text-lg font-medium text-gray-900">
+                        Tindakan
+                      </h3>
+                      <div className="space-y-3">
+                        {hasProductLogAccess && (
+                          <Link to={`/barang/${id}/log`} className="w-full">
+                            <Button
+                              variant="outline"
+                              className="justify-start w-full"
+                            >
+                              <History className="w-4 h-4 mr-2" />
+                              Lihat Log Aktivitas
+                            </Button>
+                          </Link>
+                        )}
+                        {hasProductUpdateAccess && (
+                          <Link to={`/barang/${id}/edit`} className="w-full">
+                            <Button
+                              variant="outline"
+                              className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                            >
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit Barang
+                            </Button>
+                          </Link>
+                        )}
+                        {hasProductDeleteAccess && (
                           <Button
                             variant="outline"
-                            className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                            className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                            onClick={handleDeleteProduct}
+                            disabled={deleteProductMutation.isPending}
                           >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit Barang
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            {deleteProductMutation.isPending
+                              ? "Menghapus..."
+                              : "Hapus Barang"}
                           </Button>
-                        </Link>
-                      )}
-                      {hasProductDeleteAccess && (
-                        <Button
-                          variant="outline"
-                          className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                          onClick={handleDeleteProduct}
-                          disabled={deleteProductMutation.isPending}
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          {deleteProductMutation.isPending
-                            ? "Menghapus..."
-                            : "Hapus Barang"}
-                        </Button>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}

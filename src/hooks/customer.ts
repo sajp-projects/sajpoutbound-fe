@@ -6,6 +6,7 @@ import {
   CustomerUpdateInput,
   CustomersResponse,
 } from "@/types/customer";
+import { DeliveryOrdersResponse } from "@/types/do";
 import { fetchApi } from "@/utils/api";
 import { createErrorResponse, handleApiError } from "@/utils/errorHandler";
 import {
@@ -18,6 +19,10 @@ import {
 } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 
+// Import related keys for proper cache invalidation
+import { deliveryOrderKeys } from "./do";
+import { shipmentKeys } from "./shipment";
+
 export const customerKeys = {
   all: ["customers"] as const,
   lists: () => [...customerKeys.all, "list"] as const,
@@ -27,6 +32,9 @@ export const customerKeys = {
     [...customerKeys.lists(), "infinite", { filters }] as const,
   details: () => [...customerKeys.all, "detail"] as const,
   detail: (id: string) => [...customerKeys.details(), id] as const,
+  deliveryOrders: (id: string) => [...customerKeys.detail(id), "delivery-orders"] as const,
+  deliveryOrdersList: (id: string, filters: Record<string, unknown>) =>
+    [...customerKeys.deliveryOrders(id), { filters }] as const,
 };
 
 export function useCustomer(
@@ -208,6 +216,11 @@ export function useCreateCustomer(
     onSuccess: (data) => {
       queryClient.setQueryData(customerKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      
+      // Invalidate delivery orders for this customer
+      queryClient.invalidateQueries({
+        queryKey: [...customerKeys.detail(data.id), "delivery-orders"]
+      });
     },
     ...options,
   });
@@ -264,6 +277,27 @@ export function useUpdateCustomer(
     onSuccess: (data) => {
       queryClient.setQueryData(customerKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      
+      // Invalidate delivery orders for this customer
+      queryClient.invalidateQueries({
+        queryKey: [...customerKeys.detail(data.id), "delivery-orders"]
+      });
+      
+      // Invalidate all delivery orders that belong to this customer
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.lists()
+      });
+      
+      // Invalidate all shipments since they contain customer data through DOs
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.lists()
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.details()
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all
+      });
     },
     ...options,
   });
@@ -282,11 +316,15 @@ export function useDeleteCustomer(
         { method: "DELETE" }
       );
 
-      if (!response.ok) {
-        throw new Error(`Error deleting customer: ${response.statusText}`);
-      }
 
       const result: ApiResponse<Customer> = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message ||
+            `Error deleting customer: ${response.statusText}`
+        );
+      }
 
       if (!result.success) {
         handleApiError(result, "Gagal menghapus pelanggan");
@@ -297,6 +335,82 @@ export function useDeleteCustomer(
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
       queryClient.removeQueries({ queryKey: customerKeys.detail(id) });
+      
+      // Invalidate delivery orders for this customer
+      queryClient.invalidateQueries({
+        queryKey: [...customerKeys.detail(id), "delivery-orders"]
+      });
+      
+      // Invalidate all delivery orders since we don't know which ones belonged to this customer
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.lists()
+      });
+      
+      // Invalidate all shipments since they may contain items from this customer's DOs
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.lists()
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.details()
+      });
+    },
+    ...options,
+  });
+}
+
+export function useCustomerDeliveryOrders(
+  { customerId }: { customerId: string },
+  options?: Omit<
+    UseQueryOptions<
+      DeliveryOrdersResponse,
+      Error,
+      DeliveryOrdersResponse,
+      ReturnType<typeof customerKeys.deliveryOrdersList>
+    >,
+    "queryKey" | "queryFn"
+  >
+) {
+  const [searchParams] = useSearchParams();
+
+  const filters = {
+    page: searchParams.get("page") || "1",
+    limit: searchParams.get("limit") || "10",
+  };
+
+  return useQuery({
+    queryKey: customerKeys.deliveryOrdersList(customerId, filters),
+    queryFn: async () => {
+      try {
+        const response = await fetchApi(
+          `${BASE_URL}/customers/${customerId}/delivery-orders`,
+          filters
+        );
+
+        if (!response.ok) {
+          const errorResult = await response.json();
+          throw new Error(
+            errorResult.message ||
+              `Error fetching customer delivery orders: ${response.statusText}`
+          );
+        }
+
+        const result: ApiResponse<DeliveryOrdersResponse> = await response.json();
+
+        if (!result.success) {
+          throw new Error(
+            result.message || "Terjadi kesalahan saat mengambil data delivery order"
+          );
+        }
+
+        if (!result.data) {
+          throw new Error("Data delivery order tidak ditemukan");
+        }
+
+        return result.data;
+      } catch (error) {
+        console.error("Error in useCustomerDeliveryOrders:", error);
+        throw error;
+      }
     },
     ...options,
   });

@@ -59,7 +59,7 @@ export function useShipments(options = {}) {
 }
 
 export function useShipmentsWithParams(
-  { page = 1, limit = 10, search = "", status = "", type = "" } = {},
+  { page = 1, limit = 10, search = "", status = "", type = "", startDate = "", endDate = "" } = {},
   options = {}
 ) {
   const filters = {
@@ -68,6 +68,8 @@ export function useShipmentsWithParams(
     search,
     status,
     type,
+    ...(startDate && { startDate }),
+    ...(endDate && { endDate }),
   };
 
   return useQuery({
@@ -447,15 +449,42 @@ export function useShipmentsByDeliveryOrderId(
     queryKey: ["shipmentsByDeliveryOrderId", deliveryOrderId],
     queryFn: async () => {
       if (!deliveryOrderId) return [];
-      const response = await fetchApi(
-        `/delivery-orders/${deliveryOrderId}/shipments`,
-        {},
-        { method: "GET" }
-      );
-      const result = await response.json();
-      if (!result.success)
-        throw new Error(result.message || "Gagal mengambil data pengiriman");
-      return result.data?.shipments || [];
+
+      try {
+        const response = await fetchApi(
+          `${BASE_URL}/delivery-orders/${deliveryOrderId}/shipments`,
+          {},
+          { method: "GET" }
+        );
+
+        if (!response.ok) {
+          // If it's a 404 or the DO doesn't have shipments, return empty array instead of throwing
+          if (response.status === 404) {
+            return [];
+          }
+          throw new Error(`Error fetching shipments: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        // If success is false but it's just an empty result, return empty array
+        if (!result.success && result.message?.includes("tidak ditemukan")) {
+          return [];
+        }
+
+        if (!result.success) {
+          throw new Error(result.message || "Gagal mengambil data pengiriman");
+        }
+
+        return result.data?.shipments || [];
+      } catch (error) {
+        console.error("Error in useShipmentsByDeliveryOrderId:", error);
+        // If it's a network error or 404, return empty array instead of throwing
+        if (error instanceof Error && (error.message.includes("404") || error.message.includes("tidak ditemukan"))) {
+          return [];
+        }
+        throw error;
+      }
     },
     enabled: !!deliveryOrderId,
     ...options,

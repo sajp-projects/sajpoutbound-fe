@@ -367,6 +367,8 @@ export function useDashboardSummary(
       return result.data.summary;
     },
     refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    staleTime: 1000 * 60 * 5,
     ...options,
   });
 }

@@ -60,6 +60,12 @@ export default function DetailPengguna() {
     PERMISSION.ACTIONS.READ
   );
 
+  const hasUserLogAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.USER_LOG,
+    PERMISSION.ACTIONS.READ
+  );
+
   const {
     data: userData,
     isLoading,
@@ -245,52 +251,56 @@ export default function DetailPengguna() {
                       <p className="font-medium text-gray-900">
                         {user?.deletedAt
                           ? formatDate(user.deletedAt)
-                          : "Belum diarsipkan"}
+                          : "-"}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 border border-gray-200 rounded-lg">
-                  <h3 className="mb-4 text-lg font-medium text-gray-900">
-                    Tindakan
-                  </h3>
-                  <div className="space-y-3">
-                    <Link to={`/pengguna/${id}/log`} className="w-full">
-                      <Button
-                        variant="outline"
-                        className="justify-start w-full"
-                      >
-                        <History className="w-4 h-4 mr-2" />
-                        Lihat Log Aktivitas
-                      </Button>
-                    </Link>
-                    {hasUserUpdateAccess && (
-                      <Link to={`/pengguna/${id}/edit`} className="w-full">
+                {(hasUserLogAccess || hasUserUpdateAccess || hasUserDeleteAccess) && (
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">
+                      Tindakan
+                    </h3>
+                    <div className="space-y-3">
+                      {hasUserLogAccess && (
+                        <Link to={`/pengguna/${id}/log`} className="w-full">
+                          <Button
+                            variant="outline"
+                            className="justify-start w-full"
+                          >
+                            <History className="w-4 h-4 mr-2" />
+                            Lihat Log Aktivitas
+                          </Button>
+                        </Link>
+                      )}
+                      {hasUserUpdateAccess && (
+                        <Link to={`/pengguna/${id}/edit`} className="w-full">
+                          <Button
+                            variant="outline"
+                            className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit Pengguna
+                          </Button>
+                        </Link>
+                      )}
+                      {hasUserDeleteAccess && user && !user.deletedAt && (
                         <Button
                           variant="outline"
-                          className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                          className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                          onClick={handleArsipkan}
+                          disabled={deleteUser.isPending}
                         >
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit Pengguna
+                          <Archive className="w-4 h-4 mr-2" />
+                          {deleteUser.isPending
+                            ? "Mengarsipkan..."
+                            : "Arsipkan Pengguna"}
                         </Button>
-                      </Link>
-                    )}
-                    {hasUserDeleteAccess && user && !user.deletedAt && (
-                      <Button
-                        variant="outline"
-                        className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                        onClick={handleArsipkan}
-                        disabled={deleteUser.isPending}
-                      >
-                        <Archive className="w-4 h-4 mr-2" />
-                        {deleteUser.isPending
-                          ? "Mengarsipkan..."
-                          : "Arsipkan Pengguna"}
-                      </Button>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

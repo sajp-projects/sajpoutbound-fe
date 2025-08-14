@@ -12,6 +12,9 @@ import { useSearchParams } from "react-router";
 import { handleApiError, createErrorResponse } from "@/utils/errorHandler";
 import { BASE_URL } from "@/constant/baseUrl";
 
+// Import related keys for proper cache invalidation
+import { userKeys } from "./user";
+
 export interface RolesResponse {
   roles: Role[];
   pagination: {
@@ -205,6 +208,11 @@ export function useCreateRole(
     onSuccess: (data) => {
       queryClient.setQueryData(roleKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: roleKeys.lists() });
+      
+      // Invalidate all users since role names are displayed in user details
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.details() });
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
     },
     ...options,
   });
@@ -255,6 +263,11 @@ export function useUpdateRole(
     onSuccess: (data) => {
       queryClient.setQueryData(roleKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: roleKeys.lists() });
+      
+      // Invalidate all users since role names are displayed in user details
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.details() });
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
     },
     ...options,
   });
@@ -287,6 +300,11 @@ export function useDeleteRole(
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: roleKeys.lists() });
       queryClient.removeQueries({ queryKey: roleKeys.detail(data.id) });
+      
+      // Invalidate all users since role names are displayed in user details
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.details() });
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
     },
     ...options,
   });

@@ -1,7 +1,6 @@
 import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
-import { Pagination } from "@/components/Pagination";
 import { Button } from "@/components/ui/button";
 import {
   usePermissions,
@@ -85,6 +84,8 @@ export default function IzinPeran() {
     );
   }, [permissionsData?.permissions]);
 
+  console.log(groupedPermissions);
+
   const isPermissionSelected = (permissionId: string) => {
     return selectedPermissions.has(permissionId);
   };
@@ -166,7 +167,7 @@ export default function IzinPeran() {
             <div className="text-sm text-gray-500">
               Total:{" "}
               <span className="font-medium text-gray-700">
-                {permissionsData?.pagination?.total || 0}
+                {permissionsData?.permissions?.length || 0}
               </span>{" "}
               izin
             </div>
@@ -220,19 +221,6 @@ export default function IzinPeran() {
           </div>
         )}
 
-        {}
-        {!isLoading && !isError && (
-          <div className="w-full mt-4">
-            <Pagination
-              totalItems={permissionsData?.pagination?.total || 0}
-              itemsPerPage={permissionsData?.pagination?.limit || 10}
-              currentPage={permissionsData?.pagination?.page || 1}
-              totalPages={permissionsData?.pagination?.totalPages || 1}
-              hasNext={permissionsData?.pagination?.hasNext || false}
-              hasPrev={permissionsData?.pagination?.hasPrev || false}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

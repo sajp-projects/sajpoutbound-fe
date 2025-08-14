@@ -143,7 +143,7 @@ export default function Login() {
 
       <div className="z-10 flex flex-col w-full max-w-md gap-4 px-6 md:px-10">
         <div className="flex flex-col items-center mb-2">
-          <span className="text-3xl font-bold text-blue-600">OUTMANAGE</span>
+          <span className="text-3xl font-bold text-blue-600">PT. SAJP</span>
           <div className="mt-1 text-sm font-medium text-gray-500">
             Sistem Manajemen DO
           </div>
@@ -156,11 +156,11 @@ export default function Login() {
               Login
             </CardTitle>
             <CardDescription className="mt-1 text-gray-600">
-              Sistem Informasi Mengelola Pengeluaran Barang
+              Platform Manajemen Logistik & Distribusi Terintegrasi
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="pt-4">
+          <CardContent className="">
             {generalError && (
               <div className="p-3 mb-4 text-sm font-semibold text-red-600 border border-red-300 rounded-md bg-red-50">
                 {generalError}
@@ -280,7 +280,7 @@ export default function Login() {
         </Card>
 
         <p className="mt-1 text-xs text-center text-gray-500">
-          &copy; {new Date().getFullYear()} Outmanage. Hak Cipta Dilindungi.
+          &copy; {new Date().getFullYear()} PT. SAJP. Hak Cipta Dilindungi.
         </p>
       </div>
     </div>

@@ -3,6 +3,7 @@ import {
   Edit,
   History,
   Archive,
+  ArchiveRestore,
   Trash2,
   FileCog,
   Pencil,
@@ -15,6 +16,7 @@ export enum ActionType {
   EDIT = "edit",
   LOG = "log",
   ARCHIVE = "archive",
+  UNARCHIVE = "unarchive",
   DELETE = "delete",
   CONFIG = "config",
   CUSTOM = "custom",
@@ -47,6 +49,8 @@ const getDefaultIcon = (type: ActionType) => {
       return <History className="w-4 h-4" />;
     case ActionType.ARCHIVE:
       return <Archive className="w-4 h-4" />;
+    case ActionType.UNARCHIVE:
+      return <ArchiveRestore className="w-4 h-4" />;
     case ActionType.DELETE:
       return <Trash2 className="w-4 h-4" />;
     case ActionType.CONFIG:
@@ -66,6 +70,8 @@ const getDefaultStyle = (type: ActionType) => {
       return "text-green-600 hover:text-green-700 hover:bg-green-50";
     case ActionType.ARCHIVE:
       return "text-red-600 hover:text-red-700 hover:bg-red-50";
+    case ActionType.UNARCHIVE:
+      return "text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50";
     case ActionType.DELETE:
       return "text-red-600 hover:text-red-700 hover:bg-red-50";
     case ActionType.CONFIG:
@@ -85,6 +91,8 @@ const getDefaultTitle = (type: ActionType) => {
       return "Log Aktivitas";
     case ActionType.ARCHIVE:
       return "Arsipkan";
+    case ActionType.UNARCHIVE:
+      return "Pulihkan";
     case ActionType.DELETE:
       return "Hapus";
     case ActionType.CONFIG:

@@ -9,6 +9,8 @@ export const PERMISSION = {
     VERIFY_PLATE_MANUAL: "VERIFY_PLATE_MANUAL",
     CHANGE_CUSTOMER: "CHANGE_CUSTOMER",
     REVISE_DO: "REVISE_DO",
+    UNARCHIVE: "UNARCHIVE",
+    READ_ARCHIVED: "READ_ARCHIVED",
   },
   RESOURCES: {
     DASHBOARD: "dashboard",
@@ -22,5 +24,13 @@ export const PERMISSION = {
     ARMADA: "armada",
     PENGIRIMAN: "shipment",
     LAPORAN: "report",
+    // Log resources
+    USER_LOG: "user_log",
+    PRODUCT_LOG: "product_log",
+    CUSTOMER_LOG: "customer_log",
+    WAREHOUSE_LOG: "warehouse_log",
+    ARMADA_LOG: "armada_log",
+    DO_LOG: "delivery_order_log",
+    PENGIRIMAN_LOG: "shipment_log",
   },
 };

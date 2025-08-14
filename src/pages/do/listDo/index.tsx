@@ -10,6 +10,7 @@ import { Pagination } from "@/components/Pagination";
 import { SearchInput } from "@/components/SearchInput";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DateRangeFilter } from "@/components/ui/DateRangeFilter";
 import {
   Select,
   SelectContent,
@@ -38,6 +39,7 @@ import {
   showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
+import { useState } from "react";
 
 // Definisikan konstanta untuk status DO
 const DO_STATUS = {
@@ -67,6 +69,18 @@ export default function DaftarDo() {
     enabled: isAuthenticated && roleId !== "",
   });
 
+  // Date range state (copied from laporan/operasional/index.tsx)
+  const [dateRange, setDateRange] = useState<{
+    startDate: string;
+    endDate: string;
+  }>({
+    startDate: new Date(new Date().setHours(23, 59, 59, 999))
+      .toISOString()
+      .slice(0, 10),
+    endDate: new Date(new Date().setHours(23, 59, 59, 999))
+      .toISOString()
+      .slice(0, 10),
+  });
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
   const statusFilter = searchParams.get("status") || "";
@@ -78,6 +92,8 @@ export default function DaftarDo() {
     refetchOnWindowFocus: true,
     searchQuery: searchQuery,
     statusFilter: statusFilter,
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
   });
 
   const deliveryOrders = data?.deliveryOrders || [];
@@ -117,6 +133,15 @@ export default function DaftarDo() {
     setSearchParams(params);
   };
 
+  const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
+    setDateRange(range);
+    const params = new URLSearchParams(searchParams);
+    params.set("startDate", range.startDate);
+    params.set("endDate", range.endDate);
+    params.set("page", "1");
+    setSearchParams(params);
+  };
+
   const handleArsipkan = async (id: string) => {
     const result = await showConfirmationAlert(
       "Konfirmasi Arsip",
@@ -148,6 +173,12 @@ export default function DaftarDo() {
     PERMISSION.ACTIONS.DELETE
   );
 
+  const hasDoLogAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.DO_LOG,
+    PERMISSION.ACTIONS.READ
+  );
+
   const getDeliveryOrderActions = (deliveryOrder: DeliveryOrder) => {
     const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
 
@@ -160,7 +191,9 @@ export default function DaftarDo() {
       actions.push({ type: ActionType.EDIT });
     }
 
-    actions.push({ type: ActionType.LOG });
+    if (hasDoLogAccess) {
+      actions.push({ type: ActionType.LOG });
+    }
 
     // Hanya tampilkan aksi arsip jika user memiliki akses dan status bukan COMPLETED/SELESAI
     if (
@@ -216,21 +249,30 @@ export default function DaftarDo() {
 
   return (
     <div className="flex flex-col w-full min-h-full px-2 space-y-4 sm:space-y-6 sm:px-4 md:px-0">
-      <div className="flex flex-row items-center justify-between w-full gap-2">
-        <h1 className="text-2xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
-          Daftar Delivery Order
-        </h1>
-        {hasDoCreateAccess && (
-          <Link to="/do/tambah">
-            <Button
-              leftIcon={<Plus className="w-3 h-3 sm:w-4 sm:h-4" />}
-              size="sm"
-              className="text-xs sm:text-sm"
-            >
-              Tambah
-            </Button>
-          </Link>
-        )}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 md:gap-4 w-full">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
+            Daftar Delivery Order
+          </h1>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto items-start sm:items-center justify-start sm:justify-end">
+          <DateRangeFilter
+            startDate={dateRange.startDate}
+            endDate={dateRange.endDate}
+            onChange={handleDateRangeChange}
+          />
+          {hasDoCreateAccess && (
+            <Link to="/do/tambah">
+              <Button
+                leftIcon={<Plus className="w-3 h-3 sm:w-4 sm:h-4" />}
+                size="sm"
+                className="text-xs sm:text-sm"
+              >
+                Tambah
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="w-full p-3 overflow-hidden bg-white rounded-lg shadow sm:p-4 md:p-6">

@@ -51,7 +51,7 @@ import { shipmentKeys, useShipment, useUpdateShipment } from "@/hooks/shipment";
 import { cn } from "@/lib/utils";
 import { UpdateShipmentInput } from "@/types/shipment";
 import { LOCATION_TYPE } from "@/utils/constants";
-import { formatNumber } from "@/utils/formatNumber";
+import { formatInputNumber, handleDecimalInput } from "@/utils/formatNumber";
 import { showErrorAlert, showSuccessAlert } from "@/utils/sweetAlert";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -72,7 +72,7 @@ const deliveryOrderItemSchema = Joi.object({
     .items(
       Joi.object({
         productId: Joi.string().required(),
-        requestedQuantity: Joi.number().integer().min(0).required(),
+        requestedQuantity: Joi.number().min(0).required(),
         shipmentItemId: Joi.string().allow("", null).optional(),
       })
     )
@@ -152,6 +152,9 @@ export default function EditPengiriman() {
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
     {}
   );
+  const [quantityDisplayValues, setQuantityDisplayValues] = useState<
+    Record<string, string>
+  >({});
 
   const {
     data: shipment,
@@ -388,6 +391,17 @@ export default function EditPengiriman() {
           form.setValue("armadaId", shipment.armadaId);
         }
       }, 100);
+
+      // Initialize display values for existing products
+      const newDisplayValues: Record<string, string> = {};
+      deliveryOrdersArray.forEach((doItem, doIndex) => {
+        doItem.products.forEach((product: { productId: string; requestedQuantity: number }) => {
+          if (product.requestedQuantity > 0) {
+            newDisplayValues[`${doIndex}-${product.productId}`] = formatInputNumber(product.requestedQuantity);
+          }
+        });
+      });
+      setQuantityDisplayValues(newDisplayValues);
 
       // Set accordion states - open all by default
       const accordionStates: Record<string, boolean> = {};
@@ -1361,7 +1375,7 @@ export default function EditPengiriman() {
                                                   </p>
                                                   <p className="text-sm text-gray-500">
                                                     Stok tersedia:{" "}
-                                                    {formatNumber(
+                                                    {formatInputNumber(
                                                       availableStock
                                                     )}{" "}
                                                     {product.satuan}
@@ -1379,27 +1393,16 @@ export default function EditPengiriman() {
                                                               <Input
                                                                 type="text"
                                                                 placeholder="Masukkan jumlah"
-                                                                value={
-                                                                  field.value >
-                                                                  0
-                                                                    ? formatNumber(
-                                                                        field.value
-                                                                      )
-                                                                    : ""
-                                                                }
-                                                                onChange={(
-                                                                  e
-                                                                ) => {
-                                                                  const numValue =
-                                                                    parseInt(
-                                                                      e.target.value.replace(
-                                                                        /\D/g,
-                                                                        ""
-                                                                      )
-                                                                    ) || 0;
-                                                                  field.onChange(
-                                                                    numValue
-                                                                  );
+                                                                value={quantityDisplayValues[`${index}-${product.id}`] || (field.value > 0 ? formatInputNumber(field.value) : "")}
+                                                                onChange={(e) => {
+                                                                  const result = handleDecimalInput(e.target.value);
+                                                                  field.onChange(result.numericValue || 0);
+
+                                                                  // Update display value in real-time
+                                                                  setQuantityDisplayValues(prev => ({
+                                                                    ...prev,
+                                                                    [`${index}-${product.id}`]: result.displayValue
+                                                                  }));
                                                                 }}
                                                                 disabled={
                                                                   isSubmitting ||

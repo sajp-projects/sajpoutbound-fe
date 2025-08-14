@@ -42,3 +42,28 @@ export interface Product {
   createdAt: string;
   updatedAt: string;
 }
+
+
+export interface WarehouseProductsResponse {
+  products: Product[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+export interface WarehouseUsersResponse {
+  users: UserMinimal[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}

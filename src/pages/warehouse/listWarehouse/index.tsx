@@ -70,6 +70,12 @@ export default function DaftarGudang() {
     PERMISSION.ACTIONS.DELETE
   );
 
+  const hasWarehouseLogAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.WAREHOUSE_LOG,
+    PERMISSION.ACTIONS.READ
+  );
+
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
@@ -126,7 +132,9 @@ export default function DaftarGudang() {
       actions.push({ type: ActionType.EDIT });
     }
 
-    actions.push({ type: ActionType.LOG });
+    if (hasWarehouseLogAccess) {
+      actions.push({ type: ActionType.LOG });
+    }
 
     if (hasWarehouseDeleteAccess) {
       actions.push({

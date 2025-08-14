@@ -18,6 +18,10 @@ import {
 } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 
+// Import related keys for proper cache invalidation
+import { shipmentKeys } from "./shipment";
+import { customerKeys } from "./customer";
+
 export const deliveryOrderKeys = {
   all: ["deliveryOrders"] as const,
   lists: () => [...deliveryOrderKeys.all, "list"] as const,
@@ -44,6 +48,8 @@ export function useDeliveryOrders(
     searchQuery?: string;
     statusFilter?: string;
     availableOnly?: boolean;
+    startDate?: string;
+    endDate?: string;
   }
 ) {
   const [searchParams] = useSearchParams();
@@ -53,6 +59,8 @@ export function useDeliveryOrders(
       ? options.statusFilter
       : searchParams.get("status") || "";
   const availableOnly = options?.availableOnly;
+  const startDate = options?.startDate;
+  const endDate = options?.endDate;
 
   const filters = {
     page: searchParams.get("page") || "1",
@@ -65,6 +73,8 @@ export function useDeliveryOrders(
     ...(availableOnly !== undefined && {
       availableOnly: availableOnly.toString(),
     }),
+    ...(startDate && { startDate }),
+    ...(endDate && { endDate }),
   };
 
   return useQuery({
@@ -300,6 +310,13 @@ export function useCreateDeliveryOrder(
     onSuccess: (data) => {
       queryClient.setQueryData(deliveryOrderKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: deliveryOrderKeys.lists() });
+      
+      // Invalidate customer delivery orders if customer is specified
+      if (data.customerId) {
+        queryClient.invalidateQueries({
+          queryKey: [...customerKeys.detail(data.customerId), "delivery-orders"]
+        });
+      }
     },
     ...options,
   });
@@ -353,9 +370,39 @@ export function useUpdateDeliveryOrder(
 
       return result.data as DeliveryOrder;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.setQueryData(deliveryOrderKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: deliveryOrderKeys.lists() });
+      
+      // Invalidate customer delivery orders for both old and new customer (if changed)
+      if (data.customerId) {
+        queryClient.invalidateQueries({
+          queryKey: [...customerKeys.detail(data.customerId), "delivery-orders"]
+        });
+      }
+      
+      // If customer changed, also invalidate old customer's delivery orders
+      if (variables.customerId && variables.customerId !== data.customerId) {
+        queryClient.invalidateQueries({
+          queryKey: [...customerKeys.detail(variables.customerId), "delivery-orders"]
+        });
+      }
+      
+      // Invalidate all shipments that use this DO (most important for the shipment detail page)
+      queryClient.invalidateQueries({
+        queryKey: ["shipmentsByDeliveryOrderId", data.id]
+      });
+      
+      // Invalidate all shipment lists and details since they contain customer data
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.lists()
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.details()
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all
+      });
     },
     ...options,
   });
@@ -385,6 +432,21 @@ export function useDeleteDeliveryOrder(
         queryKey: deliveryOrderKeys.archived({}),
       });
       queryClient.removeQueries({ queryKey: deliveryOrderKeys.detail(id) });
+      
+      // Invalidate shipments that used this DO
+      queryClient.invalidateQueries({
+        queryKey: ["shipmentsByDeliveryOrderId", id]
+      });
+      
+      // Invalidate all shipment lists since they may contain items from this DO
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.lists()
+      });
+      
+      // Invalidate all customer delivery orders (since we don't know which customer this belonged to)
+      queryClient.invalidateQueries({
+        queryKey: [...customerKeys.all, "delivery-orders"]
+      });
     },
     ...options,
   });

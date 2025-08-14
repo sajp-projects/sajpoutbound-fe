@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Outmanage Frontend** - A comprehensive warehouse/logistics management system built with React 19 + TypeScript, using Vite as the build tool. The application manages the complete supply chain from inventory to delivery with role-based access control (RBAC).
+**PT. SAJP Frontend** - A comprehensive warehouse/logistics management system built with React 19 + TypeScript, using Vite as the build tool. The application manages the complete supply chain from inventory to delivery with role-based access control (RBAC).
 
 **Main Stack:**
 - React 19.0.0 + TypeScript

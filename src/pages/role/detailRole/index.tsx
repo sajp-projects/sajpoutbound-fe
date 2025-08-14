@@ -47,13 +47,12 @@ export default function DetailPeran() {
   const getTabFromUrl = (): "info" | "users" => {
     const params = new URLSearchParams(location.search);
     const tab = params.get("tab");
-    if (tab === "users") {
+    if (tab === "users" && hasUserReadAccess) {
       return tab;
     }
     return "info";
   };
 
-  const [activeTab, setActiveTab] = useState<"info" | "users">(getTabFromUrl());
   const { isAuthenticated } = useAuth();
 
   const roleId = getRoleId() || "";
@@ -81,6 +80,14 @@ export default function DetailPeran() {
     PERMISSION.RESOURCES.ROLE,
     PERMISSION.ACTIONS.DELETE
   );
+
+  const hasUserReadAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.USER,
+    PERMISSION.ACTIONS.READ
+  );
+
+  const [activeTab, setActiveTab] = useState<"info" | "users">(getTabFromUrl());
 
   const {
     data: role,
@@ -124,6 +131,11 @@ export default function DetailPeran() {
   };
 
   const handleTabChange = (tab: "info" | "users") => {
+    // Prevent switching to users tab if user doesn't have permission
+    if (tab === "users" && !hasUserReadAccess) {
+      return;
+    }
+
     setActiveTab(tab);
 
     // Update URL with the active tab
@@ -142,6 +154,19 @@ export default function DetailPeran() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
+
+  // Effect to force switch to info tab if user doesn't have USER READ permission
+  useEffect(() => {
+    if (activeTab === "users" && !hasUserReadAccess) {
+      setActiveTab("info");
+      // Update URL to reflect the forced tab change
+      const searchParams = new URLSearchParams(location.search);
+      searchParams.set("tab", "info");
+      navigate(`${location.pathname}?${searchParams.toString()}`, {
+        replace: true,
+      });
+    }
+  }, [hasUserReadAccess, activeTab, location.pathname, location.search, navigate]);
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
@@ -192,23 +217,25 @@ export default function DetailPeran() {
                 <Info className="flex-shrink-0 w-4 h-4 mr-2" />
                 Informasi Peran
               </button>
-              <button
-                className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
-                  activeTab === "users"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                )}
-                onClick={() => handleTabChange("users")}
-              >
-                <Users className="flex-shrink-0 w-4 h-4 mr-2" />
-                Pengguna Terkait
-                {role?.users && role.users.length > 0 && (
-                  <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
-                    {role.users.length}
-                  </span>
-                )}
-              </button>
+              {hasUserReadAccess && (
+                <button
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                    activeTab === "users"
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  )}
+                  onClick={() => handleTabChange("users")}
+                >
+                  <Users className="flex-shrink-0 w-4 h-4 mr-2" />
+                  Pengguna Terkait
+                  {role?.users && role.users.length > 0 && (
+                    <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                      {role.users.length}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
 
             {}
@@ -271,53 +298,55 @@ export default function DetailPeran() {
                     </div>
                   </div>
 
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">
-                      Tindakan
-                    </h3>
-                    <div className="space-y-3">
-                      {hasRoleUpdateAccess && (
-                        <Link to={`/peran/${id}/edit`} className="w-full">
+                  {(hasRoleUpdateAccess || hasPermissionAccess() || hasRoleDeleteAccess) && (
+                    <div className="p-4 border border-gray-200 rounded-lg">
+                      <h3 className="mb-4 text-lg font-medium text-gray-900">
+                        Tindakan
+                      </h3>
+                      <div className="space-y-3">
+                        {hasRoleUpdateAccess && (
+                          <Link to={`/peran/${id}/edit`} className="w-full">
+                            <Button
+                              variant="outline"
+                              className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                            >
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit Peran
+                            </Button>
+                          </Link>
+                        )}
+                        {hasPermissionAccess() && (
+                          <Link to={`/peran/${id}/izin`} className="w-full">
+                            <Button
+                              variant="outline"
+                              className="justify-start w-full text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700"
+                            >
+                              <Lock className="w-4 h-4 mr-2" />
+                              Kelola Izin Peran
+                            </Button>
+                          </Link>
+                        )}
+                        {hasRoleDeleteAccess && (
                           <Button
                             variant="outline"
-                            className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                            className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                            onClick={handleDeleteRole}
+                            disabled={deleteRoleMutation.isPending}
                           >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit Peran
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            {deleteRoleMutation.isPending
+                              ? "Menghapus..."
+                              : "Hapus Peran"}
                           </Button>
-                        </Link>
-                      )}
-                      {hasPermissionAccess() && (
-                        <Link to={`/peran/${id}/izin`} className="w-full">
-                          <Button
-                            variant="outline"
-                            className="justify-start w-full text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700"
-                          >
-                            <Lock className="w-4 h-4 mr-2" />
-                            Kelola Izin Peran
-                          </Button>
-                        </Link>
-                      )}
-                      {hasRoleDeleteAccess && (
-                        <Button
-                          variant="outline"
-                          className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                          onClick={handleDeleteRole}
-                          disabled={deleteRoleMutation.isPending}
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          {deleteRoleMutation.isPending
-                            ? "Menghapus..."
-                            : "Hapus Peran"}
-                        </Button>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {activeTab === "users" && (
+            {activeTab === "users" && hasUserReadAccess && (
               <div className="space-y-4">
                 <div className="p-4 border border-gray-200 rounded-lg">
                   <div className="flex items-center justify-between mb-4">
@@ -370,9 +399,11 @@ export default function DetailPeran() {
                                 <TableHead className="py-4 font-semibold text-center text-gray-700">
                                   Status
                                 </TableHead>
-                                <TableHead className="py-4 font-semibold text-center text-gray-700">
-                                  Aksi
-                                </TableHead>
+                                {hasUserReadAccess && (
+                                  <TableHead className="py-4 font-semibold text-center text-gray-700">
+                                    Aksi
+                                  </TableHead>
+                                )}
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -415,20 +446,22 @@ export default function DetailPeran() {
                                       {user.deletedAt ? "Tidak Aktif" : "Aktif"}
                                     </span>
                                   </TableCell>
-                                  <TableCell>
-                                    <div className="flex items-center justify-center gap-1">
-                                      <Link to={`/pengguna/${user.id}`}>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="w-8 h-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                          title="Lihat Detail"
-                                        >
-                                          <Eye className="w-4 h-4" />
-                                        </Button>
-                                      </Link>
-                                    </div>
-                                  </TableCell>
+                                  {hasUserReadAccess && (
+                                    <TableCell>
+                                      <div className="flex items-center justify-center gap-1">
+                                        <Link to={`/pengguna/${user.id}`}>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="w-8 h-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                            title="Lihat Detail"
+                                          >
+                                            <Eye className="w-4 h-4" />
+                                          </Button>
+                                        </Link>
+                                      </div>
+                                    </TableCell>
+                                  )}
                                 </TableRow>
                               ))}
                             </TableBody>
@@ -493,16 +526,18 @@ export default function DetailPeran() {
                               </div>
 
                               <div className="flex items-center justify-end gap-1 pt-2 mt-2 border-t">
-                                <Link to={`/pengguna/${user.id}`}>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="w-8 h-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                    title="Lihat Detail"
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                  </Button>
-                                </Link>
+                                {hasUserReadAccess && (
+                                  <Link to={`/pengguna/${user.id}`}>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="w-8 h-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                      title="Lihat Detail"
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </Button>
+                                  </Link>
+                                )}
                               </div>
                             </div>
                           </div>

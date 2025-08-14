@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 
 interface EmptyStateProps {
@@ -5,6 +6,8 @@ interface EmptyStateProps {
   title?: string;
   message?: string;
   action?: React.ReactNode;
+  className?: string;
+  containerClassName?: string;
 }
 
 export function EmptyState({
@@ -12,12 +15,14 @@ export function EmptyState({
   title = "Tidak ada data yang ditemukan",
   message = "Coba gunakan kata kunci pencarian yang berbeda",
   action,
+  className,
+  containerClassName,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-8 text-gray-500-foreground">
+    <div className={cn("flex flex-col items-center justify-center py-8 text-center text-gray-500-foreground", containerClassName)}>
       <div className="mb-2">{icon}</div>
-      <p className="text-gray-500">{title}</p>
-      <p className="text-sm text-gray-400">{message}</p>
+      <p className={cn("text-gray-500", className)}>{title}</p>
+      <p className={cn("text-sm text-gray-400 mt-2", className)}>{message}</p>
       {action && <div className="mt-4">{action}</div>}
     </div>
   );

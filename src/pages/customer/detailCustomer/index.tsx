@@ -1,5 +1,6 @@
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
+import { Pagination } from "@/components/Pagination";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
-import { useCustomer, useDeleteCustomer } from "@/hooks/customer";
+import { useCustomer, useCustomerDeliveryOrders, useDeleteCustomer } from "@/hooks/customer";
 import { useRolePermissions } from "@/hooks/permission";
 import { cn } from "@/lib/utils";
 import { formatDate, formatDateShort } from "@/utils/date";
@@ -68,20 +69,6 @@ export default function DetailPelanggan() {
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
 
-  // Get tab from URL query parameter or default to "info"
-  const getTabFromUrl = (): "info" | "deliveryOrders" => {
-    const params = new URLSearchParams(location.search);
-    const tab = params.get("tab");
-    if (tab === "deliveryOrders") {
-      return tab;
-    }
-    return "info";
-  };
-
-  const [activeTab, setActiveTab] = useState<"info" | "deliveryOrders">(
-    getTabFromUrl()
-  );
-
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
   });
@@ -98,6 +85,32 @@ export default function DetailPelanggan() {
     PERMISSION.ACTIONS.DELETE
   );
 
+  const hasCustomerLogAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.CUSTOMER_LOG,
+    PERMISSION.ACTIONS.READ
+  );
+
+  const hasDoReadAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.DO,
+    PERMISSION.ACTIONS.READ
+  );
+
+  // Get tab from URL query parameter or default to "info"
+  const getTabFromUrl = (): "info" | "deliveryOrders" => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab === "deliveryOrders" && hasDoReadAccess) {
+      return tab;
+    }
+    return "info";
+  };
+
+  const [activeTab, setActiveTab] = useState<"info" | "deliveryOrders">(
+    getTabFromUrl()
+  );
+
   const {
     data: customer,
     isLoading,
@@ -108,6 +121,23 @@ export default function DetailPelanggan() {
     { id: id || "" },
     { staleTime: 5000, refetchOnMount: "always" }
   );
+
+  // Get paginated delivery orders for this customer
+  const {
+    data: deliveryOrdersData,
+    isLoading: isLoadingDeliveryOrders,
+    isError: isErrorDeliveryOrders,
+    error: deliveryOrdersError,
+  } = useCustomerDeliveryOrders(
+    { customerId: id || "" },
+    {
+      enabled: hasDoReadAccess && !!id && activeTab === "deliveryOrders",
+      staleTime: 0,
+      refetchOnMount: "always",
+    }
+  );
+
+
 
   const deleteCustomer = useDeleteCustomer({
     onSuccess: () => {
@@ -138,13 +168,10 @@ export default function DetailPelanggan() {
     });
   };
 
-  // Hitung total Delivery Order yang aktif (tidak dihapus)
-  const activeDeliveryOrders =
-    customer?.deliveryOrders?.filter((do_) => do_.deletedAt === null) || [];
-
-  // Hitung total barang keluar dari semua DO aktif
+  // Calculate total items from customer delivery orders (non-paginated data for statistics)
   const calculateTotalItems = () => {
     let total = 0;
+    const activeDeliveryOrders = customer?.deliveryOrders?.filter((do_) => do_.deletedAt === null) || [];
     activeDeliveryOrders.forEach((do_) => {
       do_.items.forEach((item) => {
         total += item.quantity;
@@ -154,6 +181,11 @@ export default function DetailPelanggan() {
   };
 
   const handleTabChange = (tab: "info" | "deliveryOrders") => {
+    // Prevent switching to deliveryOrders tab if user doesn't have permission
+    if (tab === "deliveryOrders" && !hasDoReadAccess) {
+      return;
+    }
+
     setActiveTab(tab);
 
     // Update URL with the active tab
@@ -172,6 +204,19 @@ export default function DetailPelanggan() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
+
+  // Effect to force switch to info tab if user doesn't have DO READ permission
+  useEffect(() => {
+    if (activeTab === "deliveryOrders" && !hasDoReadAccess) {
+      setActiveTab("info");
+      // Update URL to reflect the forced tab change
+      const searchParams = new URLSearchParams(location.search);
+      searchParams.set("tab", "info");
+      navigate(`${location.pathname}?${searchParams.toString()}`, {
+        replace: true,
+      });
+    }
+  }, [hasDoReadAccess, activeTab, location.pathname, location.search, navigate]);
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
@@ -238,23 +283,25 @@ export default function DetailPelanggan() {
                 <Info className="flex-shrink-0 w-4 h-4 mr-2" />
                 Informasi Pelanggan
               </button>
-              <button
-                className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
-                  activeTab === "deliveryOrders"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                )}
-                onClick={() => handleTabChange("deliveryOrders")}
-              >
-                <FileText className="flex-shrink-0 w-4 h-4 mr-2" />
-                Delivery Order
-                {activeDeliveryOrders.length > 0 && (
-                  <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
-                    {activeDeliveryOrders.length}
-                  </span>
-                )}
-              </button>
+              {hasDoReadAccess && (
+                <button
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                    activeTab === "deliveryOrders"
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  )}
+                  onClick={() => handleTabChange("deliveryOrders")}
+                >
+                  <FileText className="flex-shrink-0 w-4 h-4 mr-2" />
+                  Delivery Order
+                  {customer?.deliveryOrders && customer.deliveryOrders.filter(do_ => do_.deletedAt === null).length > 0 && (
+                    <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                      {customer.deliveryOrders.filter(do_ => do_.deletedAt === null).length}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
 
             {activeTab === "info" && (
@@ -295,27 +342,29 @@ export default function DetailPelanggan() {
                     </div>
                   </div>
 
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">
-                      Statistik Delivery Order
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-3 rounded-lg bg-blue-50">
-                        <p className="text-sm text-gray-500">Total DO</p>
-                        <p className="text-xl font-medium text-blue-600">
-                          {activeDeliveryOrders.length}
-                        </p>
-                      </div>
-                      <div className="p-3 rounded-lg bg-green-50">
-                        <p className="text-sm text-gray-500">
-                          Total Barang Keluar
-                        </p>
-                        <p className="text-xl font-medium text-green-600">
-                          {calculateTotalItems()}
-                        </p>
+                  {hasDoReadAccess && (
+                    <div className="p-4 border border-gray-200 rounded-lg">
+                      <h3 className="mb-4 text-lg font-medium text-gray-900">
+                        Statistik Delivery Order
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-3 rounded-lg bg-blue-50">
+                          <p className="text-sm text-gray-500">Total DO</p>
+                          <p className="text-xl font-medium text-blue-600">
+                            {customer?.deliveryOrders?.filter(do_ => do_.deletedAt === null).length || 0}
+                          </p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-green-50">
+                          <p className="text-sm text-gray-500">
+                            Total Barang Keluar
+                          </p>
+                          <p className="text-xl font-medium text-green-600">
+                            {calculateTotalItems()}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -341,67 +390,82 @@ export default function DetailPelanggan() {
                     </div>
                   </div>
 
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">
-                      Tindakan
-                    </h3>
-                    <div className="space-y-3">
-                      <Link to={`/pelanggan/${id}/log`} className="w-full">
-                        <Button
-                          variant="outline"
-                          className="justify-start w-full"
-                        >
-                          <History className="w-4 h-4 mr-2" />
-                          Lihat Log Aktivitas
-                        </Button>
-                      </Link>
-                      {hasCustomerUpdateAccess && (
-                        <Link to={`/pelanggan/${id}/edit`} className="w-full">
+                  {(hasCustomerLogAccess || hasCustomerUpdateAccess || hasCustomerDeleteAccess) && (
+                    <div className="p-4 border border-gray-200 rounded-lg">
+                      <h3 className="mb-4 text-lg font-medium text-gray-900">
+                        Tindakan
+                      </h3>
+                      <div className="space-y-3">
+                        {hasCustomerLogAccess && (
+                          <Link to={`/pelanggan/${id}/log`} className="w-full">
+                            <Button
+                              variant="outline"
+                              className="justify-start w-full"
+                            >
+                              <History className="w-4 h-4 mr-2" />
+                              Lihat Log Aktivitas
+                            </Button>
+                          </Link>
+                        )}
+                        {hasCustomerUpdateAccess && (
+                          <Link to={`/pelanggan/${id}/edit`} className="w-full">
+                            <Button
+                              variant="outline"
+                              className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                            >
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit Pelanggan
+                            </Button>
+                          </Link>
+                        )}
+                        {hasCustomerDeleteAccess && (
                           <Button
                             variant="outline"
-                            className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                            className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                            onClick={handleHapus}
+                            disabled={deleteCustomer.isPending}
                           >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit Pelanggan
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            {deleteCustomer.isPending
+                              ? "Menghapus..."
+                              : "Hapus Pelanggan"}
                           </Button>
-                        </Link>
-                      )}
-                      {hasCustomerDeleteAccess && (
-                        <Button
-                          variant="outline"
-                          className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                          onClick={handleHapus}
-                          disabled={deleteCustomer.isPending}
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          {deleteCustomer.isPending
-                            ? "Menghapus..."
-                            : "Hapus Pelanggan"}
-                        </Button>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {activeTab === "deliveryOrders" && (
+            {activeTab === "deliveryOrders" && hasDoReadAccess && (
               <div className="space-y-4">
                 <div className="p-4 border border-gray-200 rounded-lg">
                   <div className="flex flex-col items-start justify-between mb-4 sm:flex-row sm:items-center">
                     <h3 className="mb-2 text-lg font-medium text-gray-900 sm:mb-0">
-                      Delivery Order {customer.name}
+                      Delivery Order {customer?.name}
                     </h3>
-                    <span className="px-2 py-1 text-sm text-gray-500 bg-gray-100 rounded-md">
-                      Total:{" "}
-                      <span className="font-medium text-gray-700">
-                        {activeDeliveryOrders.length}
-                      </span>{" "}
-                      DO aktif
-                    </span>
+                    {deliveryOrdersData && (
+                      <span className="px-2 py-1 text-sm text-gray-500 bg-gray-100 rounded-md">
+                        Total:{" "}
+                        <span className="font-medium text-gray-700">
+                          {deliveryOrdersData.pagination.total}
+                        </span>{" "}
+                        DO aktif
+                      </span>
+                    )}
                   </div>
 
-                  {activeDeliveryOrders.length === 0 ? (
+                  {isLoadingDeliveryOrders ? (
+                    <LoadingState text="Memuat data delivery order..." />
+                  ) : isErrorDeliveryOrders ? (
+                    <ErrorState
+                      title="Gagal Memuat Data Delivery Order"
+                      message={deliveryOrdersError?.message || "Terjadi kesalahan pada server"}
+                      onRetry={() => window.location.reload()}
+                      retryButtonText="Coba lagi"
+                    />
+                  ) : !deliveryOrdersData || deliveryOrdersData.deliveryOrders.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-gray-300 border-dashed rounded-lg">
                       <FileText className="w-12 h-12 mb-4 text-gray-400" />
                       <p className="font-medium text-gray-600">
@@ -437,7 +501,7 @@ export default function DetailPelanggan() {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {activeDeliveryOrders.map((do_, idx) => (
+                              {deliveryOrdersData.deliveryOrders.map((do_, idx) => (
                                 <TableRow
                                   key={do_.id}
                                   className={cn(
@@ -446,14 +510,14 @@ export default function DetailPelanggan() {
                                   )}
                                 >
                                   <TableCell className="py-2.5 px-3 font-medium text-center text-sm">
-                                    {idx + 1}
+                                    {idx + 1 + (deliveryOrdersData.pagination.page - 1) * deliveryOrdersData.pagination.limit}
                                   </TableCell>
                                   <TableCell className="py-2.5 px-3 font-medium text-blue-600 text-sm">
                                     <Link
                                       to={`/do/${do_.id}`}
                                       className="hover:underline"
                                     >
-                                      {do_.id.substring(0, 8)}...
+                                      {do_.doNumber}
                                     </Link>
                                   </TableCell>
                                   <TableCell className="py-2.5 px-3 text-gray-600 text-sm">
@@ -484,7 +548,7 @@ export default function DetailPelanggan() {
 
                       {/* Mobile View */}
                       <div className="w-full space-y-3 sm:hidden">
-                        {activeDeliveryOrders.map((do_, idx) => (
+                        {deliveryOrdersData.deliveryOrders.map((do_, idx) => (
                           <div
                             key={do_.id}
                             className="w-full overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm"
@@ -502,7 +566,7 @@ export default function DetailPelanggan() {
                                   </p>
                                 </div>
                                 <div className="bg-gray-100 text-xs text-gray-700 px-1.5 py-0.5 rounded flex-shrink-0">
-                                  #{idx + 1}
+                                  #{idx + 1 + (deliveryOrdersData.pagination.page - 1) * deliveryOrdersData.pagination.limit}
                                 </div>
                               </div>
 
@@ -523,6 +587,19 @@ export default function DetailPelanggan() {
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {deliveryOrdersData && (
+                    <div className="mt-4">
+                      <Pagination
+                        totalItems={deliveryOrdersData.pagination.total}
+                        itemsPerPage={deliveryOrdersData.pagination.limit}
+                        currentPage={deliveryOrdersData.pagination.page}
+                        totalPages={deliveryOrdersData.pagination.totalPages}
+                        hasNext={deliveryOrdersData.pagination.hasNext}
+                        hasPrev={deliveryOrdersData.pagination.hasPrev}
+                      />
                     </div>
                   )}
                 </div>

@@ -41,7 +41,7 @@ import { shipmentKeys, useCreateShipment } from "@/hooks/shipment";
 import { cn } from "@/lib/utils";
 import { CreateShipmentInput, Shipment } from "@/types/shipment";
 import { LOCATION_TYPE } from "@/utils/constants";
-import { formatNumber } from "@/utils/formatNumber";
+import { formatInputNumber, handleDecimalInput } from "@/utils/formatNumber";
 import { showErrorAlert, showSuccessAlert } from "@/utils/sweetAlert";
 import { joiResolver } from "@hookform/resolvers/joi";
 import { useQueryClient } from "@tanstack/react-query";
@@ -68,7 +68,7 @@ const deliveryOrderItemSchema = Joi.object({
     .items(
       Joi.object({
         productId: Joi.string().required(),
-        requestedQuantity: Joi.number().integer().min(0).required(),
+        requestedQuantity: Joi.number().min(0).required(),
       })
     )
     .required(),
@@ -159,6 +159,10 @@ export default function TambahPengiriman() {
   const [doFormState, setDoFormState] = useState<
     Record<string, DoFormStateItem>
   >({});
+  const [quantityDisplayValues, setQuantityDisplayValues] = useState<
+    Record<string, string>
+  >({});
+
 
   // Fetch data armada dan delivery orders
   const {
@@ -319,6 +323,17 @@ export default function TambahPengiriman() {
             };
           });
           form.setValue(`deliveryOrders.${doIndex}.products`, orderedProducts);
+
+          // Initialize display values for existing products
+          orderedProducts.forEach((product) => {
+            if (product.requestedQuantity > 0) {
+              setQuantityDisplayValues(prev => ({
+                ...prev,
+                [`${doIndex}-${product.productId}`]: formatInputNumber(product.requestedQuantity)
+              }));
+            }
+          });
+
         } else {
           // Inisialisasi array barang dengan requestedQuantity 0 jika belum ada
           const initialProducts = availableProducts.map((product) => ({
@@ -550,6 +565,18 @@ export default function TambahPengiriman() {
         delete newState[doToRemove.deliveryOrderId];
         return newState;
       });
+
+      // Clear display values for this DO
+      setQuantityDisplayValues(prev => {
+        const newState = { ...prev };
+        Object.keys(newState).forEach(key => {
+          if (key.startsWith(`${index}-`)) {
+            delete newState[key];
+          }
+        });
+        return newState;
+      });
+
     }
 
     // Bersihkan error untuk field yang akan dihapus
@@ -609,6 +636,17 @@ export default function TambahPengiriman() {
       form.setValue(`deliveryOrders.${index}.locationType`, "");
       form.clearErrors(`deliveryOrders.${index}.locationType`);
 
+      // Clear display values for this DO
+      setQuantityDisplayValues(prev => {
+        const newState = { ...prev };
+        Object.keys(newState).forEach(key => {
+          if (key.startsWith(`${index}-`)) {
+            delete newState[key];
+          }
+        });
+        return newState;
+      });
+
       // Bersihkan state DO lama dari selectedDOProducts dan doFormState
       if (oldDeliveryOrderId) {
         setSelectedDOProducts((prev) => {
@@ -659,68 +697,6 @@ export default function TambahPengiriman() {
     form.setValue("type", value);
   };
 
-  // Simpan perubahan barang saat nilai berubah
-  const handleProductQuantityChange = useCallback(
-    (doId: string, productId: string, value: number) => {
-      // Update form state untuk DO ini
-      setDoFormState((prev) => {
-        const doData = prev[doId] || { products: [] };
-        const products = [...(doData.products || [])];
-
-        // Cari barang yang sesuai
-        const productIndex = products.findIndex(
-          (p) => p.productId === productId
-        );
-
-        if (productIndex !== -1) {
-          // Update barang yang sudah ada
-          products[productIndex].requestedQuantity = value;
-        } else {
-          // Tambahkan barang baru dengan urutan yang benar sesuai dengan selectedDOProducts
-          const doProducts = selectedDOProducts[doId] || [];
-          const availableProducts = doProducts.filter(
-            (p) => p.pendingQuantity > 0
-          );
-
-          // Buat ulang array products dengan urutan yang benar
-          const newProducts = availableProducts.map((product) => {
-            const existingProduct = products.find(
-              (p) => p.productId === product.id
-            );
-            if (product.id === productId) {
-              return {
-                productId,
-                requestedQuantity: value,
-              };
-            }
-            return (
-              existingProduct || {
-                productId: product.id,
-                requestedQuantity: 0,
-              }
-            );
-          });
-
-          return {
-            ...prev,
-            [doId]: {
-              ...doData,
-              products: newProducts,
-            },
-          };
-        }
-
-        return {
-          ...prev,
-          [doId]: {
-            ...doData,
-            products,
-          },
-        };
-      });
-    },
-    [selectedDOProducts]
-  );
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
@@ -1093,7 +1069,7 @@ export default function TambahPengiriman() {
                                                 </p>
                                                 <p className="text-sm text-gray-500">
                                                   Stok tersedia:{" "}
-                                                  {formatNumber(
+                                                  {formatInputNumber(
                                                     product.pendingQuantity
                                                   )}{" "}
                                                   {product.satuan}
@@ -1108,37 +1084,19 @@ export default function TambahPengiriman() {
                                                       render={({ field }) => (
                                                         <FormItem className="h-[80px]">
                                                           <FormControl>
-                                                            <Input
+                                                             <Input
                                                               type="text"
                                                               placeholder="Masukkan jumlah"
-                                                              value={
-                                                                field.value > 0
-                                                                  ? formatNumber(
-                                                                      field.value
-                                                                    )
-                                                                  : ""
-                                                              }
+                                                              value={quantityDisplayValues[`${index}-${product.id}`] || (field.value > 0 ? formatInputNumber(field.value) : "")}
                                                               onChange={(e) => {
-                                                                const numValue =
-                                                                  parseInt(
-                                                                    e.target.value.replace(
-                                                                      /\D/g,
-                                                                      ""
-                                                                    )
-                                                                  ) || 0;
-                                                                field.onChange(
-                                                                  numValue
-                                                                );
+                                                                const result = handleDecimalInput(e.target.value);
+                                                                field.onChange(result.numericValue || 0);
 
-                                                                // Simpan perubahan ke state untuk mencegah reset
-                                                                handleProductQuantityChange(
-                                                                  watchDeliveryOrders[
-                                                                    index
-                                                                  ]
-                                                                    .deliveryOrderId,
-                                                                  product.id,
-                                                                  numValue
-                                                                );
+                                                                // Update display value in real-time
+                                                                setQuantityDisplayValues(prev => ({
+                                                                  ...prev,
+                                                                  [`${index}-${product.id}`]: result.displayValue
+                                                                }));
                                                               }}
                                                               disabled={
                                                                 isSubmitting

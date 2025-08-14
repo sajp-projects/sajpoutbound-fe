@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { useReviseDeliveryOrderAfterWeighing } from "@/hooks/shipment";
 import { DeliveryOrder, RevisedItem } from "@/types/do";
-import { formatNumber } from "@/utils/formatNumber";
+import { formatInputNumber, handleDecimalInput } from "@/utils/formatNumber";
 import {
   isConfirmed,
   showConfirmationAlert,
@@ -62,6 +62,9 @@ export function ReviseDOModal({
 }: ReviseDOModalProps) {
   const [revisedItems, setRevisedItems] = useState<RevisedItem[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
+  const [quantityDisplays, setQuantityDisplays] = useState<Record<string, string>>({});
+
+
 
   const reviseDoMutation = useReviseDeliveryOrderAfterWeighing({
     onSuccess: () => {
@@ -96,11 +99,31 @@ export function ReviseDOModal({
       }));
       setRevisedItems(items);
       setHasChanges(false);
+
+      // Initialize display values with properly formatted quantities (including decimals)
+      const displays: Record<string, string> = {};
+      items.forEach((item) => {
+        if (item.revisedQuantity > 0) {
+          // Use formatInputNumber to match how Qty Asli is displayed
+          displays[item.id] = formatInputNumber(item.revisedQuantity);
+        } else {
+          displays[item.id] = ""; // Empty for 0 values
+        }
+      });
+      setQuantityDisplays(displays);
     }
   }, [isOpen, deliveryOrder]);
 
   const handleQuantityChange = (itemId: string, newQuantity: string) => {
-    const quantity = parseInt(newQuantity) || 0;
+    // Use handleDecimalInput with the current value for proper decimal handling
+    const result = handleDecimalInput(newQuantity);
+    const quantity = result.numericValue || 0;
+
+    // Update display value with the formatted result
+    setQuantityDisplays(prev => ({
+      ...prev,
+      [itemId]: result.displayValue
+    }));
 
     setRevisedItems((prev) =>
       prev.map((item) => {
@@ -228,8 +251,8 @@ export function ReviseDOModal({
             </ul>
           </div>
 
-          {/* Items Table */}
-          <div className="border border-gray-200 rounded-lg">
+          {/* Desktop Table View */}
+          <div className="hidden border border-gray-200 rounded-lg sm:block">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50 border-b border-gray-200">
@@ -268,33 +291,86 @@ export function ReviseDOModal({
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                      {formatNumber(item.originalQuantity)}
+                      {formatInputNumber(item.originalQuantity)}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                      <Input
-                        type="number"
-                        value={item.revisedQuantity}
-                        onChange={(e) =>
-                          handleQuantityChange(item.id, e.target.value)
-                        }
-                        className="w-20 text-center"
-                        min={0}
-                        disabled={reviseDoMutation.isPending}
-                      />
+                      <div className="flex justify-center">
+                        <Input
+                          type="text"
+                          value={quantityDisplays[item.id] || (item.revisedQuantity > 0 ? item.revisedQuantity.toString() : "")}
+                          onChange={(e) =>
+                            handleQuantityChange(item.id, e.target.value)
+                          }
+                          onFocus={(e) => e.target.select()}
+                          className="w-20 text-center"
+                          disabled={reviseDoMutation.isPending}
+                        />
+                      </div>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                      {formatNumber(item.completedQuantity)}
+                      {formatInputNumber(item.completedQuantity)}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                      {formatNumber(item.processingQuantity)}
+                      {formatInputNumber(item.processingQuantity)}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                      {formatNumber(item.pendingQuantity)}
+                      {formatInputNumber(item.pendingQuantity)}
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="block space-y-3 sm:hidden">
+            {revisedItems.map((item, index) => (
+              <div
+                key={item.id}
+                className={`p-4 rounded-lg border border-gray-200 ${
+                  index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                }`}
+              >
+                <div className="mb-3">
+                  <h4 className="font-medium text-gray-900">{item.productName}</h4>
+                  <p className="text-xs text-gray-500">Unit: {item.unit}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-gray-600 mb-1">Qty Asli</p>
+                    <p className="font-semibold text-gray-800">{formatInputNumber(item.originalQuantity)}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-gray-600 mb-1">Qty Baru</p>
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={quantityDisplays[item.id] || (item.revisedQuantity > 0 ? item.revisedQuantity.toString() : "")}
+                        onChange={(e) =>
+                          handleQuantityChange(item.id, e.target.value)
+                        }
+                        onFocus={(e) => e.target.select()}
+                        className="w-20 text-center text-sm"
+                        disabled={reviseDoMutation.isPending}
+                      />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-gray-600 mb-1">Selesai</p>
+                    <p className="font-semibold text-gray-800">{formatInputNumber(item.completedQuantity)}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-gray-600 mb-1">Proses</p>
+                    <p className="font-semibold text-gray-800">{formatInputNumber(item.processingQuantity)}</p>
+                  </div>
+                  <div className="text-center col-span-2">
+                    <p className="text-xs font-medium text-gray-600 mb-1">Pending</p>
+                    <p className="font-semibold text-gray-800">{formatInputNumber(item.pendingQuantity)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

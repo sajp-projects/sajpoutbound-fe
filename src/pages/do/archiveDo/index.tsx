@@ -1,6 +1,6 @@
 import { useArchivedDeliveryOrders, useRestoreDeliveryOrder } from "@/hooks/do";
 import { Eye, RefreshCw } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingState } from "@/components/LoadingState";
@@ -21,7 +21,7 @@ import { useRolePermissions } from "@/hooks/permission";
 import { cn } from "@/lib/utils";
 import { DeliveryOrder } from "@/types/do";
 import { formatDate, formatDateShort } from "@/utils/date";
-import { formatNumber } from "@/utils/formatNumber";
+import { formatInputNumber } from "@/utils/formatNumber";
 import { hasPermission } from "@/utils/permission";
 import { getRoleId } from "@/utils/storage";
 import {
@@ -33,6 +33,7 @@ import {
 import { useSearchParams } from "react-router";
 
 export default function ArsipDo() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
@@ -47,7 +48,7 @@ export default function ArsipDo() {
   const hasDoUpdateAccess = hasPermission(
     permissions,
     PERMISSION.RESOURCES.DO,
-    PERMISSION.ACTIONS.UPDATE
+    PERMISSION.ACTIONS.UNARCHIVE
   );
 
   const {
@@ -158,24 +159,22 @@ export default function ArsipDo() {
                     <TableCell className="font-medium text-blue-600">
                       {deliveryOrder.customer.name}
                     </TableCell>
-                    <TableCell className="truncate max-w-[150px] sm:max-w-none">
+                    <TableCell className="truncate max-w-[120px] sm:max-w-[150px]">
                       {deliveryOrder.address}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="min-w-[140px]">
                       <div className="flex flex-wrap gap-1">
-                        {deliveryOrder.items.map((item) => (
-                          <Badge
-                            key={item.id}
-                            variant="outline"
-                            className={cn(
-                              "px-2 py-0.5 rounded-md font-medium text-xs",
-                              "bg-blue-50 text-blue-600 border-blue-200"
-                            )}
-                          >
-                            {item.product.name} ({formatNumber(item.quantity)}{" "}
-                            {item.product.satuan})
-                          </Badge>
-                        ))}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 whitespace-nowrap"
+                          title="Lihat Semua"
+                          onClick={() => {
+                            navigate(`/do/${deliveryOrder.id}?tab=items`);
+                          }}
+                        >
+                          Lihat Semua ({deliveryOrder.items.length})
+                        </Button>
                       </div>
                     </TableCell>
                     <TableCell className="hidden text-gray-500 md:table-cell">
@@ -273,7 +272,7 @@ export default function ArsipDo() {
                         "bg-blue-50 text-blue-600 border-blue-200"
                       )}
                     >
-                      {item.product.name} ({formatNumber(item.quantity)}{" "}
+                      {item.product.name} ({formatInputNumber(item.quantity)}{" "}
                       {item.product.satuan})
                     </Badge>
                   ))}

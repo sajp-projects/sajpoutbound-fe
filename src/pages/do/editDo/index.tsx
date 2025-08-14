@@ -1,6 +1,6 @@
 import { joiResolver } from "@hookform/resolvers/joi";
 import Joi from "joi";
-import { ArrowLeft, Edit, Loader2, Plus, Save, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Edit, Loader2, Plus, Save, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router";
@@ -16,6 +16,14 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox, ComboboxItem } from "@/components/ui/combobox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useInfiniteCustomers } from "@/hooks/customer";
@@ -31,7 +39,7 @@ import {
   CreateDeliveryOrderProduct,
   UpdateDeliveryOrderInput,
 } from "@/types/do";
-import { formatNumber } from "@/utils/formatNumber";
+import { formatInputNumber, handleDecimalInput } from "@/utils/formatNumber";
 import { showErrorAlert, showSuccessAlert } from "@/utils/sweetAlert";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -47,10 +55,9 @@ const itemSchema = Joi.object({
     "string.empty": "Barang harus dipilih",
     "any.required": "Barang harus dipilih",
   }),
-  quantity: Joi.number().integer().min(1).required().messages({
+  quantity: Joi.number().positive().required().messages({
     "number.base": "Kuantitas harus berupa angka",
-    "number.integer": "Kuantitas harus berupa bilangan bulat",
-    "number.min": "Kuantitas minimal 1",
+    "number.positive": "Kuantitas harus lebih dari 0",
     "any.required": "Kuantitas harus diisi",
   }),
   productName: Joi.string().allow("").optional(),
@@ -75,10 +82,10 @@ const schema = Joi.object({
   tempProduct: Joi.string().allow("").optional().strip(),
   tempProductId: Joi.string().allow("").optional().strip(),
   tempQuantity: Joi.number()
-    .min(1)
+    .positive()
     .messages({
       "number.base": "Kuantitas harus berupa angka",
-      "number.min": "Kuantitas minimal 1",
+      "number.positive": "Kuantitas harus lebih dari 0",
     })
     .optional()
     .strip(),
@@ -90,11 +97,17 @@ export default function EditDo() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const deliveryOrderId = id || "";
+  const [tempQuantityDisplay, setTempQuantityDisplay] = useState("");
   const [showItems, setShowItems] = useState(true);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [useCustomerAddress, setUseCustomerAddress] = useState(false);
   const [customerSearchQuery, setCustomerSearchQuery] = useState("");
   const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [pendingProduct, setPendingProduct] = useState<{
+    name: string;
+    quantity: number;
+  } | null>(null);
   const inputClassName = cn(
     "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
   );
@@ -295,13 +308,8 @@ export default function EditDo() {
     setValue("tempProductId", "");
     setValue("tempQuantity", undefined);
     setValue("tempItemId", "");
+    setTempQuantityDisplay("");
     setEditingItemIndex(null);
-    const quantityInput = document.querySelector(
-      'input[name="tempQuantity"]'
-    ) as HTMLInputElement;
-    if (quantityInput) {
-      quantityInput.value = "";
-    }
   };
 
   const handleAddItem = (product: (typeof products)[0], quantity: number) => {
@@ -341,6 +349,7 @@ export default function EditDo() {
     setValue("tempProductId", watchItems[index].productId);
     setValue("tempQuantity", watchItems[index].quantity);
     setValue("tempItemId", watchItems[index].id || "");
+    setTempQuantityDisplay(formatInputNumber(watchItems[index].quantity));
   };
 
   const handleUpdateItem = (
@@ -388,6 +397,22 @@ export default function EditDo() {
       tempQuantity?: number;
     }
   ) => {
+    // Check if there's a pending product in the temp fields using watch()
+    const tempProductId = watch("tempProductId");
+    const tempQuantity = watch("tempQuantity");
+
+    if (tempProductId && tempQuantity) {
+      const selectedProduct = products.find((p) => p.id === tempProductId);
+      if (selectedProduct) {
+        setPendingProduct({
+          name: selectedProduct.name,
+          quantity: tempQuantity,
+        });
+        setShowWarningModal(true);
+        return;
+      }
+    }
+
     const validItems: ExtendedProduct[] = data.items.filter(
       (item) => item.productId
     );
@@ -449,6 +474,39 @@ export default function EditDo() {
         }
       }
     }
+  };
+
+  const handleProceedWithoutAdding = () => {
+    setShowWarningModal(false);
+    setPendingProduct(null);
+
+    // Reset the temp fields
+    setValue("tempProduct", "");
+    setValue("tempProductId", "");
+    setValue("tempQuantity", undefined);
+
+    // Submit the form again
+    handleSubmit(onSubmit)();
+  };
+
+  const handleAddPendingProduct = () => {
+    if (pendingProduct) {
+      const tempProductId = watch("tempProductId");
+      const tempQuantity = watch("tempQuantity");
+
+      if (tempProductId && tempQuantity) {
+        const selectedProduct = products.find((p) => p.id === tempProductId);
+        if (selectedProduct) {
+          handleAddItem(selectedProduct, tempQuantity);
+        }
+      }
+    }
+
+    setShowWarningModal(false);
+    setPendingProduct(null);
+
+    // Submit the form again
+    handleSubmit(onSubmit)();
   };
 
   console.log({
@@ -649,15 +707,11 @@ export default function EditDo() {
                                     "border-red-500",
                                   "h-10"
                                 )}
-                                value={
-                                  field.value ? formatNumber(field.value) : ""
-                                }
+                                value={tempQuantityDisplay}
                                 onChange={(e) => {
-                                  const numValue =
-                                    parseInt(
-                                      e.target.value.replace(/\D/g, "")
-                                    ) || undefined;
-                                  field.onChange(numValue);
+                                  const result = handleDecimalInput(e.target.value);
+                                  setTempQuantityDisplay(result.displayValue);
+                                  field.onChange(result.numericValue);
                                 }}
                               />
                               {errors.tempQuantity && watch("tempQuantity") && (
@@ -755,7 +809,7 @@ export default function EditDo() {
                                   </Link>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                  {formatNumber(item.quantity)}
+                                  {formatInputNumber(item.quantity)}
                                 </td>
                                 <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                                   <div className="flex justify-end space-x-2">
@@ -902,6 +956,34 @@ export default function EditDo() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Warning Modal for Pending Product */}
+      {showWarningModal && (
+        <Dialog open={showWarningModal} onOpenChange={setShowWarningModal}>
+          <DialogContent className="bg-white">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <AlertTriangle className="w-6 h-6 text-yellow-600 mr-2" />
+                Produk Belum Ditambahkan
+              </DialogTitle>
+              <DialogDescription>
+                Anda telah memilih produk{" "}
+                <strong>{pendingProduct?.name}</strong> dengan jumlah{" "}
+                <strong>{pendingProduct?.quantity}</strong> tetapi belum
+                menekan tombol + untuk menambahkannya.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleProceedWithoutAdding}>
+                Lanjutkan Tanpa Menambahkan
+              </Button>
+              <Button onClick={handleAddPendingProduct}>
+                Tambah dan Lanjutkan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

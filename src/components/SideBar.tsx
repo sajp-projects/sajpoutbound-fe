@@ -27,6 +27,7 @@ interface SubMenuItem {
   name: string;
   path: string;
   action?: string;
+  resource?: string;
 }
 
 interface MenuItem {
@@ -101,11 +102,12 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
     item: MenuItem,
     subItem: SubMenuItem
   ): boolean => {
+    const resource = subItem.resource || item.resource;
     return (
-      !item.resource ||
+      !resource ||
       hasPermission(
         permissions,
-        item.resource,
+        resource,
         subItem.action || PERMISSION.ACTIONS.READ
       )
     );
@@ -136,12 +138,13 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
           {
             name: "Arsip Pengguna",
             path: "/pengguna/arsip",
-            action: PERMISSION.ACTIONS.READ,
+            action: PERMISSION.ACTIONS.READ_ARCHIVED,
           },
           {
             name: "Log Pengguna",
             path: "/pengguna/log",
             action: PERMISSION.ACTIONS.READ,
+            resource: PERMISSION.RESOURCES.USER_LOG,
           },
         ],
       },
@@ -193,6 +196,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
             name: "Log Barang",
             path: "/barang/log",
             action: PERMISSION.ACTIONS.READ,
+            resource: PERMISSION.RESOURCES.PRODUCT_LOG,
           },
         ],
       },
@@ -215,6 +219,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
             name: "Log Pelanggan",
             path: "/pelanggan/log",
             action: PERMISSION.ACTIONS.READ,
+            resource: PERMISSION.RESOURCES.CUSTOMER_LOG,
           },
         ],
       },
@@ -237,33 +242,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
             name: "Log Gudang",
             path: "/gudang/log",
             action: PERMISSION.ACTIONS.READ,
-          },
-        ],
-      },
-      {
-        name: "Delivery Order",
-        icon: <FileText className="w-4 h-4 sm:w-5 sm:h-5" />,
-        resource: PERMISSION.RESOURCES.DO,
-        subItems: [
-          {
-            name: "Daftar DO",
-            path: "/do",
-            action: PERMISSION.ACTIONS.READ,
-          },
-          {
-            name: "Tambah DO",
-            path: "/do/tambah",
-            action: PERMISSION.ACTIONS.CREATE,
-          },
-          {
-            name: "DO Arsip",
-            path: "/do/arsip",
-            action: PERMISSION.ACTIONS.READ,
-          },
-          {
-            name: "Log DO",
-            path: "/do/log",
-            action: PERMISSION.ACTIONS.READ,
+            resource: PERMISSION.RESOURCES.WAREHOUSE_LOG,
           },
         ],
       },
@@ -286,6 +265,35 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
             name: "Log Armada",
             path: "/armada/log",
             action: PERMISSION.ACTIONS.READ,
+            resource: PERMISSION.RESOURCES.ARMADA_LOG,
+          },
+        ],
+      },
+      {
+        name: "Delivery Order",
+        icon: <FileText className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.DO,
+        subItems: [
+          {
+            name: "Daftar DO",
+            path: "/do",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Tambah DO",
+            path: "/do/tambah",
+            action: PERMISSION.ACTIONS.CREATE,
+          },
+          {
+            name: "DO Arsip",
+            path: "/do/arsip",
+            action: PERMISSION.ACTIONS.READ_ARCHIVED,
+          },
+          {
+            name: "Log DO",
+            path: "/do/log",
+            action: PERMISSION.ACTIONS.READ,
+            resource: PERMISSION.RESOURCES.DO_LOG,
           },
         ],
       },
@@ -307,12 +315,13 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
           {
             name: "Pengiriman Arsip",
             path: "/pengiriman/arsip",
-            action: PERMISSION.ACTIONS.READ,
+            action: PERMISSION.ACTIONS.READ_ARCHIVED,
           },
           {
             name: "Log Pengiriman",
             path: "/pengiriman/log",
             action: PERMISSION.ACTIONS.READ,
+            resource: PERMISSION.RESOURCES.PENGIRIMAN_LOG,
           },
           {
             name: "Verifikasi Plat Manual",
@@ -426,7 +435,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
           )}
 
           <span className="text-lg font-bold text-blue-600 sm:text-xl">
-            OUTMANAGE
+            PT. SAJP
           </span>
           <div className="mt-1 text-xs font-medium text-gray-500">
             Sistem Manajemen DO

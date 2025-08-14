@@ -6,10 +6,12 @@ import {
   FileText,
   History,
   Info,
+  Search,
   Truck,
 } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 
+import { EmptyState } from "@/components/EmptyState";
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { DeliveryOrderStatus } from "@/types/do";
 import { ShipmentFromDO, ShipmentItemFromDO } from "@/types/shipment";
 import { formatDate } from "@/utils/date";
-import { formatNumber } from "@/utils/formatNumber";
+import { formatInputNumber } from "@/utils/formatNumber";
 import { hasPermission } from "@/utils/permission";
 import { getRoleId } from "@/utils/storage";
 import {
@@ -76,20 +78,6 @@ export default function DetailDo() {
   const { isAuthenticated } = useAuth();
   const roleId = getRoleId() || "";
 
-  // Get tab from URL query parameter or default to "info"
-  const getTabFromUrl = (): "info" | "items" | "shipments" => {
-    const params = new URLSearchParams(location.search);
-    const tab = params.get("tab");
-    if (tab === "items" || tab === "shipments") {
-      return tab;
-    }
-    return "info";
-  };
-
-  const [activeTab, setActiveTab] = useState<"info" | "items" | "shipments">(
-    getTabFromUrl()
-  );
-
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
   });
@@ -106,6 +94,41 @@ export default function DetailDo() {
     PERMISSION.ACTIONS.DELETE
   );
 
+  const hasProductReadAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PRODUCT,
+    PERMISSION.ACTIONS.READ
+  );
+
+  const hasShipmentReadAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PENGIRIMAN,
+    PERMISSION.ACTIONS.READ
+  );
+
+  const hasDoLogAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.DO_LOG,
+    PERMISSION.ACTIONS.READ
+  );
+
+  // Get tab from URL query parameter or default to "info"
+  const getTabFromUrl = (): "info" | "items" | "shipments" => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab === "items" && hasProductReadAccess) {
+      return tab;
+    }
+    if (tab === "shipments" && hasShipmentReadAccess) {
+      return tab;
+    }
+    return "info";
+  };
+
+  const [activeTab, setActiveTab] = useState<"info" | "items" | "shipments">(
+    getTabFromUrl()
+  );
+
   const deliveryOrderId = id || "";
 
   const {
@@ -119,6 +142,7 @@ export default function DetailDo() {
     {
       enabled: !!deliveryOrderId,
       refetchOnWindowFocus: true,
+      refetchOnMount: "always",
       staleTime: 0,
     }
   );
@@ -155,6 +179,14 @@ export default function DetailDo() {
   };
 
   const handleTabChange = (tab: "info" | "items" | "shipments") => {
+    // Prevent switching to restricted tabs if user doesn't have permission
+    if (tab === "items" && !hasProductReadAccess) {
+      return;
+    }
+    if (tab === "shipments" && !hasShipmentReadAccess) {
+      return;
+    }
+
     setActiveTab(tab);
 
     // Update URL with the active tab
@@ -174,14 +206,35 @@ export default function DetailDo() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
+  // Effect to force switch to info tab if user doesn't have permissions
+  useEffect(() => {
+    if (activeTab === "items" && !hasProductReadAccess) {
+      setActiveTab("info");
+      // Update URL to reflect the forced tab change
+      const searchParams = new URLSearchParams(location.search);
+      searchParams.set("tab", "info");
+      navigate(`${location.pathname}?${searchParams.toString()}`, {
+        replace: true,
+      });
+    }
+    if (activeTab === "shipments" && !hasShipmentReadAccess) {
+      setActiveTab("info");
+      // Update URL to reflect the forced tab change
+      const searchParams = new URLSearchParams(location.search);
+      searchParams.set("tab", "info");
+      navigate(`${location.pathname}?${searchParams.toString()}`, {
+        replace: true,
+      });
+    }
+  }, [hasProductReadAccess, hasShipmentReadAccess, activeTab, location.pathname, location.search, navigate]);
+
   // Fetch shipments that use this DO
   const {
     data: shipments,
     isLoading: isLoadingShipments,
     error: shipmentsError,
-    refetch: refetchShipments,
   } = useShipmentsByDeliveryOrderId(deliveryOrderId, {
-    enabled: activeTab === "shipments" && !!deliveryOrderId,
+    enabled: hasShipmentReadAccess && activeTab === "shipments" && !!deliveryOrderId,
   });
 
   return (
@@ -258,40 +311,44 @@ export default function DetailDo() {
                 <Info className="flex-shrink-0 mr-2 w-4 h-4" />
                 Informasi DO
               </button>
-              <button
-                className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
-                  activeTab === "items"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                )}
-                onClick={() => handleTabChange("items")}
-              >
-                <FileText className="flex-shrink-0 mr-2 w-4 h-4" />
-                Daftar Barang
-                {deliveryOrder.items.length > 0 && (
-                  <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
-                    {deliveryOrder.items.length}
-                  </span>
-                )}
-              </button>
-              <button
-                className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
-                  activeTab === "shipments"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                )}
-                onClick={() => handleTabChange("shipments")}
-              >
-                <Truck className="flex-shrink-0 mr-2 w-4 h-4" />
-                Tracking Pengiriman
-                {shipments && shipments.length > 0 && (
-                  <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
-                    {shipments.length}
-                  </span>
-                )}
-              </button>
+              {hasProductReadAccess && (
+                <button
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                    activeTab === "items"
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  )}
+                  onClick={() => handleTabChange("items")}
+                >
+                  <FileText className="flex-shrink-0 mr-2 w-4 h-4" />
+                  Daftar Barang
+                  {deliveryOrder.items.length > 0 && (
+                    <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                      {deliveryOrder.items.length}
+                    </span>
+                  )}
+                </button>
+              )}
+              {hasShipmentReadAccess && (
+                <button
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                    activeTab === "shipments"
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  )}
+                  onClick={() => handleTabChange("shipments")}
+                >
+                  <Truck className="flex-shrink-0 mr-2 w-4 h-4" />
+                  Tracking Pengiriman
+                  {shipments && shipments.length > 0 && (
+                    <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                      {shipments.length}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
 
             {activeTab === "info" && (
@@ -369,65 +426,69 @@ export default function DetailDo() {
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-lg border border-gray-200">
-                    <h3 className="mb-4 text-lg font-medium text-gray-900">
-                      Tindakan
-                    </h3>
-                    <div className="space-y-3">
-                      <Link
-                        to={`/do/${deliveryOrderId}/log`}
-                        className="w-full"
-                      >
-                        <Button
-                          variant="outline"
-                          className="justify-start w-full"
-                        >
-                          <History className="mr-2 w-4 h-4" />
-                          Lihat Log Aktivitas
-                        </Button>
-                      </Link>
-                      {hasDoUpdateAccess &&
-                        deliveryOrder &&
-                        !deliveryOrder.deletedAt &&
-                        deliveryOrder.status !== "COMPLETED" &&
-                        deliveryOrder.status !== "SELESAI" && (
+                  {(hasDoLogAccess || hasDoUpdateAccess || hasDoDeleteAccess) && (
+                    <div className="p-4 rounded-lg border border-gray-200">
+                      <h3 className="mb-4 text-lg font-medium text-gray-900">
+                        Tindakan
+                      </h3>
+                      <div className="space-y-3">
+                        {hasDoLogAccess && (
                           <Link
-                            to={`/do/${deliveryOrderId}/edit`}
+                            to={`/do/${deliveryOrderId}/log`}
                             className="w-full"
                           >
                             <Button
                               variant="outline"
-                              className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                              className="justify-start w-full"
                             >
-                              <Edit className="mr-2 w-4 h-4" />
-                              Edit Delivery Order
+                              <History className="mr-2 w-4 h-4" />
+                              Lihat Log Aktivitas
                             </Button>
                           </Link>
                         )}
-                      {hasDoDeleteAccess &&
-                        deliveryOrder &&
-                        !deliveryOrder.deletedAt &&
-                        deliveryOrder.status !== "COMPLETED" &&
-                        deliveryOrder.status !== "SELESAI" && (
-                          <Button
-                            variant="outline"
-                            className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                            onClick={() => handleDelete(deliveryOrderId)}
-                            disabled={deleteDeliveryOrder.isPending}
-                          >
-                            <Archive className="mr-2 w-4 h-4" />
-                            {deleteDeliveryOrder.isPending
-                              ? "Mengarsipkan..."
-                              : "Arsipkan DO"}
-                          </Button>
-                        )}
+                        {hasDoUpdateAccess &&
+                          deliveryOrder &&
+                          !deliveryOrder.deletedAt &&
+                          deliveryOrder.status !== "COMPLETED" &&
+                          deliveryOrder.status !== "SELESAI" && (
+                            <Link
+                              to={`/do/${deliveryOrderId}/edit`}
+                              className="w-full"
+                            >
+                              <Button
+                                variant="outline"
+                                className="justify-start w-full text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                              >
+                                <Edit className="mr-2 w-4 h-4" />
+                                Edit Delivery Order
+                              </Button>
+                            </Link>
+                          )}
+                        {hasDoDeleteAccess &&
+                          deliveryOrder &&
+                          !deliveryOrder.deletedAt &&
+                          deliveryOrder.status !== "COMPLETED" &&
+                          deliveryOrder.status !== "SELESAI" && (
+                            <Button
+                              variant="outline"
+                              className="justify-start w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                              onClick={() => handleDelete(deliveryOrderId)}
+                              disabled={deleteDeliveryOrder.isPending}
+                            >
+                              <Archive className="mr-2 w-4 h-4" />
+                              {deleteDeliveryOrder.isPending
+                                ? "Mengarsipkan..."
+                                : "Arsipkan DO"}
+                            </Button>
+                          )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {activeTab === "items" && (
+            {activeTab === "items" && hasProductReadAccess && (
               <div className="p-4 rounded-lg border border-gray-200">
                 <h3 className="flex items-center mb-4 text-lg font-medium text-gray-900">
                   <FileText className="mr-2 w-5 h-5 text-blue-600" />
@@ -476,7 +537,7 @@ export default function DetailDo() {
                                   variant="outline"
                                   className="font-medium px-2 py-0.5 bg-green-100 text-green-800 border-green-200"
                                 >
-                                  Kuantitas Completed
+                                  Kuantitas Selesai
                                 </Badge>
                               </div>
                             </TableHead>
@@ -497,7 +558,7 @@ export default function DetailDo() {
                             </TableRow>
                           ) : (
                             deliveryOrder.items.map((item, index) => (
-                              <TableRow key={item.id}>
+                              <TableRow key={item.id} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   {index + 1}
                                 </TableCell>
@@ -511,16 +572,16 @@ export default function DetailDo() {
                                   </Link>
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                  {formatNumber(item.quantity)}
+                                  {formatInputNumber(item.quantity)}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                  {formatNumber(item.pendingQuantity)}
+                                  {formatInputNumber(item.pendingQuantity)}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                  {formatNumber(item.processingQuantity)}
+                                  {formatInputNumber(item.processingQuantity)}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                  {formatNumber(item.completedQuantity)}
+                                  {formatInputNumber(item.completedQuantity)}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   {item.product.satuan}
@@ -562,7 +623,7 @@ export default function DetailDo() {
                                   <span className="font-medium">
                                     Kuantitas:
                                   </span>{" "}
-                                  {formatNumber(item.quantity)}{" "}
+                                  {formatInputNumber(item.quantity)}{" "}
                                   {item.product.satuan}
                                 </p>
                               </div>
@@ -580,7 +641,7 @@ export default function DetailDo() {
                                   Pending
                                 </Badge>
                                 <span className="text-sm font-medium text-red-800">
-                                  {formatNumber(item.pendingQuantity)}
+                                  {formatInputNumber(item.pendingQuantity)}
                                 </span>
                               </div>
                               <div className="flex flex-col items-center p-2 bg-yellow-50 rounded-md border border-yellow-100">
@@ -591,7 +652,7 @@ export default function DetailDo() {
                                   Diproses
                                 </Badge>
                                 <span className="text-sm font-medium text-yellow-800">
-                                  {formatNumber(item.processingQuantity)}
+                                  {formatInputNumber(item.processingQuantity)}
                                 </span>
                               </div>
                               <div className="flex flex-col items-center p-2 bg-green-50 rounded-md border border-green-100">
@@ -602,7 +663,7 @@ export default function DetailDo() {
                                   Completed
                                 </Badge>
                                 <span className="text-sm font-medium text-green-800">
-                                  {formatNumber(item.completedQuantity)}
+                                  {formatInputNumber(item.completedQuantity)}
                                 </span>
                               </div>
                             </div>
@@ -615,7 +676,7 @@ export default function DetailDo() {
               </div>
             )}
 
-            {activeTab === "shipments" && (
+            {activeTab === "shipments" && hasShipmentReadAccess && (
               <div className="p-4 rounded-lg border border-gray-200">
                 <h3 className="flex items-center mb-4 text-lg font-medium text-gray-900">
                   <Truck className="mr-2 w-5 h-5 text-blue-600" />
@@ -631,21 +692,16 @@ export default function DetailDo() {
                         ? shipmentsError.message
                         : "Terjadi kesalahan pada server"
                     }
-                    onRetry={refetchShipments}
+                    onRetry={() => window.location.reload()}
                     retryButtonText="Coba lagi"
                   />
                 ) : !shipments || shipments.length === 0 ? (
-                  <div className="p-6 bg-yellow-50 rounded-lg">
-                    <div className="text-center">
-                      <h2 className="mb-2 text-lg font-semibold text-yellow-700">
-                        Tidak ada pengiriman yang menggunakan DO ini
-                      </h2>
-                      <p className="mb-4 text-yellow-600">
-                        Belum ada pengiriman yang menggunakan item dari delivery
-                        order ini.
-                      </p>
-                    </div>
-                  </div>
+                  <EmptyState
+                    icon={<Search className="w-12 h-12 text-blue-300" />}
+                    title="Tidak ada pengiriman yang menggunakan DO ini"
+                    message="Belum ada pengiriman yang menggunakan item dari delivery order ini."
+                    containerClassName="py-12"
+                  />
                 ) : (
                   <>
                     {/* Desktop view dengan tabel */}
@@ -703,7 +759,7 @@ export default function DetailDo() {
                                       <TableRow>
                                         <TableHead>Nama Barang</TableHead>
                                         <TableHead>Kuantitas</TableHead>
-                                        <TableHead>Satuan</TableHead>
+
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -714,13 +770,11 @@ export default function DetailDo() {
                                               {item.product.name}
                                             </TableCell>
                                             <TableCell>
-                                              {formatNumber(
+                                              {formatInputNumber(
                                                 item.requestedQuantity
-                                              )}
+                                              )} {item.product.satuan}
                                             </TableCell>
-                                            <TableCell>
-                                              {item.product.satuan}
-                                            </TableCell>
+
                                           </TableRow>
                                         )
                                       )}
@@ -805,12 +859,9 @@ export default function DetailDo() {
                                           <div className="flex justify-between mt-1">
                                             <p className="text-xs text-gray-600">
                                               Kuantitas:{" "}
-                                              {formatNumber(
+                                              {formatInputNumber(
                                                 item.requestedQuantity
-                                              )}
-                                            </p>
-                                            <p className="text-xs text-gray-600">
-                                              {item.product.satuan}
+                                              )} {item.product.satuan}
                                             </p>
                                           </div>
                                         </div>

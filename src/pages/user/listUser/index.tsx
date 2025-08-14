@@ -134,6 +134,12 @@ export default function Pengguna() {
     PERMISSION.ACTIONS.DELETE
   );
 
+  const hasUserLogAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.USER_LOG,
+    PERMISSION.ACTIONS.READ
+  );
+
   const getUserActions = (user: User) => {
     const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
 
@@ -141,7 +147,9 @@ export default function Pengguna() {
       actions.push({ type: ActionType.EDIT });
     }
 
-    actions.push({ type: ActionType.LOG });
+    if (hasUserLogAccess) {
+      actions.push({ type: ActionType.LOG });
+    }
 
     if (hasUserDeleteAccess) {
       actions.push({

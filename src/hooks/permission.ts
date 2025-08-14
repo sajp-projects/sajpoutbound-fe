@@ -38,8 +38,6 @@ export function usePermissions(
 ) {
   const [searchParams] = useSearchParams();
   const filters = {
-    page: searchParams.get("page") || "1",
-    limit: searchParams.get("limit") || "10",
     search: searchParams.get("search") || "",
   };
 

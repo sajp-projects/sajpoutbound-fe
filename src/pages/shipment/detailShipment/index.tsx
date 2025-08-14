@@ -81,7 +81,7 @@ import {
 } from "@/utils/constants";
 import { formatDate } from "@/utils/date";
 import { FormErrorData } from "@/utils/errorHandler";
-import { formatNumber } from "@/utils/formatNumber";
+import { formatInputNumber, formatNumber, handleDecimalInput } from "@/utils/formatNumber";
 import { hasPermission } from "@/utils/permission";
 import { getRoleId } from "@/utils/storage";
 import {
@@ -170,6 +170,11 @@ export default function DetailPengiriman() {
   const [netWeight, setNetWeight] = useState("");
   const [tareWeight, setTareWeight] = useState("");
 
+  // Formatted display states for weight inputs
+  const [grossWeightDisplay, setGrossWeightDisplay] = useState("");
+  const [netWeightDisplay, setNetWeightDisplay] = useState("");
+  const [tareWeightDisplay, setTareWeightDisplay] = useState("");
+
   // States for nota timbangan modal
   const [currentNotaIndex, setCurrentNotaIndex] = useState(0);
 
@@ -238,6 +243,8 @@ export default function DetailPengiriman() {
     { id: shipmentId },
     {
       enabled: !!shipmentId,
+      refetchOnMount: "always",
+      staleTime: 0,
     }
   );
 
@@ -609,6 +616,53 @@ export default function DetailPengiriman() {
   const handleCloseWeighingModal = () => {
     setWeighingModalOpen(false);
     setWeighingProductId("");
+    // Reset weight values and displays when closing modal
+    setGrossWeight("");
+    setNetWeight("");
+    setTareWeight("");
+    setGrossWeightDisplay("");
+    setNetWeightDisplay("");
+    setTareWeightDisplay("");
+  };
+
+  // Handler functions for formatted weight inputs with handleDecimalInput
+  const handleGrossWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    const result = handleDecimalInput(inputValue);
+
+    if (result.numericValue !== undefined) {
+      setGrossWeight(result.numericValue.toString());
+      setGrossWeightDisplay(result.displayValue);
+    } else {
+      setGrossWeight('');
+      setGrossWeightDisplay(inputValue);
+    }
+  };
+
+  const handleNetWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    const result = handleDecimalInput(inputValue);
+
+    if (result.numericValue !== undefined) {
+      setNetWeight(result.numericValue.toString());
+      setNetWeightDisplay(result.displayValue);
+    } else {
+      setNetWeight('');
+      setNetWeightDisplay(inputValue);
+    }
+  };
+
+  const handleTareWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    const result = handleDecimalInput(inputValue);
+
+    if (result.numericValue !== undefined) {
+      setTareWeight(result.numericValue.toString());
+      setTareWeightDisplay(result.displayValue);
+    } else {
+      setTareWeight('');
+      setTareWeightDisplay(inputValue);
+    }
   };
 
   // Helper function to get weighing method for a product
@@ -1297,7 +1351,7 @@ export default function DetailPengiriman() {
                                   </Badge>
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                  {formatNumber(product.totalQuantity)}{" "}
+                                  {formatInputNumber(product.totalQuantity)}{" "}
                                   {product.satuan}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
@@ -1317,7 +1371,7 @@ export default function DetailPengiriman() {
                                       return (
                                         <Badge
                                           variant="outline"
-                                          className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap"
+                                          className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap text-center"
                                         >
                                           Belum Dimuat
                                         </Badge>
@@ -1326,7 +1380,7 @@ export default function DetailPengiriman() {
                                       return (
                                         <Badge
                                           variant="outline"
-                                          className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap"
+                                          className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap text-center"
                                         >
                                           Sudah Dimuat
                                         </Badge>
@@ -1336,7 +1390,7 @@ export default function DetailPengiriman() {
                                         <div className="space-y-1">
                                           <Badge
                                             variant="outline"
-                                            className="text-blue-700 bg-blue-50 border-blue-200 whitespace-nowrap"
+                                            className="text-blue-700 bg-blue-50 border-blue-200 whitespace-nowrap text-center"
                                           >
                                             Sebagian Dimuat
                                           </Badge>
@@ -1429,6 +1483,18 @@ export default function DetailPengiriman() {
                                               Timbang
                                             </Button>
                                           );
+                                        } else if (weighingMethod === "VENDOR") {
+                                          return (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="text-purple-600 border-purple-200 bg-purple-50 cursor-not-allowed"
+                                              disabled={true}
+                                            >
+                                              <Scale className="mr-2 w-4 h-4" />
+                                              Sedang Dimuat
+                                            </Button>
+                                          );
                                         } else {
                                           return (
                                             <Button
@@ -1499,6 +1565,35 @@ export default function DetailPengiriman() {
                                             >
                                               <Scale className="mr-2 w-4 h-4" />
                                               Timbang ({unweighedCount})
+                                            </Button>
+                                          );
+                                        }
+                                      } else if (
+                                        weighingMethod === "VENDOR" &&
+                                        chosenCount > 0
+                                      ) {
+                                        const chosenItems =
+                                          shipment.shipmentItems.filter(
+                                            (si) =>
+                                              si.productId === product.id &&
+                                              si.chosenProduct
+                                          );
+                                        const unweighedCount =
+                                          chosenItems.filter(
+                                            (si) => si.status !== "COMPLETED"
+                                          ).length;
+
+                                        if (unweighedCount > 0) {
+                                          buttons.push(
+                                            <Button
+                                              key="sedang-dimuat"
+                                              variant="outline"
+                                              size="sm"
+                                              className="text-purple-600 border-purple-200 bg-purple-50 cursor-not-allowed"
+                                              disabled={true}
+                                            >
+                                              <Scale className="mr-2 w-4 h-4" />
+                                              Sedang Dimuat ({unweighedCount})
                                             </Button>
                                           );
                                         }
@@ -1590,14 +1685,14 @@ export default function DetailPengiriman() {
                               {product.isChosen ? (
                                 <Badge
                                   variant="outline"
-                                  className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap"
+                                  className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap text-center"
                                 >
                                   Sudah Dimuat
                                 </Badge>
                               ) : (
                                 <Badge
                                   variant="outline"
-                                  className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap"
+                                  className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap text-center"
                                 >
                                   Belum Dimuat
                                 </Badge>
@@ -1621,57 +1716,202 @@ export default function DetailPengiriman() {
                                 <span className="font-medium">
                                   Total Kuantitas:{" "}
                                 </span>
-                                {formatNumber(product.totalQuantity)}{" "}
+                                {formatInputNumber(product.totalQuantity)}{" "}
                                 {product.satuan}
                               </p>
                             </div>
-                            {(hasPengirimanUpdateAccess ||
+                                                        {(hasPengirimanUpdateAccess ||
                               hasPengirimanWeighAccess) && (
                               <div className="pt-3 mt-3 space-y-2 border-t border-gray-100">
-                                {hasPengirimanUpdateAccess &&
-                                  product.hasPendingItems && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
-                                      onClick={() =>
-                                        handleOpenProductModal(product.id)
-                                      }
-                                      disabled={chooseProduct.isPending}
-                                    >
-                                      <Package className="mr-2 w-4 h-4" />
-                                      Muat Barang
-                                    </Button>
-                                  )}
-                                {hasPengirimanUpdateAccess &&
-                                  product.isChosen && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-full text-green-600 border-green-200 hover:bg-green-50"
-                                      disabled={true}
-                                    >
-                                      <Check className="mr-2 w-4 h-4" />
-                                      Barang Sudah Dimuat
-                                    </Button>
-                                  )}
-                                {hasPengirimanWeighAccess &&
-                                  product.isChosen &&
-                                  getProductWeighingMethod(product.id) ===
-                                    "MANUAL" && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-full text-blue-600 border-blue-200 hover:bg-purple-50"
-                                      onClick={() =>
-                                        handleOpenWeighingModal(product.id)
-                                      }
-                                      disabled={bulkWeighItems.isPending}
-                                    >
-                                      <Scale className="mr-2 w-4 h-4" />
-                                      Timbang
-                                    </Button>
-                                  )}
+                                {(() => {
+                                  // Get the same logic as desktop view
+                                  const chosenCount =
+                                    shipment.shipmentItems.filter(
+                                      (si) =>
+                                        si.productId === product.id &&
+                                        si.chosenProduct
+                                    ).length;
+                                  const totalCount =
+                                    shipment.shipmentItems.filter(
+                                      (si) => si.productId === product.id
+                                    ).length;
+                                  const allWeighed = shipment.shipmentItems
+                                    .filter(
+                                      (si) =>
+                                        si.productId === product.id &&
+                                        si.chosenProduct
+                                    )
+                                    .every(
+                                      (si) => si.status === "COMPLETED"
+                                    );
+
+                                  const weighingMethod =
+                                    getProductWeighingMethod(product.id);
+
+                                  // If no items chosen yet
+                                  if (chosenCount === 0) {
+                                    return hasPengirimanUpdateAccess ? (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                                        onClick={() =>
+                                          handleOpenProductModal(product.id)
+                                        }
+                                        disabled={chooseProduct.isPending}
+                                      >
+                                        <Package className="mr-2 w-4 h-4" />
+                                        Muat Barang
+                                      </Button>
+                                    ) : null;
+                                  }
+
+                                  // If all items chosen
+                                  if (chosenCount === totalCount) {
+                                    // All chosen, check if all weighed
+                                    if (allWeighed) {
+                                      return (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="w-full text-green-600 bg-green-50 border-green-200 cursor-not-allowed"
+                                          disabled
+                                        >
+                                          <Check className="mr-2 w-4 h-4" />
+                                          Sudah Ditimbang
+                                        </Button>
+                                      );
+                                    } else if (
+                                      weighingMethod === "MANUAL" &&
+                                      hasPengirimanWeighAccess
+                                    ) {
+                                      return (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="w-full text-purple-600 border-purple-200 hover:bg-purple-50"
+                                          onClick={() =>
+                                            handleOpenWeighingModal(product.id)
+                                          }
+                                          disabled={bulkWeighItems.isPending}
+                                        >
+                                          <Scale className="mr-2 w-4 h-4" />
+                                          Timbang
+                                        </Button>
+                                      );
+                                    } else if (weighingMethod === "VENDOR") {
+                                      return (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="w-full text-purple-600 border-purple-200 bg-purple-50 cursor-not-allowed"
+                                          disabled={true}
+                                        >
+                                          <Scale className="mr-2 w-4 h-4" />
+                                          Sedang Dimuat
+                                        </Button>
+                                      );
+                                    } else {
+                                      return (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="w-full text-green-600 border-green-200 hover:bg-green-50"
+                                          disabled={true}
+                                        >
+                                          <Check className="mr-2 w-4 h-4" />
+                                          Semua Dimuat
+                                        </Button>
+                                      );
+                                    }
+                                  }
+
+                                  // Partial chosen - show both buttons
+                                  const buttons = [];
+                                  if (hasPengirimanUpdateAccess) {
+                                    buttons.push(
+                                      <Button
+                                        key="muat"
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                                        onClick={() =>
+                                          handleOpenProductModal(product.id)
+                                        }
+                                        disabled={chooseProduct.isPending}
+                                      >
+                                        <Package className="mr-2 w-4 h-4" />
+                                        Muat Sisa ({totalCount - chosenCount})
+                                      </Button>
+                                    );
+                                  }
+
+                                  if (
+                                    weighingMethod === "MANUAL" &&
+                                    hasPengirimanWeighAccess &&
+                                    chosenCount > 0
+                                  ) {
+                                    const chosenItems =
+                                      shipment.shipmentItems.filter(
+                                        (si) =>
+                                          si.productId === product.id &&
+                                          si.chosenProduct
+                                      );
+                                    const unweighedCount =
+                                      chosenItems.filter(
+                                        (si) => si.status !== "COMPLETED"
+                                      ).length;
+
+                                    if (unweighedCount > 0) {
+                                      buttons.push(
+                                        <Button
+                                          key="timbang"
+                                          variant="outline"
+                                          size="sm"
+                                          className="w-full text-purple-600 border-purple-200 hover:bg-purple-50"
+                                          onClick={() =>
+                                            handleOpenWeighingModal(product.id)
+                                          }
+                                          disabled={bulkWeighItems.isPending}
+                                        >
+                                          <Scale className="mr-2 w-4 h-4" />
+                                          Timbang ({unweighedCount})
+                                        </Button>
+                                      );
+                                    }
+                                  } else if (
+                                    weighingMethod === "VENDOR" &&
+                                    chosenCount > 0
+                                  ) {
+                                    const chosenItems =
+                                      shipment.shipmentItems.filter(
+                                        (si) =>
+                                          si.productId === product.id &&
+                                          si.chosenProduct
+                                      );
+                                    const unweighedCount =
+                                      chosenItems.filter(
+                                        (si) => si.status !== "COMPLETED"
+                                      ).length;
+
+                                    if (unweighedCount > 0) {
+                                      buttons.push(
+                                        <Button
+                                          key="sedang-dimuat"
+                                          variant="outline"
+                                          size="sm"
+                                          className="w-full text-purple-600 border-purple-200 bg-purple-50 cursor-not-allowed"
+                                          disabled={true}
+                                        >
+                                          <Scale className="mr-2 w-4 h-4" />
+                                          Sedang Dimuat ({unweighedCount})
+                                        </Button>
+                                      );
+                                    }
+                                  }
+
+                                  return buttons.length > 0 ? buttons : null;
+                                })()}
                               </div>
                             )}
                           </div>
@@ -1725,37 +1965,37 @@ export default function DetailPengiriman() {
                           className="overflow-hidden rounded-lg border border-gray-200"
                         >
                           <AccordionTrigger className="px-4 py-3 bg-gray-50 hover:bg-gray-100 hover:no-underline">
-                            <div className="flex items-center justify-between w-full text-left">
-                              <div className="min-w-0 flex-1 mr-2">
-                                <h4 className="font-medium text-gray-900">
-                                  <Link
-                                    to={`/do/${deliveryOrder.id}`}
-                                    className="text-blue-600 hover:underline inline"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    {deliveryOrder.doNumber}
-                                  </Link>
-                                </h4>
-                                <p className="text-sm text-gray-500 truncate">
-                                  {deliveryOrder.customer.name}
-                                </p>
-                              </div>
+                                                          <div className="flex items-center justify-between w-full text-left">
+                                <div className="min-w-0 flex-1 mr-2">
+                                  <h4 className="font-medium text-gray-900">
+                                    <Link
+                                      to={`/do/${deliveryOrder.id}`}
+                                      className="text-blue-600 hover:underline inline"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {deliveryOrder.customer.name.length > 25 ? deliveryOrder.customer.name.slice(0, 20) + "..." : deliveryOrder.customer.name}
+                                    </Link>
+                                  </h4>
+                                  <p className="hidden sm:block text-sm text-gray-500 truncate">
+                                    {deliveryOrder.customer.name}
+                                  </p>
+                                </div>
 
-                              {/* Action buttons for customer change and DO revision */}
-                              {(shipment.status === "PROSES" ||
-                                shipment.status === "SELESAI") &&
-                                deliveryOrder.products.some(
-                                  (product) => product.chosenProduct
-                                ) && (
-                                  <div
-                                    className="flex gap-1 sm:gap-2 flex-shrink-0"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
+                                {/* Action buttons for customer change and DO revision */}
+                                {(shipment.status === "PROSES" ||
+                                  shipment.status === "SELESAI") &&
+                                  deliveryOrder.products.some(
+                                    (product) => product.chosenProduct
+                                  ) && (
+                                    <div
+                                      className="flex gap-1 sm:gap-2 flex-shrink-0 ml-2"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
                                     {hasChangeCustomerAfterWeighAccess && (
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="text-blue-600 border-blue-200 hover:bg-blue-50 flex-shrink-0"
+                                        className="text-blue-600 border-blue-200 hover:bg-blue-50 flex-shrink-0 min-w-0"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           handleOpenChangeCustomerModal(
@@ -1763,7 +2003,7 @@ export default function DetailPengiriman() {
                                           );
                                         }}
                                         disabled={isLoadingFullDOHook}
-                                        title="Ubah Customer" // Tooltip for icon-only view
+                                        title="Ubah Customer"
                                       >
                                         {isLoadingFullDOHook ? (
                                           <Loader2 className="w-3 h-3 animate-spin sm:mr-1" />
@@ -1781,13 +2021,13 @@ export default function DetailPengiriman() {
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="text-green-600 border-green-200 hover:bg-green-50 flex-shrink-0"
+                                        className="text-green-600 border-green-200 hover:bg-green-50 flex-shrink-0 min-w-0"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           handleOpenReviseModal(deliveryOrder);
                                         }}
                                         disabled={isLoadingFullDOHook}
-                                        title="Revisi DO" // Tooltip for icon-only view
+                                        title="Revisi DO"
                                       >
                                         {isLoadingFullDOHook ? (
                                           <Loader2 className="w-3 h-3 animate-spin sm:mr-1" />
@@ -1857,7 +2097,7 @@ export default function DetailPengiriman() {
                                           </span>
                                         </TableCell>
                                         <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                          {formatNumber(product.quantity)}{" "}
+                                          {formatInputNumber(product.quantity)}{" "}
                                           {product.satuan}
                                         </TableCell>
                                         <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
@@ -1871,7 +2111,7 @@ export default function DetailPengiriman() {
                                           ) : (
                                             <Badge
                                               variant="outline"
-                                              className="text-yellow-700 bg-yellow-50 border-yellow-200"
+                                              className="text-yellow-700 bg-yellow-50 border-yellow-200 text-center"
                                             >
                                               Belum Dimuat
                                             </Badge>
@@ -1908,14 +2148,14 @@ export default function DetailPengiriman() {
                                         {product.chosenProduct ? (
                                           <Badge
                                             variant="outline"
-                                            className="text-green-700 bg-green-50 border-green-200"
+                                            className="text-green-700 bg-green-50 border-green-200 text-center"
                                           >
                                             Sudah Dimuat
                                           </Badge>
                                         ) : (
                                           <Badge
                                             variant="outline"
-                                            className="text-yellow-700 bg-yellow-50 border-yellow-200"
+                                            className="text-yellow-700 bg-yellow-50 border-yellow-200 text-center"
                                           >
                                             Belum Dimuat
                                           </Badge>
@@ -1941,7 +2181,7 @@ export default function DetailPengiriman() {
                                           <span className="font-medium">
                                             Kuantitas:{" "}
                                           </span>
-                                          {formatNumber(product.quantity)}{" "}
+                                          {formatInputNumber(product.quantity)}{" "}
                                           {product.satuan}
                                         </p>
                                       </div>
@@ -2069,7 +2309,7 @@ export default function DetailPengiriman() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                    {formatNumber(item.totalRequestedQuantity)}{" "}
+                                    {formatInputNumber(item.totalRequestedQuantity)}{" "}
                                     {item.product.satuan}
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
@@ -2078,14 +2318,14 @@ export default function DetailPengiriman() {
                                     ) ? (
                                       <Badge
                                         variant="outline"
-                                        className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap"
+                                        className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap text-center"
                                       >
                                         Sudah Ditimbang
                                       </Badge>
                                     ) : (
                                       <Badge
                                         variant="outline"
-                                        className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap"
+                                        className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap text-center"
                                       >
                                         Belum Ditimbang
                                       </Badge>
@@ -2209,14 +2449,14 @@ export default function DetailPengiriman() {
                                 ) ? (
                                   <Badge
                                     variant="outline"
-                                    className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap"
+                                    className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap text-center"
                                   >
                                     Sudah Ditimbang
                                   </Badge>
                                 ) : (
                                   <Badge
                                     variant="outline"
-                                    className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap"
+                                    className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap text-center"
                                   >
                                     Belum Ditimbang
                                   </Badge>
@@ -2244,7 +2484,7 @@ export default function DetailPengiriman() {
                                     Kuantitas:
                                   </span>
                                   <span>
-                                    {formatNumber(item.totalRequestedQuantity)}{" "}
+                                    {formatInputNumber(item.totalRequestedQuantity)}{" "}
                                     {item.product.satuan}
                                   </span>
                                 </div>
@@ -2690,7 +2930,7 @@ export default function DetailPengiriman() {
                           <div className="text-right">
                             <p className="text-xs text-gray-500">Kuantitas</p>
                             <p className="text-sm font-semibold text-gray-800">
-                              {formatNumber(doItem.product.quantity)}{" "}
+                              {formatInputNumber(doItem.product.quantity)}{" "}
                               {doItem.product.satuan}
                             </p>
                           </div>
@@ -2823,7 +3063,7 @@ export default function DetailPengiriman() {
                       <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
                         <h3 className="text-base font-medium text-blue-800 mb-3">
                           {productName} - Total:{" "}
-                          {formatNumber(totalUnweighedQuantity)} {productSatuan}
+                          {formatInputNumber(totalUnweighedQuantity)} {productSatuan}
                         </h3>
 
                         {/* Show delivery orders involved */}
@@ -2859,7 +3099,7 @@ export default function DetailPengiriman() {
                                       {doInfo.doNumber}
                                     </span>
                                     <span className="text-sm font-semibold text-gray-800">
-                                      {formatNumber(doInfo.quantity)}{" "}
+                                      {formatInputNumber(doInfo.quantity)}{" "}
                                       {productSatuan}
                                     </span>
                                   </div>
@@ -2880,12 +3120,12 @@ export default function DetailPengiriman() {
                     Berat Kotor (kg)
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     className="w-full px-3 py-2 mt-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
                     placeholder="Masukkan berat kotor"
-                    value={grossWeight}
-                    onChange={(e) => setGrossWeight(e.target.value)}
+                    value={grossWeightDisplay}
+                    onChange={handleGrossWeightChange}
+                    onFocus={(e) => e.target.select()}
                   />
                 </div>
                 <div>
@@ -2893,12 +3133,12 @@ export default function DetailPengiriman() {
                     Berat Bersih (kg)
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     className="w-full px-3 py-2 mt-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
-                    placeholder="Masukkan berat bersih (opsional)"
-                    value={netWeight}
-                    onChange={(e) => setNetWeight(e.target.value)}
+                    placeholder="Masukkan berat bersih"
+                    value={netWeightDisplay}
+                    onChange={handleNetWeightChange}
+                    onFocus={(e) => e.target.select()}
                   />
                 </div>
                 <div>
@@ -2906,12 +3146,12 @@ export default function DetailPengiriman() {
                     Berat Tare (kg)
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     className="w-full px-3 py-2 mt-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
-                    placeholder="Masukkan berat tare (opsional)"
-                    value={tareWeight}
-                    onChange={(e) => setTareWeight(e.target.value)}
+                    placeholder="Masukkan berat tara"
+                    value={tareWeightDisplay}
+                    onChange={handleTareWeightChange}
+                    onFocus={(e) => e.target.select()}
                   />
                 </div>
               </div>

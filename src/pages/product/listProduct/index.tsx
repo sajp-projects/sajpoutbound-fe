@@ -71,6 +71,12 @@ export default function DaftarBarang() {
     PERMISSION.ACTIONS.DELETE
   );
 
+  const hasProductLogAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PRODUCT_LOG,
+    PERMISSION.ACTIONS.READ
+  );
+
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
 
@@ -127,7 +133,9 @@ export default function DaftarBarang() {
       actions.push({ type: ActionType.EDIT });
     }
 
-    actions.push({ type: ActionType.LOG });
+    if (hasProductLogAccess) {
+      actions.push({ type: ActionType.LOG });
+    }
 
     if (hasProductDeleteAccess) {
       actions.push({
@@ -242,7 +250,10 @@ export default function DaftarBarang() {
                           </TableCell>
                           <TableCell className="py-2.5 px-3 font-medium text-blue-600 text-sm">
                             <div className="wrap-text" title={barang.name}>
-                              {barang.name}
+                              {barang.name} -
+                              <span className="text-sm font-medium text-gray-500">
+                               {" "}{barang.satuan}
+                              </span>
                             </div>
                           </TableCell>
                           <TableCell className="py-2.5 px-3 text-gray-500 text-xs lg:text-sm hidden md:table-cell">
@@ -294,9 +305,13 @@ export default function DaftarBarang() {
                   >
                     <div className="w-full p-3">
                       <div className="flex items-start justify-between w-full mb-2">
-                        <div className="max-w-[65%]">
+                        <div className="max-w-full">
                           <h3 className="text-sm font-medium text-blue-600 break-words">
-                            {barang.name}
+                            {barang.name} -
+                            <span className="text-sm font-medium text-gray-500">
+                              {" "}
+                              {barang.satuan}
+                            </span>
                           </h3>
                         </div>
                       </div>

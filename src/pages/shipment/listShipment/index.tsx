@@ -10,6 +10,7 @@ import { Pagination } from "@/components/Pagination";
 import { SearchInput } from "@/components/SearchInput";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DateRangeFilter } from "@/components/ui/DateRangeFilter";
 import {
   Select,
   SelectContent,
@@ -43,6 +44,7 @@ import {
   showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
+import { useState } from "react";
 
 interface ActionConfig {
   type: ActionType;
@@ -64,6 +66,18 @@ export default function DaftarPengiriman() {
     enabled: isAuthenticated && roleId !== "",
   });
 
+  // Date range state (copied from laporan/operasional/index.tsx)
+  const [dateRange, setDateRange] = useState<{
+    startDate: string;
+    endDate: string;
+  }>({
+    startDate: new Date(new Date().setHours(23, 59, 59, 999))
+      .toISOString()
+      .slice(0, 10),
+    endDate: new Date(new Date().setHours(23, 59, 59, 999))
+      .toISOString()
+      .slice(0, 10),
+  });
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
   const statusFilter = searchParams.get("status") || "";
@@ -77,6 +91,8 @@ export default function DaftarPengiriman() {
       search: searchQuery,
       status: statusFilter,
       type: typeFilter,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
     },
     {
       staleTime: 0,
@@ -119,6 +135,15 @@ export default function DaftarPengiriman() {
 
     params.set("page", "1");
 
+    setSearchParams(params);
+  };
+
+  const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
+    setDateRange(range);
+    const params = new URLSearchParams(searchParams);
+    params.set("startDate", range.startDate);
+    params.set("endDate", range.endDate);
+    params.set("page", "1");
     setSearchParams(params);
   };
 
@@ -212,21 +237,30 @@ export default function DaftarPengiriman() {
 
   return (
     <div className="flex flex-col px-2 space-y-4 w-full min-h-full sm:space-y-6 sm:px-4 md:px-0">
-      <div className="flex flex-row gap-2 justify-between items-center w-full">
-        <h1 className="text-2xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
-          Daftar Pengiriman
-        </h1>
-        {hasPengirimanCreateAccess && (
-          <Link to="/pengiriman/tambah">
-            <Button
-              leftIcon={<Plus className="w-3 h-3 sm:w-4 sm:h-4" />}
-              size="sm"
-              className="text-xs sm:text-sm"
-            >
-              Tambah
-            </Button>
-          </Link>
-        )}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 md:gap-4 w-full">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
+            Daftar Pengiriman
+          </h1>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto items-start sm:items-center justify-start sm:justify-end">
+          <DateRangeFilter
+            startDate={dateRange.startDate}
+            endDate={dateRange.endDate}
+            onChange={handleDateRangeChange}
+          />
+          {hasPengirimanCreateAccess && (
+            <Link to="/pengiriman/tambah">
+              <Button
+                leftIcon={<Plus className="w-3 h-3 sm:w-4 sm:h-4" />}
+                size="sm"
+                className="text-xs sm:text-sm"
+              >
+                Tambah
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="overflow-hidden p-3 w-full bg-white rounded-lg shadow sm:p-4 md:p-6">
