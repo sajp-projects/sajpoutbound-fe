@@ -74,12 +74,8 @@ export default function DaftarDo() {
     startDate: string;
     endDate: string;
   }>({
-    startDate: new Date(new Date().setHours(23, 59, 59, 999))
-      .toISOString()
-      .slice(0, 10),
-    endDate: new Date(new Date().setHours(23, 59, 59, 999))
-      .toISOString()
-      .slice(0, 10),
+    startDate: new Date().toISOString().slice(0, 10),
+    endDate: new Date().toISOString().slice(0, 10),
   });
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
@@ -95,6 +91,7 @@ export default function DaftarDo() {
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
   });
+
 
   const deliveryOrders = data?.deliveryOrders || [];
   const pagination = data?.pagination || {

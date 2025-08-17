@@ -13,4 +13,5 @@ export const SATUAN_OPTIONS: OptionType[] = [
   { value: "ROLL", label: "ROLL" },
   { value: "PACK", label: "PACK" },
   { value: "UNIT", label: "UNIT" },
+  { value: "SAK", label: "SAK" },
 ];

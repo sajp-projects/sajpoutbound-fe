@@ -71,12 +71,8 @@ export default function DaftarPengiriman() {
     startDate: string;
     endDate: string;
   }>({
-    startDate: new Date(new Date().setHours(23, 59, 59, 999))
-      .toISOString()
-      .slice(0, 10),
-    endDate: new Date(new Date().setHours(23, 59, 59, 999))
-      .toISOString()
-      .slice(0, 10),
+    startDate: new Date().toISOString().slice(0, 10),
+    endDate: new Date().toISOString().slice(0, 10),
   });
   const currentPage = parseInt(searchParams.get("page") || "1");
   const itemsPerPage = parseInt(searchParams.get("limit") || "10");
@@ -102,6 +98,7 @@ export default function DaftarPengiriman() {
   );
 
   const shipments = data?.shipments || [];
+  console.log(shipments, "shipments");
   const pagination = data?.pagination || {
     total: 0,
     page: currentPage,
@@ -138,7 +135,10 @@ export default function DaftarPengiriman() {
     setSearchParams(params);
   };
 
-  const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
+  const handleDateRangeChange = (range: {
+    startDate: string;
+    endDate: string;
+  }) => {
     setDateRange(range);
     const params = new URLSearchParams(searchParams);
     params.set("startDate", range.startDate);

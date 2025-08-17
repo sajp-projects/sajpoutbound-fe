@@ -1,3 +1,4 @@
+import { DeliveryOrderComboboxWrapper } from "@/components/DeliveryOrderComboboxWrapper";
 import {
   Accordion,
   AccordionContent,
@@ -37,8 +38,10 @@ import {
   useDeliveryOrder,
   useInfiniteDeliveryOrders,
 } from "@/hooks/do";
+import { useActiveDrivers } from "@/hooks/driver";
 import { shipmentKeys, useCreateShipment } from "@/hooks/shipment";
 import { cn } from "@/lib/utils";
+import { DeliveryOrder } from "@/types/do";
 import { CreateShipmentInput, Shipment } from "@/types/shipment";
 import { LOCATION_TYPE } from "@/utils/constants";
 import { formatInputNumber, handleDecimalInput } from "@/utils/formatNumber";
@@ -47,9 +50,10 @@ import { joiResolver } from "@hookform/resolvers/joi";
 import { useQueryClient } from "@tanstack/react-query";
 import Joi from "joi";
 import { Loader2, Plus, Save, Trash } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router";
+
 
 // Validasi plat nomor Indonesia
 const plateNumberRegex = /^[A-Z]{1,2}\s?\d{1,4}\s?[A-Z]{1,3}$/;
@@ -97,6 +101,10 @@ const formSchema = Joi.object({
     }),
     otherwise: Joi.string().allow("").optional(),
   }),
+  driverId: Joi.string().required().messages({
+    "string.empty": "Supir harus dipilih",
+    "any.required": "Supir harus dipilih",
+  }),
   internalNote: Joi.string().allow("").optional(),
   deliveryOrders: Joi.array()
     .items(deliveryOrderItemSchema)
@@ -112,6 +120,7 @@ interface FormValues {
   type: "ANTAR" | "JEMPUT";
   plateNumber?: string;
   armadaId?: string;
+  driverId: string;
   internalNote?: string;
   deliveryOrders: {
     deliveryOrderId: string;
@@ -163,7 +172,6 @@ export default function TambahPengiriman() {
     Record<string, string>
   >({});
 
-
   // Fetch data armada dan delivery orders
   const {
     data: armadasData,
@@ -187,6 +195,12 @@ export default function TambahPengiriman() {
     searchQuery: deliveryOrderSearchQuery,
     availableOnly: true,
     limit: 10,
+    enabled: true,
+
+  });
+
+  // Hook untuk mendapatkan active drivers
+  const { data: driversData, isLoading: loadingDrivers } = useActiveDrivers({
     enabled: true,
   });
 
@@ -214,17 +228,44 @@ export default function TambahPengiriman() {
         secondary: armada.description,
       })) || [];
 
+  const drivers =
+    driversData?.map((driver) => ({
+      label: driver.name,
+      value: driver.id,
+    })) || [];
+
   // Convert DO data ke format ComboboxItem (filtering sudah dilakukan di backend)
-  const deliveryOrders =
+  const deliveryOrders = useMemo(() => {
+    return (
+      deliveryOrdersData?.pages
+        .flatMap((page) => page.deliveryOrders)
+        ?.map((do_item) => ({
+          label: `${do_item.doNumber} - ${do_item.customer.name}`,
+          value: do_item.id,
+          secondary: `${do_item.address} - ${
+            do_item.items.filter((item) => item.pendingQuantity > 0).length
+          } barang tersedia`,
+        })) || []
+    );
+  }, [deliveryOrdersData]);
+
+  // Create a stable map for quick DO data lookup for hover functionality
+  const doDataMap = useMemo(() => {
+    const map = new Map<string, DeliveryOrder>();
     deliveryOrdersData?.pages
       .flatMap((page) => page.deliveryOrders)
-      ?.map((do_item) => ({
-        label: `${do_item.doNumber} - ${do_item.customer.name}`,
-        value: do_item.id,
-        secondary: `${do_item.address} - ${
-          do_item.items.filter((item) => item.pendingQuantity > 0).length
-        } barang tersedia`,
-      })) || [];
+      .forEach((do_item) => {
+        map.set(do_item.id, do_item);
+      });
+    return map;
+  }, [deliveryOrdersData]);
+
+  // State for hover tooltip
+  const [hoveredDO, setHoveredDO] = useState<DeliveryOrder | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   const createShipment = useCreateShipment({
     onSuccess: (data: Shipment) => {
@@ -255,6 +296,7 @@ export default function TambahPengiriman() {
       type: "ANTAR",
       plateNumber: "",
       armadaId: "",
+      driverId: "",
       internalNote: "",
       deliveryOrders: [
         {
@@ -271,6 +313,38 @@ export default function TambahPengiriman() {
     control: form.control,
     name: "deliveryOrders",
   });
+
+  // Global event listener for hover detection on dropdown items
+  useEffect(() => {
+    const handleGlobalMouseMove = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const commandItem = target.closest("[cmdk-item]");
+
+      if (commandItem) {
+        const itemValue = commandItem.getAttribute("data-value");
+        if (itemValue && doDataMap.has(itemValue)) {
+          const rect = commandItem.getBoundingClientRect();
+          setHoveredDO(doDataMap.get(itemValue)!);
+          setTooltipPosition({
+            x: rect.right + 10,
+            y: rect.top,
+          });
+        }
+      } else {
+        // Only clear tooltip if we're not hovering over any command item
+        const anyCommandItem = document.querySelector("[cmdk-item]:hover");
+        if (!anyCommandItem) {
+          setHoveredDO(null);
+          setTooltipPosition(null);
+        }
+      }
+    };
+
+    document.addEventListener("mousemove", handleGlobalMouseMove);
+    return () => {
+      document.removeEventListener("mousemove", handleGlobalMouseMove);
+    };
+  }, [doDataMap]);
 
   const watchType = form.watch("type");
   const watchDeliveryOrders = form.watch("deliveryOrders");
@@ -327,13 +401,14 @@ export default function TambahPengiriman() {
           // Initialize display values for existing products
           orderedProducts.forEach((product) => {
             if (product.requestedQuantity > 0) {
-              setQuantityDisplayValues(prev => ({
+              setQuantityDisplayValues((prev) => ({
                 ...prev,
-                [`${doIndex}-${product.productId}`]: formatInputNumber(product.requestedQuantity)
+                [`${doIndex}-${product.productId}`]: formatInputNumber(
+                  product.requestedQuantity
+                ),
               }));
             }
           });
-
         } else {
           // Inisialisasi array barang dengan requestedQuantity 0 jika belum ada
           const initialProducts = availableProducts.map((product) => ({
@@ -491,6 +566,7 @@ export default function TambahPengiriman() {
         values.type === "JEMPUT" && values.plateNumber
           ? values.plateNumber
           : "",
+      driverId: values.driverId,
       items,
     };
 
@@ -567,16 +643,15 @@ export default function TambahPengiriman() {
       });
 
       // Clear display values for this DO
-      setQuantityDisplayValues(prev => {
+      setQuantityDisplayValues((prev) => {
         const newState = { ...prev };
-        Object.keys(newState).forEach(key => {
+        Object.keys(newState).forEach((key) => {
           if (key.startsWith(`${index}-`)) {
             delete newState[key];
           }
         });
         return newState;
       });
-
     }
 
     // Bersihkan error untuk field yang akan dihapus
@@ -637,9 +712,9 @@ export default function TambahPengiriman() {
       form.clearErrors(`deliveryOrders.${index}.locationType`);
 
       // Clear display values for this DO
-      setQuantityDisplayValues(prev => {
+      setQuantityDisplayValues((prev) => {
         const newState = { ...prev };
-        Object.keys(newState).forEach(key => {
+        Object.keys(newState).forEach((key) => {
           if (key.startsWith(`${index}-`)) {
             delete newState[key];
           }
@@ -696,7 +771,6 @@ export default function TambahPengiriman() {
 
     form.setValue("type", value);
   };
-
 
   return (
     <div className="px-4 space-y-6 sm:px-0">
@@ -833,6 +907,34 @@ export default function TambahPengiriman() {
                       )}
                     </div>
                   </div>
+
+                  {/* Driver Selection */}
+                  <div className="sm:col-span-2 mt-4">
+                    <FormField
+                      control={form.control}
+                      name="driverId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Supir <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Combobox
+                              items={drivers}
+                              placeholder="Pilih supir"
+                              emptyMessage="Tidak ada supir tersedia"
+                              value={field.value}
+                              onValueChange={field.onChange}
+                              disabled={loadingDrivers || isSubmitting}
+                              searchable
+                              name="driverId"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
 
                 {/* Delivery Orders */}
@@ -920,33 +1022,20 @@ export default function TambahPengiriman() {
                                       <span className="text-red-500">*</span>
                                     </FormLabel>
                                     <FormControl>
-                                      <Combobox
-                                        items={deliveryOrders}
-                                        value={field.value}
-                                        onValueChange={(value) =>
-                                          handleDeliveryOrderChange(
-                                            value,
-                                            index
-                                          )
-                                        }
-                                        placeholder="Pilih Delivery Order"
-                                        searchPlaceholder="Cari DO..."
-                                        isLoading={loadingDeliveryOrders}
-                                        name={`deliveryOrders.${index}.deliveryOrderId`}
-                                        onClear={() => {
-                                          field.onChange("");
-                                          form.setValue(
-                                            `deliveryOrders.${index}.products`,
-                                            []
-                                          );
-                                        }}
-                                        onSearch={handleDeliveryOrderSearch}
-                                        useServerSearch
-                                        hasMore={hasNextDeliveryOrders}
+                                      <DeliveryOrderComboboxWrapper
+                                        field={field}
+                                        index={index}
+                                        deliveryOrders={deliveryOrders}
+                                        loadingDeliveryOrders={loadingDeliveryOrders}
+                                        hasNextDeliveryOrders={hasNextDeliveryOrders}
+                                        isFetchingNextDeliveryOrders={isFetchingNextDeliveryOrders}
+                                        onDeliveryOrderChange={handleDeliveryOrderChange}
+                                        onDeliveryOrderSearch={handleDeliveryOrderSearch}
                                         onLoadMore={fetchNextDeliveryOrders}
-                                        isLoadingMore={
-                                          isFetchingNextDeliveryOrders
-                                        }
+                                        onClear={() => {
+                                          form.setValue(`deliveryOrders.${index}.deliveryOrderId`, "");
+                                          form.setValue(`deliveryOrders.${index}.products`, []);
+                                        }}
                                       />
                                     </FormControl>
                                     <div className="min-h-[20px]">
@@ -1084,19 +1173,38 @@ export default function TambahPengiriman() {
                                                       render={({ field }) => (
                                                         <FormItem className="h-[80px]">
                                                           <FormControl>
-                                                             <Input
+                                                            <Input
                                                               type="text"
                                                               placeholder="Masukkan jumlah"
-                                                              value={quantityDisplayValues[`${index}-${product.id}`] || (field.value > 0 ? formatInputNumber(field.value) : "")}
+                                                              value={
+                                                                quantityDisplayValues[
+                                                                  `${index}-${product.id}`
+                                                                ] ||
+                                                                (field.value > 0
+                                                                  ? formatInputNumber(
+                                                                      field.value
+                                                                    )
+                                                                  : "")
+                                                              }
                                                               onChange={(e) => {
-                                                                const result = handleDecimalInput(e.target.value);
-                                                                field.onChange(result.numericValue || 0);
+                                                                const result =
+                                                                  handleDecimalInput(
+                                                                    e.target
+                                                                      .value
+                                                                  );
+                                                                field.onChange(
+                                                                  result.numericValue ||
+                                                                    0
+                                                                );
 
                                                                 // Update display value in real-time
-                                                                setQuantityDisplayValues(prev => ({
-                                                                  ...prev,
-                                                                  [`${index}-${product.id}`]: result.displayValue
-                                                                }));
+                                                                setQuantityDisplayValues(
+                                                                  (prev) => ({
+                                                                    ...prev,
+                                                                    [`${index}-${product.id}`]:
+                                                                      result.displayValue,
+                                                                  })
+                                                                );
                                                               }}
                                                               disabled={
                                                                 isSubmitting
@@ -1208,6 +1316,53 @@ export default function TambahPengiriman() {
           </Form>
         </CardContent>
       </Card>
+
+      {/* Desktop hover tooltip - floating 3D card */}
+      {hoveredDO && tooltipPosition && (
+        <div
+          className="fixed z-[60] hidden sm:block pointer-events-none"
+          style={{
+            left: tooltipPosition.x,
+            top: tooltipPosition.y,
+          }}
+        >
+          <div className="max-w-xs bg-white border border-gray-200 rounded-lg shadow-xl transform transition-all duration-200 scale-100 opacity-100">
+            <div className="p-3 border-b border-gray-100">
+              <h4 className="font-medium text-sm text-gray-900">
+                Barang Tersedia
+              </h4>
+              <p className="text-xs text-gray-500">{hoveredDO.doNumber}</p>
+            </div>
+            <div className="p-3 max-h-40 overflow-y-auto">
+              <div className="space-y-2">
+                {hoveredDO.items
+                  .filter((item) => item.pendingQuantity > 0)
+                  .map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex justify-between items-start text-xs"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">
+                          {item.product.name}
+                        </p>
+                      </div>
+                      <div className="ml-2 text-gray-600 font-medium whitespace-nowrap">
+                        {item.pendingQuantity} {item.product.satuan}
+                      </div>
+                    </div>
+                  ))}
+                {hoveredDO.items.filter((item) => item.pendingQuantity > 0)
+                  .length === 0 && (
+                  <p className="text-xs text-gray-500 italic">
+                    Tidak ada barang tersedia
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

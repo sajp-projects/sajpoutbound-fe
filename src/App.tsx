@@ -62,6 +62,11 @@ const LogSemuaArmada = lazy(() => import("./pages/armada/logAllArmada"));
 const EditArmada = lazy(() => import("./pages/armada/editArmada"));
 const DetailArmada = lazy(() => import("./pages/armada/detailArmada"));
 
+// Lazy import untuk halaman supir
+const DaftarSupir = lazy(() => import("./pages/driver/listDriver"));
+const TambahSupir = lazy(() => import("./pages/driver/addDriver"));
+const EditSupir = lazy(() => import("./pages/driver/editDriver"));
+
 // Lazy import untuk halaman DO
 const DaftarDo = lazy(() => import("./pages/do/listDo"));
 const TambahDo = lazy(() => import("./pages/do/addDo"));
@@ -409,6 +414,30 @@ export default function App() {
     },
   ];
 
+  const driverRoutes: ProtectedRouteConfig[] = [
+    {
+      path: "",
+      element: <DaftarSupir />,
+      resource: PERMISSION.RESOURCES.DRIVER,
+      action: PERMISSION.ACTIONS.READ,
+      redirectTo: "/supir",
+    },
+    {
+      path: "tambah",
+      element: <TambahSupir />,
+      resource: PERMISSION.RESOURCES.DRIVER,
+      action: PERMISSION.ACTIONS.CREATE,
+      redirectTo: "/supir",
+    },
+    {
+      path: ":id/edit",
+      element: <EditSupir />,
+      resource: PERMISSION.RESOURCES.DRIVER,
+      action: PERMISSION.ACTIONS.UPDATE,
+      redirectTo: "/supir",
+    },
+  ];
+
   const doRoutes: ProtectedRouteConfig[] = [
     {
       path: "",
@@ -591,6 +620,11 @@ export default function App() {
             {/* Route untuk armada */}
             <Route path="/armada">
               {armadaRoutes.map((route) => createProtectedRoute(route))}
+            </Route>
+
+            {/* Route untuk supir */}
+            <Route path="/supir">
+              {driverRoutes.map((route) => createProtectedRoute(route))}
             </Route>
 
             {/* Route untuk DO */}

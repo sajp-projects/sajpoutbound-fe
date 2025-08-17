@@ -3,9 +3,11 @@ import {
   useBulkWeighShipmentItems,
   useChooseProduct,
   useDeleteShipment,
+  useIndividualWeighShipmentItem,
   useNotaTimbanganForProduct,
   useShipment,
   useShipmentChosenProducts,
+  useUpdateTally,
 } from "@/hooks/shipment";
 import {
   Archive,
@@ -20,26 +22,21 @@ import {
   Loader2,
   MapPin,
   Package,
-  Pencil,
   RefreshCw,
   Scale,
   ShoppingCart,
   Upload,
-  UserCheck,
+  User,
   X,
 } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 
 import { ChangeCustomerModal } from "@/components/ChangeCustomerModal";
 import { ErrorState } from "@/components/ErrorState";
+import { IndividualWeighingModal } from "@/components/IndividualWeighingModal";
 import { LoadingState } from "@/components/LoadingState";
 import { ReviseDOModal } from "@/components/ReviseDOModal";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { WeighingMethodModal } from "@/components/WeighingMethodModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +48,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FilePreviewModal } from "@/components/ui/file-preview-modal";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -69,11 +75,10 @@ import { FilePreview } from "@/types/media";
 import {
   ChosenProductExtended,
   GroupedDeliveryOrder,
-  ProductItem,
-  ShipmentItemExtended,
+  IndividualWeighingItem,
   ShipmentStatus,
   SPMB,
-  StatusBadgeProps,
+  StatusBadgeProps
 } from "@/types/shipment";
 import {
   SHIPMENT_STATUS_LABELS,
@@ -81,7 +86,11 @@ import {
 } from "@/utils/constants";
 import { formatDate } from "@/utils/date";
 import { FormErrorData } from "@/utils/errorHandler";
-import { formatInputNumber, formatNumber, handleDecimalInput } from "@/utils/formatNumber";
+import {
+  formatInputNumber,
+  formatNumber,
+  handleDecimalInput,
+} from "@/utils/formatNumber";
 import { hasPermission } from "@/utils/permission";
 import { getRoleId } from "@/utils/storage";
 import {
@@ -90,7 +99,26 @@ import {
   showErrorAlert,
   showSuccessAlert,
 } from "@/utils/sweetAlert";
+import { joiResolver } from "@hookform/resolvers/joi";
+import Joi from "joi";
 import { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+
+import { DeliveryOrderAccordion } from "@/components/DeliveryOrderAccordion";
+
+// Tally form schema and types
+interface TallyFormValues {
+  tally: string;
+}
+
+const tallyFormSchema = Joi.object<TallyFormValues>({
+  tally: Joi.string().required().min(1).max(255).messages({
+    "string.empty": "Tally harus diisi",
+    "string.min": "Tally minimal 1 karakter",
+    "string.max": "Tally maksimal 255 karakter",
+    "any.required": "Tally harus diisi",
+  }),
+});
 
 function StatusBadge({ status }: StatusBadgeProps) {
   const getStatusColor = (status: ShipmentStatus) => {
@@ -163,6 +191,24 @@ export default function DetailPengiriman() {
   >(null);
   const [weighingProductId, setWeighingProductId] = useState<string>("");
   const [weighingModalOpen, setWeighingModalOpen] = useState(false);
+
+  // States for weighing method selection modal
+  const [weighingMethodModalOpen, setWeighingMethodModalOpen] = useState(false);
+
+  const [selectedProductForWeighing, setSelectedProductForWeighing] = useState<{
+    id: string;
+    name: string;
+    unweighedCount: number;
+  } | null>(null);
+
+  // States for individual weighing modal
+  const [individualWeighingModalOpen, setIndividualWeighingModalOpen] =
+    useState(false);
+
+  const [individualWeighingItems, setIndividualWeighingItems] = useState<
+    IndividualWeighingItem[]
+  >([]);
+  const [currentWeighingIndex, setCurrentWeighingIndex] = useState(0);
   const [vendorWaitingModalOpen, setVendorWaitingModalOpen] = useState(false);
   const [selectedVendorProduct, _setSelectedVendorProduct] =
     useState<string>("");
@@ -204,11 +250,56 @@ export default function DetailPengiriman() {
   const [modalIntent, setModalIntent] = useState<
     "change-customer" | "revise" | null
   >(null);
+  const [tallyModalOpen, setTallyModalOpen] = useState(false);
+
+  // Tally form - initialize without defaultValues first
+  const tallyForm = useForm<TallyFormValues>({
+    resolver: joiResolver(tallyFormSchema),
+    defaultValues: {
+      tally: "",
+    },
+  });
+
+  // Update tally mutation
+  const updateTally = useUpdateTally({
+    onSuccess: () => {
+      showSuccessAlert("Berhasil!", "Tally berhasil diperbarui");
+      setTallyModalOpen(false);
+      tallyForm.reset();
+    },
+    onError: (error) => {
+      showErrorAlert(
+        "Gagal Memperbarui Tally",
+        error.message || "Terjadi kesalahan saat memperbarui tally"
+      );
+    },
+  });
+
+  // Tally handlers
+  const handleOpenTallyModal = () => {
+    tallyForm.setValue("tally", shipment?.tally || "");
+    setTallyModalOpen(true);
+  };
+
+  const handleTallySubmit = (data: TallyFormValues) => {
+    if (shipmentId) {
+      updateTally.mutate({
+        id: shipmentId,
+        tally: data.tally,
+      });
+    }
+  };
 
   const hasPengirimanUpdateAccess = hasPermission(
     permissions,
     PERMISSION.RESOURCES.PENGIRIMAN,
     PERMISSION.ACTIONS.UPDATE
+  );
+
+  const hasPengirimanUpdateTallyAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PENGIRIMAN,
+    PERMISSION.ACTIONS.UPDATE_TALLY
   );
 
   const hasPengirimanDeleteAccess = hasPermission(
@@ -228,8 +319,6 @@ export default function DetailPengiriman() {
     PERMISSION.RESOURCES.PENGIRIMAN,
     PERMISSION.ACTIONS.VERIFY_PLATE
   );
-
-  console.log(hasPengirimanVerifyPlateAccess);
 
   const shipmentId = id || "";
 
@@ -400,9 +489,56 @@ export default function DetailPengiriman() {
   const bulkWeighItems = useBulkWeighShipmentItems({
     onSuccess: () => {
       showSuccessAlert("Berhasil", "Item berhasil ditimbang");
-      setWeighingModalOpen(false);
+      handleCloseWeighingModal(); // Use proper close handler
       refetch();
       refetchChosenProducts();
+      // Ensure Nota Timbangan list refreshes for currently selected product
+      if (selectedProductId) {
+        refetchNotaTimbangan();
+      }
+    },
+    onError: (error: FormErrorData) => {
+      try {
+        const errorObj = JSON.parse(error.message);
+        if (errorObj && errorObj.message) {
+          showErrorAlert("Gagal", errorObj.message);
+          return;
+        }
+      } catch {
+        // If not JSON, use error message directly
+      }
+      showErrorAlert("Gagal", error.message);
+    },
+  });
+
+  const individualWeighItem = useIndividualWeighShipmentItem({
+    onSuccess: () => {
+      showSuccessAlert("Berhasil", "Item berhasil ditimbang");
+
+      // Refetch data to get updated status
+      refetch();
+      refetchChosenProducts();
+
+      // Remove the weighed item from the current list and update modal
+      const currentItemId =
+        individualWeighingItems[currentWeighingIndex]?.shipmentItemId;
+      const remainingItems = individualWeighingItems.filter(
+        (item) => item.shipmentItemId !== currentItemId
+      );
+
+      if (remainingItems.length > 0) {
+        // Still have items to weigh, update the list and continue
+        setIndividualWeighingItems(remainingItems);
+        // Reset to first item if current index is now out of bounds
+        if (currentWeighingIndex >= remainingItems.length) {
+          setCurrentWeighingIndex(0);
+        }
+        // Keep modal open
+      } else {
+        // All items weighed, close modal
+        handleCloseIndividualWeighingModal();
+      }
+
       // Ensure Nota Timbangan list refreshes for currently selected product
       if (selectedProductId) {
         refetchNotaTimbangan();
@@ -609,13 +745,102 @@ export default function DetailPengiriman() {
   };
 
   const handleOpenWeighingModal = (productId: string) => {
-    setWeighingProductId(productId);
-    setWeighingModalOpen(true);
+    console.log("handleOpenWeighingModal called with productId:", productId);
+    console.log("shipment exists:", !!shipment);
+    console.log("chosenProducts exists:", !!chosenProducts);
+    console.log("chosenProducts data:", chosenProducts);
+
+    // Find the product and unweighed count
+    if (shipment && chosenProducts) {
+      const product = chosenProducts.find((p) => p.productId === productId);
+      console.log("Found product:", product);
+
+      if (product) {
+        const chosenItems = shipment.shipmentItems.filter(
+          (si) => si.productId === productId && si.chosenProduct
+        );
+
+        const unweighedCount = chosenItems.filter(
+          (si) => si.status !== "COMPLETED"
+        ).length;
+
+        console.log(product, "product");
+
+        const productForWeighing = {
+          id: productId,
+          name: product.product.name,
+          unweighedCount,
+        };
+
+        setSelectedProductForWeighing(productForWeighing);
+        console.log("Opening weighing method modal...");
+        setWeighingMethodModalOpen(true);
+      } else {
+        console.log("Product not found in chosenProducts");
+      }
+    } else {
+      console.log("Missing shipment or chosenProducts data");
+    }
+  };
+
+  const handleWeighingMethodSelect = (method: "combined" | "individual") => {
+    setWeighingMethodModalOpen(false);
+
+    if (method === "combined") {
+      // Open the existing bulk weighing modal
+      if (selectedProductForWeighing) {
+        setWeighingProductId(selectedProductForWeighing.id);
+        setWeighingModalOpen(true);
+      }
+    } else if (method === "individual") {
+      // Prepare individual weighing items and open individual weighing modal
+      if (selectedProductForWeighing && shipment) {
+        const chosenItems = shipment.shipmentItems.filter(
+          (si) =>
+            si.productId === selectedProductForWeighing.id &&
+            si.chosenProduct &&
+            si.status !== "COMPLETED"
+        );
+
+        console.log(selectedProductForWeighing.name, "name product ");
+
+        const individualItems = chosenItems.map((item) => ({
+          shipmentItemId: item.id,
+          deliveryOrderId: item.deliveryOrderId,
+          deliveryOrderNumber: item.deliveryOrder.doNumber,
+          customerName: item.deliveryOrder.customer.name,
+          requestedQuantity: item.requestedQuantity,
+          productName: selectedProductForWeighing.name,
+          productUnit: item.product.satuan,
+        }));
+
+        setIndividualWeighingItems(individualItems);
+        setCurrentWeighingIndex(0);
+        setIndividualWeighingModalOpen(true);
+      }
+    }
+
+    // Don't clear selectedProductForWeighing here - keep it for the modal
+  };
+
+  const handleIndividualWeighItem = (data: {
+    shipmentItemId: string;
+    grossWeight: number;
+    netWeight?: number;
+    tareWeight?: number;
+  }) => {
+    if (shipmentId) {
+      individualWeighItem.mutate({
+        ...data,
+        shipmentId: shipmentId,
+      });
+    }
   };
 
   const handleCloseWeighingModal = () => {
     setWeighingModalOpen(false);
     setWeighingProductId("");
+    setSelectedProductForWeighing(null); // Clear selected product
     // Reset weight values and displays when closing modal
     setGrossWeight("");
     setNetWeight("");
@@ -623,6 +848,13 @@ export default function DetailPengiriman() {
     setGrossWeightDisplay("");
     setNetWeightDisplay("");
     setTareWeightDisplay("");
+  };
+
+  const handleCloseIndividualWeighingModal = () => {
+    setIndividualWeighingModalOpen(false);
+    setSelectedProductForWeighing(null); // Clear selected product
+    setCurrentWeighingIndex(0);
+    setIndividualWeighingItems([]);
   };
 
   // Handler functions for formatted weight inputs with handleDecimalInput
@@ -634,21 +866,8 @@ export default function DetailPengiriman() {
       setGrossWeight(result.numericValue.toString());
       setGrossWeightDisplay(result.displayValue);
     } else {
-      setGrossWeight('');
+      setGrossWeight("");
       setGrossWeightDisplay(inputValue);
-    }
-  };
-
-  const handleNetWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-    const result = handleDecimalInput(inputValue);
-
-    if (result.numericValue !== undefined) {
-      setNetWeight(result.numericValue.toString());
-      setNetWeightDisplay(result.displayValue);
-    } else {
-      setNetWeight('');
-      setNetWeightDisplay(inputValue);
     }
   };
 
@@ -660,10 +879,35 @@ export default function DetailPengiriman() {
       setTareWeight(result.numericValue.toString());
       setTareWeightDisplay(result.displayValue);
     } else {
-      setTareWeight('');
+      setTareWeight("");
       setTareWeightDisplay(inputValue);
     }
   };
+
+  // Auto-calculate net weight when gross or tare changes
+  useEffect(() => {
+    const grossNum = parseFloat(grossWeight);
+    const tareNum = parseFloat(tareWeight);
+
+    if (!isNaN(grossNum) && !isNaN(tareNum)) {
+      const netValue = grossNum - tareNum;
+      if (netValue >= 0) {
+        setNetWeight(netValue.toString());
+        setNetWeightDisplay(formatInputNumber(netValue));
+      } else {
+        setNetWeight("0");
+        setNetWeightDisplay("0");
+      }
+    } else if (!isNaN(grossNum) && (tareWeight === "" || isNaN(tareNum))) {
+      // If only gross is entered (no tare), net = gross
+      setNetWeight(grossWeight);
+      setNetWeightDisplay(grossWeightDisplay);
+    } else {
+      // Clear net weight if insufficient data
+      setNetWeight("");
+      setNetWeightDisplay("");
+    }
+  }, [grossWeight, tareWeight, grossWeightDisplay]);
 
   // Helper function to get weighing method for a product
   const getProductWeighingMethod = (
@@ -677,12 +921,23 @@ export default function DetailPengiriman() {
 
   const handleWeighSubmit = () => {
     if (!shipmentId || !weighingProductId) return;
+
+    // Validate required fields (gross and tare)
+    if (!grossWeight || parseFloat(grossWeight) <= 0) {
+      showErrorAlert("Error", "Berat kotor harus diisi dan lebih dari 0");
+      return;
+    }
+    if (!tareWeight || parseFloat(tareWeight) < 0) {
+      showErrorAlert("Error", "Berat tare harus diisi dan tidak boleh negatif");
+      return;
+    }
+
     bulkWeighItems.mutate({
       shipmentId,
       productId: weighingProductId,
       grossWeight: parseFloat(grossWeight),
       netWeight: netWeight ? parseFloat(netWeight) : undefined,
-      tareWeight: tareWeight ? parseFloat(tareWeight) : undefined,
+      tareWeight: parseFloat(tareWeight),
     });
   };
 
@@ -710,6 +965,13 @@ export default function DetailPengiriman() {
       setAllItemsCompleted(allCompleted);
     }
   }, [shipment]);
+
+  // Update tally form when shipment data changes
+  useEffect(() => {
+    if (shipment) {
+      tallyForm.setValue("tally", shipment.tally || "");
+    }
+  }, [shipment, tallyForm]);
 
   // Handler for SPMB preview:
   const handlePreviewSpmb = (spmb: SPMB) => {
@@ -862,7 +1124,10 @@ export default function DetailPengiriman() {
                 onClick={() => handleTabChange("do")}
               >
                 <ShoppingCart className="flex-shrink-0 mr-2 w-4 h-4" />
-                Delivery Orders & Barang
+                <span className="hidden sm:inline">
+                  Delivery Orders & Barang
+                </span>
+                <span className="sm:hidden">DO & Barang</span>
               </button>
               <button
                 className={cn(
@@ -1125,7 +1390,7 @@ export default function DetailPengiriman() {
                           Nomor Pengiriman
                         </p>
                         <p className="p-1 font-mono text-sm font-medium text-gray-900 break-all bg-gray-50 rounded">
-                          {shipment.shipmentNumber}
+                          {shipment.shipmentNumber} ({shipment.plateNumber})
                         </p>
                       </div>
                       <div>
@@ -1219,13 +1484,36 @@ export default function DetailPengiriman() {
 
             {activeTab === "do" && (
               <div className="p-4 rounded-lg border border-gray-200">
-                <h3 className="flex items-center mb-4 text-lg font-medium text-gray-900">
-                  <ShoppingCart className="mr-2 w-5 h-5 text-blue-600" />
-                  Delivery Orders & Barang
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="flex items-center text-lg font-medium text-gray-900">
+                      <ShoppingCart className="mr-2 w-5 h-5 text-blue-600" />
+                      <span className="hidden sm:inline">
+                        Delivery Orders & Barang
+                      </span>
+                      <span className="sm:hidden">DO & Barang</span>
+                    </h3>
+                  </div>
+                  {hasPengirimanUpdateTallyAccess && shipment && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                      onClick={handleOpenTallyModal}
+                    >
+                      <User className="mr-2 w-4 h-4" />
+                      {shipment.tally ? "Edit Tally" : "Tambah Tally"}
+                    </Button>
+                  )}
+                </div>
                 <p className="mb-4 text-sm text-gray-500">
                   Ringkasan barang dari seluruh delivery order dalam pengiriman
                   ini
+                  {shipment?.tally && (
+                    <span className="ml-2 text-blue-600 font-medium">
+                      • Tally: {shipment.tally}
+                    </span>
+                  )}
                 </p>
 
                 {/* Tabel barang - Desktop view */}
@@ -1483,7 +1771,9 @@ export default function DetailPengiriman() {
                                               Timbang
                                             </Button>
                                           );
-                                        } else if (weighingMethod === "VENDOR") {
+                                        } else if (
+                                          weighingMethod === "VENDOR"
+                                        ) {
                                           return (
                                             <Button
                                               variant="outline"
@@ -1720,7 +2010,7 @@ export default function DetailPengiriman() {
                                 {product.satuan}
                               </p>
                             </div>
-                                                        {(hasPengirimanUpdateAccess ||
+                            {(hasPengirimanUpdateAccess ||
                               hasPengirimanWeighAccess) && (
                               <div className="pt-3 mt-3 space-y-2 border-t border-gray-100">
                                 {(() => {
@@ -1741,9 +2031,7 @@ export default function DetailPengiriman() {
                                         si.productId === product.id &&
                                         si.chosenProduct
                                     )
-                                    .every(
-                                      (si) => si.status === "COMPLETED"
-                                    );
+                                    .every((si) => si.status === "COMPLETED");
 
                                   const weighingMethod =
                                     getProductWeighingMethod(product.id);
@@ -1857,10 +2145,9 @@ export default function DetailPengiriman() {
                                           si.productId === product.id &&
                                           si.chosenProduct
                                       );
-                                    const unweighedCount =
-                                      chosenItems.filter(
-                                        (si) => si.status !== "COMPLETED"
-                                      ).length;
+                                    const unweighedCount = chosenItems.filter(
+                                      (si) => si.status !== "COMPLETED"
+                                    ).length;
 
                                     if (unweighedCount > 0) {
                                       buttons.push(
@@ -1889,10 +2176,9 @@ export default function DetailPengiriman() {
                                           si.productId === product.id &&
                                           si.chosenProduct
                                       );
-                                    const unweighedCount =
-                                      chosenItems.filter(
-                                        (si) => si.status !== "COMPLETED"
-                                      ).length;
+                                    const unweighedCount = chosenItems.filter(
+                                      (si) => si.status !== "COMPLETED"
+                                    ).length;
 
                                     if (unweighedCount > 0) {
                                       buttons.push(
@@ -1922,280 +2208,15 @@ export default function DetailPengiriman() {
                 </div>
 
                 {/* Accordion untuk delivery order */}
-                <h4 className="mb-4 text-lg font-medium text-gray-900">
-                  Daftar Delivery Order
-                </h4>
-                <Accordion type="multiple" className="space-y-4">
-                  {(() => {
-                    // Group items by delivery order
-                    const doMap = new Map<string, GroupedDeliveryOrder>();
-
-                    shipment.shipmentItems.forEach((item) => {
-                      const doId = item.deliveryOrderId;
-                      if (!doMap.has(doId)) {
-                        doMap.set(doId, {
-                          id: doId,
-                          doNumber: item.deliveryOrder.doNumber,
-                          customer: item.deliveryOrder.customer,
-                          products: [],
-                        });
-                      }
-
-                      doMap.get(doId)?.products.push({
-                        id: item.productId,
-                        name: item.product.name,
-                        satuan: item.product.satuan,
-                        quantity: item.requestedQuantity,
-                        warehouseId: item.warehouseId,
-                        chosenProduct: item.chosenProduct,
-                        locationType: (item as ShipmentItemExtended)
-                          .locationType,
-                        warehouse: item.warehouse,
-                      });
-                    });
-
-                    return Array.from(doMap.values()).map(
-                      (
-                        deliveryOrder: GroupedDeliveryOrder,
-                        doIndex: number
-                      ) => (
-                        <AccordionItem
-                          key={deliveryOrder.id}
-                          value={`do-${doIndex}`}
-                          className="overflow-hidden rounded-lg border border-gray-200"
-                        >
-                          <AccordionTrigger className="px-4 py-3 bg-gray-50 hover:bg-gray-100 hover:no-underline">
-                                                          <div className="flex items-center justify-between w-full text-left">
-                                <div className="min-w-0 flex-1 mr-2">
-                                  <h4 className="font-medium text-gray-900">
-                                    <Link
-                                      to={`/do/${deliveryOrder.id}`}
-                                      className="text-blue-600 hover:underline inline"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      {deliveryOrder.customer.name.length > 25 ? deliveryOrder.customer.name.slice(0, 20) + "..." : deliveryOrder.customer.name}
-                                    </Link>
-                                  </h4>
-                                  <p className="hidden sm:block text-sm text-gray-500 truncate">
-                                    {deliveryOrder.customer.name}
-                                  </p>
-                                </div>
-
-                                {/* Action buttons for customer change and DO revision */}
-                                {(shipment.status === "PROSES" ||
-                                  shipment.status === "SELESAI") &&
-                                  deliveryOrder.products.some(
-                                    (product) => product.chosenProduct
-                                  ) && (
-                                    <div
-                                      className="flex gap-1 sm:gap-2 flex-shrink-0 ml-2"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                    {hasChangeCustomerAfterWeighAccess && (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-blue-600 border-blue-200 hover:bg-blue-50 flex-shrink-0 min-w-0"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleOpenChangeCustomerModal(
-                                            deliveryOrder
-                                          );
-                                        }}
-                                        disabled={isLoadingFullDOHook}
-                                        title="Ubah Customer"
-                                      >
-                                        {isLoadingFullDOHook ? (
-                                          <Loader2 className="w-3 h-3 animate-spin sm:mr-1" />
-                                        ) : (
-                                          <UserCheck className="w-3 h-3 sm:mr-1" />
-                                        )}
-                                        <span className="hidden sm:inline ml-1">
-                                          {isLoadingFullDOHook
-                                            ? "Loading..."
-                                            : "Ubah Customer"}
-                                        </span>
-                                      </Button>
-                                    )}
-                                    {hasReviseDoAfterWeighAccess && (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-green-600 border-green-200 hover:bg-green-50 flex-shrink-0 min-w-0"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleOpenReviseModal(deliveryOrder);
-                                        }}
-                                        disabled={isLoadingFullDOHook}
-                                        title="Revisi DO"
-                                      >
-                                        {isLoadingFullDOHook ? (
-                                          <Loader2 className="w-3 h-3 animate-spin sm:mr-1" />
-                                        ) : (
-                                          <Pencil className="w-3 h-3 sm:mr-1" />
-                                        )}
-                                        <span className="hidden sm:inline ml-1">
-                                          {isLoadingFullDOHook
-                                            ? "Loading..."
-                                            : "Revisi DO"}
-                                        </span>
-                                      </Button>
-                                    )}
-                                  </div>
-                                )}
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="p-0">
-                            <div className="hidden overflow-x-auto sm:block">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow className="bg-gray-50 border-b border-gray-200">
-                                    <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
-                                      No
-                                    </TableHead>
-                                    <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                                      Barang
-                                    </TableHead>
-                                    <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                                      Gudang
-                                    </TableHead>
-                                    <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
-                                      Lokasi
-                                    </TableHead>
-                                    <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
-                                      Kuantitas
-                                    </TableHead>
-                                    <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
-                                      Status
-                                    </TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {deliveryOrder.products.map(
-                                    (product: ProductItem, index: number) => (
-                                      <TableRow
-                                        key={`${deliveryOrder.id}-${product.id}`}
-                                      >
-                                        <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                          {index + 1}
-                                        </TableCell>
-                                        <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                          <Link
-                                            to={`/barang/${product.id}`}
-                                            className="text-blue-600 hover:underline"
-                                          >
-                                            {product.name}
-                                          </Link>
-                                        </TableCell>
-                                        <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                          {product.warehouse.name}
-                                        </TableCell>
-                                        <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                          <span className="flex items-center">
-                                            <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                                            {product.locationType || "GUDANG"}
-                                          </span>
-                                        </TableCell>
-                                        <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                          {formatInputNumber(product.quantity)}{" "}
-                                          {product.satuan}
-                                        </TableCell>
-                                        <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                                          {product.chosenProduct ? (
-                                            <Badge
-                                              variant="outline"
-                                              className="text-green-700 bg-green-50 border-green-200"
-                                            >
-                                              Sudah Dimuat
-                                            </Badge>
-                                          ) : (
-                                            <Badge
-                                              variant="outline"
-                                              className="text-yellow-700 bg-yellow-50 border-yellow-200 text-center"
-                                            >
-                                              Belum Dimuat
-                                            </Badge>
-                                          )}
-                                        </TableCell>
-                                      </TableRow>
-                                    )
-                                  )}
-                                </TableBody>
-                              </Table>
-                            </div>
-
-                            {/* Mobile view untuk product dalam DO */}
-                            <div className="sm:hidden">
-                              <div className="p-4 space-y-3">
-                                {deliveryOrder.products.map(
-                                  (product: ProductItem, index: number) => (
-                                    <div
-                                      key={`${deliveryOrder.id}-${product.id}`}
-                                      className="p-3 rounded-lg border border-gray-200"
-                                    >
-                                      <div className="flex justify-between items-center mb-2">
-                                        <div className="flex items-center">
-                                          <div className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
-                                            {index + 1}
-                                          </div>
-                                          <Link
-                                            to={`/barang/${product.id}`}
-                                            className="font-medium text-blue-600 hover:underline"
-                                          >
-                                            {product.name}
-                                          </Link>
-                                        </div>
-                                        {product.chosenProduct ? (
-                                          <Badge
-                                            variant="outline"
-                                            className="text-green-700 bg-green-50 border-green-200 text-center"
-                                          >
-                                            Sudah Dimuat
-                                          </Badge>
-                                        ) : (
-                                          <Badge
-                                            variant="outline"
-                                            className="text-yellow-700 bg-yellow-50 border-yellow-200 text-center"
-                                          >
-                                            Belum Dimuat
-                                          </Badge>
-                                        )}
-                                      </div>
-                                      <div className="space-y-1 text-xs text-gray-600">
-                                        <p>
-                                          <span className="font-medium">
-                                            Gudang:{" "}
-                                          </span>
-                                          {product.warehouse.name}
-                                        </p>
-                                        <p>
-                                          <span className="font-medium">
-                                            Lokasi:{" "}
-                                          </span>
-                                          <span className="flex items-center">
-                                            <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                                            {product.locationType || "GUDANG"}
-                                          </span>
-                                        </p>
-                                        <p>
-                                          <span className="font-medium">
-                                            Kuantitas:{" "}
-                                          </span>
-                                          {formatInputNumber(product.quantity)}{" "}
-                                          {product.satuan}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      )
-                    );
-                  })()}
-                </Accordion>
+                <DeliveryOrderAccordion
+                  shipmentItems={shipment.shipmentItems}
+                  shipmentStatus={shipment.status}
+                  hasChangeCustomerAfterWeighAccess={hasChangeCustomerAfterWeighAccess}
+                  hasReviseDoAfterWeighAccess={hasReviseDoAfterWeighAccess}
+                  isLoadingFullDOHook={isLoadingFullDOHook}
+                  onOpenChangeCustomerModal={handleOpenChangeCustomerModal}
+                  onOpenReviseModal={handleOpenReviseModal}
+                />
               </div>
             )}
 
@@ -2309,27 +2330,54 @@ export default function DetailPengiriman() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                    {formatInputNumber(item.totalRequestedQuantity)}{" "}
+                                    {formatInputNumber(
+                                      item.totalRequestedQuantity
+                                    )}{" "}
                                     {item.product.satuan}
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                                    {item.shipmentItems.every(
-                                      (si) => si.status === "COMPLETED"
-                                    ) ? (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap text-center"
-                                      >
-                                        Sudah Ditimbang
-                                      </Badge>
-                                    ) : (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap text-center"
-                                      >
-                                        Belum Ditimbang
-                                      </Badge>
-                                    )}
+                                    {(() => {
+                                      const completedItems =
+                                        item.shipmentItems.filter(
+                                          (si) => si.status === "COMPLETED"
+                                        );
+                                      const totalItems =
+                                        item.shipmentItems.length;
+
+                                      if (
+                                        completedItems.length === totalItems
+                                      ) {
+                                        // All items completed
+                                        return (
+                                          <Badge
+                                            variant="outline"
+                                            className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap text-center"
+                                          >
+                                            Sudah Ditimbang
+                                          </Badge>
+                                        );
+                                      } else if (completedItems.length > 0) {
+                                        // Some items completed (partial)
+                                        return (
+                                          <Badge
+                                            variant="outline"
+                                            className="text-blue-700 bg-blue-50 border-blue-200 whitespace-nowrap text-center"
+                                          >
+                                            Sebagian Ditimbang
+                                          </Badge>
+                                        );
+                                      } else {
+                                        // No items completed
+                                        return (
+                                          <Badge
+                                            variant="outline"
+                                            className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap text-center"
+                                          >
+                                            Belum Ditimbang
+                                          </Badge>
+                                        );
+                                      }
+                                    })()}
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                     {item.shipmentItems.some(
@@ -2444,23 +2492,45 @@ export default function DetailPengiriman() {
                                     {item.product.name}
                                   </Link>
                                 </div>
-                                {item.shipmentItems.every(
-                                  (si) => si.status === "COMPLETED"
-                                ) ? (
-                                  <Badge
-                                    variant="outline"
-                                    className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap text-center"
-                                  >
-                                    Sudah Ditimbang
-                                  </Badge>
-                                ) : (
-                                  <Badge
-                                    variant="outline"
-                                    className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap text-center"
-                                  >
-                                    Belum Ditimbang
-                                  </Badge>
-                                )}
+                                {(() => {
+                                  const completedItems =
+                                    item.shipmentItems.filter(
+                                      (si) => si.status === "COMPLETED"
+                                    );
+                                  const totalItems = item.shipmentItems.length;
+
+                                  if (completedItems.length === totalItems) {
+                                    // All items completed
+                                    return (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap text-center"
+                                      >
+                                        Sudah Ditimbang
+                                      </Badge>
+                                    );
+                                  } else if (completedItems.length > 0) {
+                                    // Some items completed (partial)
+                                    return (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-blue-700 bg-blue-50 border-blue-200 whitespace-nowrap text-center"
+                                      >
+                                        Sebagian Ditimbang
+                                      </Badge>
+                                    );
+                                  } else {
+                                    // No items completed
+                                    return (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap text-center"
+                                      >
+                                        Belum Ditimbang
+                                      </Badge>
+                                    );
+                                  }
+                                })()}
                               </div>
 
                               <div className="space-y-2 text-xs text-gray-600">
@@ -2484,7 +2554,9 @@ export default function DetailPengiriman() {
                                     Kuantitas:
                                   </span>
                                   <span>
-                                    {formatInputNumber(item.totalRequestedQuantity)}{" "}
+                                    {formatInputNumber(
+                                      item.totalRequestedQuantity
+                                    )}{" "}
                                     {item.product.satuan}
                                   </span>
                                 </div>
@@ -3063,7 +3135,8 @@ export default function DetailPengiriman() {
                       <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
                         <h3 className="text-base font-medium text-blue-800 mb-3">
                           {productName} - Total:{" "}
-                          {formatInputNumber(totalUnweighedQuantity)} {productSatuan}
+                          {formatInputNumber(totalUnweighedQuantity)}{" "}
+                          {productSatuan}
                         </h3>
 
                         {/* Show delivery orders involved */}
@@ -3130,15 +3203,18 @@ export default function DetailPengiriman() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">
-                    Berat Bersih (kg)
+                    Berat Bersih (kg){" "}
+                    <span className="text-xs text-gray-500">
+                      (Otomatis: Kotor - Tare)
+                    </span>
                   </label>
                   <input
                     type="text"
-                    className="w-full px-3 py-2 mt-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
-                    placeholder="Masukkan berat bersih"
+                    className="w-full px-3 py-2 mt-1 text-sm border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+                    placeholder="Dihitung otomatis"
                     value={netWeightDisplay}
-                    onChange={handleNetWeightChange}
-                    onFocus={(e) => e.target.select()}
+                    disabled
+                    readOnly
                   />
                 </div>
                 <div>
@@ -3148,7 +3224,7 @@ export default function DetailPengiriman() {
                   <input
                     type="text"
                     className="w-full px-3 py-2 mt-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
-                    placeholder="Masukkan berat tara"
+                    placeholder="Masukkan berat tare"
                     value={tareWeightDisplay}
                     onChange={handleTareWeightChange}
                     onFocus={(e) => e.target.select()}
@@ -3259,6 +3335,35 @@ export default function DetailPengiriman() {
         </DialogContent>
       </Dialog>
 
+      {/* Weighing Method Selection Modal */}
+      <WeighingMethodModal
+        open={weighingMethodModalOpen}
+        onOpenChange={setWeighingMethodModalOpen}
+        onSelectMethod={handleWeighingMethodSelect}
+        productName={selectedProductForWeighing?.name || ""}
+        unweighedCount={selectedProductForWeighing?.unweighedCount || 0}
+      />
+
+      {/* Individual Weighing Modal */}
+      <IndividualWeighingModal
+        open={individualWeighingModalOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseIndividualWeighingModal();
+          }
+        }}
+        items={individualWeighingItems}
+        productName={selectedProductForWeighing?.name || ""}
+        currentIndex={currentWeighingIndex}
+        onIndexChange={setCurrentWeighingIndex}
+        onWeighItem={handleIndividualWeighItem}
+        onItemWeighed={(shipmentItemId) => {
+          // Additional cleanup can be done here if needed
+          console.log("Item weighed:", shipmentItemId);
+        }}
+        isLoading={individualWeighItem.isPending}
+      />
+
       {/* Customer Change and DO Revision Modals */}
       {fullDeliveryOrder && (
         <>
@@ -3282,6 +3387,84 @@ export default function DetailPengiriman() {
           />
         </>
       )}
+
+      {/* Tally Assignment Modal */}
+      <Dialog open={tallyModalOpen} onOpenChange={setTallyModalOpen}>
+        <DialogContent className="sm:max-w-[500px] bg-white border-0 p-0 rounded-lg shadow-lg">
+          <div className="p-6">
+            <DialogHeader className="pb-4">
+              <DialogTitle className="flex items-center text-xl font-semibold text-gray-900">
+                <User className="mr-2 w-5 h-5 text-blue-600" />
+                {shipment?.tally ? "Edit Tally" : "Tambah Tally"}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                {shipment?.tally
+                  ? "Perbarui nama tally untuk pengiriman ini"
+                  : "Tambahkan nama tally untuk pengiriman ini"}
+              </DialogDescription>
+            </DialogHeader>
+
+            <Form {...tallyForm}>
+              <form
+                onSubmit={tallyForm.handleSubmit(handleTallySubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={tallyForm.control}
+                  name="tally"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nama Tally</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Masukkan nama tally"
+                          {...field}
+                          disabled={updateTally.isPending}
+                          maxLength={255}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <DialogFooter className="pt-4 mt-4 border-t border-gray-100">
+                  <div className="flex gap-3 w-full">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setTallyModalOpen(false)}
+                      disabled={updateTally.isPending}
+                      className="flex-1"
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={updateTally.isPending}
+                      className="flex-1 text-white bg-blue-600 shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg"
+                    >
+                      {updateTally.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                          {shipment?.tally
+                            ? "Memperbarui..."
+                            : "Menambahkan..."}
+                        </>
+                      ) : (
+                        <>
+                          <Check className="mr-2 w-4 h-4" />
+                          {shipment?.tally ? "Perbarui" : "Tambah"}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </DialogFooter>
+              </form>
+            </Form>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

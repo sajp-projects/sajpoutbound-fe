@@ -4,6 +4,7 @@ import {
   BulkWeighShipmentInput,
   ChosenProductsResponse,
   CreateShipmentInput,
+  IndividualWeighShipmentInput,
   Shipment,
   ShipmentPagination,
   UpdateShipmentInput,
@@ -59,7 +60,15 @@ export function useShipments(options = {}) {
 }
 
 export function useShipmentsWithParams(
-  { page = 1, limit = 10, search = "", status = "", type = "", startDate = "", endDate = "" } = {},
+  {
+    page = 1,
+    limit = 10,
+    search = "",
+    status = "",
+    type = "",
+    startDate = "",
+    endDate = "",
+  } = {},
   options = {}
 ) {
   const filters = {
@@ -71,6 +80,8 @@ export function useShipmentsWithParams(
     ...(startDate && { startDate }),
     ...(endDate && { endDate }),
   };
+
+  console.log(filters, "shipments filters");
 
   return useQuery({
     queryKey: shipmentKeys.list(filters),
@@ -480,7 +491,11 @@ export function useShipmentsByDeliveryOrderId(
       } catch (error) {
         console.error("Error in useShipmentsByDeliveryOrderId:", error);
         // If it's a network error or 404, return empty array instead of throwing
-        if (error instanceof Error && (error.message.includes("404") || error.message.includes("tidak ditemukan"))) {
+        if (
+          error instanceof Error &&
+          (error.message.includes("404") ||
+            error.message.includes("tidak ditemukan"))
+        ) {
           return [];
         }
         throw error;
@@ -528,6 +543,46 @@ export function useBulkWeighShipmentItems(options = {}) {
           variables.shipmentId,
           variables.productId
         ),
+      });
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.lists() });
+    },
+    ...options,
+  });
+}
+
+export function useIndividualWeighShipmentItem(options = {}) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: IndividualWeighShipmentInput) => {
+      const response = await fetchApi(
+        `${BASE_URL}/shipments/${data.shipmentId}/weigh-item`,
+        {},
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        }
+      );
+      const result = (await response.json()) as ApiErrorResult;
+      if (!result.success) {
+        throw new Error(
+          JSON.stringify(
+            createErrorResponse(
+              result,
+              "Gagal melakukan penimbangan item individual"
+            )
+          )
+        );
+      }
+      return result.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.detail(variables.shipmentId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.chosenProducts(variables.shipmentId),
       });
       queryClient.invalidateQueries({ queryKey: shipmentKeys.lists() });
     },
@@ -741,6 +796,62 @@ export function useNotaTimbanganForProduct(
     },
     enabled:
       !!shipmentId && !!productId && shipmentId !== "" && productId !== "",
+    ...options,
+  });
+}
+
+export function useUpdateTally(
+  options: UseMutationOptions<
+    ApiResponse<Shipment>,
+    ApiErrorResult,
+    { id: string; tally: string }
+  > = {}
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, tally }: { id: string; tally: string }) => {
+      const response = await fetchApi(
+        `${BASE_URL}/shipments/${id}/update-tally`,
+        {},
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ tally }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw createErrorResponse(
+          errorResult,
+          `Error updating tally: ${response.statusText}`
+        );
+      }
+
+      const result: ApiResponse<Shipment> = await response.json();
+
+      if (!result.success) {
+        handleApiError(result, "Terjadi kesalahan saat memperbarui tally");
+      }
+
+      return result;
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate and refetch shipment data
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.detail(variables.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all,
+      });
+
+      if (options.onSuccess) {
+        options.onSuccess(data, variables, undefined);
+      }
+    },
     ...options,
   });
 }

@@ -368,7 +368,7 @@ export default function TambahPengguna() {
                 id="warehouseId"
                 label="Gudang"
                 error={errors.warehouseId}
-                helpText="Gudang tempat pengguna bertugas (opsional)"
+                helpText="Pengguna hanya dapat memuat barang dari gudang yang ditugaskan. Jika tidak dipilih, pengguna dapat mengakses semua gudang (opsional)"
               >
                 <div className="flex items-center gap-2">
                   <div className="relative w-full">

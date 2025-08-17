@@ -397,7 +397,7 @@ export default function EditPengguna() {
                   </p>
                 ) : (
                   <p className="mt-1 text-sm text-gray-500">
-                    Gudang tempat pengguna bertugas (opsional)
+                 Pengguna hanya dapat memuat barang dari gudang yang ditugaskan. Jika tidak dipilih, pengguna dapat mengakses semua gudang (opsional)
                   </p>
                 )}
               </div>

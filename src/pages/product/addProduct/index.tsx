@@ -162,7 +162,7 @@ export default function TambahBarang() {
                   htmlFor="name"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Nama Barang
+                  Nama Barang <span className="text-red-500">*</span>
                 </label>
                 <Input
                   id="name"
@@ -220,7 +220,7 @@ export default function TambahBarang() {
                   htmlFor="satuan"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Satuan
+                  Satuan <span className="text-red-500">*</span>
                 </label>
                 <select
                   id="satuan"
@@ -254,7 +254,7 @@ export default function TambahBarang() {
                   htmlFor="warehouseId"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Gudang
+                  Gudang <span className="text-red-500">*</span>
                 </label>
                 <select
                   id="warehouseId"

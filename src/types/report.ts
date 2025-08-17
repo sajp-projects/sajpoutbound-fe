@@ -342,6 +342,7 @@ export interface DashboardSummaryFilter {
 export interface RecentActivity {
   id: string;
   shipmentNumber: string;
+  plateNumber: string | null;
   status: "PENDING" | "PROSES" | "SELESAI";
   createdAt: string;
 }
@@ -367,6 +368,27 @@ export interface ArmadaInfo {
   id_sl?: string;
 }
 
+export interface UnprocessedDO {
+  id: string;
+  doNumber: string | null;
+  customer: {
+    id: string;
+    name: string;
+  };
+  items: Array<{
+    id: string;
+    product: {
+      id: string;
+      name: string;
+      satuan: string;
+    };
+    quantity: number;
+    pendingQuantity: number;
+  }>;
+  createdAt: string;
+  status: "PENDING" | "PROSES" | "SELESAI";
+}
+
 export interface DashboardSummaryResult {
   kpi: {
     totalDOsActive: number;
@@ -385,6 +407,7 @@ export interface DashboardSummaryResult {
   };
   doSummary: OperationalReportSummary;
   recentActivities: RecentActivity[];
+  unprocessedDOs: UnprocessedDO[];
   performance: PerformanceMetrics;
   armada: {
     total: number;

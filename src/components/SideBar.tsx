@@ -14,6 +14,7 @@ import {
   PackageCheck,
   ShieldCheck,
   Truck,
+  User,
   UserCheck,
   Users,
   Warehouse,
@@ -119,6 +120,107 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
         name: "Dashboard",
         icon: <Home className="w-4 h-4 sm:w-5 sm:h-5" />,
         path: "/",
+      },
+      {
+        name: "Armada",
+        icon: <Truck className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.ARMADA,
+        subItems: [
+          {
+            name: "Daftar Armada",
+            path: "/armada",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Tambah Armada",
+            path: "/armada/tambah",
+            action: PERMISSION.ACTIONS.CREATE,
+          },
+          {
+            name: "Log Armada",
+            path: "/armada/log",
+            action: PERMISSION.ACTIONS.READ,
+            resource: PERMISSION.RESOURCES.ARMADA_LOG,
+          },
+        ],
+      },
+      {
+        name: "Delivery Order",
+        icon: <FileText className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.DO,
+        subItems: [
+          {
+            name: "Daftar DO",
+            path: "/do",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Tambah DO",
+            path: "/do/tambah",
+            action: PERMISSION.ACTIONS.CREATE,
+          },
+          {
+            name: "DO Arsip",
+            path: "/do/arsip",
+            action: PERMISSION.ACTIONS.READ_ARCHIVED,
+          },
+          {
+            name: "Log DO",
+            path: "/do/log",
+            action: PERMISSION.ACTIONS.READ,
+            resource: PERMISSION.RESOURCES.DO_LOG,
+          },
+        ],
+      },
+      {
+        name: "Pengiriman",
+        icon: <PackageCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.PENGIRIMAN,
+        subItems: [
+          {
+            name: "Daftar Pengiriman",
+            path: "/pengiriman",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Tambah Pengiriman",
+            path: "/pengiriman/tambah",
+            action: PERMISSION.ACTIONS.CREATE,
+          },
+          {
+            name: "Pengiriman Arsip",
+            path: "/pengiriman/arsip",
+            action: PERMISSION.ACTIONS.READ_ARCHIVED,
+          },
+          {
+            name: "Log Pengiriman",
+            path: "/pengiriman/log",
+            action: PERMISSION.ACTIONS.READ,
+            resource: PERMISSION.RESOURCES.PENGIRIMAN_LOG,
+          },
+          {
+            name: "Verifikasi Plat Manual",
+            path: "/pengiriman/verifikasi-plat-manual",
+            action: PERMISSION.ACTIONS.VERIFY_PLATE_MANUAL,
+          },
+        ],
+      },
+      {
+        name: "Supir",
+        icon: <User className="w-4 h-4 sm:w-5 sm:h-5" />,
+        resource: PERMISSION.RESOURCES.DRIVER,
+        subItems: [
+          {
+            name: "Daftar Supir",
+            path: "/supir",
+            action: PERMISSION.ACTIONS.READ,
+          },
+          {
+            name: "Tambah Supir",
+            path: "/supir/tambah",
+            action: PERMISSION.ACTIONS.CREATE,
+          },
+        ],
       },
       {
         name: "Pengguna",
@@ -243,90 +345,6 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
             path: "/gudang/log",
             action: PERMISSION.ACTIONS.READ,
             resource: PERMISSION.RESOURCES.WAREHOUSE_LOG,
-          },
-        ],
-      },
-      {
-        name: "Armada",
-        icon: <Truck className="w-4 h-4 sm:w-5 sm:h-5" />,
-        resource: PERMISSION.RESOURCES.ARMADA,
-        subItems: [
-          {
-            name: "Daftar Armada",
-            path: "/armada",
-            action: PERMISSION.ACTIONS.READ,
-          },
-          {
-            name: "Tambah Armada",
-            path: "/armada/tambah",
-            action: PERMISSION.ACTIONS.CREATE,
-          },
-          {
-            name: "Log Armada",
-            path: "/armada/log",
-            action: PERMISSION.ACTIONS.READ,
-            resource: PERMISSION.RESOURCES.ARMADA_LOG,
-          },
-        ],
-      },
-      {
-        name: "Delivery Order",
-        icon: <FileText className="w-4 h-4 sm:w-5 sm:h-5" />,
-        resource: PERMISSION.RESOURCES.DO,
-        subItems: [
-          {
-            name: "Daftar DO",
-            path: "/do",
-            action: PERMISSION.ACTIONS.READ,
-          },
-          {
-            name: "Tambah DO",
-            path: "/do/tambah",
-            action: PERMISSION.ACTIONS.CREATE,
-          },
-          {
-            name: "DO Arsip",
-            path: "/do/arsip",
-            action: PERMISSION.ACTIONS.READ_ARCHIVED,
-          },
-          {
-            name: "Log DO",
-            path: "/do/log",
-            action: PERMISSION.ACTIONS.READ,
-            resource: PERMISSION.RESOURCES.DO_LOG,
-          },
-        ],
-      },
-      {
-        name: "Pengiriman",
-        icon: <PackageCheck className="w-4 h-4 sm:w-5 sm:h-5" />,
-        resource: PERMISSION.RESOURCES.PENGIRIMAN,
-        subItems: [
-          {
-            name: "Daftar Pengiriman",
-            path: "/pengiriman",
-            action: PERMISSION.ACTIONS.READ,
-          },
-          {
-            name: "Tambah Pengiriman",
-            path: "/pengiriman/tambah",
-            action: PERMISSION.ACTIONS.CREATE,
-          },
-          {
-            name: "Pengiriman Arsip",
-            path: "/pengiriman/arsip",
-            action: PERMISSION.ACTIONS.READ_ARCHIVED,
-          },
-          {
-            name: "Log Pengiriman",
-            path: "/pengiriman/log",
-            action: PERMISSION.ACTIONS.READ,
-            resource: PERMISSION.RESOURCES.PENGIRIMAN_LOG,
-          },
-          {
-            name: "Verifikasi Plat Manual",
-            path: "/pengiriman/verifikasi-plat-manual",
-            action: PERMISSION.ACTIONS.VERIFY_PLATE_MANUAL,
           },
         ],
       },

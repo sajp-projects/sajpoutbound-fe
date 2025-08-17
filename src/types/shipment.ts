@@ -63,6 +63,8 @@ export interface Shipment {
   type: ShipmentType;
   status: ShipmentStatus;
   armadaId: string;
+  driverId: string;
+  tally: string | null;
   internalNote: string | null;
   plateNumber: string;
   platePhoto: string | null;
@@ -77,6 +79,10 @@ export interface Shipment {
     plateNumber: string;
     id_sl?: string;
     description?: string;
+  };
+  driver: {
+    id: string;
+    name: string;
   };
   shipmentItems: ShipmentItem[];
   spmbs?: SPMB[];
@@ -100,6 +106,7 @@ export interface UpdateShipmentItem {
 export interface CreateShipmentInput {
   type: ShipmentType;
   armadaId?: string;
+  driverId: string;
   internalNote?: string;
   plateNumber: string;
   items: CreateShipmentItem[];
@@ -108,6 +115,8 @@ export interface CreateShipmentInput {
 export interface UpdateShipmentInput {
   type?: ShipmentType;
   armadaId?: string;
+  driverId?: string;
+  tally?: string;
   internalNote?: string;
   plateNumber?: string;
   items?: UpdateShipmentItem[];
@@ -369,4 +378,23 @@ export interface BulkWeighShipmentInput {
   grossWeight: number;
   netWeight?: number;
   tareWeight?: number;
+}
+
+export interface IndividualWeighShipmentInput {
+  shipmentId: string;
+  shipmentItemId: string;
+  grossWeight: number;
+  netWeight?: number;
+  tareWeight?: number;
+}
+
+// Individual weighing item interface
+export interface IndividualWeighingItem {
+  shipmentItemId: string;
+  deliveryOrderId: string;
+  deliveryOrderNumber: string;
+  customerName: string;
+  requestedQuantity: number;
+  productName: string;
+  productUnit: string;
 }

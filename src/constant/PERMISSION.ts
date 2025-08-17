@@ -11,6 +11,7 @@ export const PERMISSION = {
     REVISE_DO: "REVISE_DO",
     UNARCHIVE: "UNARCHIVE",
     READ_ARCHIVED: "READ_ARCHIVED",
+    UPDATE_TALLY: "UPDATE_TALLY",
   },
   RESOURCES: {
     DASHBOARD: "dashboard",
@@ -22,6 +23,7 @@ export const PERMISSION = {
     WAREHOUSE: "warehouse",
     DO: "delivery_order",
     ARMADA: "armada",
+    DRIVER: "driver",
     PENGIRIMAN: "shipment",
     LAPORAN: "report",
     // Log resources

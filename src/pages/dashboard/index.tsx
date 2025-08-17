@@ -82,6 +82,9 @@ export default function Dashboard() {
   const kpi = dashboardData?.kpi;
   const doSummary = dashboardData?.doSummary;
   const recentActivities = dashboardData?.recentActivities || [];
+  const unprocessedDOs = dashboardData?.unprocessedDOs || [];
+
+  console.log(unprocessedDOs, "unprocessedDos");
   const armada = dashboardData?.armada;
 
   // Shipment stats for ANTAR and JEMPUT
@@ -109,8 +112,16 @@ export default function Dashboard() {
   const recentItems = recentActivities.slice(0, 5) || [];
 
   // Permission checks
-  const canReadShipments = hasPermission(permissions, PERMISSION.RESOURCES.PENGIRIMAN, PERMISSION.ACTIONS.READ);
-  const canReadArmada = hasPermission(permissions, PERMISSION.RESOURCES.ARMADA, PERMISSION.ACTIONS.READ);
+  const canReadShipments = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PENGIRIMAN,
+    PERMISSION.ACTIONS.READ
+  );
+  const canReadArmada = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.ARMADA,
+    PERMISSION.ACTIONS.READ
+  );
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
@@ -125,7 +136,10 @@ export default function Dashboard() {
     }
   };
 
-  const handleNavigateToShipments = (status?: string, type?: "ANTAR" | "JEMPUT") => {
+  const handleNavigateToShipments = (
+    status?: string,
+    type?: "ANTAR" | "JEMPUT"
+  ) => {
     const params = new URLSearchParams({
       startDate: dateRange.startDate,
       endDate: dateRange.endDate,
@@ -171,6 +185,174 @@ export default function Dashboard() {
               Selamat datang kembali! Berikut ringkasan operasional hari ini.
             </p>
           </div>
+        </div>
+
+        {/* DO Belum Diproses/Terkirim - Main Priority List */}
+        <div className="mb-6">
+          <Card className="bg-white border-gray-100">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600" />
+                DO Belum Diproses/Terkirim ({unprocessedDOs?.length ?? 0})
+              </CardTitle>
+              <p className="text-sm text-gray-600">
+                Daftar Delivery Order yang belum di proses atau terkirim
+              </p>
+            </CardHeader>
+            <CardContent>
+              {isDashboardLoading ? (
+                <LoadingSkeleton className="h-64" />
+              ) : unprocessedDOs && unprocessedDOs.length > 0 ? (
+                <div className="space-y-3">
+                  {unprocessedDOs.slice(0, 5).map((DO) => (
+                    <div
+                      key={DO.id}
+                      className="p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors border-gray-200"
+                    >
+                      {/* Mobile Layout - Status at top right */}
+                      <div className="sm:hidden">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <p className="font-medium text-sm text-gray-900">
+                              {DO.doNumber ||
+                                `DO-${DO.id.slice(-6).toUpperCase()}`}
+                            </p>
+                            <p className="text-xs text-gray-600">
+                              {DO.customer.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {formatDate(DO.createdAt)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge className={getStatusBadgeClass(DO.status)}>
+                              {DO.status}
+                            </Badge>
+                            {hasPermission(
+                              permissions,
+                              PERMISSION.RESOURCES.DO,
+                              PERMISSION.ACTIONS.READ
+                            ) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                onClick={() => navigate(`/do/${DO.id}`)}
+                              >
+                                <FileText className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {DO.items.slice(0, 1).map((item) => (
+                            <Badge
+                              key={item.id}
+                              variant="outline"
+                              className="text-xs border-gray-200"
+                            >
+                              {item.product.name}: {item.pendingQuantity}{" "}
+                              {item.product.satuan}
+                            </Badge>
+                          ))}
+                          {DO.items.length > 1 && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-gray-200"
+                            >
+                              +{DO.items.length - 1} item
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Desktop Layout - Original side by side */}
+                      <div className="hidden sm:flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <p className="font-medium text-sm text-gray-900">
+                                {DO.doNumber ||
+                                  `DO-${DO.id.slice(-6).toUpperCase()}`}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                {DO.customer.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {formatDate(DO.createdAt)}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {DO.items.slice(0, 2).map((item) => (
+                                <Badge
+                                  key={item.id}
+                                  variant="outline"
+                                  className="text-xs border-gray-200 border-1"
+                                >
+                                  {item.product.name}: {item.pendingQuantity}{" "}
+                                  {item.product.satuan}
+                                </Badge>
+                              ))}
+                              {DO.items.length > 2 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{DO.items.length - 2} lainnya
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className={getStatusBadgeClass(DO.status)}>
+                            {DO.status}
+                          </Badge>
+                          {hasPermission(
+                            permissions,
+                            PERMISSION.RESOURCES.DO,
+                            PERMISSION.ACTIONS.READ
+                          ) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={() => navigate(`/do/${DO.id}`)}
+                            >
+                              <FileText className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                  <p className="text-gray-600">Semua DO sudah diproses!</p>
+                  <p className="text-sm text-gray-500">
+                    Tidak ada Delivery Order yang memerlukan perhatian.
+                  </p>
+                </div>
+              )}
+              {hasPermission(
+                permissions,
+                PERMISSION.RESOURCES.DO,
+                PERMISSION.ACTIONS.READ
+              ) &&
+                unprocessedDOs &&
+                unprocessedDOs.length > 0 && (
+                  <div className="mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate("/do")}
+                      className="w-full"
+                    >
+                      Lihat Semua DO
+                    </Button>
+                  </div>
+                )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Delivery Order Management - Side by Side */}
@@ -269,7 +451,15 @@ export default function Dashboard() {
                                 ? "hover:shadow-md cursor-pointer"
                                 : "cursor-default"
                             }`}
-                            onClick={canReadShipments ? () => handleNavigateToShipments(item.status, "ANTAR") : undefined}
+                            onClick={
+                              canReadShipments
+                                ? () =>
+                                    handleNavigateToShipments(
+                                      item.status,
+                                      "ANTAR"
+                                    )
+                                : undefined
+                            }
                           >
                             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-100 rounded-full mx-auto mb-1 sm:mb-2 flex items-center justify-center">
                               {item.icon}
@@ -375,7 +565,15 @@ export default function Dashboard() {
                                 ? "hover:shadow-md cursor-pointer"
                                 : "cursor-default"
                             }`}
-                            onClick={canReadShipments ? () => handleNavigateToShipments(item.status, "JEMPUT") : undefined}
+                            onClick={
+                              canReadShipments
+                                ? () =>
+                                    handleNavigateToShipments(
+                                      item.status,
+                                      "JEMPUT"
+                                    )
+                                : undefined
+                            }
                           >
                             <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-100 rounded-full mx-auto mb-1 sm:mb-2 flex items-center justify-center">
                               {item.icon}

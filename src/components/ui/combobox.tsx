@@ -41,6 +41,8 @@ interface ComboboxProps {
   popoverClassName?: string;
   onSearch?: (query: string) => void;
   useServerSearch?: boolean;
+  disabled?: boolean;
+  searchable?: boolean;
   // Infinite scroll props
   hasMore?: boolean;
   onLoadMore?: () => void;
@@ -66,6 +68,8 @@ export function Combobox({
   popoverClassName,
   onSearch,
   useServerSearch = false,
+  disabled = false,
+  searchable = true,
   hasMore = false,
   onLoadMore,
   isLoadingMore = false,
@@ -186,6 +190,7 @@ export function Combobox({
               variant="outline"
               role="combobox"
               aria-expanded={open}
+              disabled={disabled}
               className={cn(
                 "w-full justify-between h-10",
                 "text-left font-normal",
@@ -224,12 +229,14 @@ export function Combobox({
             side="bottom"
           >
             <Command shouldFilter={!useServerSearch}>
-              <CommandInput
-                placeholder={searchPlaceholder}
-                value={searchQuery}
-                onValueChange={handleSearchChange}
-                className="border-none focus:ring-0"
-              />
+              {searchable && (
+                <CommandInput
+                  placeholder={searchPlaceholder}
+                  value={searchQuery}
+                  onValueChange={handleSearchChange}
+                  className="border-none focus:ring-0"
+                />
+              )}
               <CommandList
                 ref={listRef}
                 onScroll={handleScroll}
