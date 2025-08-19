@@ -210,7 +210,10 @@ export default function DaftarGudang() {
                       <TableHead className="w-[5%] py-3 px-3 text-center font-semibold text-gray-700 text-sm">
                         No.
                       </TableHead>
-                      <TableHead className="w-[40%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                      <TableHead className="w-[20%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
+                        Kode
+                      </TableHead>
+                      <TableHead className="w-[30%] py-3 px-3 text-left font-semibold text-gray-700 text-sm">
                         Nama
                       </TableHead>
                       <TableHead className="w-[15%] py-3 px-3 text-left font-semibold text-gray-700 text-sm hidden md:table-cell">
@@ -242,6 +245,11 @@ export default function DaftarGudang() {
                         >
                           <TableCell className="py-2.5 px-3 font-medium text-center text-sm">
                             {idx + 1 + (pagination.page - 1) * pagination.limit}
+                          </TableCell>
+                          <TableCell className="py-2.5 px-3 font-medium text-gray-700 text-sm">
+                            <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs">
+                              {gudang.code}
+                            </span>
                           </TableCell>
                           <TableCell className="py-2.5 px-3 font-medium text-blue-600 text-sm">
                             <Link
@@ -290,6 +298,11 @@ export default function DaftarGudang() {
                     <div className="w-full p-3">
                       <div className="flex items-start justify-between w-full mb-2">
                         <div className="max-w-[65%]">
+                          <div className="mb-1">
+                            <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
+                              {gudang.code}
+                            </span>
+                          </div>
                           <h3 className="text-sm font-medium text-blue-600 break-words">
                             {gudang.name}
                           </h3>

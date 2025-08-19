@@ -3,12 +3,12 @@ import { Pagination } from "@/components/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import { useWarehouse } from "@/hooks/warehouse";
 import { useWarehouseLogsByWarehouseId } from "@/hooks/warehouseLog";
@@ -63,6 +63,14 @@ export default function LogGudang() {
             <tbody>
               <tr>
                 <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                  Kode
+                </td>
+                <td className="px-2 py-1 border border-gray-200 font-mono">
+                  {newData.code as string}
+                </td>
+              </tr>
+              <tr>
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
                   Nama
                 </td>
                 <td className="px-2 py-1 border border-gray-200">
@@ -93,6 +101,14 @@ export default function LogGudang() {
             <tbody>
               <tr>
                 <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-50">
+                  Kode
+                </td>
+                <td className="px-2 py-1 border border-gray-200 font-mono">
+                  {oldData.code as string}
+                </td>
+              </tr>
+              <tr>
+                <td className="px-2 py-1 font-medium border border-gray-200 bg-gray-200">
                   Nama
                 </td>
                 <td className="px-2 py-1 border border-gray-200">
@@ -115,6 +131,14 @@ export default function LogGudang() {
 
     if (oldData && newData) {
       const changes = [];
+      if (oldData.code !== newData.code) {
+        changes.push({
+          field: "Kode",
+          oldValue: oldData.code as string,
+          newValue: newData.code as string,
+        });
+      }
+
       if (oldData.name !== newData.name) {
         changes.push({
           field: "Nama",

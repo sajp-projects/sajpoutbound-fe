@@ -239,13 +239,33 @@ export default function TambahPengiriman() {
     return (
       deliveryOrdersData?.pages
         .flatMap((page) => page.deliveryOrders)
-        ?.map((do_item) => ({
-          label: `${do_item.doNumber} - ${do_item.customer.name}`,
-          value: do_item.id,
-          secondary: `${do_item.address} - ${
-            do_item.items.filter((item) => item.pendingQuantity > 0).length
-          } barang tersedia`,
-        })) || []
+        ?.map((do_item) => {
+          // Format deliverySchedule for display with responsive format
+          const scheduleText = do_item.deliverySchedule
+            ? (() => {
+                const date = new Date(do_item.deliverySchedule);
+                const shortFormat = date.toLocaleDateString('id-ID', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+                return shortFormat;
+              })()
+            : null;
+
+          // Construct secondary text with responsive layout in mind
+          const secondaryParts = [do_item.address];
+          if (scheduleText) {
+            secondaryParts.push(`${scheduleText}`);
+          }
+
+          return {
+            label: `${do_item.doNumber} - ${do_item.customer.name}`,
+            value: do_item.id,
+            secondary: secondaryParts.join(' • '),
+          };
+        }) || []
     );
   }, [deliveryOrdersData]);
 
@@ -1348,7 +1368,7 @@ export default function TambahPengiriman() {
                         </p>
                       </div>
                       <div className="ml-2 text-gray-600 font-medium whitespace-nowrap">
-                        {item.pendingQuantity} {item.product.satuan}
+                        {item.pendingQuantity.toLocaleString('id-ID')} {item.product.satuan}
                       </div>
                     </div>
                   ))}

@@ -8,6 +8,7 @@ export interface UserMinimal {
 
 export interface Warehouse {
   id: string;
+  code: string;
   name: string;
   description: string;
   createdAt: string;
@@ -23,11 +24,13 @@ export interface WarehousesResponse {
 }
 
 export interface CreateWarehouseInput {
+  code: string;
   name: string;
   description: string;
 }
 
 export interface UpdateWarehouseInput {
+  code?: string;
   name?: string;
   description?: string;
 }

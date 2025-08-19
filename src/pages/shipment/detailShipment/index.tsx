@@ -5,8 +5,10 @@ import {
   useDeleteShipment,
   useIndividualWeighShipmentItem,
   useNotaTimbanganForProduct,
+  useSelectiveChooseProduct,
   useShipment,
   useShipmentChosenProducts,
+  useUpdateKenek,
   useUpdateTally,
 } from "@/hooks/shipment";
 import {
@@ -27,7 +29,8 @@ import {
   ShoppingCart,
   Upload,
   User,
-  X,
+  UserCog2,
+  X
 } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 
@@ -36,7 +39,6 @@ import { ErrorState } from "@/components/ErrorState";
 import { IndividualWeighingModal } from "@/components/IndividualWeighingModal";
 import { LoadingState } from "@/components/LoadingState";
 import { ReviseDOModal } from "@/components/ReviseDOModal";
-import { WeighingMethodModal } from "@/components/WeighingMethodModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,6 +67,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { WeighingMethodModal } from "@/components/WeighingMethodModal";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useDeliveryOrder } from "@/hooks/do";
@@ -74,6 +77,7 @@ import { DeliveryOrder } from "@/types/do";
 import { FilePreview } from "@/types/media";
 import {
   ChosenProductExtended,
+  DeliveryOrderForSelection,
   GroupedDeliveryOrder,
   IndividualWeighingItem,
   ShipmentStatus,
@@ -105,6 +109,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { DeliveryOrderAccordion } from "@/components/DeliveryOrderAccordion";
+import { DOSelectionModal } from "@/components/DOSelectionModal";
+import { LoadingMethod, LoadingMethodSelectionModal } from "@/components/LoadingMethodSelectionModal";
 
 // Tally form schema and types
 interface TallyFormValues {
@@ -117,6 +123,20 @@ const tallyFormSchema = Joi.object<TallyFormValues>({
     "string.min": "Tally minimal 1 karakter",
     "string.max": "Tally maksimal 255 karakter",
     "any.required": "Tally harus diisi",
+  }),
+});
+
+// Kenek form schema and types
+interface KenekFormValues {
+  kenek: string;
+}
+
+const kenekFormSchema = Joi.object<KenekFormValues>({
+  kenek: Joi.string().required().min(1).max(255).messages({
+    "string.empty": "Kenek harus diisi",
+    "string.min": "Kenek minimal 1 karakter",
+    "string.max": "Kenek maksimal 255 karakter",
+    "any.required": "Kenek harus diisi",
   }),
 });
 
@@ -251,6 +271,24 @@ export default function DetailPengiriman() {
     "change-customer" | "revise" | null
   >(null);
   const [tallyModalOpen, setTallyModalOpen] = useState(false);
+  const [kenekModalOpen, setKenekModalOpen] = useState(false);
+
+  // Loading method selection modal states
+  const [loadingMethodModalOpen, setLoadingMethodModalOpen] = useState(false);
+  const [selectedProductForLoading, setSelectedProductForLoading] = useState<{
+    id: string;
+    name: string;
+    satuan: string;
+  } | null>(null);
+
+  // DO Selection Modal states
+  const [doSelectionModalOpen, setDoSelectionModalOpen] = useState(false);
+  const [selectedProductForDOSelection, setSelectedProductForDOSelection] = useState<{
+    id: string;
+    name: string;
+    satuan: string;
+    deliveryOrders: DeliveryOrderForSelection[];
+  } | null>(null);
 
   // Tally form - initialize without defaultValues first
   const tallyForm = useForm<TallyFormValues>({
@@ -260,12 +298,21 @@ export default function DetailPengiriman() {
     },
   });
 
+  // Kenek form - initialize without defaultValues first
+  const kenekForm = useForm<KenekFormValues>({
+    resolver: joiResolver(kenekFormSchema),
+    defaultValues: {
+      kenek: "",
+    },
+  });
+
   // Update tally mutation
   const updateTally = useUpdateTally({
     onSuccess: () => {
       showSuccessAlert("Berhasil!", "Tally berhasil diperbarui");
       setTallyModalOpen(false);
       tallyForm.reset();
+      refetch(); // Refetch shipment data to get updated tally
     },
     onError: (error) => {
       showErrorAlert(
@@ -290,6 +337,203 @@ export default function DetailPengiriman() {
     }
   };
 
+  // Update kenek mutation
+  const updateKenek = useUpdateKenek({
+    onSuccess: () => {
+      showSuccessAlert("Berhasil!", "Kenek berhasil diperbarui");
+      setKenekModalOpen(false);
+      kenekForm.reset();
+      refetch(); // Refetch shipment data to get updated kenek
+    },
+    onError: (error) => {
+      showErrorAlert(
+        "Gagal Memperbarui Kenek",
+        error.message || "Terjadi kesalahan saat memperbarui kenek"
+      );
+    },
+  });
+
+  // Kenek handlers
+  const handleOpenKenekModal = () => {
+    kenekForm.setValue("kenek", shipment?.kenek || "");
+    setKenekModalOpen(true);
+  };
+
+  const handleKenekSubmit = (data: KenekFormValues) => {
+    if (shipmentId) {
+      updateKenek.mutate({
+        id: shipmentId,
+        kenek: data.kenek,
+      });
+    }
+  };
+
+  // Selective choose product mutation
+  const selectiveChooseProduct = useSelectiveChooseProduct({
+    onSuccess: () => {
+      // Show success message
+      showSuccessAlert(
+        "Sukses!",
+        "Barang berhasil dimuat secara selektif"
+      );
+
+      // Clear the selected data
+      setSelectedProductId("");
+      setSelectedProductDOs([]);
+      setSelectedWeighingMethod(null);
+
+      // Immediately refetch to ensure UI update
+      refetch();
+      refetchChosenProducts();
+
+      // Additional refetch after a small delay to ensure data consistency
+      setTimeout(() => {
+        refetch();
+        refetchChosenProducts();
+      }, 500);
+
+      // The shipment data will also be automatically refetched due to query invalidation
+      // in the useSelectiveChooseProduct hook
+    },
+    onError: (error) => {
+      showErrorAlert(
+        "Error",
+        error.message || "Terjadi kesalahan saat memuat barang selektif"
+      );
+    },
+  });
+
+  // Loading method selection handlers
+  // This function checks if a product has multiple DOs in the shipment:
+  // - If only 1 DO: directly opens product modal (ALL method)
+  // - If multiple DOs: shows loading method selection modal
+  const handleOpenLoadingMethodModal = (productId: string) => {
+    if (!shipment) return;
+
+    // Check how many unique DOs this product has in the shipment
+    const uniqueDOs = new Set<string>();
+    shipment.shipmentItems.forEach((item) => {
+      if (item.productId === productId && !item.chosenProduct) {
+        uniqueDOs.add(item.deliveryOrderId);
+      }
+    });
+
+    // If only one DO, directly use ALL method (original flow)
+    if (uniqueDOs.size <= 1) {
+      handleOpenProductModal(productId);
+      return;
+    }
+
+    // If multiple DOs, show the loading method selection modal
+    const productName = shipment.shipmentItems.find(item => item.productId === productId)?.product.name || "";
+    const productUnit = shipment.shipmentItems.find(item => item.productId === productId)?.product.satuan || "";
+
+    setSelectedProductForLoading({
+      id: productId,
+      name: productName,
+      satuan: productUnit,
+    });
+    setLoadingMethodModalOpen(true);
+  };
+
+  const handleLoadingMethodSelect = (method: LoadingMethod) => {
+    if (!selectedProductForLoading) return;
+
+    setLoadingMethodModalOpen(false);
+
+    if (method === "ALL") {
+      // Use existing product modal for weighing method selection (original flow)
+      handleOpenProductModal(selectedProductForLoading.id);
+    } else if (method === "SELECTIVE") {
+      // Open DO selection modal
+      handleOpenDOSelectionModal(selectedProductForLoading.id);
+    }
+
+    setSelectedProductForLoading(null);
+  };
+
+  // DO Selection handlers
+  const handleOpenDOSelectionModal = (productId: string) => {
+    if (!shipment) return;
+
+    // Extract delivery orders for this product
+    const productName = shipment.shipmentItems.find(item => item.productId === productId)?.product.name || "";
+    const productUnit = shipment.shipmentItems.find(item => item.productId === productId)?.product.satuan || "";
+
+    // Group items by delivery order for this product
+    const doMap = new Map<string, DeliveryOrderForSelection>();
+
+    shipment.shipmentItems.forEach((item) => {
+      if (item.productId === productId && !item.chosenProduct) {
+        const doId = item.deliveryOrderId;
+        if (!doMap.has(doId)) {
+          doMap.set(doId, {
+            id: doId,
+            doNumber: item.deliveryOrder.doNumber,
+            customer: item.deliveryOrder.customer,
+            items: [],
+          });
+        }
+
+        doMap.get(doId)!.items.push({
+          id: item.id,
+          productId: item.productId,
+          requestedQuantity: item.requestedQuantity,
+          pendingQuantity: item.requestedQuantity, // Assuming pending = requested for non-chosen items
+          status: item.status,
+        });
+      }
+    });
+
+    setSelectedProductForDOSelection({
+      id: productId,
+      name: productName,
+      satuan: productUnit,
+      deliveryOrders: Array.from(doMap.values()),
+    });
+    setDoSelectionModalOpen(true);
+  };
+
+  const handleDOSelectionConfirm = (selectedDOIds: string[]) => {
+    if (!selectedProductForDOSelection) return;
+
+        // Store the selected DOs and open the weighing method selection modal
+    const selectedDOs = selectedDOIds.map((doId) => {
+      const doInfo = selectedProductForDOSelection.deliveryOrders.find((deliveryOrder) => deliveryOrder.id === doId);
+      if (!doInfo) return null;
+
+      return {
+        doId: doInfo.id,
+        customer: doInfo.customer,
+        product: {
+          id: selectedProductForDOSelection.id,
+          name: selectedProductForDOSelection.name,
+          quantity: doInfo.items.reduce((sum, item) => sum + item.requestedQuantity, 0),
+          satuan: selectedProductForDOSelection.satuan,
+        },
+      };
+    }).filter((item) => item !== null) as {
+      doId: string;
+      customer: {
+        id: string;
+        name: string;
+      };
+      product: {
+        id: string;
+        name: string;
+        quantity: number;
+        satuan: string;
+      };
+    }[];
+
+    setSelectedProductDOs(selectedDOs);
+
+    setSelectedProductId(selectedProductForDOSelection.id);
+    setProductModalOpen(true);
+    setDoSelectionModalOpen(false);
+    setSelectedProductForDOSelection(null);
+  };
+
   const hasPengirimanUpdateAccess = hasPermission(
     permissions,
     PERMISSION.RESOURCES.PENGIRIMAN,
@@ -297,6 +541,12 @@ export default function DetailPengiriman() {
   );
 
   const hasPengirimanUpdateTallyAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PENGIRIMAN,
+    PERMISSION.ACTIONS.UPDATE_TALLY
+  );
+
+  const hasPengirimanUpdateKenekAccess = hasPermission(
     permissions,
     PERMISSION.RESOURCES.PENGIRIMAN,
     PERMISSION.ACTIONS.UPDATE_TALLY
@@ -756,6 +1006,8 @@ export default function DetailPengiriman() {
       console.log("Found product:", product);
 
       if (product) {
+        // Get only the chosen items for this product (items that were loaded into the shipment)
+        // This ensures weighing only works for items that are actually in the shipment
         const chosenItems = shipment.shipmentItems.filter(
           (si) => si.productId === productId && si.chosenProduct
         );
@@ -795,6 +1047,8 @@ export default function DetailPengiriman() {
     } else if (method === "individual") {
       // Prepare individual weighing items and open individual weighing modal
       if (selectedProductForWeighing && shipment) {
+        // Get only the chosen unweighed items for this product (items that were loaded and need weighing)
+        // This ensures weighing only works for items that are actually in the shipment
         const chosenItems = shipment.shipmentItems.filter(
           (si) =>
             si.productId === selectedProductForWeighing.id &&
@@ -910,13 +1164,26 @@ export default function DetailPengiriman() {
   }, [grossWeight, tareWeight, grossWeightDisplay]);
 
   // Helper function to get weighing method for a product
+  // Note: With selective loading, the weighing method is determined when the product is chosen
+  // This function looks up the weighing method from the chosenProducts list
   const getProductWeighingMethod = (
     productId: string
   ): "MANUAL" | "VENDOR" | null => {
     const chosenProduct = chosenProducts.find(
       (cp) => cp.productId === productId
     );
-    return chosenProduct?.weighingMethod || null;
+    const result = chosenProduct?.weighingMethod || null;
+
+    // Debug logging to help identify weighing method issues
+    if (productId) {
+      console.log(`getProductWeighingMethod for product ${productId}:`, {
+        chosenProducts: chosenProducts.length,
+        foundProduct: chosenProduct,
+        weighingMethod: result
+      });
+    }
+
+    return result;
   };
 
   const handleWeighSubmit = () => {
@@ -1494,26 +1761,47 @@ export default function DetailPengiriman() {
                       <span className="sm:hidden">DO & Barang</span>
                     </h3>
                   </div>
-                  {hasPengirimanUpdateTallyAccess && shipment && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                      onClick={handleOpenTallyModal}
-                    >
-                      <User className="mr-2 w-4 h-4" />
-                      {shipment.tally ? "Edit Tally" : "Tambah Tally"}
-                    </Button>
-                  )}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    {hasPengirimanUpdateKenekAccess && shipment && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={
+                          shipment.kenek
+                            ? "w-full sm:w-auto text-green-700 bg-green-50 border-green-200 hover:bg-green-100 text-xs sm:text-sm"
+                            : "w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 text-xs sm:text-sm"
+                        }
+                        onClick={handleOpenKenekModal}
+                      >
+                        <UserCog2 className="mr-2 w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="truncate">
+                          {shipment.kenek ? shipment.kenek : "Tambah Kenek"}
+                        </span>
+                      </Button>
+                    )}
+
+                    {hasPengirimanUpdateTallyAccess && shipment && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={
+                          shipment.tally
+                            ? "w-full sm:w-auto text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100 text-xs sm:text-sm"
+                            : "w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50 text-xs sm:text-sm"
+                        }
+                        onClick={handleOpenTallyModal}
+                      >
+                        <User className="mr-2 w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="truncate">
+                          {shipment.tally ? shipment.tally : "Tambah Tally"}
+                        </span>
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <p className="mb-4 text-sm text-gray-500">
                   Ringkasan barang dari seluruh delivery order dalam pengiriman
                   ini
-                  {shipment?.tally && (
-                    <span className="ml-2 text-blue-600 font-medium">
-                      • Tally: {shipment.tally}
-                    </span>
-                  )}
                 </p>
 
                 {/* Tabel barang - Desktop view */}
@@ -1722,11 +2010,25 @@ export default function DetailPengiriman() {
                                           <Button
                                             variant="outline"
                                             size="sm"
-                                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                                            onClick={() =>
-                                              handleOpenProductModal(product.id)
+                                            className={
+                                              !shipment?.tally || !shipment?.kenek
+                                                ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                                                : "text-blue-600 border-blue-200 hover:bg-blue-50"
                                             }
-                                            disabled={chooseProduct.isPending}
+                                            onClick={() =>
+                                              handleOpenLoadingMethodModal(product.id)
+                                            }
+                                            disabled={
+                                              chooseProduct.isPending ||
+                                              selectiveChooseProduct.isPending ||
+                                              !shipment?.tally ||
+                                              !shipment?.kenek
+                                            }
+                                            title={
+                                              !shipment?.tally || !shipment?.kenek
+                                                ? "Tally dan Kenek harus diisi terlebih dahulu"
+                                                : undefined
+                                            }
                                           >
                                             <Package className="mr-2 w-4 h-4" />
                                             Muat Barang
@@ -1800,23 +2102,36 @@ export default function DetailPengiriman() {
                                         }
                                       }
 
-                                      // Partial chosen - show both buttons
+                                      // Partial chosen - show load remaining button
                                       const buttons = [];
                                       if (hasPengirimanUpdateAccess) {
                                         buttons.push(
                                           <Button
-                                            key="muat"
+                                            key="muat-sisa"
                                             variant="outline"
                                             size="sm"
-                                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                                            onClick={() =>
-                                              handleOpenProductModal(product.id)
+                                            className={
+                                              !shipment?.tally || !shipment?.kenek
+                                                ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                                                : "text-blue-600 border-blue-200 hover:bg-blue-50"
                                             }
-                                            disabled={chooseProduct.isPending}
+                                            onClick={() =>
+                                              handleOpenLoadingMethodModal(product.id)
+                                            }
+                                            disabled={
+                                              chooseProduct.isPending ||
+                                              selectiveChooseProduct.isPending ||
+                                              !shipment?.tally ||
+                                              !shipment?.kenek
+                                            }
+                                            title={
+                                              !shipment?.tally || !shipment?.kenek
+                                                ? "Tally dan Kenek harus diisi terlebih dahulu"
+                                                : "Muat sisa barang"
+                                            }
                                           >
                                             <Package className="mr-2 w-4 h-4" />
-                                            Muat Sisa (
-                                            {totalCount - chosenCount})
+                                            Muat Sisa ({totalCount - chosenCount})
                                           </Button>
                                         );
                                       }
@@ -1836,6 +2151,16 @@ export default function DetailPengiriman() {
                                           chosenItems.filter(
                                             (si) => si.status !== "COMPLETED"
                                           ).length;
+
+                                        // Debug logging for weighing button visibility
+                                        console.log(`Weighing button visibility for product ${product.id}:`, {
+                                          weighingMethod,
+                                          hasPengirimanWeighAccess,
+                                          chosenCount,
+                                          chosenItems: chosenItems.length,
+                                          unweighedCount,
+                                          willShow: unweighedCount > 0
+                                        });
 
                                         if (unweighedCount > 0) {
                                           buttons.push(
@@ -1925,7 +2250,8 @@ export default function DetailPengiriman() {
                           };
                           doIds: Set<string>;
                           totalQuantity: number;
-                          isChosen: boolean;
+                          chosenCount: number;
+                          totalCount: number;
                           hasPendingItems: boolean;
                         }
                       >();
@@ -1941,15 +2267,19 @@ export default function DetailPengiriman() {
                             warehouse: item.warehouse,
                             doIds: new Set([item.deliveryOrderId]),
                             totalQuantity: item.requestedQuantity,
-                            isChosen: item.chosenProduct || false,
+                            chosenCount: item.chosenProduct ? 1 : 0,
+                            totalCount: 1,
                             hasPendingItems: !item.chosenProduct,
                           });
                         } else {
                           const product = productMap.get(productId)!;
                           product.doIds.add(item.deliveryOrderId);
                           product.totalQuantity += item.requestedQuantity;
+                          product.totalCount += 1;
                           if (item.chosenProduct) {
-                            product.isChosen = true;
+                            product.chosenCount += 1;
+                          } else {
+                            product.hasPendingItems = true;
                           }
                         }
                       });
@@ -1972,21 +2302,41 @@ export default function DetailPengiriman() {
                                   {product.name}
                                 </Link>
                               </div>
-                              {product.isChosen ? (
-                                <Badge
-                                  variant="outline"
-                                  className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap text-center"
-                                >
-                                  Sudah Dimuat
-                                </Badge>
-                              ) : (
-                                <Badge
-                                  variant="outline"
-                                  className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap text-center"
-                                >
-                                  Belum Dimuat
-                                </Badge>
-                              )}
+                              {(() => {
+                                if (product.chosenCount === 0) {
+                                  return (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap text-center"
+                                    >
+                                      Belum Dimuat
+                                    </Badge>
+                                  );
+                                } else if (product.chosenCount === product.totalCount) {
+                                  return (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap text-center"
+                                    >
+                                      Sudah Dimuat
+                                    </Badge>
+                                  );
+                                } else {
+                                  return (
+                                    <div className="text-right space-y-1">
+                                      <Badge
+                                        variant="outline"
+                                        className="text-blue-700 bg-blue-50 border-blue-200 whitespace-nowrap text-center"
+                                      >
+                                        Sebagian Dimuat
+                                      </Badge>
+                                      <p className="text-xs text-gray-500">
+                                        {product.chosenCount}/{product.totalCount} item
+                                      </p>
+                                    </div>
+                                  );
+                                }
+                              })()}
                             </div>
                             <div className="space-y-1 text-xs text-gray-600">
                               <p>
@@ -2014,17 +2364,9 @@ export default function DetailPengiriman() {
                               hasPengirimanWeighAccess) && (
                               <div className="pt-3 mt-3 space-y-2 border-t border-gray-100">
                                 {(() => {
-                                  // Get the same logic as desktop view
-                                  const chosenCount =
-                                    shipment.shipmentItems.filter(
-                                      (si) =>
-                                        si.productId === product.id &&
-                                        si.chosenProduct
-                                    ).length;
-                                  const totalCount =
-                                    shipment.shipmentItems.filter(
-                                      (si) => si.productId === product.id
-                                    ).length;
+                                  // Use the pre-calculated counts from the product object
+                                  const chosenCount = product.chosenCount;
+                                  const totalCount = product.totalCount;
                                   const allWeighed = shipment.shipmentItems
                                     .filter(
                                       (si) =>
@@ -2042,11 +2384,25 @@ export default function DetailPengiriman() {
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
-                                        onClick={() =>
-                                          handleOpenProductModal(product.id)
+                                        className={
+                                          !shipment?.tally || !shipment?.kenek
+                                            ? "w-full text-gray-400 border-gray-200 cursor-not-allowed"
+                                            : "w-full text-blue-600 border-blue-200 hover:bg-blue-50"
                                         }
-                                        disabled={chooseProduct.isPending}
+                                        onClick={() =>
+                                          handleOpenLoadingMethodModal(product.id)
+                                        }
+                                        disabled={
+                                          chooseProduct.isPending ||
+                                          selectiveChooseProduct.isPending ||
+                                          !shipment?.tally ||
+                                          !shipment?.kenek
+                                        }
+                                        title={
+                                          !shipment?.tally || !shipment?.kenek
+                                            ? "Tally dan Kenek harus diisi terlebih dahulu"
+                                            : undefined
+                                        }
                                       >
                                         <Package className="mr-2 w-4 h-4" />
                                         Muat Barang
@@ -2122,11 +2478,25 @@ export default function DetailPengiriman() {
                                         key="muat"
                                         variant="outline"
                                         size="sm"
-                                        className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
-                                        onClick={() =>
-                                          handleOpenProductModal(product.id)
+                                        className={
+                                          !shipment?.tally || !shipment?.kenek
+                                            ? "w-full text-gray-400 border-gray-200 cursor-not-allowed"
+                                            : "w-full text-blue-600 border-blue-200 hover:bg-blue-50"
                                         }
-                                        disabled={chooseProduct.isPending}
+                                        onClick={() =>
+                                          handleOpenLoadingMethodModal(product.id)
+                                        }
+                                        disabled={
+                                          chooseProduct.isPending ||
+                                          selectiveChooseProduct.isPending ||
+                                          !shipment?.tally ||
+                                          !shipment?.kenek
+                                        }
+                                        title={
+                                          !shipment?.tally || !shipment?.kenek
+                                            ? "Tally dan Kenek harus diisi terlebih dahulu"
+                                            : undefined
+                                        }
                                       >
                                         <Package className="mr-2 w-4 h-4" />
                                         Muat Sisa ({totalCount - chosenCount})
@@ -2148,6 +2518,16 @@ export default function DetailPengiriman() {
                                     const unweighedCount = chosenItems.filter(
                                       (si) => si.status !== "COMPLETED"
                                     ).length;
+
+                                    // Debug logging for weighing button visibility
+                                    console.log(`Weighing button visibility for product ${product.id}:`, {
+                                      weighingMethod,
+                                      hasPengirimanWeighAccess,
+                                      chosenCount,
+                                      chosenItems: chosenItems.length,
+                                      unweighedCount,
+                                      willShow: unweighedCount > 0
+                                    });
 
                                     if (unweighedCount > 0) {
                                       buttons.push(
@@ -2855,34 +3235,34 @@ export default function DetailPengiriman() {
 
       {/* Product Detail Modal */}
       <Dialog open={productModalOpen} onOpenChange={setProductModalOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-white border-0 p-0 rounded-lg shadow-lg">
-          <div className="p-6">
-            <DialogHeader className="pb-4">
-              <DialogTitle className="flex items-center text-xl font-semibold text-gray-900">
-                <Package className="mr-2 w-5 h-5 text-blue-600" />
+        <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[85vh] bg-white border-0 p-0 rounded-lg shadow-lg">
+          <div className="flex flex-col max-h-[85vh]">
+            <DialogHeader className="p-6 pb-4 border-b border-gray-100 flex-shrink-0">
+              <DialogTitle className="flex items-center text-lg sm:text-xl font-semibold text-gray-900">
+                <Package className="mr-2 w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                 Detail Barang untuk Pengiriman
               </DialogTitle>
-              <DialogDescription className="text-gray-600">
+              <DialogDescription className="text-sm sm:text-base text-gray-600">
                 Pilih Barang untuk dimuat dalam pengiriman
               </DialogDescription>
             </DialogHeader>
 
-            <div className="py-4">
+            <div className="flex-1 overflow-y-auto p-6 min-h-0">
               {selectedProductDOs.length > 0 && (
                 <>
                   <h3 className="mb-3 text-base font-medium text-gray-800">
                     Informasi Barang
                   </h3>
-                  <div className="p-4 mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-                    <p className="text-base font-medium text-blue-800">
+                  <div className="p-3 sm:p-4 mb-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+                    <p className="text-sm sm:text-base font-medium text-blue-800">
                       {selectedProductDOs[0].product.name}
                     </p>
-                    <div className="grid grid-cols-2 gap-4 mt-3 text-sm text-gray-700">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3 text-sm text-gray-700">
                       <div>
                         <p className="text-xs font-medium text-blue-600">
                           Total Kuantitas
                         </p>
-                        <p className="font-semibold text-gray-800">
+                        <p className="font-semibold text-gray-800 text-sm sm:text-base">
                           {formatNumber(
                             selectedProductDOs.reduce(
                               (sum, item) => sum + item.product.quantity,
@@ -2899,7 +3279,7 @@ export default function DetailPengiriman() {
                         <div className="font-semibold text-gray-800">
                           <Badge
                             variant="outline"
-                            className="font-medium text-blue-700 bg-blue-50 border-blue-200"
+                            className="font-medium text-blue-700 bg-blue-50 border-blue-200 text-xs sm:text-sm"
                           >
                             {selectedProductDOs.length} DO
                           </Badge>
@@ -2908,12 +3288,12 @@ export default function DetailPengiriman() {
                     </div>
                   </div>
 
-                  <div className="p-4 mb-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
-                    <h3 className="mb-3 text-base font-medium text-green-800">
+                  <div className="p-3 sm:p-4 mb-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
+                    <h3 className="mb-3 text-sm sm:text-base font-medium text-green-800">
                       Pilih Metode Penimbangan
                     </h3>
                     <div className="space-y-3">
-                      <div className="flex items-center">
+                      <div className="flex items-start">
                         <input
                           id="manual-weighing"
                           name="weighing-method"
@@ -2925,22 +3305,22 @@ export default function DetailPengiriman() {
                               e.target.value as "MANUAL" | "VENDOR"
                             )
                           }
-                          className="w-4 h-4 text-green-600 border-gray-300"
+                          className="w-4 h-4 text-green-600 border-gray-300 mt-0.5"
                         />
                         <label
                           htmlFor="manual-weighing"
                           className="ml-3 text-sm"
                         >
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-gray-900 text-sm sm:text-base">
                             Penimbangan Manual
                           </span>
-                          <p className="text-xs text-gray-600">
+                          <p className="text-xs text-gray-600 mt-1">
                             Penimbangan dilakukan secara manual melalui sistem
                             internal
                           </p>
                         </label>
                       </div>
-                      <div className="flex items-center">
+                      <div className="flex items-start">
                         <input
                           id="vendor-weighing"
                           name="weighing-method"
@@ -2952,16 +3332,16 @@ export default function DetailPengiriman() {
                               e.target.value as "MANUAL" | "VENDOR"
                             )
                           }
-                          className="w-4 h-4 text-green-600 border-gray-300"
+                          className="w-4 h-4 text-green-600 border-gray-300 mt-0.5"
                         />
                         <label
                           htmlFor="vendor-weighing"
                           className="ml-3 text-sm"
                         >
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-gray-900 text-sm sm:text-base">
                             Penimbangan Vendor (API)
                           </span>
-                          <p className="text-xs text-gray-600">
+                          <p className="text-xs text-gray-600 mt-1">
                             Penimbangan dilakukan melalui sistem vendor pihak
                             ketiga
                           </p>
@@ -2973,16 +3353,16 @@ export default function DetailPengiriman() {
                   <h3 className="mb-3 text-base font-medium text-gray-800">
                     Delivery Orders Terkait
                   </h3>
-                  <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                     {selectedProductDOs.map((doItem, index) => (
                       <div
                         key={doItem.doId}
-                        className="p-4 bg-white rounded-lg border border-gray-200 transition-colors duration-200 hover:border-gray-300"
+                        className="p-3 sm:p-4 bg-white rounded-lg border border-gray-200 transition-colors duration-200 hover:border-gray-300"
                       >
-                        <div className="flex justify-between">
-                          <div>
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0">
+                          <div className="flex-1">
                             <div className="flex items-center">
-                              <span className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
+                              <span className="flex justify-center items-center mr-2 w-5 h-5 sm:w-6 sm:h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
                                 {index + 1}
                               </span>
                               <p className="text-sm font-medium text-gray-800">
@@ -2995,11 +3375,11 @@ export default function DetailPengiriman() {
                                 </Link>
                               </p>
                             </div>
-                            <p className="mt-1 ml-8 text-xs text-gray-500">
+                            <p className="mt-1 ml-7 sm:ml-8 text-xs text-gray-500">
                               Pelanggan: {doItem.customer.name}
                             </p>
                           </div>
-                          <div className="text-right">
+                          <div className="text-left sm:text-right">
                             <p className="text-xs text-gray-500">Kuantitas</p>
                             <p className="text-sm font-semibold text-gray-800">
                               {formatInputNumber(doItem.product.quantity)}{" "}
@@ -3014,7 +3394,7 @@ export default function DetailPengiriman() {
               )}
             </div>
 
-            <DialogFooter className="pt-4 mt-4 border-t border-gray-100">
+            <DialogFooter className="p-6 pt-4 border-t border-gray-100 flex-shrink-0">
               <div className="flex gap-3 w-full">
                 <Button
                   type="button"
@@ -3035,27 +3415,48 @@ export default function DetailPengiriman() {
                           ? "Manual"
                           : "Vendor";
                       const productName = selectedProductDOs[0].product.name;
-                      const doId = selectedProductDOs[0].doId;
                       const productId = selectedProductId;
                       const weighingMethod = selectedWeighingMethod;
+
+                      // Check if this is a selective loading case
+                      // We need to track the loading method that was selected
+                      // selectedProductDOs is populated from handleDOSelectionConfirm which is only called for selective loading
+                      const isSelectiveLoading = selectedProductDOs.length > 0 && selectedProductDOs.some((deliveryOrder) => deliveryOrder.doId);
 
                       // Close modal first to avoid z-index issues
                       setProductModalOpen(false);
 
                       // Show confirmation dialog after modal is closed
                       setTimeout(() => {
+                        const confirmMessage = isSelectiveLoading
+                          ? `Apakah Anda yakin ingin memuat barang "${productName}" dari ${selectedProductDOs.length} delivery order dengan metode penimbangan ${methodText}? Pilihan ini tidak dapat diubah setelah dikonfirmasi.`
+                          : `Apakah Anda yakin ingin memuat barang "${productName}" dengan metode penimbangan ${methodText}? Pilihan ini tidak dapat diubah setelah dikonfirmasi.`;
+
                         showConfirmationAlert(
                           "Konfirmasi Metode Penimbangan",
-                          `Apakah Anda yakin ingin memuat barang "${productName}" dengan metode penimbangan ${methodText}? Pilihan ini tidak dapat diubah setelah dikonfirmasi.`,
+                          confirmMessage,
                           "Ya, Muat Barang!",
                           "Batal"
                         ).then((result) => {
                           if (isConfirmed(result)) {
-                            handleChooseProduct(
-                              doId,
-                              productId,
-                              weighingMethod as "MANUAL" | "VENDOR"
-                            );
+                            if (isSelectiveLoading) {
+                              // Call selective choose product API
+                              const deliveryOrderIds = selectedProductDOs.map(function(deliveryOrder) { return deliveryOrder.doId; });
+                              selectiveChooseProduct.mutate({
+                                shipmentId,
+                                productId,
+                                weighingMethod: weighingMethod as "MANUAL" | "VENDOR",
+                                deliveryOrderIds,
+                              });
+                            } else {
+                              // Call regular choose product API (single DO)
+                              const doId = selectedProductDOs[0].doId;
+                              handleChooseProduct(
+                                doId,
+                                productId,
+                                weighingMethod as "MANUAL" | "VENDOR"
+                              );
+                            }
                           } else {
                             // If user cancels, reopen the modal
                             setProductModalOpen(true);
@@ -3064,10 +3465,10 @@ export default function DetailPengiriman() {
                       }, 100); // Small delay to ensure modal is closed
                     }
                   }}
-                  disabled={chooseProduct.isPending || !selectedWeighingMethod}
+                  disabled={chooseProduct.isPending || selectiveChooseProduct.isPending || !selectedWeighingMethod}
                   className="flex-1 text-white bg-blue-600 shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg"
                 >
-                  {chooseProduct.isPending ? (
+                  {chooseProduct.isPending || selectiveChooseProduct.isPending ? (
                     <>
                       <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                       Memproses...
@@ -3104,7 +3505,7 @@ export default function DetailPengiriman() {
               {weighingProductId && shipment && (
                 <>
                   {(() => {
-                    // Find all chosen items for this product
+                    // Find all chosen items for this product (items that were loaded into the shipment)
                     const chosenItems = shipment.shipmentItems.filter(
                       (item) =>
                         item.productId === weighingProductId &&
@@ -3465,6 +3866,113 @@ export default function DetailPengiriman() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Kenek Assignment Modal */}
+      <Dialog open={kenekModalOpen} onOpenChange={setKenekModalOpen}>
+        <DialogContent className="sm:max-w-[500px] bg-white border-0 p-0 rounded-lg shadow-lg">
+          <div className="p-6">
+            <DialogHeader className="pb-4">
+              <DialogTitle className="flex items-center text-xl font-semibold text-gray-900">
+                <User className="mr-2 w-5 h-5 text-green-600" />
+                {shipment?.kenek ? "Edit Kenek" : "Tambah Kenek"}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                {shipment?.kenek
+                  ? "Perbarui nama kenek untuk pengiriman ini"
+                  : "Tambahkan nama kenek untuk pengiriman ini"}
+              </DialogDescription>
+            </DialogHeader>
+
+            <Form {...kenekForm}>
+              <form
+                onSubmit={kenekForm.handleSubmit(handleKenekSubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={kenekForm.control}
+                  name="kenek"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nama Kenek</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Masukkan nama kenek"
+                          {...field}
+                          disabled={updateKenek.isPending}
+                          maxLength={255}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <DialogFooter className="pt-4 mt-4 border-t border-gray-100">
+                  <div className="flex gap-3 w-full">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setKenekModalOpen(false)}
+                      disabled={updateKenek.isPending}
+                      className="flex-1"
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={updateKenek.isPending}
+                      className="flex-1 text-white bg-green-600 shadow-md transition-all duration-200 hover:bg-green-700 hover:shadow-lg"
+                    >
+                      {updateKenek.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                          {shipment?.kenek
+                            ? "Memperbarui..."
+                            : "Menambahkan..."}
+                        </>
+                      ) : (
+                        <>
+                          <Check className="mr-2 w-4 h-4" />
+                          {shipment?.kenek ? "Perbarui" : "Tambah"}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </DialogFooter>
+              </form>
+            </Form>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Loading Method Selection Modal */}
+      {selectedProductForLoading && (
+        <LoadingMethodSelectionModal
+          isOpen={loadingMethodModalOpen}
+          onClose={() => {
+            setLoadingMethodModalOpen(false);
+            setSelectedProductForLoading(null);
+          }}
+          productName={selectedProductForLoading.name}
+          onSelectMethod={handleLoadingMethodSelect}
+        />
+      )}
+
+      {/* DO Selection Modal */}
+      {selectedProductForDOSelection && (
+        <DOSelectionModal
+          isOpen={doSelectionModalOpen}
+          onClose={() => {
+            setDoSelectionModalOpen(false);
+            setSelectedProductForDOSelection(null);
+          }}
+          productName={selectedProductForDOSelection.name}
+          productUnit={selectedProductForDOSelection.satuan}
+          deliveryOrders={selectedProductForDOSelection.deliveryOrders}
+          onConfirm={handleDOSelectionConfirm}
+          isLoading={selectiveChooseProduct.isPending}
+        />
+      )}
     </div>
   );
 }

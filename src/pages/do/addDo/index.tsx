@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox, ComboboxItem } from "@/components/ui/combobox";
+import { DateInput } from "@/components/ui/date-input";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ import {
 } from "@/types/do";
 import { formatInputNumber, handleDecimalInput } from "@/utils/formatNumber";
 import { showErrorAlert, showSuccessAlert } from "@/utils/sweetAlert";
+import { toZonedTime } from "date-fns-tz";
 
 interface ExtendedProduct extends CreateDeliveryOrderProduct {
   productName?: string;
@@ -66,6 +68,7 @@ const schema = Joi.object({
     "any.required": "Alamat pengiriman harus diisi",
   }),
   internalNote: Joi.string().allow("").optional(),
+  deliverySchedule: Joi.date().optional().allow(null),
   items: Joi.array().min(1).items(itemSchema).required().messages({
     "array.min": "Minimal harus ada 1 barang",
     "any.required": "Daftar barang harus diisi",
@@ -94,8 +97,12 @@ export default function TambahDo() {
     quantity: number;
   } | null>(null);
   const [tempQuantityDisplay, setTempQuantityDisplay] = useState("");
+  const [dateInputValidation, setDateInputValidation] = useState<{
+    isValid: boolean;
+    hasInput: boolean;
+  }>({ isValid: false, hasInput: false });
   const inputClassName = cn(
-    "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+    "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
   );
 
   const {
@@ -112,6 +119,7 @@ export default function TambahDo() {
       tempProduct?: string;
       tempProductId?: string;
       tempQuantity?: number;
+      deliverySchedule?: Date;
     }
   >({
     resolver: joiResolver(schema),
@@ -120,6 +128,10 @@ export default function TambahDo() {
       customerName: "",
       address: "",
       internalNote: "",
+      deliverySchedule: (() => {
+        const jakartaTime = toZonedTime(new Date(), "Asia/Jakarta");
+        return jakartaTime;
+      })(),
       items: [],
       tempProduct: "",
       tempProductId: "",
@@ -344,6 +356,22 @@ export default function TambahDo() {
       }
     }
 
+    // Validate delivery schedule
+    if (dateInputValidation.hasInput && !dateInputValidation.isValid) {
+      showErrorAlert(
+        "Validasi Gagal",
+        "Jadwal kirim tidak valid. Pastikan format tanggal sudah benar."
+      );
+      return;
+    }
+
+    // Set default delivery schedule to today's Jakarta time if not specified
+    let finalDeliverySchedule = data.deliverySchedule;
+    if (!finalDeliverySchedule) {
+      const jakartaTime = toZonedTime(new Date(), "Asia/Jakarta");
+      finalDeliverySchedule = jakartaTime;
+    }
+
     const validItems = data.items.filter((item) => item.productId);
 
     if (validItems.length === 0) {
@@ -372,11 +400,13 @@ export default function TambahDo() {
       customerId: data.customerId,
       address: data.address,
       internalNote: data.internalNote || "",
+      deliverySchedule: finalDeliverySchedule,
       items: validItems.map((item) => ({
         productId: item.productId,
         quantity: Number(item.quantity),
       })),
     });
+
   };
 
   const handleProceedWithoutAdding = () => {
@@ -540,6 +570,36 @@ export default function TambahDo() {
                         </label>
                       </div>
                     )}
+                  </div>
+
+                  <div>
+                    <div>
+                      <label
+                        htmlFor="deliverySchedule"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Jadwal Kirim
+                      </label>
+                      <Controller
+                        name="deliverySchedule"
+                        control={control}
+                        render={({ field }) => (
+                          <DateInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="DD-MM-YYYY HH:MM"
+                            className={inputClassName}
+                            onValidationChange={(isValid, hasInput) => {
+                              setDateInputValidation({ isValid, hasInput });
+                            }}
+                          />
+                        )}
+                      />
+                      <p className="mt-1 text-sm text-gray-500">
+                        Masukkan jadwal pengiriman.
+                        Jika tidak diisi, akan otomatis diset ke hari ini.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

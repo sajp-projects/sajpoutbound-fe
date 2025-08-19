@@ -29,6 +29,7 @@ export interface DeliveryOrder {
   customerId: string;
   address: string;
   internalNote: string;
+  deliverySchedule?: Date;
   status?: DeliveryOrderStatus;
   createdAt: string;
   updatedAt: string;
@@ -55,6 +56,7 @@ export interface CreateDeliveryOrderInput {
   customerId: string;
   address: string;
   internalNote: string;
+  deliverySchedule?: Date;
   items: CreateDeliveryOrderProduct[];
 }
 
@@ -62,6 +64,7 @@ export interface UpdateDeliveryOrderInput {
   customerId?: string;
   address?: string;
   internalNote?: string;
+  deliverySchedule?: Date;
   items?: CreateDeliveryOrderProduct[];
 }
 

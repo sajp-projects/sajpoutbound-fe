@@ -9,12 +9,12 @@ import { Pagination } from "@/components/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { getActionLabel } from "@/utils/badges";
@@ -60,6 +60,14 @@ export default function LogSemuaGudang() {
               <tbody>
                 <tr>
                   <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                    Kode
+                  </td>
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1 font-mono">
+                    {newData.code as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                     Nama
                   </td>
                   <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
@@ -92,6 +100,14 @@ export default function LogSemuaGudang() {
               <tbody>
                 <tr>
                   <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
+                    Kode
+                  </td>
+                  <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1 font-mono">
+                    {oldData.code as string}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="font-medium bg-gray-50 w-[120px] border border-gray-200 p-1">
                     Nama
                   </td>
                   <td className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full border border-gray-200 p-1">
@@ -115,6 +131,14 @@ export default function LogSemuaGudang() {
 
     if (oldData && newData) {
       const changes = [];
+
+      if (oldData.code !== newData.code) {
+        changes.push({
+          field: "Kode",
+          oldValue: oldData.code as string,
+          newValue: newData.code as string,
+        });
+      }
 
       if (oldData.name !== newData.name) {
         changes.push({

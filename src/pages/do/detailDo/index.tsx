@@ -389,6 +389,17 @@ export default function DetailDo() {
                       </p>
                     </div>
                   )}
+
+                  {deliveryOrder.deliverySchedule && (
+                    <div className="p-4 rounded-lg border border-gray-200">
+                      <h3 className="mb-4 text-lg font-medium text-gray-900">
+                        Jadwal Kirim
+                      </h3>
+                      <p className="text-gray-700">
+                        {formatDate(new Date(deliveryOrder.deliverySchedule).toISOString())}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">

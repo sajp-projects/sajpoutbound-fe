@@ -16,19 +16,24 @@ import { COLORS } from "@/constant/COLORS";
 import { useOutputReport } from "@/hooks/report";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 
 type PeriodType = "daily" | "monthly" | "yearly";
 
 export default function Pengeluaran() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const today = new Date().toISOString().slice(0, 10);
   const [period, setPeriod] = useState<PeriodType>("daily");
   const [dateRange, setDateRange] = useState({ start: today, end: today });
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [status, setStatus] = useState("ALL");
-  const [groupBy, setGroupBy] = useState<
-    "item" | "customer" | "vehicle" | "warehouse"
-  >("item");
+  const [status, setStatus] = useState(
+    () => searchParams.get("status") || "ALL"
+  );
+  const [groupBy, setGroupBy] = useState<"item" | "customer" | "vehicle" | "warehouse">(
+    (searchParams.get("groupBy") as "item" | "customer" | "vehicle" | "warehouse") || "item"
+  );
 
   // For monthly/yearly filtering
   const currentYear = new Date().getFullYear();
@@ -188,7 +193,17 @@ export default function Pengeluaran() {
           )}
           {/* Status Filter */}
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Select value={status} onValueChange={setStatus}>
+            <Select value={status} onValueChange={(newStatus) => {
+              setStatus(newStatus);
+              // Update URL params to maintain state
+              const newParams = new URLSearchParams(searchParams);
+              if (newStatus !== "ALL") {
+                newParams.set("status", newStatus);
+              } else {
+                newParams.delete("status");
+              }
+              setSearchParams(newParams);
+            }}>
               <SelectTrigger className="w-full sm:w-32">
                 <SelectValue placeholder="Semua" />
               </SelectTrigger>
@@ -233,7 +248,12 @@ export default function Pengeluaran() {
                       : "bg-transparent text-gray-600 hover:bg-white/70"
                   )}
                   onClick={() => {
-                    setGroupBy(opt.value as typeof groupBy);
+                    const newGroupBy = opt.value as typeof groupBy;
+                    setGroupBy(newGroupBy);
+                    // Update URL params to maintain state
+                    const newParams = new URLSearchParams(searchParams);
+                    newParams.set("groupBy", newGroupBy);
+                    setSearchParams(newParams);
                   }}
                   type="button"
                 >
@@ -300,6 +320,7 @@ export default function Pengeluaran() {
                     return chartData;
                   })()}
                   COLORS={COLORS}
+                  groupBy={groupBy}
                 />
                 <PengeluaranTop3
                   groups={summaryData.allGroups ?? []}

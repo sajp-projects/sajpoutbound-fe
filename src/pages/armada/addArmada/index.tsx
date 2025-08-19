@@ -7,21 +7,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useCreateArmada } from "@/hooks/armada";
-import { cn } from "@/lib/utils";
 import { CreateArmadaInput } from "@/types/armada";
-import { FormErrors } from "@/utils/errorHandler";
 import {
-  isConfirmed,
-  showConfirmationAlert,
-  showSuccessAlert,
+  showErrorAlert,
+  showSuccessAlert
 } from "@/utils/sweetAlert";
 import { Loader2, Save } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
-
-// Validasi plat nomor Indonesia
-const plateNumberRegex = /^[A-Z]{1,2}\s?\d{1,4}\s?[A-Z]{1,3}$/;
 
 interface ArmadaFormData {
   model: string;
@@ -29,10 +25,6 @@ interface ArmadaFormData {
   plateNumber: string;
   description: string;
 }
-
-type ArmadaFormErrors = FormErrors<ArmadaFormData> & {
-  general?: string;
-};
 
 export default function TambahArmada() {
   const navigate = useNavigate();
@@ -42,30 +34,6 @@ export default function TambahArmada() {
     plateNumber: "",
     description: "",
   });
-  const [errors, setErrors] = useState<ArmadaFormErrors>({});
-
-  // Validasi realtime untuk plat nomor
-  useEffect(() => {
-    if (formData.plateNumber) {
-      if (!plateNumberRegex.test(formData.plateNumber)) {
-        setErrors((prev) => ({
-          ...prev,
-          plateNumber: "Format plat nomor tidak valid (contoh: B 1234 ABC)",
-        }));
-      } else {
-        setErrors((prev) => ({
-          ...prev,
-          plateNumber: undefined,
-        }));
-      }
-    } else {
-      // Hapus error jika field kosong
-      setErrors((prev) => ({
-        ...prev,
-        plateNumber: undefined,
-      }));
-    }
-  }, [formData.plateNumber]);
 
   const createArmadaMutation = useCreateArmada({
     onSuccess: (data) => {
@@ -75,6 +43,7 @@ export default function TambahArmada() {
     },
     onError: (error) => {
       try {
+        console.log(error, 'error adding armada')
         const errorObj = JSON.parse(error.message);
 
         if (
@@ -82,104 +51,54 @@ export default function TambahArmada() {
           errorObj.details &&
           errorObj.details.length > 0
         ) {
-          const newErrors: ArmadaFormErrors = {};
+          // Show validation errors in SweetAlert
+          const errorMessages = errorObj.details.map((detail: { path: string; message: string }) => {
+            const fieldName = detail.path.includes("model") ? "Model" :
+                             detail.path.includes("id_sl") ? "ID SL" :
+                             detail.path.includes("plateNumber") ? "Plat Nomor" :
+                             detail.path.includes("description") ? "Deskripsi" : "Field";
+            return `${fieldName}: ${detail.message}`;
+          }).join('\n');
 
-          errorObj.details.forEach(
-            (detail: { path: string; message: string }) => {
-              if (detail.path.includes("model")) {
-                newErrors.model = detail.message;
-              } else if (detail.path.includes("id_sl")) {
-                newErrors.id_sl = detail.message;
-              } else if (detail.path.includes("plateNumber")) {
-                newErrors.plateNumber = detail.message;
-              } else if (detail.path.includes("description")) {
-                newErrors.description = detail.message;
-              } else {
-                newErrors.general = detail.message;
-              }
-            }
-          );
-
-          setErrors(newErrors);
+          showErrorAlert("Validasi Error", errorMessages);
         } else {
-          setErrors({ general: errorObj.message });
+          showErrorAlert("Error", errorObj.message || "Terjadi kesalahan saat menambahkan armada");
         }
       } catch {
-        setErrors({ general: "Terjadi kesalahan saat menambahkan armada" });
+        showErrorAlert("Error", "Terjadi kesalahan saat menambahkan armada");
       }
     },
   });
 
   const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
 
-    // Konversi plat nomor ke uppercase untuk plateNumber
+    // Convert plate number to uppercase
     if (name === "plateNumber") {
       setFormData((prev) => ({ ...prev, [name]: value.toUpperCase() }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
-
-    // Hapus error untuk field yang sedang diubah, kecuali plateNumber yang divalidasi realtime
-    if (name !== "plateNumber" && errors[name as keyof typeof errors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors: ArmadaFormErrors = {};
-    let isValid = true;
-
-    if (!formData.model.trim()) {
-      newErrors.model = "Model armada harus diisi";
-      isValid = false;
-    }
-
-    if (!formData.plateNumber.trim()) {
-      newErrors.plateNumber = "Plat nomor harus diisi";
-      isValid = false;
-    } else if (!plateNumberRegex.test(formData.plateNumber)) {
-      newErrors.plateNumber =
-        "Format plat nomor tidak valid (contoh: B 1234 ABC)";
-      isValid = false;
-    }
-
-    setErrors((prev) => ({ ...prev, ...newErrors }));
-    return isValid;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setErrors((prev) => ({ ...prev, general: undefined }));
 
-    if (!validateForm()) {
-      return;
+    // Format data for API
+    const armadaData: CreateArmadaInput = {
+      model: formData.model.trim(),
+      plateNumber: formData.plateNumber.trim(),
+      description: formData.description.trim(),
+    };
+
+    // Only include id_sl if it's not empty
+    if (formData.id_sl.trim()) {
+      armadaData.id_sl = formData.id_sl.trim();
     }
 
-    showConfirmationAlert(
-      "Konfirmasi",
-      "Apakah Anda yakin ingin menambahkan armada baru ini?",
-      "Ya, Tambahkan!",
-      "Batal"
-    ).then((result) => {
-      if (isConfirmed(result)) {
-        const armadaData: CreateArmadaInput = {
-          model: formData.model,
-          plateNumber: formData.plateNumber,
-          description: formData.description,
-        };
-
-        if (formData.id_sl.trim()) {
-          armadaData.id_sl = formData.id_sl;
-        }
-
-        createArmadaMutation.mutate(armadaData);
-      }
-    });
+    createArmadaMutation.mutate(armadaData);
   };
 
   const isSubmitting = createArmadaMutation.isPending;
@@ -199,131 +118,79 @@ export default function TambahArmada() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {errors.general && (
-              <div className="p-3 mb-4 text-sm text-red-600 border border-red-200 rounded-md bg-red-50">
-                {errors.general}
-              </div>
-            )}
+
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="model"
-                  className="block text-sm font-medium text-gray-700"
-                >
+              <div className="col-span-1">
+                <Label htmlFor="model" className="text-sm font-medium text-gray-700">
                   Model Armada
-                </label>
+                </Label>
                 <Input
                   id="model"
                   name="model"
+                  type="text"
                   value={formData.model}
                   onChange={handleInputChange}
                   placeholder="Masukkan model armada"
-                  className={cn(
-                    "mt-1 w-full border-gray-300",
-                    errors.model
-                      ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-                      : "focus:border-blue-500 focus:ring-blue-500"
-                  )}
+                  className="mt-1"
                 />
-                {errors.model ? (
-                  <p className="mt-1 text-sm text-red-500">{errors.model}</p>
-                ) : (
-                  <p className="mt-1 text-sm text-gray-500">
-                    Model/tipe kendaraan armada
-                  </p>
-                )}
+                <p className="mt-1 text-sm text-gray-500">
+                  Model kendaraan (contoh: Truk Fuso, Pickup L300)
+                </p>
               </div>
 
-              <div>
-                <label
-                  htmlFor="id_sl"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  ID
-                </label>
+              <div className="col-span-1">
+                <Label htmlFor="id_sl" className="text-sm font-medium text-gray-700">
+                  ID SL
+                </Label>
                 <Input
                   id="id_sl"
                   name="id_sl"
+                  type="text"
                   value={formData.id_sl}
                   onChange={handleInputChange}
-                  placeholder="Masukkan ID Armada"
-                  className={cn(
-                    "mt-1 w-full border-gray-300",
-                    errors.id_sl
-                      ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-                      : "focus:border-blue-500 focus:ring-blue-500"
-                  )}
+                  placeholder="Masukkan ID SL armada"
+                  className="mt-1"
                 />
-                {errors.id_sl ? (
-                  <p className="mt-1 text-sm text-red-500">{errors.id_sl}</p>
-                ) : (
-                  <p className="mt-1 text-sm text-gray-500">
-                    ID untuk identifikasi armada (opsional)
-                  </p>
-                )}
+                <p className="mt-1 text-sm text-gray-500">
+                  ID SL armada (opsional)
+                </p>
               </div>
 
-              <div>
-                <label
-                  htmlFor="plateNumber"
-                  className="block text-sm font-medium text-gray-700"
-                >
+              <div className="col-span-1">
+                <Label htmlFor="plateNumber" className="text-sm font-medium text-gray-700">
                   Plat Nomor
-                </label>
+                </Label>
                 <Input
                   id="plateNumber"
                   name="plateNumber"
+                  type="text"
                   value={formData.plateNumber}
                   onChange={handleInputChange}
-                  placeholder="Contoh: B 1234 ABC"
-                  className={cn(
-                    "mt-1 w-full border-gray-300",
-                    errors.plateNumber
-                      ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-                      : "focus:border-blue-500 focus:ring-blue-500"
-                  )}
+                  placeholder="Masukkan plat nomor armada"
+                  className="mt-1"
                 />
-                {errors.plateNumber ? (
-                  <p className="mt-1 text-sm text-red-500">
-                    {errors.plateNumber}
-                  </p>
-                ) : (
-                  <p className="mt-1 text-sm text-gray-500">
-                    Nomor plat kendaraan (format: B 1234 ABC)
-                  </p>
-                )}
+                <p className="mt-1 text-sm text-gray-500">
+                  Plat nomor kendaraan (contoh: B 1234 ABC)
+                </p>
               </div>
 
-              <div className="md:col-span-2">
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700"
-                >
+              <div className="col-span-1 md:col-span-2">
+                <Label htmlFor="description" className="text-sm font-medium text-gray-700">
                   Deskripsi
-                </label>
-                <textarea
+                </Label>
+                <Textarea
                   id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  rows={4}
-                  placeholder="Deskripsikan armada ini"
-                  className={cn(
-                    "mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
-                    errors.description &&
-                      "border-red-300 focus:border-red-500 focus:ring-red-500"
-                  )}
+                  placeholder="Masukkan deskripsi armada"
+                  rows={3}
+                  className="mt-1"
                 />
-                {errors.description ? (
-                  <p className="mt-1 text-sm text-red-500">
-                    {errors.description}
-                  </p>
-                ) : (
-                  <p className="mt-1 text-sm text-gray-500">
-                    Deskripsikan kegunaan dan informasi tambahan tentang armada
-                  </p>
-                )}
+                <p className="mt-1 text-sm text-gray-500">
+                  Deskripsi tambahan armada (opsional)
+                </p>
               </div>
             </div>
 

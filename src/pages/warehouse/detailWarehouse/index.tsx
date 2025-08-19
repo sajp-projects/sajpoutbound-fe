@@ -25,6 +25,7 @@ import {
   showSuccessAlert,
 } from "@/utils/sweetAlert";
 import {
+  ArrowLeft,
   Edit,
   History,
   Info,
@@ -228,6 +229,7 @@ export default function DetailGudang() {
         <div className="flex items-center">
           <Link to="/gudang">
             <Button variant="ghost" size="sm" className="mr-2">
+              <ArrowLeft className="w-4 h-4 mr-1" />
               Kembali
             </Button>
           </Link>
@@ -315,6 +317,12 @@ export default function DetailGudang() {
                       Data Gudang
                     </h3>
                     <div className="space-y-3">
+                      <div>
+                        <p className="text-sm text-gray-500">Kode Gudang</p>
+                        <p className="font-medium text-gray-700 font-mono bg-gray-100 px-2 py-1 rounded text-sm">
+                          {gudang?.code}
+                        </p>
+                      </div>
                       <div>
                         <p className="text-sm text-gray-500">Nama Gudang</p>
                         <p className="font-medium text-blue-600">

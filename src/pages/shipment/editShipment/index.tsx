@@ -1,7 +1,7 @@
 import { joiResolver } from "@hookform/resolvers/joi";
 import Joi from "joi";
 import { ArrowLeft, Loader2, Plus, Save, Trash } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router";
 
@@ -49,6 +49,7 @@ import {
 } from "@/hooks/do";
 import { shipmentKeys, useShipment, useUpdateShipment } from "@/hooks/shipment";
 import { cn } from "@/lib/utils";
+import { DeliveryOrder } from "@/types/do";
 import { UpdateShipmentInput } from "@/types/shipment";
 import { LOCATION_TYPE } from "@/utils/constants";
 import { formatInputNumber, handleDecimalInput } from "@/utils/formatNumber";
@@ -156,6 +157,13 @@ export default function EditPengiriman() {
     Record<string, string>
   >({});
 
+  // State for hover tooltip
+  const [hoveredDO, setHoveredDO] = useState<DeliveryOrder | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
   const {
     data: shipment,
     isLoading,
@@ -244,15 +252,57 @@ export default function EditPengiriman() {
           deliveryOrdersData?.pages.flatMap((page) => page.deliveryOrders) || []
         ).some((d) => d.id === do_item.id)
     ),
-  ].map((do_item) => ({
-    label: `${do_item.doNumber} - ${do_item.customer.name}`,
-    value: do_item.id,
-    secondary: `${do_item.address} - ${
-      do_item.items.filter(
-        (item: { pendingQuantity: number }) => item.pendingQuantity > 0
-      ).length
-    } barang tersedia`,
-  }));
+  ].map((do_item) => {
+    const availableItemsCount = do_item.items.filter(
+      (item: { pendingQuantity: number }) => item.pendingQuantity > 0
+    ).length;
+
+    // Format deliverySchedule for display with responsive format
+    const scheduleText = do_item.deliverySchedule
+      ? (() => {
+          const date = new Date(do_item.deliverySchedule);
+          const shortFormat = date.toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          return shortFormat;
+        })()
+      : null;
+
+    // Construct secondary text with responsive layout in mind
+    const secondaryParts = [do_item.address];
+    if (scheduleText) {
+      secondaryParts.push(`${scheduleText}`);
+    }
+    secondaryParts.push(`${availableItemsCount} barang tersedia`);
+
+    return {
+      label: `${do_item.doNumber} - ${do_item.customer.name}`,
+      value: do_item.id,
+      secondary: secondaryParts.join(' • '),
+    };
+  });
+
+  // Create a stable map for quick DO data lookup for hover functionality
+  const doDataMap = useMemo(() => {
+    const map = new Map<string, DeliveryOrder>();
+
+    // Add delivery orders from available DOs
+    deliveryOrdersData?.pages
+      .flatMap((page) => page.deliveryOrders)
+      .forEach((do_item) => {
+        map.set(do_item.id, do_item);
+      });
+
+    // Add attached DOs
+    attachedDOs.forEach((do_item) => {
+      map.set(do_item.id, do_item);
+    });
+
+    return map;
+  }, [deliveryOrdersData, attachedDOs]);
 
   const updateShipment = useUpdateShipment({
     onSuccess: () => {
@@ -541,6 +591,38 @@ export default function EditPengiriman() {
       }
     });
   }, [watchDeliveryOrders, selectedDOProducts, loadDOProducts]);
+
+  // Global event listener for hover detection on dropdown items
+  useEffect(() => {
+    const handleGlobalMouseMove = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const commandItem = target.closest("[cmdk-item]");
+
+      if (commandItem) {
+        const itemValue = commandItem.getAttribute("data-value");
+        if (itemValue && doDataMap.has(itemValue)) {
+          const rect = commandItem.getBoundingClientRect();
+          setHoveredDO(doDataMap.get(itemValue)!);
+          setTooltipPosition({
+            x: rect.right + 10,
+            y: rect.top,
+          });
+        }
+      } else {
+        // Only clear tooltip if we're not hovering over any command item
+        const anyCommandItem = document.querySelector("[cmdk-item]:hover");
+        if (!anyCommandItem) {
+          setHoveredDO(null);
+          setTooltipPosition(null);
+        }
+      }
+    };
+
+    document.addEventListener("mousemove", handleGlobalMouseMove);
+    return () => {
+      document.removeEventListener("mousemove", handleGlobalMouseMove);
+    };
+  }, [doDataMap]);
 
   const handleDeliveryOrderSearch = useCallback((query: string) => {
     setDeliveryOrderSearchQuery(query);
@@ -1529,6 +1611,53 @@ export default function EditPengiriman() {
           </Form>
         </CardContent>
       </Card>
+
+      {/* Desktop hover tooltip - floating 3D card */}
+      {hoveredDO && tooltipPosition && (
+        <div
+          className="fixed z-[60] hidden sm:block pointer-events-none"
+          style={{
+            left: tooltipPosition.x,
+            top: tooltipPosition.y,
+          }}
+        >
+          <div className="max-w-xs bg-white border border-gray-200 rounded-lg shadow-xl transform transition-all duration-200 scale-100 opacity-100">
+            <div className="p-3 border-b border-gray-100">
+              <h4 className="font-medium text-sm text-gray-900">
+                Barang Tersedia
+              </h4>
+              <p className="text-xs text-gray-500">{hoveredDO.doNumber}</p>
+            </div>
+            <div className="p-3 max-h-40 overflow-y-auto">
+              <div className="space-y-2">
+                {hoveredDO.items
+                  .filter((item) => item.pendingQuantity > 0)
+                  .map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex justify-between items-start text-xs"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">
+                          {item.product.name}
+                        </p>
+                      </div>
+                      <div className="ml-2 text-gray-600 font-medium whitespace-nowrap">
+                        {item.pendingQuantity.toLocaleString('id-ID')} {item.product.satuan}
+                      </div>
+                    </div>
+                  ))}
+                {hoveredDO.items.filter((item) => item.pendingQuantity > 0)
+                  .length === 0 && (
+                  <p className="text-xs text-gray-500 italic">
+                    Tidak ada barang tersedia
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

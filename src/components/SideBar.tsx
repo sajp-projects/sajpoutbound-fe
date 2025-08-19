@@ -360,7 +360,7 @@ export default function SideBar({ isOpen, toggleSidebar }: SideBarProps) {
           },
           {
             name: "Pengeluaran",
-            path: "/laporan/pengeluaran",
+            path: "/laporan/pengeluaran?groupBy=item",
             action: PERMISSION.ACTIONS.READ,
           },
           {

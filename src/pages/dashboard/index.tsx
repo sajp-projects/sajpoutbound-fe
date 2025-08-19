@@ -37,12 +37,8 @@ export default function Dashboard() {
     startDate: string;
     endDate: string;
   }>({
-    startDate: new Date(new Date().setHours(23, 59, 59, 999))
-      .toISOString()
-      .slice(0, 10),
-    endDate: new Date(new Date().setHours(23, 59, 59, 999))
-      .toISOString()
-      .slice(0, 10),
+    startDate: new Date().toISOString().slice(0, 10),
+    endDate: new Date().toISOString().slice(0, 10),
   });
 
   // Real API integration with new comprehensive dashboard summary
@@ -54,6 +50,8 @@ export default function Dashboard() {
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
   });
+
+  console.log(dashboardData, "dashboardData");
 
   // Loading state component
   const LoadingSkeleton = ({ className = "" }: { className?: string }) => (
@@ -79,13 +77,12 @@ export default function Dashboard() {
   }
 
   // Extract data from comprehensive dashboard summary
-  const kpi = dashboardData?.kpi;
-  const doSummary = dashboardData?.doSummary;
-  const recentActivities = dashboardData?.recentActivities || [];
-  const unprocessedDOs = dashboardData?.unprocessedDOs || [];
+  const summary = dashboardData;
+  const kpi = summary?.kpi;
+  const doSummary = summary?.doSummary;
+  const recentActivities = summary?.recentActivities || [];
+  const unprocessedDOs = summary?.unprocessedDOs || [];
 
-  console.log(unprocessedDOs, "unprocessedDos");
-  const armada = dashboardData?.armada;
 
   // Shipment stats for ANTAR and JEMPUT
   const shipmentStats = {
@@ -134,6 +131,23 @@ export default function Dashboard() {
       default:
         return "bg-gray-50 text-gray-600 border-gray-200";
     }
+  };
+
+  const handleNavigateToDeliveryOrders = (
+    status?: string,
+    type?: "ANTAR" | "JEMPUT"
+  ) => {
+    const params = new URLSearchParams({
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+    });
+    if (status) {
+      params.set("status", status);
+    }
+    if (type) {
+      params.set("type", type);
+    }
+    navigate(`/do?${params.toString()}`);
   };
 
   const handleNavigateToShipments = (
@@ -397,7 +411,7 @@ export default function Dashboard() {
                               size="sm"
                               className="text-gray-600 hover:bg-gray-100 text-xs sm:text-sm"
                               onClick={() =>
-                                handleNavigateToShipments(undefined, "ANTAR")
+                                handleNavigateToDeliveryOrders(undefined, "ANTAR")
                               }
                             >
                               <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -454,7 +468,7 @@ export default function Dashboard() {
                             onClick={
                               canReadShipments
                                 ? () =>
-                                    handleNavigateToShipments(
+                                    handleNavigateToDeliveryOrders(
                                       item.status,
                                       "ANTAR"
                                     )
@@ -511,7 +525,7 @@ export default function Dashboard() {
                               size="sm"
                               className="text-gray-600 hover:bg-gray-100 text-xs sm:text-sm"
                               onClick={() =>
-                                handleNavigateToShipments(undefined, "JEMPUT")
+                                handleNavigateToDeliveryOrders(undefined, "JEMPUT")
                               }
                             >
                               <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -568,7 +582,7 @@ export default function Dashboard() {
                             onClick={
                               canReadShipments
                                 ? () =>
-                                    handleNavigateToShipments(
+                                    handleNavigateToDeliveryOrders(
                                       item.status,
                                       "JEMPUT"
                                     )
@@ -979,7 +993,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
                   <div className="bg-gray-50 rounded-xl p-3 sm:p-4 text-center">
                     <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-                      {armada?.total || 0}
+                      {kpi?.totalArmadas || 0}
                     </div>
                     <div className="text-xs sm:text-sm text-gray-600 leading-tight">
                       Total Armada
@@ -987,7 +1001,7 @@ export default function Dashboard() {
                   </div>
                   <div className="bg-gray-50 rounded-xl p-3 sm:p-4 text-center">
                     <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-                      {armada?.usageCount || 0}
+                      {kpi?.vehicleUsageCount || 0}
                     </div>
                     <div className="text-xs sm:text-sm text-gray-600 leading-tight">
                       <span className="hidden sm:inline">Sedang Digunakan</span>
@@ -996,13 +1010,54 @@ export default function Dashboard() {
                   </div>
                   <div className="bg-gray-50 rounded-xl p-3 sm:p-4 text-center">
                     <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-                      {(armada?.total || 0) - (armada?.usageCount || 0)}
+                      {(kpi?.totalArmadas || 0) - (kpi?.vehicleUsageCount || 0)}
                     </div>
                     <div className="text-xs sm:text-sm text-gray-600 leading-tight">
                       Tersedia
                     </div>
                   </div>
-                </div>
+                                </div>
+
+                {/* Most Active Vehicles */}
+                {kpi?.mostActiveVehicle && kpi.mostActiveVehicle.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                      Armada Paling Aktif
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {kpi.mostActiveVehicle.slice(0, 3).map((vehicle, index) => (
+                        <div
+                          key={vehicle.id}
+                          className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <Truck className="w-4 h-4 text-blue-600" />
+                              </div>
+                              <span className="text-sm font-medium text-gray-900">
+                                #{index + 1}
+                              </span>
+                            </div>
+                            <Badge variant="outline" className="text-xs border-gray-200">
+                              {vehicle.shipmentCount} pengiriman
+                            </Badge>
+                          </div>
+                          <div className="space-y-2">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {vehicle.model}
+                              </p>
+                              <p className="text-xs text-gray-500 font-mono">
+                                {vehicle.plateNumber || "N/A"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Active Shipments Table */}
                 <div className="space-y-4">
@@ -1038,18 +1093,11 @@ export default function Dashboard() {
                             {recentActivities
                               .slice(0, 6)
                               .map((activity, index) => {
-                                // For demo purposes, we'll use alternating armada data since we don't have it in recentActivities
-                                // In real implementation, this should come from the backend
-                                const demoArmadaModels = [
-                                  "Truk Fuso",
-                                  "Pickup L300",
-                                  "Truk Colt Diesel",
-                                ];
-                                const demoPlateNumbers = [
-                                  "B 1234 CD",
-                                  "B 5678 EF",
-                                  "B 9012 GH",
-                                ];
+                                // Use real armada data from the backend if available
+                                const armadaInfo = kpi?.mostActiveVehicle?.[index] || {
+                                  model: "Data tidak tersedia",
+                                  plateNumber: "N/A",
+                                };
 
                                 return (
                                   <tr
@@ -1057,10 +1105,10 @@ export default function Dashboard() {
                                     className="border-b border-gray-100 hover:bg-gray-50"
                                   >
                                     <td className="py-3 px-4 text-gray-900 font-medium">
-                                      {demoArmadaModels[index % 3]}
+                                      {armadaInfo.model}
                                     </td>
                                     <td className="py-3 px-4 text-gray-600">
-                                      {demoPlateNumbers[index % 3]}
+                                      {armadaInfo.plateNumber}
                                     </td>
                                     <td className="py-3 px-4 text-gray-900 font-medium">
                                       {activity.shipmentNumber}
@@ -1088,18 +1136,11 @@ export default function Dashboard() {
                       {/* Cards for smaller screens */}
                       <div className="md:hidden space-y-3">
                         {recentActivities.slice(0, 6).map((activity, index) => {
-                          // For demo purposes, we'll use alternating armada data since we don't have it in recentActivities
-                          // In real implementation, this should come from the backend
-                          const demoArmadaModels = [
-                            "Truk Fuso",
-                            "Pickup L300",
-                            "Truk Colt Diesel",
-                          ];
-                          const demoPlateNumbers = [
-                            "B 1234 CD",
-                            "B 5678 EF",
-                            "B 9012 GH",
-                          ];
+                          // Use real armada data from the backend if available
+                          const armadaInfo = kpi?.mostActiveVehicle?.[index] || {
+                            model: "N/A",
+                            plateNumber: "N/A",
+                          };
 
                           return (
                             <div
@@ -1128,13 +1169,13 @@ export default function Dashboard() {
                                 <div className="flex justify-between">
                                   <span className="text-gray-600">Armada:</span>
                                   <span className="font-medium text-gray-900">
-                                    {demoArmadaModels[index % 3]}
+                                    {armadaInfo.model}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-gray-600">Plat:</span>
                                   <span className="text-gray-900">
-                                    {demoPlateNumbers[index % 3]}
+                                    {armadaInfo.plateNumber}
                                   </span>
                                 </div>
                               </div>

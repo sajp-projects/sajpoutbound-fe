@@ -65,6 +65,7 @@ export interface Shipment {
   armadaId: string;
   driverId: string;
   tally: string | null;
+  kenek: string | null;
   internalNote: string | null;
   plateNumber: string;
   platePhoto: string | null;
@@ -117,6 +118,7 @@ export interface UpdateShipmentInput {
   armadaId?: string;
   driverId?: string;
   tally?: string;
+  kenek?: string;
   internalNote?: string;
   plateNumber?: string;
   items?: UpdateShipmentItem[];
@@ -397,4 +399,29 @@ export interface IndividualWeighingItem {
   requestedQuantity: number;
   productName: string;
   productUnit: string;
+}
+
+// Selective product loading interfaces
+export interface SelectiveProductLoadingInput {
+  shipmentId: string;
+  productId: string;
+  weighingMethod: "MANUAL" | "VENDOR";
+  deliveryOrderIds: string[];
+}
+
+export interface DeliveryOrderForSelection {
+  id: string;
+  doNumber: string;
+  customer: {
+    id: string;
+    name: string;
+    address?: string;
+  };
+  items: Array<{
+    id: string;
+    productId: string;
+    requestedQuantity: number;
+    pendingQuantity: number;
+    status: string;
+  }>;
 }

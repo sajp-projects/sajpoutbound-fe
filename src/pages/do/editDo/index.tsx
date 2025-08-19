@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox, ComboboxItem } from "@/components/ui/combobox";
+import { DateInput } from "@/components/ui/date-input";
 import {
   Dialog,
   DialogContent,
@@ -75,6 +76,7 @@ const schema = Joi.object({
     "any.required": "Alamat pengiriman harus diisi",
   }),
   internalNote: Joi.string().allow("").optional(),
+  deliverySchedule: Joi.date().optional().allow(null),
   items: Joi.array().min(1).items(itemSchema).required().messages({
     "array.min": "Minimal harus ada 1 barang",
     "any.required": "Daftar barang harus diisi",
@@ -97,7 +99,6 @@ export default function EditDo() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const deliveryOrderId = id || "";
-  const [tempQuantityDisplay, setTempQuantityDisplay] = useState("");
   const [showItems, setShowItems] = useState(true);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [useCustomerAddress, setUseCustomerAddress] = useState(false);
@@ -108,8 +109,13 @@ export default function EditDo() {
     name: string;
     quantity: number;
   } | null>(null);
+  const [tempQuantityDisplay, setTempQuantityDisplay] = useState("");
+  const [dateInputValidation, setDateInputValidation] = useState<{
+    isValid: boolean;
+    hasInput: boolean;
+  }>({ isValid: false, hasInput: false });
   const inputClassName = cn(
-    "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+    "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
   );
 
   const {
@@ -118,7 +124,7 @@ export default function EditDo() {
     setValue,
     watch,
     reset,
-    formState: { errors, isDirty },
+    formState: { errors },
     setError,
   } = useForm<
     UpdateDeliveryOrderInput & {
@@ -136,6 +142,7 @@ export default function EditDo() {
       customerName: "",
       address: "",
       internalNote: "",
+      deliverySchedule: undefined,
       items: [],
       tempProduct: "",
       tempProductId: "",
@@ -259,6 +266,29 @@ export default function EditDo() {
         customerName: deliveryOrder.customer.name,
         address: deliveryOrder.address,
         internalNote: deliveryOrder.internalNote,
+        deliverySchedule: deliveryOrder.deliverySchedule
+          ? (() => {
+              // The database stores Jakarta time but without timezone info
+              // We need to parse it as if it's already in Jakarta timezone
+              const schedule = deliveryOrder.deliverySchedule;
+
+              if (schedule instanceof Date) {
+                return schedule;
+              }
+
+              if (typeof schedule === 'string') {
+                // The backend stores Jakarta time but sends it as UTC string
+                // We need to parse it and adjust for the timezone difference
+                const utcDate = new Date(schedule);
+                // Since the backend added 7 hours when storing, we need to subtract 7 hours
+                // to get back to the intended Jakarta time display
+                const jakartaDate = new Date(utcDate.getTime() - (7 * 60 * 60 * 1000));
+                return jakartaDate;
+              }
+
+              return undefined;
+            })()
+          : undefined,
       });
 
       if (deliveryOrder.items && deliveryOrder.items.length > 0) {
@@ -413,6 +443,15 @@ export default function EditDo() {
       }
     }
 
+    // Validate delivery schedule
+    if (dateInputValidation.hasInput && !dateInputValidation.isValid) {
+      showErrorAlert(
+        "Validasi Gagal",
+        "Jadwal kirim tidak valid. Pastikan format tanggal sudah benar."
+      );
+      return;
+    }
+
     const validItems: ExtendedProduct[] = data.items.filter(
       (item) => item.productId
     );
@@ -444,12 +483,14 @@ export default function EditDo() {
       customerId: data.customerId,
       address: data.address,
       internalNote: data.internalNote,
+      deliverySchedule: data.deliverySchedule,
       items: validItems.map((item) => ({
         id: item.id,
         productId: item.productId,
         quantity: Number(item.quantity),
       })),
     });
+
   };
 
   const handleProductSelect = (item: ComboboxItem) => {
@@ -508,14 +549,6 @@ export default function EditDo() {
     // Submit the form again
     handleSubmit(onSubmit)();
   };
-
-  console.log({
-    errors,
-    isDirty: isDirty,
-    tempProductId: watch("tempProductId"),
-    tempQuantity: watch("tempQuantity"),
-    items: watch("items"),
-  });
 
   if (isLoadingDeliveryOrder) {
     return <LoadingState text="Memuat data delivery order..." />;
@@ -646,6 +679,36 @@ export default function EditDo() {
                       >
                         Gunakan alamat pelanggan
                       </label>
+                    </div>
+
+                    <div>
+                      <div>
+                        <label
+                          htmlFor="deliverySchedule"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Jadwal Kirim (DD-MM-YYYY HH:MM)
+                        </label>
+                        <Controller
+                          name="deliverySchedule"
+                          control={control}
+                          render={({ field }) => (
+                            <DateInput
+                              value={field.value || undefined}
+                              onChange={field.onChange}
+                              placeholder="DD-MM-YYYY HH:MM"
+                              className={inputClassName}
+                              onValidationChange={(isValid, hasInput) => {
+                                setDateInputValidation({ isValid, hasInput });
+                              }}
+                            />
+                          )}
+                        />
+                        <p className="mt-1 text-sm text-gray-500">
+                          Masukkan jadwal pengiriman.
+                          Jika tidak diisi, akan otomatis diset ke hari ini.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

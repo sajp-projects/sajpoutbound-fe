@@ -12,12 +12,14 @@ interface PengeluaranPieChartProps {
   data: PieChartData[];
   COLORS: string[];
   title?: string;
+  groupBy?: string; // Add groupBy to force re-render when changing
 }
 
 export function PengeluaranPieChart({
   data,
   COLORS,
   title = "Distribusi Kuantitas",
+  groupBy,
 }: PengeluaranPieChartProps) {
   return (
     <Card className="mb-4 bg-white border-gray-100 h-full shadow-sm hover:shadow-md transition-shadow">
@@ -38,6 +40,7 @@ export function PengeluaranPieChart({
           <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6 w-full">
             <div className="relative flex-shrink-0">
               <PieChart
+                key={`pie-chart-${groupBy}-${data.length}-${JSON.stringify(data.map(d => d.name))}`}
                 width={160}
                 height={160}
                 className="sm:w-[200px] sm:h-[200px]"
@@ -68,7 +71,7 @@ export function PengeluaranPieChart({
             <div className="flex flex-col gap-3 sm:gap-3 flex-1 min-w-0">
               {data.map((entry, idx) => (
                 <div
-                  key={entry.name}
+                  key={`${groupBy}-legend-${entry.name}-${idx}`}
                   className="flex items-center gap-3 sm:gap-3 group min-w-0"
                 >
                   <div className="relative flex-shrink-0">

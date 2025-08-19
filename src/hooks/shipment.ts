@@ -5,6 +5,7 @@ import {
   ChosenProductsResponse,
   CreateShipmentInput,
   IndividualWeighShipmentInput,
+  SelectiveProductLoadingInput,
   Shipment,
   ShipmentPagination,
   UpdateShipmentInput,
@@ -843,6 +844,118 @@ export function useUpdateTally(
       // Invalidate and refetch shipment data
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.detail(variables.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all,
+      });
+
+      if (options.onSuccess) {
+        options.onSuccess(data, variables, undefined);
+      }
+    },
+    ...options,
+  });
+}
+
+export function useUpdateKenek(
+  options: UseMutationOptions<
+    ApiResponse<Shipment>,
+    ApiErrorResult,
+    { id: string; kenek: string }
+  > = {}
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, kenek }: { id: string; kenek: string }) => {
+      const response = await fetchApi(
+        `${BASE_URL}/shipments/${id}/update-kenek`,
+        {},
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ kenek }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw createErrorResponse(
+          errorResult,
+          `Error updating kenek: ${response.statusText}`
+        );
+      }
+
+      const result: ApiResponse<Shipment> = await response.json();
+
+      if (!result.success) {
+        handleApiError(result, "Terjadi kesalahan saat memperbarui kenek");
+      }
+
+      return result;
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate and refetch shipment data
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.detail(variables.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all,
+      });
+
+      if (options.onSuccess) {
+        options.onSuccess(data, variables, undefined);
+      }
+    },
+    ...options,
+  });
+}
+
+export function useSelectiveChooseProduct(
+  options: UseMutationOptions<
+    ApiResponse<any>,
+    ApiErrorResult,
+    SelectiveProductLoadingInput
+  > = {}
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: SelectiveProductLoadingInput) => {
+      const { shipmentId, ...payload } = data;
+      const response = await fetchApi(
+        `${BASE_URL}/shipments/${shipmentId}/choosen-product-selective`,
+        {},
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw createErrorResponse(
+          errorResult,
+          `Error choosing product selectively: ${response.statusText}`
+        );
+      }
+
+      const result: ApiResponse<any> = await response.json();
+
+      if (!result.success) {
+        handleApiError(result, "Terjadi kesalahan saat memuat barang selektif");
+      }
+
+      return result;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.detail(variables.shipmentId),
       });
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.all,
