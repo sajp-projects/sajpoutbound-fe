@@ -10,6 +10,7 @@ import {
   ShipmentAssignmentReportResult,
 } from "@/types/report";
 import { fetchApi } from "@/utils/api";
+import { axiosInstance } from "@/utils/axios";
 import { handleApiError } from "@/utils/errorHandler";
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
@@ -371,4 +372,63 @@ export function useDashboardSummary(
     staleTime: 1000 * 60 * 5,
     ...options,
   });
+}
+
+/**
+ * Download expenditure Excel report
+ */
+export async function downloadExpenditureExcel(filters: {
+  period?: 'daily' | 'monthly' | 'yearly';
+  startDate?: string;
+  endDate?: string;
+  year?: number;
+  month?: number;
+  warehouseId?: string;
+}) {
+  const queryParams = new URLSearchParams();
+  if (filters.period) queryParams.append('period', filters.period);
+  if (filters.startDate) queryParams.append('startDate', filters.startDate);
+  if (filters.endDate) queryParams.append('endDate', filters.endDate);
+  if (filters.year) queryParams.append('year', filters.year.toString());
+  if (filters.month) queryParams.append('month', filters.month.toString());
+  if (filters.warehouseId) queryParams.append('warehouseId', filters.warehouseId);
+
+  try {
+
+    const response = await axiosInstance({
+      method: 'GET',
+      url: `${BASE_URL}/reports/expenditure/excel`,
+      params: Object.fromEntries(queryParams),
+      responseType: 'blob', // Important for file downloads
+    });
+
+    // Create download link
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+
+    // Extract filename from content-disposition header or use default
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'laporan_expenditure.xlsx';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Clean up the blob URL
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error('Error downloading Excel file:', error);
+    throw error;
+  }
 }

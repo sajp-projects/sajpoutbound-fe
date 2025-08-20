@@ -1,6 +1,7 @@
 // Laporan Pengeluaran
 import { ErrorState } from "@/components/ErrorState";
 import { LoadingState } from "@/components/LoadingState";
+import { ExpenditureExcelModal } from "@/components/report/expenditure/ExpenditureExcelModal";
 import { PengeluaranPieChart } from "@/components/report/expenditure/ExpenditurePieChart";
 import PengeluaranTablePaginated from "@/components/report/expenditure/ExpenditureTablePaginated";
 import { PengeluaranTop3 } from "@/components/report/expenditure/ExpenditureTop3";
@@ -34,6 +35,7 @@ export default function Pengeluaran() {
   const [groupBy, setGroupBy] = useState<"item" | "customer" | "vehicle" | "warehouse">(
     (searchParams.get("groupBy") as "item" | "customer" | "vehicle" | "warehouse") || "item"
   );
+  const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
 
   // For monthly/yearly filtering
   const currentYear = new Date().getFullYear();
@@ -98,23 +100,27 @@ export default function Pengeluaran() {
     }
   }
 
+  function handleOpenExcelModal() {
+    setIsExcelModalOpen(true);
+  }
+
   return (
     <div className="flex flex-col px-2 space-y-4 w-full min-h-full sm:space-y-6 sm:px-4 md:px-0">
       {/* Outer header: title/subtitle left, filters right */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 md:gap-4 w-full">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 md:gap-4 w-full">
+        <div className="flex-shrink-0">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Laporan Pengeluaran
           </h1>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto items-start sm:items-center justify-start sm:justify-end">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-2 w-full sm:w-auto items-start sm:items-center justify-start sm:justify-end">
           {/* Period Filter */}
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Select
               value={period}
               onValueChange={(value) => handlePeriodChange(value as PeriodType)}
             >
-              <SelectTrigger className="w-full sm:w-32">
+              <SelectTrigger className="w-full sm:w-32 md:w-28">
                 <SelectValue placeholder="Periode" />
               </SelectTrigger>
               <SelectContent>
@@ -126,8 +132,9 @@ export default function Pengeluaran() {
           </div>
           {/* Date Range Filter for Daily */}
           {period === "daily" && (
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto md:flex-shrink-0">
               <DateRangeFilter
+              label=""
                 startDate={dateRange.start}
                 endDate={dateRange.end}
                 onChange={({ startDate, endDate }) =>
@@ -138,12 +145,12 @@ export default function Pengeluaran() {
           )}
           {/* Month/Year Filter for Monthly */}
           {period === "monthly" && (
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto md:flex-shrink-0">
               <Select
                 value={String(month)}
                 onValueChange={(m) => setMonth(parseInt(m))}
               >
-                <SelectTrigger className="w-28">
+                <SelectTrigger className="w-28 md:w-24">
                   <SelectValue placeholder="Bulan" />
                 </SelectTrigger>
                 <SelectContent>
@@ -158,7 +165,7 @@ export default function Pengeluaran() {
                 value={String(year)}
                 onValueChange={(y) => setYear(parseInt(y))}
               >
-                <SelectTrigger className="w-24">
+                <SelectTrigger className="w-24 md:w-20">
                   <SelectValue placeholder="Tahun" />
                 </SelectTrigger>
                 <SelectContent>
@@ -173,12 +180,12 @@ export default function Pengeluaran() {
           )}
           {/* Year Filter for Yearly */}
           {period === "yearly" && (
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto md:flex-shrink-0">
               <Select
                 value={String(year)}
                 onValueChange={(y) => setYear(parseInt(y))}
               >
-                <SelectTrigger className="w-24">
+                <SelectTrigger className="w-24 md:w-20">
                   <SelectValue placeholder="Tahun" />
                 </SelectTrigger>
                 <SelectContent>
@@ -204,7 +211,7 @@ export default function Pengeluaran() {
               }
               setSearchParams(newParams);
             }}>
-              <SelectTrigger className="w-full sm:w-32">
+              <SelectTrigger className="w-full sm:w-32 md:w-28">
                 <SelectValue placeholder="Semua" />
               </SelectTrigger>
               <SelectContent>
@@ -214,6 +221,16 @@ export default function Pengeluaran() {
                 <SelectItem value="SELESAI">Selesai</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          {/* Excel Download Button */}
+          <div className="flex items-center gap-2 w-full sm:w-auto md:flex-shrink-0">
+            <button
+              onClick={handleOpenExcelModal}
+              className="w-full sm:w-auto md:w-auto px-3 md:px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 whitespace-nowrap"
+              type="button"
+            >
+              Download Excel
+            </button>
           </div>
         </div>
       </div>
@@ -345,6 +362,12 @@ export default function Pengeluaran() {
           )
         )}
       </div>
+
+      {/* Excel Download Modal */}
+      <ExpenditureExcelModal
+        open={isExcelModalOpen}
+        onOpenChange={setIsExcelModalOpen}
+      />
     </div>
   );
 }

@@ -66,7 +66,7 @@ export function LoadingMethodSelectionModal({
               Pilih Metode Pemuatan
             </DialogTitle>
             <DialogDescription className="text-sm sm:text-base text-gray-600">
-              Pilih bagaimana Anda ingin memuat barang <strong>{productName}</strong> yang memiliki multiple delivery orders
+              Pilih bagaimana Anda ingin memuat barang <strong>{productName}</strong> yang memiliki beberapa DO
             </DialogDescription>
           </DialogHeader>
 
