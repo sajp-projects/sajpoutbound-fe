@@ -47,6 +47,7 @@ import {
   useDeliveryOrdersByIds,
   useInfiniteDeliveryOrders,
 } from "@/hooks/do";
+import { useActiveDrivers } from "@/hooks/driver";
 import { shipmentKeys, useShipment, useUpdateShipment } from "@/hooks/shipment";
 import { cn } from "@/lib/utils";
 import { DeliveryOrder } from "@/types/do";
@@ -104,6 +105,16 @@ const formSchema = Joi.object({
     }),
     otherwise: Joi.string().allow("").optional(),
   }),
+  driverId: Joi.string().required().messages({
+    "string.empty": "Supir harus dipilih",
+    "any.required": "Supir harus dipilih",
+  }),
+  kenek: Joi.string().required().min(1).max(255).messages({
+    "string.empty": "Kenek harus diisi",
+    "string.min": "Kenek tidak boleh kosong",
+    "string.max": "Kenek tidak boleh lebih dari 255 karakter",
+    "any.required": "Kenek harus diisi",
+  }),
   internalNote: Joi.string().allow("").optional(),
   deliveryOrders: Joi.array()
     .items(deliveryOrderItemSchema)
@@ -119,6 +130,8 @@ interface FormValues {
   type: "ANTAR" | "JEMPUT";
   plateNumber?: string;
   armadaId?: string;
+  driverId: string;
+  kenek: string;
   internalNote?: string;
   deliveryOrders: {
     deliveryOrderId: string;
@@ -204,6 +217,11 @@ export default function EditPengiriman() {
     enabled: true,
   });
 
+  // Hook untuk mendapatkan active drivers
+  const { data: driversData, isLoading: loadingDrivers } = useActiveDrivers({
+    enabled: true,
+  });
+
   // Hook untuk mendapatkan detail DO yang sedang aktif dipilih
   const {
     data: activeDOData,
@@ -227,6 +245,12 @@ export default function EditPengiriman() {
         value: armada.id,
         secondary: armada.description,
       })) || [];
+
+  const drivers =
+    driversData?.map((driver) => ({
+      label: driver.name,
+      value: driver.id,
+    })) || [];
 
   // --- Fetch attached DOs if not in available list ---
   const attachedDOIds = (() => {
@@ -345,6 +369,8 @@ export default function EditPengiriman() {
       type: "ANTAR",
       plateNumber: "",
       armadaId: "",
+      driverId: "",
+      kenek: "",
       internalNote: "",
       deliveryOrders: [],
     },
@@ -425,6 +451,8 @@ export default function EditPengiriman() {
         type: shipment.type,
         plateNumber: shipment.plateNumber || "",
         armadaId: shipment.armadaId || "",
+        driverId: shipment.driverId || "",
+        kenek: shipment.kenek || "",
         internalNote: shipment.internalNote || "",
         deliveryOrders: deliveryOrdersArray,
       });
@@ -1087,6 +1115,56 @@ export default function EditPengiriman() {
                           />
                         </div>
                       )}
+                    </div>
+
+                    {/* Driver and Kenek Selection */}
+                    <div className="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="driverId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              Supir <span className="text-red-500">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Combobox
+                                items={drivers}
+                                placeholder="Pilih supir"
+                                emptyMessage="Tidak ada supir tersedia"
+                                value={field.value}
+                                onValueChange={field.onChange}
+                                disabled={loadingDrivers || isSubmitting}
+                                searchable
+                                name="driverId"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="kenek"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              Kenek <span className="text-red-500">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                {...field}
+                                placeholder="Masukkan nama kenek"
+                                disabled={isSubmitting}
+                                className={cn(
+                                  form.formState.errors.kenek && "border-red-500"
+                                )}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
                   </div>
                 </div>

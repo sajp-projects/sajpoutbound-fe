@@ -8,7 +8,7 @@ import {
   useSelectiveChooseProduct,
   useShipment,
   useShipmentChosenProducts,
-  useUpdateKenek,
+  useTransferItems,
   useUpdateTally,
 } from "@/hooks/shipment";
 import {
@@ -29,7 +29,6 @@ import {
   ShoppingCart,
   Upload,
   User,
-  UserCog2,
   X
 } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
@@ -80,9 +79,12 @@ import {
   DeliveryOrderForSelection,
   GroupedDeliveryOrder,
   IndividualWeighingItem,
+  ProductItem,
+  ShipmentItem,
   ShipmentStatus,
   SPMB,
-  StatusBadgeProps
+  StatusBadgeProps,
+  TransferItem
 } from "@/types/shipment";
 import {
   SHIPMENT_STATUS_LABELS,
@@ -111,6 +113,8 @@ import { useForm } from "react-hook-form";
 import { DeliveryOrderAccordion } from "@/components/DeliveryOrderAccordion";
 import { DOSelectionModal } from "@/components/DOSelectionModal";
 import { LoadingMethod, LoadingMethodSelectionModal } from "@/components/LoadingMethodSelectionModal";
+import { ReduceQuantityModal } from "@/components/ReduceQuantityModal";
+import { TransferItemsModal } from "@/components/TransferItemsModal";
 
 // Tally form schema and types
 interface TallyFormValues {
@@ -126,19 +130,6 @@ const tallyFormSchema = Joi.object<TallyFormValues>({
   }),
 });
 
-// Kenek form schema and types
-interface KenekFormValues {
-  kenek: string;
-}
-
-const kenekFormSchema = Joi.object<KenekFormValues>({
-  kenek: Joi.string().required().min(1).max(255).messages({
-    "string.empty": "Kenek harus diisi",
-    "string.min": "Kenek minimal 1 karakter",
-    "string.max": "Kenek maksimal 255 karakter",
-    "any.required": "Kenek harus diisi",
-  }),
-});
 
 function StatusBadge({ status }: StatusBadgeProps) {
   const getStatusColor = (status: ShipmentStatus) => {
@@ -261,6 +252,20 @@ export default function DetailPengiriman() {
     PERMISSION.ACTIONS.REVISE_DO
   );
 
+  // Permission check for transfer items - using REVISE_DO permission
+  const hasTransferItemsAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PENGIRIMAN,
+    PERMISSION.ACTIONS.REVISE_DO
+  );
+
+  // Permission check for reduce quantity - using REVISE_DO permission (same as transfer)
+  const hasReduceQuantityAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PENGIRIMAN,
+    PERMISSION.ACTIONS.REVISE_DO
+  );
+
   // Modal states for customer change and DO revision
   const [showChangeCustomerModal, setShowChangeCustomerModal] = useState(false);
   const [showReviseModal, setShowReviseModal] = useState(false);
@@ -271,7 +276,6 @@ export default function DetailPengiriman() {
     "change-customer" | "revise" | null
   >(null);
   const [tallyModalOpen, setTallyModalOpen] = useState(false);
-  const [kenekModalOpen, setKenekModalOpen] = useState(false);
 
   // Loading method selection modal states
   const [loadingMethodModalOpen, setLoadingMethodModalOpen] = useState(false);
@@ -290,6 +294,18 @@ export default function DetailPengiriman() {
     deliveryOrders: DeliveryOrderForSelection[];
   } | null>(null);
 
+  // Transfer Items Modal states
+  const [transferItemsModalOpen, setTransferItemsModalOpen] = useState(false);
+  const [selectedTransferItems, setSelectedTransferItems] = useState<TransferItem[]>([]);
+
+  // Reduce Quantity Modal states
+  const [reduceQuantityModalOpen, setReduceQuantityModalOpen] = useState(false);
+  const [selectedReduceQuantityItem, setSelectedReduceQuantityItem] = useState<{
+    shipmentItem: ShipmentItem;
+    product: ProductItem;
+    deliveryOrder: GroupedDeliveryOrder;
+  } | null>(null);
+
   // Tally form - initialize without defaultValues first
   const tallyForm = useForm<TallyFormValues>({
     resolver: joiResolver(tallyFormSchema),
@@ -298,13 +314,6 @@ export default function DetailPengiriman() {
     },
   });
 
-  // Kenek form - initialize without defaultValues first
-  const kenekForm = useForm<KenekFormValues>({
-    resolver: joiResolver(kenekFormSchema),
-    defaultValues: {
-      kenek: "",
-    },
-  });
 
   // Update tally mutation
   const updateTally = useUpdateTally({
@@ -318,6 +327,29 @@ export default function DetailPengiriman() {
       showErrorAlert(
         "Gagal Memperbarui Tally",
         error.message || "Terjadi kesalahan saat memperbarui tally"
+      );
+    },
+  });
+
+  // Transfer items mutation
+  const transferItems = useTransferItems({
+    onSuccess: (response) => {
+      if (response.data) {
+        const summary = response.data.transferSummary;
+        showSuccessAlert(
+          "Transfer Berhasil!",
+          `${summary.totalItemsTransferred} item berhasil ditransfer ke ${summary.targetCustomer}. DO baru: ${summary.newDoNumber}`
+        );
+      } else {
+        showSuccessAlert("Transfer Berhasil!", "Items berhasil ditransfer ke customer baru");
+      }
+      handleCloseTransferItemsModal();
+      refetch(); // Refetch shipment data to show updated quantities
+    },
+    onError: (error) => {
+      showErrorAlert(
+        "Gagal Transfer Items",
+        error.message || "Terjadi kesalahan saat transfer items"
       );
     },
   });
@@ -337,36 +369,6 @@ export default function DetailPengiriman() {
     }
   };
 
-  // Update kenek mutation
-  const updateKenek = useUpdateKenek({
-    onSuccess: () => {
-      showSuccessAlert("Berhasil!", "Kenek berhasil diperbarui");
-      setKenekModalOpen(false);
-      kenekForm.reset();
-      refetch(); // Refetch shipment data to get updated kenek
-    },
-    onError: (error) => {
-      showErrorAlert(
-        "Gagal Memperbarui Kenek",
-        error.message || "Terjadi kesalahan saat memperbarui kenek"
-      );
-    },
-  });
-
-  // Kenek handlers
-  const handleOpenKenekModal = () => {
-    kenekForm.setValue("kenek", shipment?.kenek || "");
-    setKenekModalOpen(true);
-  };
-
-  const handleKenekSubmit = (data: KenekFormValues) => {
-    if (shipmentId) {
-      updateKenek.mutate({
-        id: shipmentId,
-        kenek: data.kenek,
-      });
-    }
-  };
 
   // Selective choose product mutation
   const selectiveChooseProduct = useSelectiveChooseProduct({
@@ -546,11 +548,6 @@ export default function DetailPengiriman() {
     PERMISSION.ACTIONS.UPDATE_TALLY
   );
 
-  const hasPengirimanUpdateKenekAccess = hasPermission(
-    permissions,
-    PERMISSION.RESOURCES.PENGIRIMAN,
-    PERMISSION.ACTIONS.UPDATE_TALLY
-  );
 
   const hasPengirimanDeleteAccess = hasPermission(
     permissions,
@@ -922,6 +919,60 @@ export default function DetailPengiriman() {
     setModalIntent(null);
   };
 
+  // Transfer Items handlers
+  const handleTransferItemSelect = (item: TransferItem, checked: boolean) => {
+    if (checked) {
+      // Add item to selection
+      setSelectedTransferItems(prev => [...prev, item]);
+    } else {
+      // Remove item from selection
+      setSelectedTransferItems(prev =>
+        prev.filter(selected =>
+          !(selected.deliveryOrderId === item.deliveryOrderId && selected.productId === item.productId)
+        )
+      );
+    }
+  };
+
+  const handleOpenTransferItemsModal = () => {
+    setTransferItemsModalOpen(true);
+  };
+
+  const handleCloseTransferItemsModal = () => {
+    setTransferItemsModalOpen(false);
+    setSelectedTransferItems([]); // Clear selection when closing
+  };
+
+  const handleOpenReduceQuantityModal = (
+    shipmentItem: ShipmentItem,
+    product: ProductItem,
+    deliveryOrder: GroupedDeliveryOrder
+  ) => {
+    setSelectedReduceQuantityItem({ shipmentItem, product, deliveryOrder });
+    setReduceQuantityModalOpen(true);
+  };
+
+  const handleCloseReduceQuantityModal = () => {
+    setReduceQuantityModalOpen(false);
+    setSelectedReduceQuantityItem(null);
+  };
+
+  const handleTransferSubmit = (targetCustomerId: string, items: TransferItem[]) => {
+    if (!shipment) return;
+
+    const transferData = {
+      targetCustomerId,
+      sourceShipmentId: shipment.id,
+      transferItems: items.map(item => ({
+        deliveryOrderId: item.deliveryOrderId,
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+    };
+
+    transferItems.mutate(transferData);
+  };
+
   const handleViewPlatePhoto = () => {
     if (!shipment?.platePhoto) return;
 
@@ -1174,14 +1225,6 @@ export default function DetailPengiriman() {
     );
     const result = chosenProduct?.weighingMethod || null;
 
-    // Debug logging to help identify weighing method issues
-    if (productId) {
-      console.log(`getProductWeighingMethod for product ${productId}:`, {
-        chosenProducts: chosenProducts.length,
-        foundProduct: chosenProduct,
-        weighingMethod: result
-      });
-    }
 
     return result;
   };
@@ -1657,7 +1700,11 @@ export default function DetailPengiriman() {
                           Nomor Pengiriman
                         </p>
                         <p className="p-1 font-mono text-sm font-medium text-gray-900 break-all bg-gray-50 rounded">
-                          {shipment.shipmentNumber} ({shipment.plateNumber})
+                          {shipment.shipmentNumber} ({
+                            shipment.type === "ANTAR"
+                              ? shipment.armada?.plateNumber
+                              : shipment.plateNumber
+                          })
                         </p>
                       </div>
                       <div>
@@ -1762,23 +1809,6 @@ export default function DetailPengiriman() {
                     </h3>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2">
-                    {hasPengirimanUpdateKenekAccess && shipment && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={
-                          shipment.kenek
-                            ? "w-full sm:w-auto text-green-700 bg-green-50 border-green-200 hover:bg-green-100 text-xs sm:text-sm"
-                            : "w-full sm:w-auto text-green-600 border-green-200 hover:bg-green-50 text-xs sm:text-sm"
-                        }
-                        onClick={handleOpenKenekModal}
-                      >
-                        <UserCog2 className="mr-2 w-3 h-3 sm:w-4 sm:h-4" />
-                        <span className="truncate">
-                          {shipment.kenek ? shipment.kenek : "Tambah Kenek"}
-                        </span>
-                      </Button>
-                    )}
 
                     {hasPengirimanUpdateTallyAccess && shipment && (
                       <Button
@@ -2152,15 +2182,6 @@ export default function DetailPengiriman() {
                                             (si) => si.status !== "COMPLETED"
                                           ).length;
 
-                                        // Debug logging for weighing button visibility
-                                        console.log(`Weighing button visibility for product ${product.id}:`, {
-                                          weighingMethod,
-                                          hasPengirimanWeighAccess,
-                                          chosenCount,
-                                          chosenItems: chosenItems.length,
-                                          unweighedCount,
-                                          willShow: unweighedCount > 0
-                                        });
 
                                         if (unweighedCount > 0) {
                                           buttons.push(
@@ -2285,16 +2306,16 @@ export default function DetailPengiriman() {
                       });
 
                       return Array.from(productMap.values()).map(
-                        (product, index) => (
+                        (product) => (
                           <div
                             key={product.id}
                             className="p-4 rounded-lg border border-gray-200"
                           >
                             <div className="flex justify-between items-center mb-2">
                               <div className="flex items-center">
-                                <div className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
-                                  {index + 1}
-                                </div>
+                                {/* <div className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
+                                    {index + 1}
+                                  </div> */}
                                 <Link
                                   to={`/barang/${product.id}`}
                                   className="font-medium text-blue-600 hover:underline"
@@ -2323,10 +2344,10 @@ export default function DetailPengiriman() {
                                   );
                                 } else {
                                   return (
-                                    <div className="text-right space-y-1">
+                                    <div className="flex flex-col items-end space-y-1">
                                       <Badge
                                         variant="outline"
-                                        className="text-blue-700 bg-blue-50 border-blue-200 whitespace-nowrap text-center"
+                                        className="text-blue-700 bg-blue-50 border-blue-200 whitespace-nowrap"
                                       >
                                         Sebagian Dimuat
                                       </Badge>
@@ -2596,6 +2617,12 @@ export default function DetailPengiriman() {
                   isLoadingFullDOHook={isLoadingFullDOHook}
                   onOpenChangeCustomerModal={handleOpenChangeCustomerModal}
                   onOpenReviseModal={handleOpenReviseModal}
+                  selectedTransferItems={selectedTransferItems}
+                  onTransferItemSelect={handleTransferItemSelect}
+                  onOpenTransferItemsModal={handleOpenTransferItemsModal}
+                  hasTransferItemsAccess={hasTransferItemsAccess}
+                  onOpenReduceQuantityModal={handleOpenReduceQuantityModal}
+                  hasReduceQuantityAccess={hasReduceQuantityAccess}
                 />
               </div>
             )}
@@ -2623,14 +2650,11 @@ export default function DetailPengiriman() {
                 ) : (
                   <div>
                     {/* Desktop view */}
-                    <div className="hidden overflow-hidden rounded-lg border border-gray-200 sm:block">
+                    <div className="hidden rounded-lg border border-gray-200 sm:block">
                       <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow className="bg-gray-50 border-b border-gray-200">
-                              <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
-                                Kode
-                              </TableHead>
                               <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
                                 Barang
                               </TableHead>
@@ -2643,16 +2667,16 @@ export default function DetailPengiriman() {
                               <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
                                 Pelanggan
                               </TableHead>
-                              <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                              <TableHead className="px-2 py-3 text-sm font-semibold text-right text-gray-700">
                                 Kuantitas
                               </TableHead>
-                              <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                              <TableHead className="px-2 py-3 text-sm font-semibold text-center text-gray-700">
                                 Status Timbangan
                               </TableHead>
-                              <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                              <TableHead className="px-2 py-3 text-sm font-semibold text-center text-gray-700">
                                 Nota Timbangan
                               </TableHead>
-                              <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                              <TableHead className="px-2 py-3 text-sm font-semibold text-center text-gray-700">
                                 Aksi
                               </TableHead>
                             </TableRow>
@@ -2672,9 +2696,6 @@ export default function DetailPengiriman() {
                             ) : (
                               chosenProducts.map((item) => (
                                 <TableRow key={item.id}>
-                                  <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                    {item.code}
-                                  </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-gray-600">
                                     <Link
                                       to={`/barang/${item.productId}`}
@@ -2855,16 +2876,16 @@ export default function DetailPengiriman() {
                             </p>
                           </div>
                         ) : (
-                          chosenProducts.map((item, index) => (
+                          chosenProducts.map((item) => (
                             <div
                               key={item.id}
                               className="p-4 rounded-lg border border-gray-200"
                             >
                               <div className="flex justify-between items-center mb-3">
                                 <div className="flex items-center">
-                                  <div className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
+                                  {/* <div className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
                                     {index + 1}
-                                  </div>
+                                  </div> */}
                                   <Link
                                     to={`/barang/${item.productId}`}
                                     className="font-medium text-blue-600 hover:underline"
@@ -2956,11 +2977,11 @@ export default function DetailPengiriman() {
                                     ))}
                                   </div>
                                 </div>
-                                <div className="flex items-start">
+                                <div className="flex items-baseline">
                                   <span className="w-20 font-medium">
                                     Nota Timbangan:
                                   </span>
-                                  <span>
+                                  <div className="flex-1 flex items-end">
                                     {item.shipmentItems.some(
                                       (si) => si.status === "COMPLETED"
                                     ) &&
@@ -3016,7 +3037,7 @@ export default function DetailPengiriman() {
                                         Belum tersedia
                                       </span>
                                     )}
-                                  </span>
+                                  </div>
                                 </div>
                               </div>
 
@@ -3648,7 +3669,7 @@ export default function DetailPengiriman() {
 
                 <Button
                   onClick={handleWeighSubmit}
-                  disabled={bulkWeighItems.isPending}
+                  disabled={bulkWeighItems.isPending || !grossWeight || !tareWeight}
                   className="flex-1 text-white bg-blue-600 shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg"
                 >
                   {bulkWeighItems.isPending ? (
@@ -3789,6 +3810,36 @@ export default function DetailPengiriman() {
         </>
       )}
 
+      {/* Transfer Items Modal */}
+      <TransferItemsModal
+        isOpen={transferItemsModalOpen}
+        onClose={handleCloseTransferItemsModal}
+        transferItems={selectedTransferItems}
+        onTransfer={handleTransferSubmit}
+        isLoading={transferItems.isPending}
+      />
+
+      {/* Reduce Quantity Modal */}
+      {selectedReduceQuantityItem && (
+        <ReduceQuantityModal
+          isOpen={reduceQuantityModalOpen}
+          onOpenChange={handleCloseReduceQuantityModal}
+          shipmentItemId={selectedReduceQuantityItem.shipmentItem.id}
+          currentQuantity={selectedReduceQuantityItem.shipmentItem.requestedQuantity}
+          productName={selectedReduceQuantityItem.product.name}
+          customerName={selectedReduceQuantityItem.deliveryOrder.customer.name}
+          doNumber={selectedReduceQuantityItem.deliveryOrder.doNumber}
+          productUnit={selectedReduceQuantityItem.product.satuan}
+          onSuccess={(message) => {
+            showSuccessAlert("Berhasil!", message);
+            refetch(); // Refetch shipment data to show updated quantities
+          }}
+          onError={(message) => {
+            showErrorAlert("Gagal Mengurangi Kuantitas", message);
+          }}
+        />
+      )}
+
       {/* Tally Assignment Modal */}
       <Dialog open={tallyModalOpen} onOpenChange={setTallyModalOpen}>
         <DialogContent className="sm:max-w-[500px] bg-white border-0 p-0 rounded-lg shadow-lg">
@@ -3867,83 +3918,6 @@ export default function DetailPengiriman() {
         </DialogContent>
       </Dialog>
 
-      {/* Kenek Assignment Modal */}
-      <Dialog open={kenekModalOpen} onOpenChange={setKenekModalOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-white border-0 p-0 rounded-lg shadow-lg">
-          <div className="p-6">
-            <DialogHeader className="pb-4">
-              <DialogTitle className="flex items-center text-xl font-semibold text-gray-900">
-                <User className="mr-2 w-5 h-5 text-green-600" />
-                {shipment?.kenek ? "Edit Kenek" : "Tambah Kenek"}
-              </DialogTitle>
-              <DialogDescription className="text-gray-600">
-                {shipment?.kenek
-                  ? "Perbarui nama kenek untuk pengiriman ini"
-                  : "Tambahkan nama kenek untuk pengiriman ini"}
-              </DialogDescription>
-            </DialogHeader>
-
-            <Form {...kenekForm}>
-              <form
-                onSubmit={kenekForm.handleSubmit(handleKenekSubmit)}
-                className="space-y-4"
-              >
-                <FormField
-                  control={kenekForm.control}
-                  name="kenek"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nama Kenek</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Masukkan nama kenek"
-                          {...field}
-                          disabled={updateKenek.isPending}
-                          maxLength={255}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <DialogFooter className="pt-4 mt-4 border-t border-gray-100">
-                  <div className="flex gap-3 w-full">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setKenekModalOpen(false)}
-                      disabled={updateKenek.isPending}
-                      className="flex-1"
-                    >
-                      Batal
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={updateKenek.isPending}
-                      className="flex-1 text-white bg-green-600 shadow-md transition-all duration-200 hover:bg-green-700 hover:shadow-lg"
-                    >
-                      {updateKenek.isPending ? (
-                        <>
-                          <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-                          {shipment?.kenek
-                            ? "Memperbarui..."
-                            : "Menambahkan..."}
-                        </>
-                      ) : (
-                        <>
-                          <Check className="mr-2 w-4 h-4" />
-                          {shipment?.kenek ? "Perbarui" : "Tambah"}
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </DialogFooter>
-              </form>
-            </Form>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Loading Method Selection Modal */}
       {selectedProductForLoading && (

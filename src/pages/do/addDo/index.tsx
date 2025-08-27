@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox, ComboboxItem } from "@/components/ui/combobox";
-import { DateInput } from "@/components/ui/date-input";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import {
   Dialog,
   DialogContent,
@@ -97,10 +97,6 @@ export default function TambahDo() {
     quantity: number;
   } | null>(null);
   const [tempQuantityDisplay, setTempQuantityDisplay] = useState("");
-  const [dateInputValidation, setDateInputValidation] = useState<{
-    isValid: boolean;
-    hasInput: boolean;
-  }>({ isValid: false, hasInput: false });
   const inputClassName = cn(
     "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
   );
@@ -356,14 +352,6 @@ export default function TambahDo() {
       }
     }
 
-    // Validate delivery schedule
-    if (dateInputValidation.hasInput && !dateInputValidation.isValid) {
-      showErrorAlert(
-        "Validasi Gagal",
-        "Jadwal kirim tidak valid. Pastikan format tanggal sudah benar."
-      );
-      return;
-    }
 
     // Set default delivery schedule to today's Jakarta time if not specified
     let finalDeliverySchedule = data.deliverySchedule;
@@ -584,14 +572,10 @@ export default function TambahDo() {
                         name="deliverySchedule"
                         control={control}
                         render={({ field }) => (
-                          <DateInput
+                          <DateTimePicker
                             value={field.value}
                             onChange={field.onChange}
-                            placeholder="DD-MM-YYYY HH:MM"
                             className={inputClassName}
-                            onValidationChange={(isValid, hasInput) => {
-                              setDateInputValidation({ isValid, hasInput });
-                            }}
                           />
                         )}
                       />

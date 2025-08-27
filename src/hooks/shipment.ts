@@ -2,12 +2,17 @@ import { BASE_URL } from "@/constant/baseUrl";
 import { ApiErrorResult, ApiResponse } from "@/types/api";
 import {
   BulkWeighShipmentInput,
+  ChosenProduct,
   ChosenProductsResponse,
   CreateShipmentInput,
   IndividualWeighShipmentInput,
+  ReduceQuantityInput,
+  ReduceQuantityResponse,
   SelectiveProductLoadingInput,
   Shipment,
   ShipmentPagination,
+  TransferItemsInput,
+  TransferItemsResponse,
   UpdateShipmentInput,
 } from "@/types/shipment";
 import { fetchApi } from "@/utils/api";
@@ -35,7 +40,7 @@ export const shipmentKeys = {
     [...shipmentKeys.all, "notaTimbangan", shipmentId, productId] as const,
 };
 
-export function useShipments(options = {}) {
+export function useShipments(options: Record<string, unknown> = {}) {
   return useQuery({
     queryKey: shipmentKeys.all,
     queryFn: async () => {
@@ -69,8 +74,16 @@ export function useShipmentsWithParams(
     type = "",
     startDate = "",
     endDate = "",
+  }: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    type?: string;
+    startDate?: string;
+    endDate?: string;
   } = {},
-  options = {}
+  options: Record<string, unknown> = {}
 ) {
   const filters = {
     page,
@@ -108,7 +121,7 @@ export function useShipmentsWithParams(
   });
 }
 
-export function useShipment({ id }: { id: string }, options = {}) {
+export function useShipment({ id }: { id: string }, options: Record<string, unknown> = {}) {
   return useQuery({
     queryKey: shipmentKeys.detail(id),
     queryFn: async () => {
@@ -147,7 +160,7 @@ export function useShipment({ id }: { id: string }, options = {}) {
   });
 }
 
-export function useArchivedShipments(options = {}) {
+export function useArchivedShipments(options: Record<string, unknown> = {}) {
   return useQuery({
     queryKey: shipmentKeys.archived(),
     queryFn: async () => {
@@ -174,7 +187,7 @@ export function useArchivedShipments(options = {}) {
   });
 }
 
-export function useCreateShipment(options = {}) {
+export function useCreateShipment(options: Record<string, unknown> = {}) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -214,7 +227,7 @@ export function useCreateShipment(options = {}) {
   });
 }
 
-export function useUpdateShipment(options = {}) {
+export function useUpdateShipment(options: Record<string, unknown> = {}) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -261,7 +274,7 @@ export function useUpdateShipment(options = {}) {
   });
 }
 
-export function useDeleteShipment(options = {}) {
+export function useDeleteShipment(options: Record<string, unknown> = {}) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -324,7 +337,7 @@ export function useDeleteShipment(options = {}) {
 //   });
 // }
 
-export function useChooseProduct(options = {}) {
+export function useChooseProduct(options: Record<string, unknown> = {}) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -368,7 +381,7 @@ export function useChooseProduct(options = {}) {
 export function useShipmentChosenProducts(
   shipmentId: string,
   weighingMethod?: "MANUAL" | "VENDOR",
-  options = {}
+  options: Record<string, unknown> = {}
 ) {
   const queryKey = weighingMethod
     ? [...shipmentKeys.chosenProducts(shipmentId), weighingMethod]
@@ -417,7 +430,7 @@ export function useShipmentChosenProducts(
   });
 }
 
-export function useDeleteShipmentItems(options = {}) {
+export function useDeleteShipmentItems(options: Record<string, unknown> = {}) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -455,7 +468,7 @@ export function useDeleteShipmentItems(options = {}) {
 
 export function useShipmentsByDeliveryOrderId(
   deliveryOrderId: string,
-  options = {}
+  options: Record<string, unknown> = {}
 ) {
   return useQuery({
     queryKey: ["shipmentsByDeliveryOrderId", deliveryOrderId],
@@ -507,7 +520,7 @@ export function useShipmentsByDeliveryOrderId(
   });
 }
 
-export function useBulkWeighShipmentItems(options = {}) {
+export function useBulkWeighShipmentItems(options: Record<string, unknown> = {}) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -551,7 +564,7 @@ export function useBulkWeighShipmentItems(options = {}) {
   });
 }
 
-export function useIndividualWeighShipmentItem(options = {}) {
+export function useIndividualWeighShipmentItem(options: Record<string, unknown> = {}) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -730,7 +743,7 @@ export function useUnverifiedShipments() {
 export function useNotaTimbanganForProduct(
   shipmentId: string,
   productId: string,
-  options = {}
+  options: Record<string, unknown> = {}
 ) {
   return useQuery({
     queryKey: shipmentKeys.notaTimbangan(shipmentId, productId),
@@ -915,7 +928,7 @@ export function useUpdateKenek(
 
 export function useSelectiveChooseProduct(
   options: UseMutationOptions<
-    ApiResponse<any>,
+    ApiResponse<ChosenProduct>,
     ApiErrorResult,
     SelectiveProductLoadingInput
   > = {}
@@ -945,7 +958,7 @@ export function useSelectiveChooseProduct(
         );
       }
 
-      const result: ApiResponse<any> = await response.json();
+      const result: ApiResponse<ChosenProduct> = await response.json();
 
       if (!result.success) {
         handleApiError(result, "Terjadi kesalahan saat memuat barang selektif");
@@ -959,6 +972,123 @@ export function useSelectiveChooseProduct(
       });
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.all,
+      });
+
+      if (options.onSuccess) {
+        options.onSuccess(data, variables, undefined);
+      }
+    },
+    ...options,
+  });
+}
+
+export function useTransferItems(
+  options: UseMutationOptions<
+    ApiResponse<TransferItemsResponse>,
+    ApiErrorResult,
+    TransferItemsInput
+  > = {}
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: TransferItemsInput) => {
+      const response = await fetchApi(
+        `${BASE_URL}/delivery-orders/transfer-items`,
+        {},
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw createErrorResponse(
+          errorResult,
+          `Error transferring items: ${response.statusText}`
+        );
+      }
+
+      const result: ApiResponse<TransferItemsResponse> = await response.json();
+
+      if (!result.success) {
+        handleApiError(result, "Terjadi kesalahan saat transfer items");
+      }
+
+      return result;
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate shipment data to refresh the view
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.detail(variables.sourceShipmentId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all,
+      });
+      // Invalidate delivery order queries as well
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.all,
+      });
+
+      if (options.onSuccess) {
+        options.onSuccess(data, variables, undefined);
+      }
+    },
+    ...options,
+  });
+}
+
+export function useReduceQuantity(
+  options: UseMutationOptions<
+    ApiResponse<ReduceQuantityResponse>,
+    ApiErrorResult,
+    ReduceQuantityInput
+  > = {}
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: ReduceQuantityInput) => {
+      const response = await fetchApi(
+        `${BASE_URL}/delivery-orders/reduce-quantity`,
+        {},
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw createErrorResponse(
+          errorResult,
+          `Error reducing quantity: ${response.statusText}`
+        );
+      }
+
+      const result: ApiResponse<ReduceQuantityResponse> = await response.json();
+
+      if (!result.success) {
+        handleApiError(result, "Terjadi kesalahan saat mengurangi kuantitas");
+      }
+
+      return result;
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate queries to refresh the view - we don't have shipmentId directly,
+      // so we invalidate all shipments and delivery orders to be safe
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.all,
       });
 
       if (options.onSuccess) {

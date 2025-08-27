@@ -325,7 +325,7 @@ export default function EditBarang() {
                     {warehouses && warehouses.length > 0 ? (
                       warehouses.map((warehouse) => (
                         <option key={warehouse.id} value={warehouse.id}>
-                          {warehouse.name}
+                         {warehouse.code} - {warehouse.name}
                         </option>
                       ))
                     ) : (

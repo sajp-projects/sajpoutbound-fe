@@ -48,6 +48,7 @@ import { formatInputNumber, handleDecimalInput } from "@/utils/formatNumber";
 import { showErrorAlert, showSuccessAlert } from "@/utils/sweetAlert";
 import { joiResolver } from "@hookform/resolvers/joi";
 import { useQueryClient } from "@tanstack/react-query";
+import { formatInTimeZone } from "date-fns-tz";
 import Joi from "joi";
 import { Loader2, Plus, Save, Trash } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -105,6 +106,12 @@ const formSchema = Joi.object({
     "string.empty": "Supir harus dipilih",
     "any.required": "Supir harus dipilih",
   }),
+  kenek: Joi.string().required().min(1).max(255).messages({
+    "string.empty": "Kenek harus diisi",
+    "string.min": "Kenek tidak boleh kosong",
+    "string.max": "Kenek tidak boleh lebih dari 255 karakter",
+    "any.required": "Kenek harus diisi",
+  }),
   internalNote: Joi.string().allow("").optional(),
   deliveryOrders: Joi.array()
     .items(deliveryOrderItemSchema)
@@ -121,6 +128,7 @@ interface FormValues {
   plateNumber?: string;
   armadaId?: string;
   driverId: string;
+  kenek: string;
   internalNote?: string;
   deliveryOrders: {
     deliveryOrderId: string;
@@ -240,21 +248,18 @@ export default function TambahPengiriman() {
       deliveryOrdersData?.pages
         .flatMap((page) => page.deliveryOrders)
         ?.map((do_item) => {
-          // Format deliverySchedule for display with responsive format
+
           const scheduleText = do_item.deliverySchedule
             ? (() => {
                 const date = new Date(do_item.deliverySchedule);
-                const shortFormat = date.toLocaleDateString('id-ID', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                });
-                return shortFormat;
+                const adjustedDate = new Date(date.getTime() - (7 * 60 * 60 * 1000));
+                const result = formatInTimeZone(adjustedDate, "Asia/Jakarta", "dd-MM-yyyy, HH:mm");
+
+                return result;
               })()
             : null;
 
-          // Construct secondary text with responsive layout in mind
+          // Construct secondary text with address and schedule
           const secondaryParts = [do_item.address];
           if (scheduleText) {
             secondaryParts.push(`${scheduleText}`);
@@ -317,6 +322,7 @@ export default function TambahPengiriman() {
       plateNumber: "",
       armadaId: "",
       driverId: "",
+      kenek: "",
       internalNote: "",
       deliveryOrders: [
         {
@@ -587,6 +593,7 @@ export default function TambahPengiriman() {
           ? values.plateNumber
           : "",
       driverId: values.driverId,
+      kenek: values.kenek,
       items,
     };
 
@@ -928,8 +935,8 @@ export default function TambahPengiriman() {
                     </div>
                   </div>
 
-                  {/* Driver Selection */}
-                  <div className="sm:col-span-2 mt-4">
+                  {/* Driver and Kenek Selection */}
+                  <div className="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="driverId"
@@ -948,6 +955,28 @@ export default function TambahPengiriman() {
                               disabled={loadingDrivers || isSubmitting}
                               searchable
                               name="driverId"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="kenek"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Kenek <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Masukkan nama kenek"
+                              disabled={isSubmitting}
+                              className={cn(
+                                form.formState.errors.kenek && "border-red-500"
+                              )}
                             />
                           </FormControl>
                           <FormMessage />

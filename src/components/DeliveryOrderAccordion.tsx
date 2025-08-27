@@ -1,4 +1,4 @@
-import { Loader2, MapPin, Pencil, UserCheck } from "lucide-react";
+import { ArrowRightLeft, Loader2, MapPin, MinusCircle, Pencil, UserCheck } from "lucide-react";
 import { Link } from "react-router";
 
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox, SimpleCheckbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -21,6 +22,7 @@ import {
   GroupedDeliveryOrder,
   ProductItem,
   ShipmentItem,
+  TransferItem,
 } from "@/types/shipment";
 import { formatInputNumber } from "@/utils/formatNumber";
 
@@ -32,6 +34,14 @@ interface DeliveryOrderAccordionProps {
   isLoadingFullDOHook: boolean;
   onOpenChangeCustomerModal: (deliveryOrder: GroupedDeliveryOrder) => void;
   onOpenReviseModal: (deliveryOrder: GroupedDeliveryOrder) => void;
+  // Transfer items props
+  selectedTransferItems: TransferItem[];
+  onTransferItemSelect: (item: TransferItem, checked: boolean) => void;
+  onOpenTransferItemsModal: () => void;
+  hasTransferItemsAccess?: boolean;
+  // Reduce quantity props
+  onOpenReduceQuantityModal?: (shipmentItem: ShipmentItem, product: ProductItem, deliveryOrder: GroupedDeliveryOrder) => void;
+  hasReduceQuantityAccess?: boolean;
 }
 
 export function DeliveryOrderAccordion({
@@ -42,6 +52,12 @@ export function DeliveryOrderAccordion({
   isLoadingFullDOHook,
   onOpenChangeCustomerModal,
   onOpenReviseModal,
+  selectedTransferItems,
+  onTransferItemSelect,
+  onOpenTransferItemsModal,
+  hasTransferItemsAccess = false,
+  onOpenReduceQuantityModal,
+  hasReduceQuantityAccess = false,
 }: DeliveryOrderAccordionProps) {
   // Group items by delivery order
   const doMap = new Map<string, GroupedDeliveryOrder>();
@@ -71,11 +87,59 @@ export function DeliveryOrderAccordion({
 
   const groupedDeliveryOrders = Array.from(doMap.values());
 
+  // Helper function to check if an item is selected for transfer
+  const isItemSelected = (deliveryOrderId: string, productId: string): boolean => {
+    return selectedTransferItems.some(
+      (item) => item.deliveryOrderId === deliveryOrderId && item.productId === productId
+    );
+  };
+
+  // Helper function to create transfer item from product data
+  const createTransferItem = (
+    deliveryOrder: GroupedDeliveryOrder,
+    product: ProductItem,
+    shipmentItem: ShipmentItem
+  ): TransferItem => {
+    // For completed shipments, we'll use the requestedQuantity as available quantity
+    // In a real implementation, you'd want to get the completedQuantity from the backend
+    const availableQuantity = shipmentItem.requestedQuantity;
+
+    return {
+      deliveryOrderId: deliveryOrder.id,
+      productId: product.id,
+      productName: product.name,
+      doNumber: deliveryOrder.doNumber,
+      customerName: deliveryOrder.customer.name,
+      availableQuantity,
+      quantity: availableQuantity, // Default to transfer all available
+      satuan: product.satuan,
+    };
+  };
+
+  // Check if there are any items that can be transferred
+  const hasTransferableItems = shipmentStatus === "SELESAI" &&
+    groupedDeliveryOrders.some(deliveryOrder =>
+      deliveryOrder.products.some(product => product.chosenProduct)
+    );
+
   return (
     <>
-      <h4 className="mb-4 text-lg font-medium text-gray-900">
-        Daftar Delivery Order
-      </h4>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-lg font-medium text-gray-900">
+          Daftar Delivery Order
+        </h4>
+        {/* Transfer Items button - only show for completed shipments with selected items */}
+        {hasTransferItemsAccess && hasTransferableItems && selectedTransferItems.length > 0 && (
+          <Button
+            onClick={onOpenTransferItemsModal}
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+            size="sm"
+          >
+            <ArrowRightLeft className="w-4 h-4 mr-2" />
+            Transfer {selectedTransferItems.length} Item{selectedTransferItems.length > 1 ? 's' : ''}
+          </Button>
+        )}
+      </div>
       <Accordion type="multiple" className="space-y-4">
         {groupedDeliveryOrders.map(
           (deliveryOrder: GroupedDeliveryOrder, doIndex: number) => (
@@ -168,6 +232,12 @@ export function DeliveryOrderAccordion({
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-gray-50 border-b border-gray-200">
+                        {/* Transfer checkbox column - only show for completed shipments */}
+                        {hasTransferItemsAccess && hasTransferableItems && (
+                          <TableHead className="w-[50px] py-3 px-4 text-center font-semibold text-gray-700 text-sm">
+                            Transfer
+                          </TableHead>
+                        )}
                         <TableHead className="w-[50px] py-3 px-4 text-left font-semibold text-gray-700 text-sm">
                           No
                         </TableHead>
@@ -186,15 +256,46 @@ export function DeliveryOrderAccordion({
                         <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
                           Status
                         </TableHead>
+                        {/* Actions column for reduce quantity - only show for completed shipments */}
+                        {hasReduceQuantityAccess && shipmentStatus === "SELESAI" && (
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                            Aksi
+                          </TableHead>
+                        )}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {deliveryOrder.products.map(
-                        (product: ProductItem, index: number) => (
-                          <TableRow key={`${deliveryOrder.id}-${product.id}`}>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">
-                              {index + 1}
-                            </TableCell>
+                        (product: ProductItem, index: number) => {
+                          // Find the corresponding shipment item
+                          const shipmentItem = shipmentItems.find(
+                            item => item.deliveryOrderId === deliveryOrder.id && item.productId === product.id
+                          );
+
+                          const isSelected = isItemSelected(deliveryOrder.id, product.id);
+                          const canBeTransferred = product.chosenProduct && hasTransferItemsAccess && hasTransferableItems;
+
+                          return (
+                            <TableRow key={`${deliveryOrder.id}-${product.id}`}>
+                              {/* Transfer checkbox column */}
+                              {hasTransferItemsAccess && hasTransferableItems && (
+                                <TableCell className="pl-2 pr-2 py-3 text-center">
+                                  {canBeTransferred && shipmentItem ? (
+                                    <SimpleCheckbox
+                                      checked={isSelected}
+                                      onCheckedChange={(checked: boolean) => {
+                                        const transferItem = createTransferItem(deliveryOrder, product, shipmentItem);
+                                        onTransferItemSelect(transferItem, checked);
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-4 h-4" /> // Empty space for items that can't be transferred
+                                  )}
+                                </TableCell>
+                              )}
+                              <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                {index + 1}
+                              </TableCell>
                             <TableCell className="px-4 py-3 text-sm text-gray-600">
                               <Link
                                 to={`/barang/${product.id}`}
@@ -233,9 +334,32 @@ export function DeliveryOrderAccordion({
                                 </Badge>
                               )}
                             </TableCell>
+                            {/* Actions cell for reduce quantity - only show for completed shipments */}
+                            {hasReduceQuantityAccess && shipmentStatus === "SELESAI" && (
+                              <TableCell className="px-4 py-3 text-center">
+                                {product.chosenProduct && shipmentItem && onOpenReduceQuantityModal ? (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onOpenReduceQuantityModal(shipmentItem, product, deliveryOrder);
+                                    }}
+                                    title="Kurangi Kuantitas"
+                                  >
+                                    <MinusCircle className="w-3 h-3" />
+                                    <span className="hidden sm:inline ml-1">Kurangi</span>
+                                  </Button>
+                                ) : (
+                                  <div className="w-4 h-4" /> /* Empty space for items that can't be reduced */
+                                )}
+                              </TableCell>
+                            )}
                           </TableRow>
-                        )
-                      )}
+                        );
+                      }
+                    )}
                     </TableBody>
                   </Table>
                 </div>
@@ -244,34 +368,51 @@ export function DeliveryOrderAccordion({
                 <div className="sm:hidden">
                   <div className="p-4 space-y-3">
                     {deliveryOrder.products.map(
-                      (product: ProductItem, index: number) => (
-                        <div
-                          key={`${deliveryOrder.id}-${product.id}`}
-                          className="p-3 rounded-lg border border-gray-200"
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            <div className="flex items-center">
-                              <div className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
-                                {index + 1}
+                      (product: ProductItem) => {
+                        // Find the corresponding shipment item for mobile view too
+                        const shipmentItem = shipmentItems.find(
+                          item => item.deliveryOrderId === deliveryOrder.id && item.productId === product.id
+                        );
+
+                        const isSelected = isItemSelected(deliveryOrder.id, product.id);
+                        const canBeTransferred = product.chosenProduct && hasTransferItemsAccess && hasTransferableItems;
+
+                        return (
+                          <div
+                            key={`${deliveryOrder.id}-${product.id}`}
+                            className="p-3 rounded-lg border border-gray-200"
+                          >
+                            <div className="flex justify-between items-center mb-2">
+                              <div className="flex items-center">
+                                {/* Transfer checkbox for mobile */}
+                                {hasTransferItemsAccess && hasTransferableItems && canBeTransferred && shipmentItem && (
+                                  <Checkbox
+                                    checked={isSelected}
+                                    onCheckedChange={(checked: boolean) => {
+                                      const transferItem = createTransferItem(deliveryOrder, product, shipmentItem);
+                                      onTransferItemSelect(transferItem, checked);
+                                    }}
+                                    className="mr-3"
+                                  />
+                                )}
+                                <Link
+                                  to={`/barang/${product.id}`}
+                                  className="font-medium text-blue-600 hover:underline"
+                                >
+                                  {product.name}
+                                </Link>
                               </div>
-                              <Link
-                                to={`/barang/${product.id}`}
-                                className="font-medium text-blue-600 hover:underline"
-                              >
-                                {product.name}
-                              </Link>
-                            </div>
                             {product.chosenProduct ? (
                               <Badge
                                 variant="outline"
-                                className="text-green-700 bg-green-50 border-green-200 text-center"
+                                className="text-green-700 bg-green-50 border-green-200 text-center text-xs whitespace-nowrap px-1"
                               >
                                 Sudah Dimuat
                               </Badge>
                             ) : (
                               <Badge
                                 variant="outline"
-                                className="text-yellow-700 bg-yellow-50 border-yellow-200 text-center"
+                                className="text-yellow-700 bg-yellow-50 border-yellow-200 text-center text-xs whitespace-nowrap px-1"
                               >
                                 Belum Dimuat
                               </Badge>
@@ -295,8 +436,31 @@ export function DeliveryOrderAccordion({
                               {product.satuan}
                             </p>
                           </div>
+                          
+                          {/* Reduce quantity button for mobile - only show for completed shipments */}
+                          {hasReduceQuantityAccess && 
+                           shipmentStatus === "SELESAI" && 
+                           product.chosenProduct && 
+                           shipmentItem && 
+                           onOpenReduceQuantityModal && (
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-orange-600 border-orange-200 hover:bg-orange-50 w-full"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onOpenReduceQuantityModal(shipmentItem, product, deliveryOrder);
+                                }}
+                              >
+                                <MinusCircle className="w-3 h-3 mr-2" />
+                                Kurangi Kuantitas
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                      )
+                        );
+                      }
                     )}
                   </div>
                 </div>

@@ -46,7 +46,7 @@ export default function TambahBarang() {
   const [errors, setErrors] = useState<ProductFormErrors>({});
 
   const { data: warehousesData } = useAllWarehouses({
-    staleTime: 300000,
+    refetchOnMount: 'always',
   });
   const warehouses = warehousesData || [];
 

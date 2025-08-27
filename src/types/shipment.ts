@@ -108,6 +108,7 @@ export interface CreateShipmentInput {
   type: ShipmentType;
   armadaId?: string;
   driverId: string;
+  kenek: string;
   internalNote?: string;
   plateNumber: string;
   items: CreateShipmentItem[];
@@ -424,4 +425,99 @@ export interface DeliveryOrderForSelection {
     pendingQuantity: number;
     status: string;
   }>;
+}
+
+// Transfer items functionality types
+export interface TransferItem {
+  deliveryOrderId: string;
+  productId: string;
+  productName: string;
+  doNumber: string;
+  customerName: string;
+  availableQuantity: number; // completedQuantity from backend
+  quantity: number; // quantity to transfer
+  satuan: string;
+}
+
+export interface TransferItemsInput {
+  targetCustomerId: string;
+  sourceShipmentId: string;
+  transferItems: {
+    deliveryOrderId: string;
+    productId: string;
+    quantity: number;
+  }[];
+}
+
+export interface TransferItemsResponse {
+  newDeliveryOrder: {
+    id: string;
+    doNumber: string;
+    customerId: string;
+    address?: string;
+    internalNote?: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    customer: {
+      id: string;
+      name: string;
+      address?: string;
+    };
+    items: Array<{
+      id: string;
+      deliveryOrderId: string;
+      productId: string;
+      quantity: number;
+      completedQuantity: number;
+      pendingQuantity: number;
+      processingQuantity: number;
+      createdAt: string;
+      updatedAt: string;
+      product: {
+        id: string;
+        name: string;
+        satuan: string;
+      };
+    }>;
+  };
+  updatedOriginalDOs: Array<{
+    id: string;
+    doNumber: string;
+    customerId: string;
+    status: string;
+    customer: {
+      id: string;
+      name: string;
+    };
+  }>;
+  transferSummary: {
+    sourceShipmentId: string;
+    sourceShipmentNumber: string;
+    targetCustomer: string;
+    totalItemsTransferred: number;
+    newDoNumber: string;
+  };
+}
+
+// Reduce quantity functionality types
+export interface ReduceQuantityInput {
+  shipmentItemId: string;
+  newQuantity: number;
+}
+
+export interface ReduceQuantityResponse {
+  message: string;
+  data: {
+    updatedShipmentItem: {
+      id: string;
+      requestedQuantity: number;
+      weightedQuantity: number;
+    };
+    updatedDeliveryOrderItem: {
+      id: string;
+      completedQuantity: number;
+      pendingQuantity: number;
+    };
+  };
 }

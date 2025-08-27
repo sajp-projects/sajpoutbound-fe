@@ -178,6 +178,7 @@ export function useInfiniteCustomers(options?: {
     enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
+    refetchOnMount: 'always',
   });
 }
 
@@ -216,7 +217,7 @@ export function useCreateCustomer(
     onSuccess: (data) => {
       queryClient.setQueryData(customerKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
-      
+
       // Invalidate delivery orders for this customer
       queryClient.invalidateQueries({
         queryKey: [...customerKeys.detail(data.id), "delivery-orders"]
@@ -277,17 +278,17 @@ export function useUpdateCustomer(
     onSuccess: (data) => {
       queryClient.setQueryData(customerKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
-      
+
       // Invalidate delivery orders for this customer
       queryClient.invalidateQueries({
         queryKey: [...customerKeys.detail(data.id), "delivery-orders"]
       });
-      
+
       // Invalidate all delivery orders that belong to this customer
       queryClient.invalidateQueries({
         queryKey: deliveryOrderKeys.lists()
       });
-      
+
       // Invalidate all shipments since they contain customer data through DOs
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.lists()
@@ -335,17 +336,17 @@ export function useDeleteCustomer(
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
       queryClient.removeQueries({ queryKey: customerKeys.detail(id) });
-      
+
       // Invalidate delivery orders for this customer
       queryClient.invalidateQueries({
         queryKey: [...customerKeys.detail(id), "delivery-orders"]
       });
-      
+
       // Invalidate all delivery orders since we don't know which ones belonged to this customer
       queryClient.invalidateQueries({
         queryKey: deliveryOrderKeys.lists()
       });
-      
+
       // Invalidate all shipments since they may contain items from this customer's DOs
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.lists()
