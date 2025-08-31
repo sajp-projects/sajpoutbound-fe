@@ -75,8 +75,8 @@ export default function LogDo() {
   };
 
   const renderChanges = (
-    oldData: Record<string, unknown> | null,
-    newData: Record<string, unknown> | null
+    oldData: Record<string, any> | null,
+    newData: Record<string, any> | null
   ) => {
     if (!oldData && !newData) return null;
 
@@ -94,7 +94,9 @@ export default function LogDo() {
                     No. DO
                   </td>
                   <td className="px-2 py-1 border border-gray-200">
-                    {(newData.doNumber || newData.preservedDOData?.doNumber) as string}
+                    {(newData.doNumber || newData.preservedDOData?.doNumber
+
+                    ) as string}
                   </td>
                 </tr>
                 <tr>
