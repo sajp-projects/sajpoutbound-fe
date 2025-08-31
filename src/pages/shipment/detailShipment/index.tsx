@@ -252,18 +252,18 @@ export default function DetailPengiriman() {
     PERMISSION.ACTIONS.REVISE_DO
   );
 
-  // Permission check for transfer items - using REVISE_DO permission
+  // Permission check for transfer items - using specific TRANSFER_ITEMS permission
   const hasTransferItemsAccess = hasPermission(
     permissions,
     PERMISSION.RESOURCES.PENGIRIMAN,
-    PERMISSION.ACTIONS.REVISE_DO
+    PERMISSION.ACTIONS.TRANSFER_ITEMS
   );
 
-  // Permission check for reduce quantity - using REVISE_DO permission (same as transfer)
+  // Permission check for reduce quantity - using specific REDUCE_ITEMS permission
   const hasReduceQuantityAccess = hasPermission(
     permissions,
     PERMISSION.RESOURCES.PENGIRIMAN,
-    PERMISSION.ACTIONS.REVISE_DO
+    PERMISSION.ACTIONS.REDUCE_ITEMS
   );
 
   // Modal states for customer change and DO revision
