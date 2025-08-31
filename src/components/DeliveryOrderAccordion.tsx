@@ -274,13 +274,17 @@ export function DeliveryOrderAccordion({
 
                           const isSelected = isItemSelected(deliveryOrder.id, product.id);
                           const canBeTransferred = product.chosenProduct && hasTransferItemsAccess && hasTransferableItems;
+                          const isDisabled = shipmentItem?.requestedQuantity === 0;
 
                           return (
-                            <TableRow key={`${deliveryOrder.id}-${product.id}`}>
+                            <TableRow 
+                              key={`${deliveryOrder.id}-${product.id}`}
+                              className={isDisabled ? "opacity-50 bg-gray-50" : ""}
+                            >
                               {/* Transfer checkbox column */}
                               {hasTransferItemsAccess && hasTransferableItems && (
                                 <TableCell className="pl-2 pr-2 py-3 text-center">
-                                  {canBeTransferred && shipmentItem ? (
+                                  {canBeTransferred && shipmentItem && !isDisabled ? (
                                     <SimpleCheckbox
                                       checked={isSelected}
                                       onCheckedChange={(checked: boolean) => {
@@ -337,7 +341,7 @@ export function DeliveryOrderAccordion({
                             {/* Actions cell for reduce quantity - only show for completed shipments */}
                             {hasReduceQuantityAccess && shipmentStatus === "SELESAI" && (
                               <TableCell className="px-4 py-3 text-center">
-                                {product.chosenProduct && shipmentItem && onOpenReduceQuantityModal ? (
+                                {product.chosenProduct && shipmentItem && onOpenReduceQuantityModal && !isDisabled ? (
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -376,16 +380,17 @@ export function DeliveryOrderAccordion({
 
                         const isSelected = isItemSelected(deliveryOrder.id, product.id);
                         const canBeTransferred = product.chosenProduct && hasTransferItemsAccess && hasTransferableItems;
+                        const isDisabled = shipmentItem?.requestedQuantity === 0;
 
                         return (
                           <div
                             key={`${deliveryOrder.id}-${product.id}`}
-                            className="p-3 rounded-lg border border-gray-200"
+                            className={`p-3 rounded-lg border border-gray-200 ${isDisabled ? "opacity-50 bg-gray-50" : ""}`}
                           >
                             <div className="flex justify-between items-center mb-2">
                               <div className="flex items-center">
                                 {/* Transfer checkbox for mobile */}
-                                {hasTransferItemsAccess && hasTransferableItems && canBeTransferred && shipmentItem && (
+                                {hasTransferItemsAccess && hasTransferableItems && canBeTransferred && shipmentItem && !isDisabled && (
                                   <Checkbox
                                     checked={isSelected}
                                     onCheckedChange={(checked: boolean) => {
@@ -442,7 +447,8 @@ export function DeliveryOrderAccordion({
                            shipmentStatus === "SELESAI" && 
                            product.chosenProduct && 
                            shipmentItem && 
-                           onOpenReduceQuantityModal && (
+                           onOpenReduceQuantityModal && 
+                           !isDisabled && (
                             <div className="mt-3 pt-3 border-t border-gray-200">
                               <Button
                                 variant="outline"

@@ -94,7 +94,7 @@ export default function LogDo() {
                     No. DO
                   </td>
                   <td className="px-2 py-1 border border-gray-200">
-                    {newData.doNumber as string}
+                    {(newData.doNumber || newData.preservedDOData?.doNumber) as string}
                   </td>
                 </tr>
                 <tr>
@@ -102,7 +102,7 @@ export default function LogDo() {
                     Pelanggan
                   </td>
                   <td className="px-2 py-1 border border-gray-200">
-                    {newData.customerName as string}
+                    {(newData.customerName || newData.preservedDOData?.customerName) as string}
                   </td>
                 </tr>
                 <tr>
@@ -110,7 +110,7 @@ export default function LogDo() {
                     Alamat
                   </td>
                   <td className="px-2 py-1 border border-gray-200">
-                    {newData.address as string}
+                    {(newData.address || newData.preservedDOData?.address) as string}
                   </td>
                 </tr>
                 <tr>
@@ -118,7 +118,7 @@ export default function LogDo() {
                     Catatan Internal
                   </td>
                   <td className="px-2 py-1 border border-gray-200">
-                    {newData.internalNote as string}
+                    {(newData.internalNote || newData.preservedDOData?.internalNote) as string}
                   </td>
                 </tr>
                 {typeof newData.items !== "undefined" &&
