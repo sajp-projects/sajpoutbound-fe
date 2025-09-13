@@ -72,6 +72,8 @@ export interface ShipmentItem {
   shipmentNumber: string;
   type: string;
   plateNumber?: string;
+  verifiedAt?: Date | null;
+  createdAt?: Date | null;
   item: {
     id: string;
     product: {
@@ -87,6 +89,17 @@ export interface ShipmentItem {
     weightedQuantity: number;
     status: ShipmentStatus;
     locationType: string;
+    deliveryOrder?: {
+      id: string;
+      customer: {
+        id: string;
+        name: string;
+      };
+      spmb?: {
+        id: string;
+        code: string;
+      } | null;
+    };
   };
   armada?: {
     id: string;

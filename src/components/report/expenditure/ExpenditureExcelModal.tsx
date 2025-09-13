@@ -14,11 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { downloadExpenditureExcel } from "@/hooks/report";
+import { generateExpenditureExcel } from "@/utils/excelGenerator";
 import { useAllWarehouses } from "@/hooks/warehouse";
+import { OutputReportResult } from "@/types/report";
 import { useState } from "react";
 
-type PeriodType = "daily" | "monthly" | "yearly";
 
 interface ExpenditureExcelModalProps {
   open: boolean;
@@ -27,6 +27,7 @@ interface ExpenditureExcelModalProps {
   dateRange: { start: string; end: string };
   month: number;
   year: number;
+  outputReportData: OutputReportResult | undefined;
 }
 
 export function ExpenditureExcelModal({
@@ -36,6 +37,7 @@ export function ExpenditureExcelModal({
   dateRange,
   month,
   year,
+  outputReportData,
 }: ExpenditureExcelModalProps) {
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>("ALL");
   const [isDownloading, setIsDownloading] = useState(false);
@@ -67,38 +69,24 @@ export function ExpenditureExcelModal({
     setIsDownloading(true);
 
     try {
-      const downloadFilters: {
-        period?: PeriodType;
-        startDate?: string;
-        endDate?: string;
-        year?: number;
-        month?: number;
-        warehouseId?: string;
-      } = {
-        period,
-      };
-
-      // Use the same pattern as the main page filters
-      if (period === "daily") {
-        if (dateRange.start) downloadFilters.startDate = dateRange.start;
-        if (dateRange.end) downloadFilters.endDate = dateRange.end;
-      } else if (period === "monthly") {
-        downloadFilters.year = year;
-        downloadFilters.month = month;
-      } else if (period === "yearly") {
-        downloadFilters.year = year;
+      if (!outputReportData) {
+        throw new Error("No data available for Excel generation");
       }
 
-      if (selectedWarehouseId !== "ALL") {
-        downloadFilters.warehouseId = selectedWarehouseId;
-      }
+      // Get warehouse name for the Excel title
+      const selectedWarehouse = warehousesData?.find(w => w.id === selectedWarehouseId);
+      const warehouseName = selectedWarehouse?.name;
 
-      await downloadExpenditureExcel(downloadFilters);
+      // Get warehouse filter
+      const warehouseFilter = selectedWarehouseId !== "ALL" ? selectedWarehouseId : undefined;
 
-  // Close modal after successful download
-  onOpenChange(false);
-  // Only reset warehouse selection and downloading state
-  setSelectedWarehouseId("ALL");
+      // Generate Excel on frontend using existing hook data
+      generateExpenditureExcel(outputReportData, warehouseName, warehouseFilter);
+
+      // Close modal after successful download
+      onOpenChange(false);
+      // Only reset warehouse selection and downloading state
+      setSelectedWarehouseId("ALL");
     } catch (error) {
       console.error("Download failed:", error);
       // You could add toast notification here

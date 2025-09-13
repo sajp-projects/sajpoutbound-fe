@@ -371,6 +371,7 @@ export default function Pengeluaran() {
         dateRange={dateRange}
         month={month}
         year={year}
+        outputReportData={summaryData}
       />
     </div>
   );
