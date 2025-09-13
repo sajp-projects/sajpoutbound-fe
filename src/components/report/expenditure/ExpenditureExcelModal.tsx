@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { DateRangeFilter } from "@/components/ui/DateRangeFilter";
 import {
   Dialog,
   DialogContent,
@@ -24,25 +23,26 @@ type PeriodType = "daily" | "monthly" | "yearly";
 interface ExpenditureExcelModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  period: "daily" | "monthly" | "yearly";
+  dateRange: { start: string; end: string };
+  month: number;
+  year: number;
 }
 
 export function ExpenditureExcelModal({
   open,
   onOpenChange,
+  period,
+  dateRange,
+  month,
+  year,
 }: ExpenditureExcelModalProps) {
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>("ALL");
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Date filtering state
-  const today = new Date().toISOString().slice(0, 10);
-  const [period, setPeriod] = useState<PeriodType>("daily");
-  const [dateRange, setDateRange] = useState({ start: today, end: today });
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [year, setYear] = useState(new Date().getFullYear());
-
   // For monthly/yearly filtering
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
+  // Removed unused currentYear variable
+  // Removed unused years array
   const months = [
     { value: 1, label: "Januari" },
     { value: 2, label: "Februari" },
@@ -61,21 +61,7 @@ export function ExpenditureExcelModal({
   // Fetch all warehouses for dropdown
   const { data: warehousesData } = useAllWarehouses();
 
-  function handleDateChange(s: string, e: string) {
-    setDateRange({ start: s, end: e });
-  }
-
-  function handlePeriodChange(newPeriod: PeriodType) {
-    setPeriod(newPeriod);
-    if (newPeriod === "daily") {
-      setDateRange({ start: today, end: today });
-    } else if (newPeriod === "monthly") {
-      setMonth(new Date().getMonth() + 1);
-      setYear(new Date().getFullYear());
-    } else if (newPeriod === "yearly") {
-      setYear(new Date().getFullYear());
-    }
-  }
+  // Remove local filter state, use props only
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -92,7 +78,7 @@ export function ExpenditureExcelModal({
         period,
       };
 
-      // Use the same pattern as the existing report filters
+      // Use the same pattern as the main page filters
       if (period === "daily") {
         if (dateRange.start) downloadFilters.startDate = dateRange.start;
         if (dateRange.end) downloadFilters.endDate = dateRange.end;
@@ -109,15 +95,10 @@ export function ExpenditureExcelModal({
 
       await downloadExpenditureExcel(downloadFilters);
 
-      // Close modal after successful download
-      onOpenChange(false);
-
-      // Reset selections
-      setSelectedWarehouseId("ALL");
-      setPeriod("daily");
-      setDateRange({ start: today, end: today });
-      setMonth(new Date().getMonth() + 1);
-      setYear(new Date().getFullYear());
+  // Close modal after successful download
+  onOpenChange(false);
+  // Only reset warehouse selection and downloading state
+  setSelectedWarehouseId("ALL");
     } catch (error) {
       console.error("Download failed:", error);
       // You could add toast notification here
@@ -143,19 +124,9 @@ export function ExpenditureExcelModal({
               Periode
             </label>
             <div className="col-span-3">
-              <Select
-                value={period}
-                onValueChange={(value) => handlePeriodChange(value as PeriodType)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Periode" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Harian</SelectItem>
-                  <SelectItem value="monthly">Bulanan</SelectItem>
-                  <SelectItem value="yearly">Tahunan</SelectItem>
-                </SelectContent>
-              </Select>
+              <span className="text-base font-semibold">{
+                period === "daily" ? "Harian" : period === "monthly" ? "Bulanan" : "Tahunan"
+              }</span>
             </div>
           </div>
 
@@ -166,14 +137,7 @@ export function ExpenditureExcelModal({
                 Tanggal
               </label>
               <div className="col-span-3">
-                <DateRangeFilter
-                label=""
-                  startDate={dateRange.start}
-                  endDate={dateRange.end}
-                  onChange={({ startDate, endDate }) =>
-                    handleDateChange(startDate, endDate)
-                  }
-                />
+                <span className="text-base font-semibold">{dateRange.start} - {dateRange.end}</span>
               </div>
             </div>
           )}
@@ -184,37 +148,8 @@ export function ExpenditureExcelModal({
               <label className="text-right text-sm font-medium">
                 Bulan/Tahun
               </label>
-              <div className="col-span-3 flex gap-2">
-                <Select
-                  value={String(month)}
-                  onValueChange={(m) => setMonth(parseInt(m))}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Bulan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map((m) => (
-                      <SelectItem key={m.value} value={String(m.value)}>
-                        {m.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={String(year)}
-                  onValueChange={(y) => setYear(parseInt(y))}
-                >
-                  <SelectTrigger className="w-24">
-                    <SelectValue placeholder="Tahun" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((y) => (
-                      <SelectItem key={y} value={String(y)}>
-                        {y}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="col-span-3">
+                <span className="text-base font-semibold">{months.find(m => m.value === month)?.label} {year}</span>
               </div>
             </div>
           )}
@@ -226,21 +161,7 @@ export function ExpenditureExcelModal({
                 Tahun
               </label>
               <div className="col-span-3">
-                <Select
-                  value={String(year)}
-                  onValueChange={(y) => setYear(parseInt(y))}
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Tahun" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((y) => (
-                      <SelectItem key={y} value={String(y)}>
-                        {y}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <span className="text-base font-semibold">{year}</span>
               </div>
             </div>
           )}

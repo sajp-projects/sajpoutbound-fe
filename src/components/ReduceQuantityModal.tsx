@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useReduceQuantity } from "@/hooks/shipment";
-import { formatInputNumber } from "@/utils/formatNumber";
+import { formatInputNumber, handleDecimalInput } from "@/utils/formatNumber";
 
 interface ReduceQuantityModalProps {
   isOpen: boolean;
@@ -41,9 +41,7 @@ export function ReduceQuantityModal({
   onError,
 }: ReduceQuantityModalProps) {
   const [newQuantity, setNewQuantity] = useState<number>(currentQuantity);
-  const [inputValue, setInputValue] = useState<string>(
-    currentQuantity.toString()
-  );
+  const [inputValue, setInputValue] = useState<string>("");
 
   const { mutate: reduceQuantity, isPending } = useReduceQuantity({
     onSuccess: (data) => {
@@ -66,10 +64,15 @@ export function ReduceQuantityModal({
   });
 
   const handleInputChange = (value: string) => {
-    setInputValue(value);
-    // Convert to number, handling empty string and invalid input
-    const numValue = parseFloat(value) || 0;
-    setNewQuantity(numValue);
+    const result = handleDecimalInput(value);
+    // Prevent negative values
+    if (result.numericValue !== undefined && result.numericValue < 0) {
+      setInputValue("");
+      setNewQuantity(0);
+      return;
+    }
+    setInputValue(result.displayValue);
+    setNewQuantity(result.numericValue ?? 0);
   };
 
   const handleSubmit = () => {
@@ -102,7 +105,7 @@ export function ReduceQuantityModal({
     onOpenChange(false);
     // Reset form
     setNewQuantity(currentQuantity);
-    setInputValue(currentQuantity.toString());
+    setInputValue("");
   };
 
   const reductionAmount = currentQuantity - newQuantity;
@@ -159,7 +162,8 @@ export function ReduceQuantityModal({
             </Label>
             <Input
               id="newQuantity"
-              type="number"
+              type="text"
+              inputMode="decimal"
               min="0"
               max={currentQuantity - 0.01}
               step="0.01"
@@ -168,6 +172,16 @@ export function ReduceQuantityModal({
               placeholder="Masukkan kuantitas baru"
               className="text-left"
             />
+            {/* Validation error for negative value */}
+            {(() => {
+              const result = handleDecimalInput(inputValue);
+              if (result.numericValue !== undefined && result.numericValue < 0) {
+                return (
+                  <span className="text-xs text-red-600 block mt-1">Kuantitas tidak boleh kurang dari 0</span>
+                );
+              }
+              return null;
+            })()}
             <p className="text-xs text-gray-500">
               Harus lebih kecil dari kuantitas saat ini ({formatInputNumber(currentQuantity)} {productUnit})
             </p>

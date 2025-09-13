@@ -998,7 +998,7 @@ export default function TambahPengiriman() {
                       size="sm"
                       onClick={addNewDeliveryOrder}
                       disabled={isSubmitting}
-                      className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                      className="text-white bg-blue-600 hover:bg-blue-700 hover:text-whwite"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Tambah DO

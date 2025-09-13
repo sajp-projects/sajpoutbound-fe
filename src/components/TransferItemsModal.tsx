@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/table";
 import { useCustomers } from "@/hooks/customer";
 import { TransferItem } from "@/types/shipment";
-import { formatInputNumber } from "@/utils/formatNumber";
+import { formatInputNumber, handleDecimalInput } from "@/utils/formatNumber";
 import React from "react";
 
 interface TransferItemsModalProps {
@@ -78,16 +78,16 @@ export function TransferItemsModal({
 
   // Initialize quantities only once when modal opens
     useEffect(() => {
-    if (!hasInitialized.current && transferItems.length > 0) {
-      const initialQuantities: Record<string, string> = {};
-      transferItems.forEach((item) => {
-        const key = `${item.deliveryOrderId}-${item.productId}`;
-        initialQuantities[key] = "0";
-      });
-      setItemQuantities(initialQuantities);
-      hasInitialized.current = true;
-    }
-  }, [transferItems]);
+      if (!hasInitialized.current && transferItems.length > 0) {
+        const initialQuantities: Record<string, string> = {};
+        transferItems.forEach((item) => {
+          const key = `${item.deliveryOrderId}-${item.productId}`;
+          initialQuantities[key] = ""; // Set to empty string by default
+        });
+        setItemQuantities(initialQuantities);
+        hasInitialized.current = true;
+      }
+    }, [transferItems]);
 
   // Reset initialization flag when modal closes
     useEffect(() => {
@@ -98,19 +98,19 @@ export function TransferItemsModal({
 
   const handleQuantityChange = (deliveryOrderId: string, productId: string, value: string) => {
     const key = `${deliveryOrderId}-${productId}`;
-
-    console.log('handleQuantityChange called:', { deliveryOrderId, productId, value, key });
-
-    // Allow any input while typing, including empty string
-    setItemQuantities(prev => {
-      console.log('Previous state:', prev);
-      const newState = {
+    const result = handleDecimalInput(value);
+    // Prevent negative values
+    if (result.numericValue !== undefined && result.numericValue < 0) {
+      setItemQuantities(prev => ({
         ...prev,
-        [key]: value,
-      };
-      console.log('New state:', newState);
-      return newState;
-    });
+        [key]: "", // Reset to empty if negative
+      }));
+      return;
+    }
+    setItemQuantities(prev => ({
+      ...prev,
+      [key]: result.displayValue,
+    }));
   };
 
   const handleSubmit = (data: TransferFormData) => {
@@ -118,7 +118,9 @@ export function TransferItemsModal({
     const updatedItems = transferItems.map((item) => {
       const key = `${item.deliveryOrderId}-${item.productId}`;
       const quantityStr = itemQuantities[key] ?? item.quantity.toString();
-      const quantity = parseFloat(quantityStr);
+      // Use handleDecimalInput to parse numeric value
+      const result = handleDecimalInput(quantityStr);
+      const quantity = result.numericValue ?? 0;
 
       return {
         ...item,
@@ -134,13 +136,14 @@ export function TransferItemsModal({
     onTransfer(data.targetCustomerId, updatedItems);
   };
 
-  // Check if there are any valid quantities to transfer
+  // Check if there are any valid quantities to transfer and no negative values
   const hasValidQuantities = transferItems.every((item) => {
     const key = `${item.deliveryOrderId}-${item.productId}`;
-    const quantityStr = itemQuantities[key] ?? "0";
-    const quantity = parseFloat(quantityStr);
-    console.log('Validation check:', { key, quantityStr, quantity, isValid: !isNaN(quantity) && quantity > 0 });
-    return !isNaN(quantity) && quantity > 0;
+    const quantityStr = itemQuantities[key] ?? "";
+    const result = handleDecimalInput(quantityStr);
+    const quantity = result.numericValue;
+    // Must be empty or > 0, and not negative
+    return (quantity === undefined || (!isNaN(quantity) && quantity > 0));
   });
 
   console.log('hasValidQuantities result:', hasValidQuantities);
@@ -232,7 +235,7 @@ export function TransferItemsModal({
                 <TableBody>
                   {transferItems.map((item, index) => {
                     const key = `${item.deliveryOrderId}-${item.productId}`;
-                    const currentQuantity = itemQuantities[key] ?? "0";
+                    const currentQuantity = itemQuantities[key] ?? "";
 
                     return (
                       <TableRow
@@ -264,11 +267,22 @@ export function TransferItemsModal({
                               onChange={(e) =>
                                 handleQuantityChange(item.deliveryOrderId, item.productId, e.target.value)
                               }
+                              inputMode="decimal"
                               min={0}
                               max={item.availableQuantity}
                               step="0.01"
                               className="w-20 text-center text-sm"
                             />
+                            {/* Validation error for negative value */}
+                            {(() => {
+                              const result = handleDecimalInput(currentQuantity);
+                              if (result.numericValue !== undefined && result.numericValue < 0) {
+                                return (
+                                  <span className="text-xs text-red-600 block mt-1">Kuantitas tidak boleh kurang dari 0</span>
+                                );
+                              }
+                              return null;
+                            })()}
                           </div>
                         </TableCell>
                       </TableRow>

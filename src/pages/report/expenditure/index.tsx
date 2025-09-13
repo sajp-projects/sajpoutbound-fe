@@ -367,6 +367,10 @@ export default function Pengeluaran() {
       <ExpenditureExcelModal
         open={isExcelModalOpen}
         onOpenChange={setIsExcelModalOpen}
+        period={period}
+        dateRange={dateRange}
+        month={month}
+        year={year}
       />
     </div>
   );

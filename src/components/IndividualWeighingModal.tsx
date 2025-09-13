@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Loader2, Scale } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { isConfirmed, showConfirmationAlert } from "@/utils/sweetAlert";
 import { handleDecimalInput } from "../utils/formatNumber";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -26,6 +27,7 @@ interface IndividualItem {
 
 interface IndividualWeighingModalProps {
   open: boolean;
+  setOpen: (open: boolean) => void;
   onOpenChange: (open: boolean) => void;
   items: IndividualItem[];
   productName: string;
@@ -43,6 +45,7 @@ interface IndividualWeighingModalProps {
 
 export function IndividualWeighingModal({
   open,
+  setOpen,
   onOpenChange,
   items,
   productName,
@@ -228,30 +231,41 @@ export function IndividualWeighingModal({
       return;
     }
 
-    const weighData = {
-      shipmentItemId: currentItem.shipmentItemId,
-      grossWeight: parseFloat(grossWeight),
-      netWeight: netWeight ? parseFloat(netWeight) : undefined,
-      tareWeight: parseFloat(tareWeight),
-    };
+    setOpen(false);
 
-    // Clear saved data for this item since it's being weighed
-    setItemInputData((prev) => {
-      const updated = { ...prev };
-      delete updated[currentItem.shipmentItemId];
-      return updated;
+    showConfirmationAlert(
+      "Konfirmasi Penimbangan Item",
+      "Apakah Anda yakin ingin menyimpan hasil penimbangan item ini?"
+    ).then((result) => {
+      if (isConfirmed(result)) {
+        const weighData = {
+          shipmentItemId: currentItem.shipmentItemId,
+          grossWeight: parseFloat(grossWeight),
+          netWeight: netWeight ? parseFloat(netWeight) : undefined,
+          tareWeight: parseFloat(tareWeight),
+        };
+
+        // Clear saved data for this item since it's being weighed
+        setItemInputData((prev) => {
+          const updated = { ...prev };
+          delete updated[currentItem.shipmentItemId];
+          return updated;
+        });
+
+        // Reset current input fields
+        resetWeights();
+
+        // Call the weighing callback
+        onWeighItem(weighData);
+
+        // Notify parent that item was weighed (for additional cleanup if needed)
+        if (onItemWeighed) {
+          onItemWeighed(currentItem.shipmentItemId);
+        }
+      } else {
+        setOpen(true);
+      }
     });
-
-    // Reset current input fields
-    resetWeights();
-
-    // Call the weighing callback
-    onWeighItem(weighData);
-
-    // Notify parent that item was weighed (for additional cleanup if needed)
-    if (onItemWeighed) {
-      onItemWeighed(currentItem.shipmentItemId);
-    }
   };
 
   const isSubmitDisabled =

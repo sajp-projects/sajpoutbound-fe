@@ -338,26 +338,22 @@ export function DeliveryOrderAccordion({
                                 </Badge>
                               )}
                             </TableCell>
-                            {/* Actions cell for reduce quantity - only show for completed shipments */}
-                            {hasReduceQuantityAccess && shipmentStatus === "SELESAI" && (
+                            {/* Actions cell for reduce quantity - only show for items that are chosen but not yet weighted */}
+                            {hasReduceQuantityAccess && shipmentItem && shipmentItem.chosenProduct && !shipmentItem.weightedQuantity && onOpenReduceQuantityModal && !isDisabled && (
                               <TableCell className="px-4 py-3 text-center">
-                                {product.chosenProduct && shipmentItem && onOpenReduceQuantityModal && !isDisabled ? (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onOpenReduceQuantityModal(shipmentItem, product, deliveryOrder);
-                                    }}
-                                    title="Kurangi Kuantitas"
-                                  >
-                                    <MinusCircle className="w-3 h-3" />
-                                    <span className="hidden sm:inline ml-1">Kurangi</span>
-                                  </Button>
-                                ) : (
-                                  <div className="w-4 h-4" /> /* Empty space for items that can't be reduced */
-                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onOpenReduceQuantityModal(shipmentItem, product, deliveryOrder);
+                                  }}
+                                  title="Kurangi Kuantitas"
+                                >
+                                  <MinusCircle className="w-3 h-3" />
+                                  <span className="hidden sm:inline ml-1">Kurangi</span>
+                                </Button>
                               </TableCell>
                             )}
                           </TableRow>

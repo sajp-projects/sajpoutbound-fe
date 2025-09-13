@@ -1232,6 +1232,8 @@ export default function DetailPengiriman() {
   const handleWeighSubmit = () => {
     if (!shipmentId || !weighingProductId) return;
 
+    setWeighingModalOpen(false);
+
     // Validate required fields (gross and tare)
     if (!grossWeight || parseFloat(grossWeight) <= 0) {
       showErrorAlert("Error", "Berat kotor harus diisi dan lebih dari 0");
@@ -1242,12 +1244,22 @@ export default function DetailPengiriman() {
       return;
     }
 
-    bulkWeighItems.mutate({
-      shipmentId,
-      productId: weighingProductId,
-      grossWeight: parseFloat(grossWeight),
-      netWeight: netWeight ? parseFloat(netWeight) : undefined,
-      tareWeight: parseFloat(tareWeight),
+    showConfirmationAlert(
+      "Konfirmasi Penimbangan",
+      "Apakah Anda yakin ingin menyimpan hasil penimbangan untuk produk ini?"
+    ).then((result) => {
+      if (isConfirmed(result)) {
+        bulkWeighItems.mutate({
+          shipmentId,
+          productId: weighingProductId,
+          grossWeight: parseFloat(grossWeight),
+          netWeight: netWeight ? parseFloat(netWeight) : undefined,
+          tareWeight: parseFloat(tareWeight),
+        });
+      } else {
+        // If user cancels, reopen the modal
+        setWeighingModalOpen(true)
+      }
     });
   };
 
@@ -3769,6 +3781,7 @@ export default function DetailPengiriman() {
       {/* Individual Weighing Modal */}
       <IndividualWeighingModal
         open={individualWeighingModalOpen}
+        setOpen={setIndividualWeighingModalOpen}
         onOpenChange={(open) => {
           if (!open) {
             handleCloseIndividualWeighingModal();
