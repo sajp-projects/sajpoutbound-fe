@@ -41,10 +41,13 @@ function transformOutputReportToExcelData(outputReportData: OutputReportResult, 
             ? new Date(shipment.createdAt) 
             : shipment.createdAt;
           
+          // Subtract 7 hours (7 * 60 * 60 * 1000 ms) to convert from UTC+7 to UTC
+          const adjustedDate = new Date(date.getTime() - (7 * 60 * 60 * 1000));
+          
           // Format to DD-MM-YYYY
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
+          const day = String(adjustedDate.getUTCDate()).padStart(2, '0');
+          const month = String(adjustedDate.getUTCMonth() + 1).padStart(2, '0');
+          const year = adjustedDate.getUTCFullYear();
           tanggal = `${day}-${month}-${year}`;
         } catch (error) {
           console.error('Error formatting date:', error);
