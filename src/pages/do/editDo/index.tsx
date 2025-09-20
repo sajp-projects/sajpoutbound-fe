@@ -342,6 +342,14 @@ export default function EditDo() {
     setEditingItemIndex(null);
   };
 
+  // Helper function to check if item is used in shipments
+  const isItemUsedInShipments = (item: ExtendedProduct): boolean => {
+    const originalDOItem = deliveryOrder?.items?.find(doItem => doItem.id === item.id);
+    return !!(originalDOItem &&
+      ((originalDOItem.processingQuantity || 0) > 0 ||
+       (originalDOItem.completedQuantity || 0) > 0));
+  };
+
   const handleAddItem = (product: (typeof products)[0], quantity: number) => {
     if (!quantity || quantity < 1) {
       showErrorAlert("Validasi Gagal", "Kuantitas minimal 1");
@@ -374,12 +382,14 @@ export default function EditDo() {
   };
 
   const handleEditItem = (index: number) => {
+    const item = watchItems[index];
+
     setEditingItemIndex(index);
-    setValue("tempProduct", watchItems[index].productName || "");
-    setValue("tempProductId", watchItems[index].productId);
-    setValue("tempQuantity", watchItems[index].quantity);
-    setValue("tempItemId", watchItems[index].id || "");
-    setTempQuantityDisplay(formatInputNumber(watchItems[index].quantity));
+    setValue("tempProduct", item.productName || "");
+    setValue("tempProductId", item.productId);
+    setValue("tempQuantity", item.quantity);
+    setValue("tempItemId", item.id || "");
+    setTempQuantityDisplay(formatInputNumber(item.quantity));
   };
 
   const handleUpdateItem = (
@@ -392,6 +402,18 @@ export default function EditDo() {
     }
 
     if (editingItemIndex !== null) {
+      const currentItem = watchItems[editingItemIndex];
+      const isUsedInShipments = isItemUsedInShipments(currentItem);
+
+      // If item is used in shipments, only allow quantity changes, not product changes
+      if (isUsedInShipments && product.id !== currentItem.productId) {
+        showErrorAlert(
+          "Tidak Dapat Mengubah Produk",
+          "Item ini sudah digunakan dalam shipment. Anda hanya dapat mengubah quantity, tidak dapat mengubah produk."
+        );
+        return;
+      }
+
       const isDuplicate = watchItems.some(
         (item, index) =>
           item.productId === product.id && index !== editingItemIndex
@@ -726,29 +748,37 @@ export default function EditDo() {
                         <Controller
                           name="tempProductId"
                           control={control}
-                          render={({ field: { value, onChange } }) => (
-                            <Combobox
-                              items={productOptions}
-                              value={value || ""}
-                              onValueChange={onChange}
-                              onSelect={handleProductSelect}
-                              placeholder="Masukkan nama barang"
-                              searchPlaceholder="Cari barang..."
-                              isLoading={loadingProducts}
-                              error={errors.items ? " " : ""}
-                              name="tempProductId"
-                              onClear={() => {
-                                onChange("");
-                                setValue("tempProduct", "");
-                              }}
-                              onSearch={handleProductSearch}
-                              useServerSearch
-                              hasMore={hasNextProducts}
-                              onLoadMore={fetchNextProducts}
-                              isLoadingMore={isFetchingNextProducts}
-                              className="h-10"
-                            />
-                          )}
+                          render={({ field: { value, onChange } }) => {
+                            const isEditingUsedItem = editingItemIndex !== null &&
+                              isItemUsedInShipments(watchItems[editingItemIndex]);
+
+                            return (
+                              <Combobox
+                                items={productOptions}
+                                value={value || ""}
+                                onValueChange={onChange}
+                                onSelect={handleProductSelect}
+                                placeholder={isEditingUsedItem ? "Produk tidak dapat diubah" : "Masukkan nama barang"}
+                                searchPlaceholder="Cari barang..."
+                                isLoading={loadingProducts}
+                                error={errors.items ? " " : ""}
+                                name="tempProductId"
+                                disabled={isEditingUsedItem}
+                                onClear={() => {
+                                  if (!isEditingUsedItem) {
+                                    onChange("");
+                                    setValue("tempProduct", "");
+                                  }
+                                }}
+                                onSearch={handleProductSearch}
+                                useServerSearch
+                                hasMore={hasNextProducts}
+                                onLoadMore={fetchNextProducts}
+                                isLoadingMore={isFetchingNextProducts}
+                                className="h-10"
+                              />
+                            );
+                          }}
                         />
                       </div>
                     </div>
@@ -900,8 +930,23 @@ export default function EditDo() {
                                       type="button"
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => remove(index)}
-                                      className="flex justify-center items-center p-1 w-8 h-8 text-white bg-red-500 rounded-md hover:bg-red-600"
+                                      onClick={() => {
+                                        const isUsedInShipments = isItemUsedInShipments(item);
+                                        if (isUsedInShipments) {
+                                          showErrorAlert(
+                                            "Tidak Dapat Menghapus Item",
+                                            "Item ini sudah digunakan dalam shipment dan tidak dapat dihapus."
+                                          );
+                                        } else {
+                                          remove(index);
+                                        }
+                                      }}
+                                      disabled={isItemUsedInShipments(item)}
+                                      className={`flex justify-center items-center p-1 w-8 h-8 text-white rounded-md ${
+                                        isItemUsedInShipments(item)
+                                          ? "bg-gray-400 cursor-not-allowed"
+                                          : "bg-red-500 hover:bg-red-600"
+                                      }`}
                                     >
                                       <svg
                                         xmlns="http://www.w3.org/2000/svg"
