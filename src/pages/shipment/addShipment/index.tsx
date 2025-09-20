@@ -800,7 +800,23 @@ export default function TambahPengiriman() {
   };
 
   return (
-    <div className="px-4 space-y-6 sm:px-0">
+    <div className="px-4 space-y-6 sm:px-0 relative">
+      {/* Sticky Floating Action Button for mobile/tablet */}
+      <div className="fixed bottom-6 right-6 z-50 md:hidden group">
+        <div className="absolute -top-10 right-0 bg-gray-800 text-white text-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+          Tambah DO
+        </div>
+        <Button
+          type="button"
+          onClick={addNewDeliveryOrder}
+          disabled={isSubmitting}
+          className="w-16 h-16 rounded-full shadow-lg text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 active:scale-95 transform transition-all duration-100 flex items-center justify-center p-0"
+          aria-label="Tambah DO"
+        >
+          <Plus className="w-8 h-8" />
+        </Button>
+      </div>
+      
       <div className="flex items-center">
         <h1 className="text-2xl font-bold text-gray-900">Tambah Pengiriman</h1>
       </div>
@@ -998,7 +1014,7 @@ export default function TambahPengiriman() {
                       size="sm"
                       onClick={addNewDeliveryOrder}
                       disabled={isSubmitting}
-                      className="text-white bg-blue-600 hover:bg-blue-700 hover:text-whwite"
+                      className="text-white bg-blue-600 hover:bg-blue-700 hover:text-white"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Tambah DO
@@ -1412,6 +1428,8 @@ export default function TambahPengiriman() {
           </div>
         </div>
       )}
+
+
     </div>
   );
 }

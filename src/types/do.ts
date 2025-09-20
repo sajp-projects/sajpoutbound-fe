@@ -70,6 +70,7 @@ export interface UpdateDeliveryOrderInput {
 
 export interface RevisedItem {
   id: string;
+  productId: string; // Add productId for mapping to shipment items
   productName: string;
   originalQuantity: number;
   revisedQuantity: number;

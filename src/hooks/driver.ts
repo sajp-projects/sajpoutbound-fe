@@ -14,6 +14,7 @@ import {
   type UseQueryOptions,
 } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
+import { shipmentKeys } from "./shipment";
 
 export const driverKeys = {
   all: ["drivers"] as const,
@@ -211,6 +212,7 @@ export function useCreateDriver(
       queryClient.setQueryData(driverKeys.detail(data.id), data);
       queryClient.invalidateQueries({ queryKey: driverKeys.lists() });
       queryClient.invalidateQueries({ queryKey: driverKeys.active() });
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.lists() });
     },
     ...options,
   });

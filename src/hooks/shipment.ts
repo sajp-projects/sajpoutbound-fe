@@ -702,6 +702,58 @@ export function useReviseDeliveryOrderAfterWeighing(
   });
 }
 
+export function useReviseShipmentItemAfterWeighing(
+  options?: UseMutationOptions<
+    ApiErrorResult,
+    Error,
+    { shipmentId: string; shipmentItemId: string; newQuantity: number }
+  >
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiErrorResult,
+    Error,
+    { shipmentId: string; shipmentItemId: string; newQuantity: number }
+  >({
+    mutationFn: async ({ shipmentId, shipmentItemId, newQuantity }) => {
+      const response = await fetchApi(
+        `${BASE_URL}/delivery-orders/revise-shipment-item`,
+        {},
+        {
+          method: "POST",
+          body: JSON.stringify({
+            shipmentId,
+            shipmentItemId,
+            newQuantity
+          }),
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || "Gagal merevisi shipment item");
+      }
+      return result;
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate shipment data since we updated a shipment item
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.detail(variables.shipmentId),
+      });
+      // Invalidate all shipment queries since quantity revisions affect shipment item data
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all,
+      });
+      // Invalidate delivery orders since DO quantities are recalculated
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.lists(),
+      });
+    },
+    ...options,
+  });
+}
+
 export function useUnverifiedShipments() {
   return useQuery({
     queryKey: shipmentKeys.unverified(),

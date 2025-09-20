@@ -233,6 +233,12 @@ export function useCreateProduct(
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.all
       });
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.all
+      });
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.details()
+      });
     },
     ...options,
   });

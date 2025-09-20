@@ -3811,15 +3811,18 @@ export default function DetailPengiriman() {
               refetchChosenProducts();
             }}
           />
-          <ReviseDOModal
-            isOpen={showReviseModal}
-            onClose={handleCloseReviseModal}
-            deliveryOrder={fullDeliveryOrder}
-            onSuccess={() => {
-              refetch();
-              refetchChosenProducts();
-            }}
-          />
+          {shipment && (
+            <ReviseDOModal
+              isOpen={showReviseModal}
+              onClose={handleCloseReviseModal}
+              deliveryOrder={fullDeliveryOrder}
+              shipment={shipment}
+              onSuccess={() => {
+                refetch();
+                refetchChosenProducts();
+              }}
+            />
+          )}
         </>
       )}
 
