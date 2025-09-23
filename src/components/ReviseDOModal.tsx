@@ -368,7 +368,7 @@ export function ReviseDOModal({
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                       <span className="text-xs">
-                        {item.estimatedWeight ? `${formatInputNumber(item.estimatedWeight)} kg` : '-'}
+                        {item.estimatedWeight ? `${formatInputNumber(item.estimatedWeight.toFixed(2))} kg` : '-'}
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-center text-gray-500">
