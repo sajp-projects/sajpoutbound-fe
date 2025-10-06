@@ -379,6 +379,7 @@ export interface BulkWeighShipmentInput {
   shipmentId: string;
   productId: string;
   grossWeight: number;
+  deliveryOrderIds?: string[];
   netWeight?: number;
   tareWeight?: number;
 }

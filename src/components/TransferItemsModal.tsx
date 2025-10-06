@@ -62,7 +62,9 @@ export function TransferItemsModal({
   onTransfer,
   isLoading = false,
 }: TransferItemsModalProps) {
-  const [itemQuantities, setItemQuantities] = useState<Record<string, string>>({});
+  const [itemQuantities, setItemQuantities] = useState<Record<string, string>>(
+    {}
+  );
   const hasInitialized = React.useRef(false);
 
   // Fetch customers for selection
@@ -77,37 +79,41 @@ export function TransferItemsModal({
   });
 
   // Initialize quantities only once when modal opens
-    useEffect(() => {
-      if (!hasInitialized.current && transferItems.length > 0) {
-        const initialQuantities: Record<string, string> = {};
-        transferItems.forEach((item) => {
-          const key = `${item.deliveryOrderId}-${item.productId}`;
-          initialQuantities[key] = ""; // Set to empty string by default
-        });
-        setItemQuantities(initialQuantities);
-        hasInitialized.current = true;
-      }
-    }, [transferItems]);
+  useEffect(() => {
+    if (!hasInitialized.current && transferItems.length > 0) {
+      const initialQuantities: Record<string, string> = {};
+      transferItems.forEach((item) => {
+        const key = `${item.deliveryOrderId}-${item.productId}`;
+        initialQuantities[key] = ""; // Set to empty string by default
+      });
+      setItemQuantities(initialQuantities);
+      hasInitialized.current = true;
+    }
+  }, [transferItems]);
 
   // Reset initialization flag when modal closes
-    useEffect(() => {
+  useEffect(() => {
     if (!isOpen) {
       hasInitialized.current = false;
     }
   }, [isOpen]);
 
-  const handleQuantityChange = (deliveryOrderId: string, productId: string, value: string) => {
+  const handleQuantityChange = (
+    deliveryOrderId: string,
+    productId: string,
+    value: string
+  ) => {
     const key = `${deliveryOrderId}-${productId}`;
     const result = handleDecimalInput(value);
     // Prevent negative values
     if (result.numericValue !== undefined && result.numericValue < 0) {
-      setItemQuantities(prev => ({
+      setItemQuantities((prev) => ({
         ...prev,
         [key]: "", // Reset to empty if negative
       }));
       return;
     }
-    setItemQuantities(prev => ({
+    setItemQuantities((prev) => ({
       ...prev,
       [key]: result.displayValue,
     }));
@@ -115,18 +121,20 @@ export function TransferItemsModal({
 
   const handleSubmit = (data: TransferFormData) => {
     // Create updated transfer items with user-specified quantities
-    const updatedItems = transferItems.map((item) => {
-      const key = `${item.deliveryOrderId}-${item.productId}`;
-      const quantityStr = itemQuantities[key] ?? item.quantity.toString();
-      // Use handleDecimalInput to parse numeric value
-      const result = handleDecimalInput(quantityStr);
-      const quantity = result.numericValue ?? 0;
+    const updatedItems = transferItems
+      .map((item) => {
+        const key = `${item.deliveryOrderId}-${item.productId}`;
+        const quantityStr = itemQuantities[key] ?? item.quantity.toString();
+        // Use handleDecimalInput to parse numeric value
+        const result = handleDecimalInput(quantityStr);
+        const quantity = result.numericValue ?? 0;
 
-      return {
-        ...item,
-        quantity: isNaN(quantity) ? 0 : quantity, // Use 0 if NaN, otherwise use the parsed value
-      };
-    }).filter(item => item.quantity > 0); // Only include items with quantity > 0
+        return {
+          ...item,
+          quantity: isNaN(quantity) ? 0 : quantity, // Use 0 if NaN, otherwise use the parsed value
+        };
+      })
+      .filter((item) => item.quantity > 0); // Only include items with quantity > 0
 
     if (updatedItems.length === 0) {
       // Show error - no items to transfer
@@ -143,11 +151,8 @@ export function TransferItemsModal({
     const result = handleDecimalInput(quantityStr);
     const quantity = result.numericValue;
     // Must be empty or > 0, and not negative
-    return (quantity === undefined || (!isNaN(quantity) && quantity > 0));
+    return quantity === undefined || (!isNaN(quantity) && quantity > 0);
   });
-
-  console.log('hasValidQuantities result:', hasValidQuantities);
-  console.log('Current itemQuantities state:', itemQuantities);
 
   const handleClose = () => {
     form.reset();
@@ -166,27 +171,37 @@ export function TransferItemsModal({
             Transfer Items ke Customer Baru
           </DialogTitle>
           <DialogDescription>
-            Transfer {transferItems.length} item dari pengiriman selesai ke customer yang berbeda.
-            Atur kuantitas yang akan ditransfer untuk setiap item.
+            Transfer {transferItems.length} item dari pengiriman selesai ke
+            customer yang berbeda. Atur kuantitas yang akan ditransfer untuk
+            setiap item.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           {/* Customer Selection */}
           <div className="space-y-2">
-            <Label htmlFor="targetCustomerId" className="flex items-center gap-2">
+            <Label
+              htmlFor="targetCustomerId"
+              className="flex items-center gap-2"
+            >
               <User className="w-4 h-4" />
               Customer Tujuan
             </Label>
             <Select
               value={form.watch("targetCustomerId")}
-              onValueChange={(value) => form.setValue("targetCustomerId", value)}
+              onValueChange={(value) =>
+                form.setValue("targetCustomerId", value)
+              }
               disabled={isLoadingCustomers}
             >
               <SelectTrigger>
-                <SelectValue placeholder={
-                  isLoadingCustomers ? "Loading customers..." : "Pilih customer tujuan"
-                } />
+                <SelectValue
+                  placeholder={
+                    isLoadingCustomers
+                      ? "Loading customers..."
+                      : "Pilih customer tujuan"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {customers.map((customer) => (
@@ -265,7 +280,11 @@ export function TransferItemsModal({
                               type="text"
                               value={currentQuantity}
                               onChange={(e) =>
-                                handleQuantityChange(item.deliveryOrderId, item.productId, e.target.value)
+                                handleQuantityChange(
+                                  item.deliveryOrderId,
+                                  item.productId,
+                                  e.target.value
+                                )
                               }
                               inputMode="decimal"
                               min={0}
@@ -275,10 +294,16 @@ export function TransferItemsModal({
                             />
                             {/* Validation error for negative value */}
                             {(() => {
-                              const result = handleDecimalInput(currentQuantity);
-                              if (result.numericValue !== undefined && result.numericValue < 0) {
+                              const result =
+                                handleDecimalInput(currentQuantity);
+                              if (
+                                result.numericValue !== undefined &&
+                                result.numericValue < 0
+                              ) {
                                 return (
-                                  <span className="text-xs text-red-600 block mt-1">Kuantitas tidak boleh kurang dari 0</span>
+                                  <span className="text-xs text-red-600 block mt-1">
+                                    Kuantitas tidak boleh kurang dari 0
+                                  </span>
                                 );
                               }
                               return null;
@@ -305,7 +330,11 @@ export function TransferItemsModal({
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || !form.watch("targetCustomerId") || !hasValidQuantities}
+              disabled={
+                isLoading ||
+                !form.watch("targetCustomerId") ||
+                !hasValidQuantities
+              }
               className="bg-purple-600 hover:bg-purple-700"
             >
               <ArrowRightLeft className="w-4 h-4 mr-2" />

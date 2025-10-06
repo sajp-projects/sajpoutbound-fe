@@ -29,7 +29,7 @@ import {
   ShoppingCart,
   Upload,
   User,
-  X
+  X,
 } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 
@@ -84,7 +84,7 @@ import {
   ShipmentStatus,
   SPMB,
   StatusBadgeProps,
-  TransferItem
+  TransferItem,
 } from "@/types/shipment";
 import {
   SHIPMENT_STATUS_LABELS,
@@ -112,7 +112,10 @@ import { useForm } from "react-hook-form";
 
 import { DeliveryOrderAccordion } from "@/components/DeliveryOrderAccordion";
 import { DOSelectionModal } from "@/components/DOSelectionModal";
-import { LoadingMethod, LoadingMethodSelectionModal } from "@/components/LoadingMethodSelectionModal";
+import {
+  LoadingMethod,
+  LoadingMethodSelectionModal,
+} from "@/components/LoadingMethodSelectionModal";
 import { ReduceQuantityModal } from "@/components/ReduceQuantityModal";
 import { TransferItemsModal } from "@/components/TransferItemsModal";
 
@@ -129,7 +132,6 @@ const tallyFormSchema = Joi.object<TallyFormValues>({
     "any.required": "Tally harus diisi",
   }),
 });
-
 
 function StatusBadge({ status }: StatusBadgeProps) {
   const getStatusColor = (status: ShipmentStatus) => {
@@ -212,6 +214,12 @@ export default function DetailPengiriman() {
     unweighedCount: number;
   } | null>(null);
 
+  // States for weighing DO selection
+  const [weighingDOSelectionOpen, setWeighingDOSelectionOpen] = useState(false);
+  const [selectedDOsForWeighing, setSelectedDOsForWeighing] = useState<
+    string[]
+  >([]);
+
   // States for individual weighing modal
   const [individualWeighingModalOpen, setIndividualWeighingModalOpen] =
     useState(false);
@@ -287,16 +295,19 @@ export default function DetailPengiriman() {
 
   // DO Selection Modal states
   const [doSelectionModalOpen, setDoSelectionModalOpen] = useState(false);
-  const [selectedProductForDOSelection, setSelectedProductForDOSelection] = useState<{
-    id: string;
-    name: string;
-    satuan: string;
-    deliveryOrders: DeliveryOrderForSelection[];
-  } | null>(null);
+  const [selectedProductForDOSelection, setSelectedProductForDOSelection] =
+    useState<{
+      id: string;
+      name: string;
+      satuan: string;
+      deliveryOrders: DeliveryOrderForSelection[];
+    } | null>(null);
 
   // Transfer Items Modal states
   const [transferItemsModalOpen, setTransferItemsModalOpen] = useState(false);
-  const [selectedTransferItems, setSelectedTransferItems] = useState<TransferItem[]>([]);
+  const [selectedTransferItems, setSelectedTransferItems] = useState<
+    TransferItem[]
+  >([]);
 
   // Reduce Quantity Modal states
   const [reduceQuantityModalOpen, setReduceQuantityModalOpen] = useState(false);
@@ -313,7 +324,6 @@ export default function DetailPengiriman() {
       tally: "",
     },
   });
-
 
   // Update tally mutation
   const updateTally = useUpdateTally({
@@ -341,7 +351,10 @@ export default function DetailPengiriman() {
           `${summary.totalItemsTransferred} item berhasil ditransfer ke ${summary.targetCustomer}. DO baru: ${summary.newDoNumber}`
         );
       } else {
-        showSuccessAlert("Transfer Berhasil!", "Items berhasil ditransfer ke customer baru");
+        showSuccessAlert(
+          "Transfer Berhasil!",
+          "Items berhasil ditransfer ke customer baru"
+        );
       }
       handleCloseTransferItemsModal();
       refetch(); // Refetch shipment data to show updated quantities
@@ -369,15 +382,11 @@ export default function DetailPengiriman() {
     }
   };
 
-
   // Selective choose product mutation
   const selectiveChooseProduct = useSelectiveChooseProduct({
     onSuccess: () => {
       // Show success message
-      showSuccessAlert(
-        "Sukses!",
-        "Barang berhasil dimuat secara selektif"
-      );
+      showSuccessAlert("Sukses!", "Barang berhasil dimuat secara selektif");
 
       // Clear the selected data
       setSelectedProductId("");
@@ -427,8 +436,12 @@ export default function DetailPengiriman() {
     }
 
     // If multiple DOs, show the loading method selection modal
-    const productName = shipment.shipmentItems.find(item => item.productId === productId)?.product.name || "";
-    const productUnit = shipment.shipmentItems.find(item => item.productId === productId)?.product.satuan || "";
+    const productName =
+      shipment.shipmentItems.find((item) => item.productId === productId)
+        ?.product.name || "";
+    const productUnit =
+      shipment.shipmentItems.find((item) => item.productId === productId)
+        ?.product.satuan || "";
 
     setSelectedProductForLoading({
       id: productId,
@@ -459,8 +472,12 @@ export default function DetailPengiriman() {
     if (!shipment) return;
 
     // Extract delivery orders for this product
-    const productName = shipment.shipmentItems.find(item => item.productId === productId)?.product.name || "";
-    const productUnit = shipment.shipmentItems.find(item => item.productId === productId)?.product.satuan || "";
+    const productName =
+      shipment.shipmentItems.find((item) => item.productId === productId)
+        ?.product.name || "";
+    const productUnit =
+      shipment.shipmentItems.find((item) => item.productId === productId)
+        ?.product.satuan || "";
 
     // Group items by delivery order for this product
     const doMap = new Map<string, DeliveryOrderForSelection>();
@@ -499,22 +516,29 @@ export default function DetailPengiriman() {
   const handleDOSelectionConfirm = (selectedDOIds: string[]) => {
     if (!selectedProductForDOSelection) return;
 
-        // Store the selected DOs and open the weighing method selection modal
-    const selectedDOs = selectedDOIds.map((doId) => {
-      const doInfo = selectedProductForDOSelection.deliveryOrders.find((deliveryOrder) => deliveryOrder.id === doId);
-      if (!doInfo) return null;
+    // Store the selected DOs and open the weighing method selection modal
+    const selectedDOs = selectedDOIds
+      .map((doId) => {
+        const doInfo = selectedProductForDOSelection.deliveryOrders.find(
+          (deliveryOrder) => deliveryOrder.id === doId
+        );
+        if (!doInfo) return null;
 
-      return {
-        doId: doInfo.id,
-        customer: doInfo.customer,
-        product: {
-          id: selectedProductForDOSelection.id,
-          name: selectedProductForDOSelection.name,
-          quantity: doInfo.items.reduce((sum, item) => sum + item.requestedQuantity, 0),
-          satuan: selectedProductForDOSelection.satuan,
-        },
-      };
-    }).filter((item) => item !== null) as {
+        return {
+          doId: doInfo.id,
+          customer: doInfo.customer,
+          product: {
+            id: selectedProductForDOSelection.id,
+            name: selectedProductForDOSelection.name,
+            quantity: doInfo.items.reduce(
+              (sum, item) => sum + item.requestedQuantity,
+              0
+            ),
+            satuan: selectedProductForDOSelection.satuan,
+          },
+        };
+      })
+      .filter((item) => item !== null) as {
       doId: string;
       customer: {
         id: string;
@@ -547,7 +571,6 @@ export default function DetailPengiriman() {
     PERMISSION.RESOURCES.PENGIRIMAN,
     PERMISSION.ACTIONS.UPDATE_TALLY
   );
-
 
   const hasPengirimanDeleteAccess = hasPermission(
     permissions,
@@ -923,12 +946,16 @@ export default function DetailPengiriman() {
   const handleTransferItemSelect = (item: TransferItem, checked: boolean) => {
     if (checked) {
       // Add item to selection
-      setSelectedTransferItems(prev => [...prev, item]);
+      setSelectedTransferItems((prev) => [...prev, item]);
     } else {
       // Remove item from selection
-      setSelectedTransferItems(prev =>
-        prev.filter(selected =>
-          !(selected.deliveryOrderId === item.deliveryOrderId && selected.productId === item.productId)
+      setSelectedTransferItems((prev) =>
+        prev.filter(
+          (selected) =>
+            !(
+              selected.deliveryOrderId === item.deliveryOrderId &&
+              selected.productId === item.productId
+            )
         )
       );
     }
@@ -957,13 +984,16 @@ export default function DetailPengiriman() {
     setSelectedReduceQuantityItem(null);
   };
 
-  const handleTransferSubmit = (targetCustomerId: string, items: TransferItem[]) => {
+  const handleTransferSubmit = (
+    targetCustomerId: string,
+    items: TransferItem[]
+  ) => {
     if (!shipment) return;
 
     const transferData = {
       targetCustomerId,
       sourceShipmentId: shipment.id,
-      transferItems: items.map(item => ({
+      transferItems: items.map((item) => ({
         deliveryOrderId: item.deliveryOrderId,
         productId: item.productId,
         quantity: item.quantity,
@@ -1033,6 +1063,11 @@ export default function DetailPengiriman() {
       }
     });
 
+    // Check if this product has already been chosen with a specific weighing method
+    const existingWeighingMethod = getProductWeighingMethod(productId);
+    console.log("Existing weighing method for product:", productId, "is:", existingWeighingMethod);
+    setSelectedWeighingMethod(existingWeighingMethod);
+
     setSelectedProductId(productId);
     setSelectedProductDOs(productDOs);
     setProductModalOpen(true);
@@ -1045,87 +1080,123 @@ export default function DetailPengiriman() {
     setSelectedWeighingMethod(null); // Reset to no selection
   };
 
-  const handleOpenWeighingModal = (productId: string) => {
-    console.log("handleOpenWeighingModal called with productId:", productId);
-    console.log("shipment exists:", !!shipment);
-    console.log("chosenProducts exists:", !!chosenProducts);
-    console.log("chosenProducts data:", chosenProducts);
-
-    // Find the product and unweighed count
-    if (shipment && chosenProducts) {
-      const product = chosenProducts.find((p) => p.productId === productId);
-      console.log("Found product:", product);
-
-      if (product) {
-        // Get only the chosen items for this product (items that were loaded into the shipment)
-        // This ensures weighing only works for items that are actually in the shipment
-        const chosenItems = shipment.shipmentItems.filter(
-          (si) => si.productId === productId && si.chosenProduct
-        );
-
-        const unweighedCount = chosenItems.filter(
-          (si) => si.status !== "COMPLETED"
-        ).length;
-
-        console.log(product, "product");
-
-        const productForWeighing = {
-          id: productId,
-          name: product.product.name,
-          unweighedCount,
-        };
-
-        setSelectedProductForWeighing(productForWeighing);
-        console.log("Opening weighing method modal...");
-        setWeighingMethodModalOpen(true);
-      } else {
-        console.log("Product not found in chosenProducts");
-      }
-    } else {
+  // Open DO selection for weighing
+  const handleOpenWeighingDOSelection = (productId: string) => {
+    if (!shipment || !chosenProducts) {
       console.log("Missing shipment or chosenProducts data");
+      return;
     }
+
+    const chosenProduct = chosenProducts.find(
+      (cp) => cp.productId === productId
+    );
+    if (!chosenProduct) {
+      console.log("Product not found in chosenProducts");
+      return;
+    }
+
+    // Get delivery orders for this product from shipment items
+    // Only include DOs that have unweighed items (status !== "COMPLETED")
+    const uniqueDOs = new Map();
+
+    shipment.shipmentItems
+      .filter((item) => item.productId === productId && item.chosenProduct && item.status !== "COMPLETED")
+      .forEach((item) => {
+        if (!uniqueDOs.has(item.deliveryOrderId)) {
+          uniqueDOs.set(item.deliveryOrderId, {
+            id: item.deliveryOrder.id,
+            doNumber: item.deliveryOrder.doNumber,
+            customer: item.deliveryOrder.customer,
+            items: [],
+          });
+        }
+        // Add the item to the DO's items array
+        uniqueDOs.get(item.deliveryOrderId).items.push({
+          id: item.id,
+          productId: item.productId,
+          requestedQuantity: item.requestedQuantity,
+          pendingQuantity: item.requestedQuantity, // For weighing, use requestedQuantity as pendingQuantity
+          status: item.status,
+        });
+      });
+
+    const dosWithChosenItems = Array.from(uniqueDOs.values());
+
+    setSelectedProductForDOSelection({
+      id: productId,
+      name: chosenProduct.product.name,
+      satuan: chosenProduct.product.satuan,
+      deliveryOrders: dosWithChosenItems,
+    });
+    setWeighingDOSelectionOpen(true);
   };
 
+  // Handle DO selection confirmation for weighing - opens method modal
+  const handleWeighingDOSelectionConfirm = (selectedDOIds: string[]) => {
+    if (!selectedProductForDOSelection) {
+      return;
+    }
+
+    // Count actual unweighed items from selected DOs
+    const unweighedItemsCount =
+      shipment?.shipmentItems.filter(
+        (item) =>
+          item.productId === selectedProductForDOSelection.id &&
+          item.chosenProduct &&
+          item.status !== "COMPLETED" &&
+          selectedDOIds.includes(item.deliveryOrderId)
+      ).length || 0;
+
+    // Store selected DOs and product info
+    setSelectedDOsForWeighing(selectedDOIds);
+    setSelectedProductForWeighing({
+      id: selectedProductForDOSelection.id,
+      name: selectedProductForDOSelection.name,
+      unweighedCount: unweighedItemsCount,
+    });
+
+    // Close DO selection modal and open method modal
+    setWeighingDOSelectionOpen(false);
+    setWeighingMethodModalOpen(true);
+  };
+
+  // Handle weighing method selection (combined/individual)
   const handleWeighingMethodSelect = (method: "combined" | "individual") => {
     setWeighingMethodModalOpen(false);
 
-    if (method === "combined") {
-      // Open the existing bulk weighing modal
-      if (selectedProductForWeighing) {
-        setWeighingProductId(selectedProductForWeighing.id);
-        setWeighingModalOpen(true);
-      }
-    } else if (method === "individual") {
-      // Prepare individual weighing items and open individual weighing modal
-      if (selectedProductForWeighing && shipment) {
-        // Get only the chosen unweighed items for this product (items that were loaded and need weighing)
-        // This ensures weighing only works for items that are actually in the shipment
-        const chosenItems = shipment.shipmentItems.filter(
-          (si) =>
-            si.productId === selectedProductForWeighing.id &&
-            si.chosenProduct &&
-            si.status !== "COMPLETED"
-        );
-
-        console.log(selectedProductForWeighing.name, "name product ");
-
-        const individualItems = chosenItems.map((item) => ({
-          shipmentItemId: item.id,
-          deliveryOrderId: item.deliveryOrderId,
-          deliveryOrderNumber: item.deliveryOrder.doNumber,
-          customerName: item.deliveryOrder.customer.name,
-          requestedQuantity: item.requestedQuantity,
-          productName: selectedProductForWeighing.name,
-          productUnit: item.product.satuan,
-        }));
-
-        setIndividualWeighingItems(individualItems);
-        setCurrentWeighingIndex(0);
-        setIndividualWeighingModalOpen(true);
-      }
+    if (!selectedProductForWeighing) {
+      return;
     }
 
-    // Don't clear selectedProductForWeighing here - keep it for the modal
+    if (method === "combined") {
+      // Bulk weighing with selected DOs
+      setWeighingProductId(selectedProductForWeighing.id);
+      setWeighingModalOpen(true);
+    } else if (method === "individual") {
+      // Individual weighing - get items from selected DOs only
+      const selectedItems =
+        shipment?.shipmentItems
+          .filter(
+            (item) =>
+              item.productId === selectedProductForWeighing.id &&
+              item.chosenProduct &&
+              item.status !== "COMPLETED" &&
+              selectedDOsForWeighing.includes(item.deliveryOrderId)
+          )
+          .map((item) => ({
+            shipmentItemId: item.id,
+            deliveryOrderId: item.deliveryOrderId,
+            deliveryOrderNumber: item.deliveryOrder.doNumber,
+            customerName: item.deliveryOrder.customer.name,
+            productName: item.product.name,
+            productUnit: item.product.satuan,
+            requestedQuantity: item.requestedQuantity,
+          })) || [];
+
+      setIndividualWeighingItems(selectedItems);
+      setCurrentWeighingIndex(0);
+      setIndividualWeighingModalOpen(true);
+    }
   };
 
   const handleIndividualWeighItem = (data: {
@@ -1146,6 +1217,7 @@ export default function DetailPengiriman() {
     setWeighingModalOpen(false);
     setWeighingProductId("");
     setSelectedProductForWeighing(null); // Clear selected product
+    setSelectedDOsForWeighing([]); // Clear selected DOs
     // Reset weight values and displays when closing modal
     setGrossWeight("");
     setNetWeight("");
@@ -1225,7 +1297,6 @@ export default function DetailPengiriman() {
     );
     const result = chosenProduct?.weighingMethod || null;
 
-
     return result;
   };
 
@@ -1252,13 +1323,17 @@ export default function DetailPengiriman() {
         bulkWeighItems.mutate({
           shipmentId,
           productId: weighingProductId,
+          deliveryOrderIds:
+            selectedDOsForWeighing.length > 0
+              ? selectedDOsForWeighing
+              : undefined,
           grossWeight: parseFloat(grossWeight),
           netWeight: netWeight ? parseFloat(netWeight) : undefined,
           tareWeight: parseFloat(tareWeight),
         });
       } else {
         // If user cancels, reopen the modal
-        setWeighingModalOpen(true)
+        setWeighingModalOpen(true);
       }
     });
   };
@@ -1712,11 +1787,11 @@ export default function DetailPengiriman() {
                           Nomor Pengiriman
                         </p>
                         <p className="p-1 font-mono text-sm font-medium text-gray-900 break-all bg-gray-50 rounded">
-                          {shipment.shipmentNumber} ({
-                            shipment.type === "ANTAR"
-                              ? shipment.armada?.plateNumber
-                              : shipment.plateNumber
-                          })
+                          {shipment.shipmentNumber} (
+                          {shipment.type === "ANTAR"
+                            ? shipment.armada?.plateNumber
+                            : shipment.plateNumber}
+                          )
                         </p>
                       </div>
                       <div>
@@ -1821,7 +1896,6 @@ export default function DetailPengiriman() {
                     </h3>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2">
-
                     {hasPengirimanUpdateTallyAccess && shipment && (
                       <Button
                         variant="outline"
@@ -2053,12 +2127,15 @@ export default function DetailPengiriman() {
                                             variant="outline"
                                             size="sm"
                                             className={
-                                              !shipment?.tally || !shipment?.kenek
+                                              !shipment?.tally ||
+                                              !shipment?.kenek
                                                 ? "text-gray-400 border-gray-200 cursor-not-allowed"
                                                 : "text-blue-600 border-blue-200 hover:bg-blue-50"
                                             }
                                             onClick={() =>
-                                              handleOpenLoadingMethodModal(product.id)
+                                              handleOpenLoadingMethodModal(
+                                                product.id
+                                              )
                                             }
                                             disabled={
                                               chooseProduct.isPending ||
@@ -2067,7 +2144,8 @@ export default function DetailPengiriman() {
                                               !shipment?.kenek
                                             }
                                             title={
-                                              !shipment?.tally || !shipment?.kenek
+                                              !shipment?.tally ||
+                                              !shipment?.kenek
                                                 ? "Tally dan Kenek harus diisi terlebih dahulu"
                                                 : undefined
                                             }
@@ -2103,7 +2181,7 @@ export default function DetailPengiriman() {
                                               size="sm"
                                               className="text-purple-600 border-purple-200 hover:bg-purple-50"
                                               onClick={() =>
-                                                handleOpenWeighingModal(
+                                                handleOpenWeighingDOSelection(
                                                   product.id
                                                 )
                                               }
@@ -2153,12 +2231,15 @@ export default function DetailPengiriman() {
                                             variant="outline"
                                             size="sm"
                                             className={
-                                              !shipment?.tally || !shipment?.kenek
+                                              !shipment?.tally ||
+                                              !shipment?.kenek
                                                 ? "text-gray-400 border-gray-200 cursor-not-allowed"
                                                 : "text-blue-600 border-blue-200 hover:bg-blue-50"
                                             }
                                             onClick={() =>
-                                              handleOpenLoadingMethodModal(product.id)
+                                              handleOpenLoadingMethodModal(
+                                                product.id
+                                              )
                                             }
                                             disabled={
                                               chooseProduct.isPending ||
@@ -2167,13 +2248,15 @@ export default function DetailPengiriman() {
                                               !shipment?.kenek
                                             }
                                             title={
-                                              !shipment?.tally || !shipment?.kenek
+                                              !shipment?.tally ||
+                                              !shipment?.kenek
                                                 ? "Tally dan Kenek harus diisi terlebih dahulu"
                                                 : "Muat sisa barang"
                                             }
                                           >
                                             <Package className="mr-2 w-4 h-4" />
-                                            Muat Sisa ({totalCount - chosenCount})
+                                            Muat Sisa (
+                                            {totalCount - chosenCount})
                                           </Button>
                                         );
                                       }
@@ -2194,7 +2277,6 @@ export default function DetailPengiriman() {
                                             (si) => si.status !== "COMPLETED"
                                           ).length;
 
-
                                         if (unweighedCount > 0) {
                                           buttons.push(
                                             <Button
@@ -2203,7 +2285,7 @@ export default function DetailPengiriman() {
                                               size="sm"
                                               className="text-purple-600 border-purple-200 hover:bg-purple-50"
                                               onClick={() =>
-                                                handleOpenWeighingModal(
+                                                handleOpenWeighingDOSelection(
                                                   product.id
                                                 )
                                               }
@@ -2317,305 +2399,301 @@ export default function DetailPengiriman() {
                         }
                       });
 
-                      return Array.from(productMap.values()).map(
-                        (product) => (
-                          <div
-                            key={product.id}
-                            className="p-4 rounded-lg border border-gray-200"
-                          >
-                            <div className="flex justify-between items-center mb-2">
-                              <div className="flex items-center">
-                                {/* <div className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
+                      return Array.from(productMap.values()).map((product) => (
+                        <div
+                          key={product.id}
+                          className="p-4 rounded-lg border border-gray-200"
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center">
+                              {/* <div className="flex justify-center items-center mr-2 w-6 h-6 text-xs font-medium text-white bg-blue-600 rounded-full">
                                     {index + 1}
                                   </div> */}
-                                <Link
-                                  to={`/barang/${product.id}`}
-                                  className="font-medium text-blue-600 hover:underline"
-                                >
-                                  {product.name}
-                                </Link>
-                              </div>
+                              <Link
+                                to={`/barang/${product.id}`}
+                                className="font-medium text-blue-600 hover:underline"
+                              >
+                                {product.name}
+                              </Link>
+                            </div>
+                            {(() => {
+                              if (product.chosenCount === 0) {
+                                return (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap text-center"
+                                  >
+                                    Belum Dimuat
+                                  </Badge>
+                                );
+                              } else if (
+                                product.chosenCount === product.totalCount
+                              ) {
+                                return (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap text-center"
+                                  >
+                                    Sudah Dimuat
+                                  </Badge>
+                                );
+                              } else {
+                                return (
+                                  <div className="flex flex-col items-end space-y-1">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-blue-700 bg-blue-50 border-blue-200 whitespace-nowrap"
+                                    >
+                                      Sebagian Dimuat
+                                    </Badge>
+                                    <p className="text-xs text-gray-500">
+                                      {product.chosenCount}/{product.totalCount}{" "}
+                                      item
+                                    </p>
+                                  </div>
+                                );
+                              }
+                            })()}
+                          </div>
+                          <div className="space-y-1 text-xs text-gray-600">
+                            <p>
+                              <span className="font-medium">Gudang: </span>
+                              {product.warehouse.name}
+                            </p>
+                            <div className="flex items-center">
+                              <span className="font-medium">Jumlah DO: </span>
+                              <Badge
+                                variant="outline"
+                                className="text-blue-700 bg-blue-50 border-blue-200"
+                              >
+                                {product.doIds.size} DO
+                              </Badge>
+                            </div>
+                            <p>
+                              <span className="font-medium">
+                                Total Kuantitas:{" "}
+                              </span>
+                              {formatInputNumber(product.totalQuantity)}{" "}
+                              {product.satuan}
+                            </p>
+                          </div>
+                          {(hasPengirimanUpdateAccess ||
+                            hasPengirimanWeighAccess) && (
+                            <div className="pt-3 mt-3 space-y-2 border-t border-gray-100">
                               {(() => {
-                                if (product.chosenCount === 0) {
-                                  return (
-                                    <Badge
+                                // Use the pre-calculated counts from the product object
+                                const chosenCount = product.chosenCount;
+                                const totalCount = product.totalCount;
+                                const allWeighed = shipment.shipmentItems
+                                  .filter(
+                                    (si) =>
+                                      si.productId === product.id &&
+                                      si.chosenProduct
+                                  )
+                                  .every((si) => si.status === "COMPLETED");
+
+                                const weighingMethod = getProductWeighingMethod(
+                                  product.id
+                                );
+
+                                // If no items chosen yet
+                                if (chosenCount === 0) {
+                                  return hasPengirimanUpdateAccess ? (
+                                    <Button
                                       variant="outline"
-                                      className="text-yellow-700 bg-yellow-50 border-yellow-200 whitespace-nowrap text-center"
+                                      size="sm"
+                                      className={
+                                        !shipment?.tally || !shipment?.kenek
+                                          ? "w-full text-gray-400 border-gray-200 cursor-not-allowed"
+                                          : "w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                                      }
+                                      onClick={() =>
+                                        handleOpenLoadingMethodModal(product.id)
+                                      }
+                                      disabled={
+                                        chooseProduct.isPending ||
+                                        selectiveChooseProduct.isPending ||
+                                        !shipment?.tally ||
+                                        !shipment?.kenek
+                                      }
+                                      title={
+                                        !shipment?.tally || !shipment?.kenek
+                                          ? "Tally dan Kenek harus diisi terlebih dahulu"
+                                          : undefined
+                                      }
                                     >
-                                      Belum Dimuat
-                                    </Badge>
-                                  );
-                                } else if (product.chosenCount === product.totalCount) {
-                                  return (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-green-700 bg-green-50 border-green-200 whitespace-nowrap text-center"
-                                    >
-                                      Sudah Dimuat
-                                    </Badge>
-                                  );
-                                } else {
-                                  return (
-                                    <div className="flex flex-col items-end space-y-1">
-                                      <Badge
-                                        variant="outline"
-                                        className="text-blue-700 bg-blue-50 border-blue-200 whitespace-nowrap"
-                                      >
-                                        Sebagian Dimuat
-                                      </Badge>
-                                      <p className="text-xs text-gray-500">
-                                        {product.chosenCount}/{product.totalCount} item
-                                      </p>
-                                    </div>
-                                  );
+                                      <Package className="mr-2 w-4 h-4" />
+                                      Muat Barang
+                                    </Button>
+                                  ) : null;
                                 }
-                              })()}
-                            </div>
-                            <div className="space-y-1 text-xs text-gray-600">
-                              <p>
-                                <span className="font-medium">Gudang: </span>
-                                {product.warehouse.name}
-                              </p>
-                              <div className="flex items-center">
-                                <span className="font-medium">Jumlah DO: </span>
-                                <Badge
-                                  variant="outline"
-                                  className="text-blue-700 bg-blue-50 border-blue-200"
-                                >
-                                  {product.doIds.size} DO
-                                </Badge>
-                              </div>
-                              <p>
-                                <span className="font-medium">
-                                  Total Kuantitas:{" "}
-                                </span>
-                                {formatInputNumber(product.totalQuantity)}{" "}
-                                {product.satuan}
-                              </p>
-                            </div>
-                            {(hasPengirimanUpdateAccess ||
-                              hasPengirimanWeighAccess) && (
-                              <div className="pt-3 mt-3 space-y-2 border-t border-gray-100">
-                                {(() => {
-                                  // Use the pre-calculated counts from the product object
-                                  const chosenCount = product.chosenCount;
-                                  const totalCount = product.totalCount;
-                                  const allWeighed = shipment.shipmentItems
-                                    .filter(
-                                      (si) =>
-                                        si.productId === product.id &&
-                                        si.chosenProduct
-                                    )
-                                    .every((si) => si.status === "COMPLETED");
 
-                                  const weighingMethod =
-                                    getProductWeighingMethod(product.id);
-
-                                  // If no items chosen yet
-                                  if (chosenCount === 0) {
-                                    return hasPengirimanUpdateAccess ? (
+                                // If all items chosen
+                                if (chosenCount === totalCount) {
+                                  // All chosen, check if all weighed
+                                  if (allWeighed) {
+                                    return (
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className={
-                                          !shipment?.tally || !shipment?.kenek
-                                            ? "w-full text-gray-400 border-gray-200 cursor-not-allowed"
-                                            : "w-full text-blue-600 border-blue-200 hover:bg-blue-50"
-                                        }
-                                        onClick={() =>
-                                          handleOpenLoadingMethodModal(product.id)
-                                        }
-                                        disabled={
-                                          chooseProduct.isPending ||
-                                          selectiveChooseProduct.isPending ||
-                                          !shipment?.tally ||
-                                          !shipment?.kenek
-                                        }
-                                        title={
-                                          !shipment?.tally || !shipment?.kenek
-                                            ? "Tally dan Kenek harus diisi terlebih dahulu"
-                                            : undefined
-                                        }
+                                        className="w-full text-green-600 bg-green-50 border-green-200 cursor-not-allowed"
+                                        disabled
                                       >
-                                        <Package className="mr-2 w-4 h-4" />
-                                        Muat Barang
+                                        <Check className="mr-2 w-4 h-4" />
+                                        Sudah Ditimbang
                                       </Button>
-                                    ) : null;
-                                  }
-
-                                  // If all items chosen
-                                  if (chosenCount === totalCount) {
-                                    // All chosen, check if all weighed
-                                    if (allWeighed) {
-                                      return (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="w-full text-green-600 bg-green-50 border-green-200 cursor-not-allowed"
-                                          disabled
-                                        >
-                                          <Check className="mr-2 w-4 h-4" />
-                                          Sudah Ditimbang
-                                        </Button>
-                                      );
-                                    } else if (
-                                      weighingMethod === "MANUAL" &&
-                                      hasPengirimanWeighAccess
-                                    ) {
-                                      return (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="w-full text-purple-600 border-purple-200 hover:bg-purple-50"
-                                          onClick={() =>
-                                            handleOpenWeighingModal(product.id)
-                                          }
-                                          disabled={bulkWeighItems.isPending}
-                                        >
-                                          <Scale className="mr-2 w-4 h-4" />
-                                          Timbang
-                                        </Button>
-                                      );
-                                    } else if (weighingMethod === "VENDOR") {
-                                      return (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="w-full text-purple-600 border-purple-200 bg-purple-50 cursor-not-allowed"
-                                          disabled={true}
-                                        >
-                                          <Scale className="mr-2 w-4 h-4" />
-                                          Sedang Dimuat
-                                        </Button>
-                                      );
-                                    } else {
-                                      return (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="w-full text-green-600 border-green-200 hover:bg-green-50"
-                                          disabled={true}
-                                        >
-                                          <Check className="mr-2 w-4 h-4" />
-                                          Semua Dimuat
-                                        </Button>
-                                      );
-                                    }
-                                  }
-
-                                  // Partial chosen - show both buttons
-                                  const buttons = [];
-                                  if (hasPengirimanUpdateAccess) {
-                                    buttons.push(
+                                    );
+                                  } else if (
+                                    weighingMethod === "MANUAL" &&
+                                    hasPengirimanWeighAccess
+                                  ) {
+                                    return (
                                       <Button
-                                        key="muat"
                                         variant="outline"
                                         size="sm"
-                                        className={
-                                          !shipment?.tally || !shipment?.kenek
-                                            ? "w-full text-gray-400 border-gray-200 cursor-not-allowed"
-                                            : "w-full text-blue-600 border-blue-200 hover:bg-blue-50"
-                                        }
+                                        className="w-full text-purple-600 border-purple-200 hover:bg-purple-50"
                                         onClick={() =>
-                                          handleOpenLoadingMethodModal(product.id)
+                                          handleOpenWeighingDOSelection(
+                                            product.id
+                                          )
                                         }
-                                        disabled={
-                                          chooseProduct.isPending ||
-                                          selectiveChooseProduct.isPending ||
-                                          !shipment?.tally ||
-                                          !shipment?.kenek
-                                        }
-                                        title={
-                                          !shipment?.tally || !shipment?.kenek
-                                            ? "Tally dan Kenek harus diisi terlebih dahulu"
-                                            : undefined
-                                        }
+                                        disabled={bulkWeighItems.isPending}
                                       >
-                                        <Package className="mr-2 w-4 h-4" />
-                                        Muat Sisa ({totalCount - chosenCount})
+                                        <Scale className="mr-2 w-4 h-4" />
+                                        Timbang
+                                      </Button>
+                                    );
+                                  } else if (weighingMethod === "VENDOR") {
+                                    return (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full text-purple-600 border-purple-200 bg-purple-50 cursor-not-allowed"
+                                        disabled={true}
+                                      >
+                                        <Scale className="mr-2 w-4 h-4" />
+                                        Sedang Dimuat
+                                      </Button>
+                                    );
+                                  } else {
+                                    return (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full text-green-600 border-green-200 hover:bg-green-50"
+                                        disabled={true}
+                                      >
+                                        <Check className="mr-2 w-4 h-4" />
+                                        Semua Dimuat
                                       </Button>
                                     );
                                   }
+                                }
 
-                                  if (
-                                    weighingMethod === "MANUAL" &&
-                                    hasPengirimanWeighAccess &&
-                                    chosenCount > 0
-                                  ) {
-                                    const chosenItems =
-                                      shipment.shipmentItems.filter(
-                                        (si) =>
-                                          si.productId === product.id &&
-                                          si.chosenProduct
-                                      );
-                                    const unweighedCount = chosenItems.filter(
-                                      (si) => si.status !== "COMPLETED"
-                                    ).length;
+                                // Partial chosen - show both buttons
+                                const buttons = [];
+                                if (hasPengirimanUpdateAccess) {
+                                  buttons.push(
+                                    <Button
+                                      key="muat"
+                                      variant="outline"
+                                      size="sm"
+                                      className={
+                                        !shipment?.tally || !shipment?.kenek
+                                          ? "w-full text-gray-400 border-gray-200 cursor-not-allowed"
+                                          : "w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                                      }
+                                      onClick={() =>
+                                        handleOpenLoadingMethodModal(product.id)
+                                      }
+                                      disabled={
+                                        chooseProduct.isPending ||
+                                        selectiveChooseProduct.isPending ||
+                                        !shipment?.tally ||
+                                        !shipment?.kenek
+                                      }
+                                      title={
+                                        !shipment?.tally || !shipment?.kenek
+                                          ? "Tally dan Kenek harus diisi terlebih dahulu"
+                                          : undefined
+                                      }
+                                    >
+                                      <Package className="mr-2 w-4 h-4" />
+                                      Muat Sisa ({totalCount - chosenCount})
+                                    </Button>
+                                  );
+                                }
 
-                                    // Debug logging for weighing button visibility
-                                    console.log(`Weighing button visibility for product ${product.id}:`, {
-                                      weighingMethod,
-                                      hasPengirimanWeighAccess,
-                                      chosenCount,
-                                      chosenItems: chosenItems.length,
-                                      unweighedCount,
-                                      willShow: unweighedCount > 0
-                                    });
+                                if (
+                                  weighingMethod === "MANUAL" &&
+                                  hasPengirimanWeighAccess &&
+                                  chosenCount > 0
+                                ) {
+                                  const chosenItems =
+                                    shipment.shipmentItems.filter(
+                                      (si) =>
+                                        si.productId === product.id &&
+                                        si.chosenProduct
+                                    );
+                                  const unweighedCount = chosenItems.filter(
+                                    (si) => si.status !== "COMPLETED"
+                                  ).length;
 
-                                    if (unweighedCount > 0) {
-                                      buttons.push(
-                                        <Button
-                                          key="timbang"
-                                          variant="outline"
-                                          size="sm"
-                                          className="w-full text-purple-600 border-purple-200 hover:bg-purple-50"
-                                          onClick={() =>
-                                            handleOpenWeighingModal(product.id)
-                                          }
-                                          disabled={bulkWeighItems.isPending}
-                                        >
-                                          <Scale className="mr-2 w-4 h-4" />
-                                          Timbang ({unweighedCount})
-                                        </Button>
-                                      );
-                                    }
-                                  } else if (
-                                    weighingMethod === "VENDOR" &&
-                                    chosenCount > 0
-                                  ) {
-                                    const chosenItems =
-                                      shipment.shipmentItems.filter(
-                                        (si) =>
-                                          si.productId === product.id &&
-                                          si.chosenProduct
-                                      );
-                                    const unweighedCount = chosenItems.filter(
-                                      (si) => si.status !== "COMPLETED"
-                                    ).length;
-
-                                    if (unweighedCount > 0) {
-                                      buttons.push(
-                                        <Button
-                                          key="sedang-dimuat"
-                                          variant="outline"
-                                          size="sm"
-                                          className="w-full text-purple-600 border-purple-200 bg-purple-50 cursor-not-allowed"
-                                          disabled={true}
-                                        >
-                                          <Scale className="mr-2 w-4 h-4" />
-                                          Sedang Dimuat ({unweighedCount})
-                                        </Button>
-                                      );
-                                    }
+                                  if (unweighedCount > 0) {
+                                    buttons.push(
+                                      <Button
+                                        key="timbang"
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full text-purple-600 border-purple-200 hover:bg-purple-50"
+                                        onClick={() =>
+                                          handleOpenWeighingDOSelection(
+                                            product.id
+                                          )
+                                        }
+                                        disabled={bulkWeighItems.isPending}
+                                      >
+                                        <Scale className="mr-2 w-4 h-4" />
+                                        Timbang ({unweighedCount})
+                                      </Button>
+                                    );
                                   }
+                                } else if (
+                                  weighingMethod === "VENDOR" &&
+                                  chosenCount > 0
+                                ) {
+                                  const chosenItems =
+                                    shipment.shipmentItems.filter(
+                                      (si) =>
+                                        si.productId === product.id &&
+                                        si.chosenProduct
+                                    );
+                                  const unweighedCount = chosenItems.filter(
+                                    (si) => si.status !== "COMPLETED"
+                                  ).length;
 
-                                  return buttons.length > 0 ? buttons : null;
-                                })()}
-                              </div>
-                            )}
-                          </div>
-                        )
-                      );
+                                  if (unweighedCount > 0) {
+                                    buttons.push(
+                                      <Button
+                                        key="sedang-dimuat"
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full text-purple-600 border-purple-200 bg-purple-50 cursor-not-allowed"
+                                        disabled={true}
+                                      >
+                                        <Scale className="mr-2 w-4 h-4" />
+                                        Sedang Dimuat ({unweighedCount})
+                                      </Button>
+                                    );
+                                  }
+                                }
+
+                                return buttons.length > 0 ? buttons : null;
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      ));
                     })()}
                   </div>
                 </div>
@@ -2624,7 +2702,9 @@ export default function DetailPengiriman() {
                 <DeliveryOrderAccordion
                   shipmentItems={shipment.shipmentItems}
                   shipmentStatus={shipment.status}
-                  hasChangeCustomerAfterWeighAccess={hasChangeCustomerAfterWeighAccess}
+                  hasChangeCustomerAfterWeighAccess={
+                    hasChangeCustomerAfterWeighAccess
+                  }
                   hasReviseDoAfterWeighAccess={hasReviseDoAfterWeighAccess}
                   isLoadingFullDOHook={isLoadingFullDOHook}
                   onOpenChangeCustomerModal={handleOpenChangeCustomerModal}
@@ -3321,67 +3401,82 @@ export default function DetailPengiriman() {
                     </div>
                   </div>
 
-                  <div className="p-3 sm:p-4 mb-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
-                    <h3 className="mb-3 text-sm sm:text-base font-medium text-green-800">
-                      Pilih Metode Penimbangan
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex items-start">
-                        <input
-                          id="manual-weighing"
-                          name="weighing-method"
-                          type="radio"
-                          value="MANUAL"
-                          checked={selectedWeighingMethod === "MANUAL"}
-                          onChange={(e) =>
-                            setSelectedWeighingMethod(
-                              e.target.value as "MANUAL" | "VENDOR"
-                            )
-                          }
-                          className="w-4 h-4 text-green-600 border-gray-300 mt-0.5"
-                        />
-                        <label
-                          htmlFor="manual-weighing"
-                          className="ml-3 text-sm"
-                        >
-                          <span className="font-medium text-gray-900 text-sm sm:text-base">
-                            Penimbangan Manual
-                          </span>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Penimbangan dilakukan secara manual melalui sistem
-                            internal
-                          </p>
-                        </label>
-                      </div>
-                      <div className="flex items-start">
-                        <input
-                          id="vendor-weighing"
-                          name="weighing-method"
-                          type="radio"
-                          value="VENDOR"
-                          checked={selectedWeighingMethod === "VENDOR"}
-                          onChange={(e) =>
-                            setSelectedWeighingMethod(
-                              e.target.value as "MANUAL" | "VENDOR"
-                            )
-                          }
-                          className="w-4 h-4 text-green-600 border-gray-300 mt-0.5"
-                        />
-                        <label
-                          htmlFor="vendor-weighing"
-                          className="ml-3 text-sm"
-                        >
+                  {(() => {
+                    // Get existing method directly in the render to ensure it's always current
+                    const existingMethod = getProductWeighingMethod(selectedProductId);
+                    const currentMethod = existingMethod || selectedWeighingMethod;
+
+                    return (
+                      <div className="p-3 sm:p-4 mb-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
+                        <h3 className="mb-3 text-sm sm:text-base font-medium text-green-800">
+                          Pilih Metode Penimbangan
+                          {existingMethod ? (
+                            <span className="ml-2 text-xs text-gray-600">
+                              (Metode sudah dipilih sebelumnya)
+                            </span>
+                          ) : null}
+                        </h3>
+                        <div className="space-y-3">
+                          <div className="flex items-start">
+                            <input
+                              id="manual-weighing"
+                              name="weighing-method"
+                              type="radio"
+                              value="MANUAL"
+                              checked={currentMethod === "MANUAL"}
+                              onChange={(e) =>
+                                setSelectedWeighingMethod(
+                                  e.target.value as "MANUAL" | "VENDOR"
+                                )
+                              }
+                              disabled={!!existingMethod}
+                              className="w-4 h-4 text-green-600 border-gray-300 mt-0.5 disabled:opacity-90 disabled:cursor-not-allowed"
+                            />
+                            <label
+                              htmlFor="manual-weighing"
+                              className={`ml-3 text-sm ${existingMethod ? 'opacity-90' : ''}`}
+                            >
+                              <span className="font-medium text-gray-900 text-sm sm:text-base">
+                                Penimbangan Manual
+                              </span>
+                              <p className="text-xs text-gray-600 mt-1">
+                                Penimbangan dilakukan secara manual melalui sistem
+                                internal
+                              </p>
+                            </label>
+                          </div>
+                          <div className="flex items-start">
+                            <input
+                              id="vendor-weighing"
+                              name="weighing-method"
+                              type="radio"
+                              value="VENDOR"
+                              checked={currentMethod === "VENDOR"}
+                              onChange={(e) =>
+                                setSelectedWeighingMethod(
+                                  e.target.value as "MANUAL" | "VENDOR"
+                                )
+                              }
+                              disabled={!!existingMethod}
+                              className="w-4 h-4 text-green-600 border-gray-300 mt-0.5 disabled:opacity-90 disabled:cursor-not-allowed"
+                            />
+                            <label
+                              htmlFor="vendor-weighing"
+                              className={`ml-3 text-sm ${existingMethod ? 'opacity-90' : ''}`}
+                            >
                           <span className="font-medium text-gray-900 text-sm sm:text-base">
                             Penimbangan Vendor (API)
                           </span>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Penimbangan dilakukan melalui sistem vendor pihak
-                            ketiga
-                          </p>
-                        </label>
+                              <p className="text-xs text-gray-600 mt-1">
+                                Penimbangan dilakukan melalui sistem vendor pihak
+                                ketiga
+                              </p>
+                            </label>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
 
                   <h3 className="mb-3 text-base font-medium text-gray-800">
                     Delivery Orders Terkait
@@ -3454,7 +3549,11 @@ export default function DetailPengiriman() {
                       // Check if this is a selective loading case
                       // We need to track the loading method that was selected
                       // selectedProductDOs is populated from handleDOSelectionConfirm which is only called for selective loading
-                      const isSelectiveLoading = selectedProductDOs.length > 0 && selectedProductDOs.some((deliveryOrder) => deliveryOrder.doId);
+                      const isSelectiveLoading =
+                        selectedProductDOs.length > 0 &&
+                        selectedProductDOs.some(
+                          (deliveryOrder) => deliveryOrder.doId
+                        );
 
                       // Close modal first to avoid z-index issues
                       setProductModalOpen(false);
@@ -3474,11 +3573,17 @@ export default function DetailPengiriman() {
                           if (isConfirmed(result)) {
                             if (isSelectiveLoading) {
                               // Call selective choose product API
-                              const deliveryOrderIds = selectedProductDOs.map(function(deliveryOrder) { return deliveryOrder.doId; });
+                              const deliveryOrderIds = selectedProductDOs.map(
+                                function (deliveryOrder) {
+                                  return deliveryOrder.doId;
+                                }
+                              );
                               selectiveChooseProduct.mutate({
                                 shipmentId,
                                 productId,
-                                weighingMethod: weighingMethod as "MANUAL" | "VENDOR",
+                                weighingMethod: weighingMethod as
+                                  | "MANUAL"
+                                  | "VENDOR",
                                 deliveryOrderIds,
                               });
                             } else {
@@ -3498,10 +3603,15 @@ export default function DetailPengiriman() {
                       }, 100); // Small delay to ensure modal is closed
                     }
                   }}
-                  disabled={chooseProduct.isPending || selectiveChooseProduct.isPending || !selectedWeighingMethod}
+                  disabled={
+                    chooseProduct.isPending ||
+                    selectiveChooseProduct.isPending ||
+                    !selectedWeighingMethod
+                  }
                   className="flex-1 text-white bg-blue-600 shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg"
                 >
-                  {chooseProduct.isPending || selectiveChooseProduct.isPending ? (
+                  {chooseProduct.isPending ||
+                  selectiveChooseProduct.isPending ? (
                     <>
                       <Loader2 className="mr-2 w-4 h-4 animate-spin" />
                       Memproses...
@@ -3539,10 +3649,13 @@ export default function DetailPengiriman() {
                 <>
                   {(() => {
                     // Find all chosen items for this product (items that were loaded into the shipment)
+                    // Filter by selected DOs if any are selected
                     const chosenItems = shipment.shipmentItems.filter(
                       (item) =>
                         item.productId === weighingProductId &&
-                        item.chosenProduct
+                        item.chosenProduct &&
+                        (selectedDOsForWeighing.length === 0 ||
+                          selectedDOsForWeighing.includes(item.deliveryOrderId))
                     );
 
                     // Find unweighed items (those that need weighing)
@@ -3681,7 +3794,9 @@ export default function DetailPengiriman() {
 
                 <Button
                   onClick={handleWeighSubmit}
-                  disabled={bulkWeighItems.isPending || !grossWeight || !tareWeight}
+                  disabled={
+                    bulkWeighItems.isPending || !grossWeight || !tareWeight
+                  }
                   className="flex-1 text-white bg-blue-600 shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg"
                 >
                   {bulkWeighItems.isPending ? (
@@ -3770,14 +3885,6 @@ export default function DetailPengiriman() {
       </Dialog>
 
       {/* Weighing Method Selection Modal */}
-      <WeighingMethodModal
-        open={weighingMethodModalOpen}
-        onOpenChange={setWeighingMethodModalOpen}
-        onSelectMethod={handleWeighingMethodSelect}
-        productName={selectedProductForWeighing?.name || ""}
-        unweighedCount={selectedProductForWeighing?.unweighedCount || 0}
-      />
-
       {/* Individual Weighing Modal */}
       <IndividualWeighingModal
         open={individualWeighingModalOpen}
@@ -3798,6 +3905,32 @@ export default function DetailPengiriman() {
         }}
         isLoading={individualWeighItem.isPending}
       />
+
+      {/* Weighing DO Selection Modal */}
+      {selectedProductForDOSelection && (
+        <DOSelectionModal
+          isOpen={weighingDOSelectionOpen}
+          onClose={() => {
+            setWeighingDOSelectionOpen(false);
+            setSelectedProductForDOSelection(null);
+          }}
+          productName={selectedProductForDOSelection.name}
+          productUnit={selectedProductForDOSelection.satuan}
+          deliveryOrders={selectedProductForDOSelection.deliveryOrders}
+          onConfirm={handleWeighingDOSelectionConfirm}
+        />
+      )}
+
+      {/* Weighing Method Selection Modal */}
+      {selectedProductForWeighing && (
+        <WeighingMethodModal
+          open={weighingMethodModalOpen}
+          onOpenChange={setWeighingMethodModalOpen}
+          productName={selectedProductForWeighing.name}
+          unweighedCount={selectedProductForWeighing.unweighedCount}
+          onSelectMethod={handleWeighingMethodSelect}
+        />
+      )}
 
       {/* Customer Change and DO Revision Modals */}
       {fullDeliveryOrder && (
@@ -3841,7 +3974,9 @@ export default function DetailPengiriman() {
           isOpen={reduceQuantityModalOpen}
           onOpenChange={handleCloseReduceQuantityModal}
           shipmentItemId={selectedReduceQuantityItem.shipmentItem.id}
-          currentQuantity={selectedReduceQuantityItem.shipmentItem.requestedQuantity}
+          currentQuantity={
+            selectedReduceQuantityItem.shipmentItem.requestedQuantity
+          }
           productName={selectedReduceQuantityItem.product.name}
           customerName={selectedReduceQuantityItem.deliveryOrder.customer.name}
           doNumber={selectedReduceQuantityItem.deliveryOrder.doNumber}
@@ -3933,7 +4068,6 @@ export default function DetailPengiriman() {
           </div>
         </DialogContent>
       </Dialog>
-
 
       {/* Loading Method Selection Modal */}
       {selectedProductForLoading && (

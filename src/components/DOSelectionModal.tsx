@@ -54,6 +54,7 @@ export function DOSelectionModal({
   const handleConfirm = () => {
     if (selectedDOIds.length === 0) return;
     onConfirm(selectedDOIds);
+    setSelectedDOIds([]);
     onClose();
   };
 
@@ -181,6 +182,7 @@ export function DOSelectionModal({
                 <X className="mr-2 w-4 h-4" />
                 Batal
               </Button>
+
               <Button
                 type="button"
                 onClick={handleConfirm}
