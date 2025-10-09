@@ -12,7 +12,7 @@ import {
 import { DeliveryOrderForSelection } from "@/types/shipment";
 import { formatInputNumber } from "@/utils/formatNumber";
 import { Check, Package, User, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface DOSelectionModalProps {
   isOpen: boolean;
@@ -34,6 +34,13 @@ export function DOSelectionModal({
   isLoading = false,
 }: DOSelectionModalProps) {
   const [selectedDOIds, setSelectedDOIds] = useState<string[]>([]);
+
+  // Reset selection when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedDOIds([]);
+    }
+  }, [isOpen]);
 
   const handleDOSelection = (doId: string, checked: boolean) => {
     if (checked) {

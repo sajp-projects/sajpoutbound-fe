@@ -14,6 +14,7 @@ export interface ShipmentItem {
   chosenProduct?: boolean;
   warehouseId: string;
   weighedAt: string | null;
+  loadingGroupId?: string | null;
   createdAt: string;
   updatedAt: string;
   product: {
@@ -419,6 +420,21 @@ export interface DeliveryOrderForSelection {
     name: string;
     address?: string;
   };
+  items: Array<{
+    id: string;
+    productId: string;
+    requestedQuantity: number;
+    pendingQuantity: number;
+    status: string;
+  }>;
+}
+
+// Loading group for weighing
+export interface LoadingGroup {
+  id: string;
+  doNumbers: string[];
+  deliveryOrderIds: string[];
+  customers: string[];
   items: Array<{
     id: string;
     productId: string;

@@ -66,7 +66,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { WeighingMethodModal } from "@/components/WeighingMethodModal";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useDeliveryOrder } from "@/hooks/do";
@@ -79,6 +78,7 @@ import {
   DeliveryOrderForSelection,
   GroupedDeliveryOrder,
   IndividualWeighingItem,
+  LoadingGroup,
   ProductItem,
   ShipmentItem,
   ShipmentStatus,
@@ -112,6 +112,7 @@ import { useForm } from "react-hook-form";
 
 import { DeliveryOrderAccordion } from "@/components/DeliveryOrderAccordion";
 import { DOSelectionModal } from "@/components/DOSelectionModal";
+import { LoadingGroupSelectionModal } from "@/components/LoadingGroupSelectionModal";
 import {
   LoadingMethod,
   LoadingMethodSelectionModal,
@@ -205,15 +206,6 @@ export default function DetailPengiriman() {
   const [weighingProductId, setWeighingProductId] = useState<string>("");
   const [weighingModalOpen, setWeighingModalOpen] = useState(false);
 
-  // States for weighing method selection modal
-  const [weighingMethodModalOpen, setWeighingMethodModalOpen] = useState(false);
-
-  const [selectedProductForWeighing, setSelectedProductForWeighing] = useState<{
-    id: string;
-    name: string;
-    unweighedCount: number;
-  } | null>(null);
-
   // States for weighing DO selection
   const [weighingDOSelectionOpen, setWeighingDOSelectionOpen] = useState(false);
   const [selectedDOsForWeighing, setSelectedDOsForWeighing] = useState<
@@ -300,7 +292,7 @@ export default function DetailPengiriman() {
       id: string;
       name: string;
       satuan: string;
-      deliveryOrders: DeliveryOrderForSelection[];
+      deliveryOrders: DeliveryOrderForSelection[] | LoadingGroup[];
     } | null>(null);
 
   // Transfer Items Modal states
@@ -519,7 +511,7 @@ export default function DetailPengiriman() {
     // Store the selected DOs and open the weighing method selection modal
     const selectedDOs = selectedDOIds
       .map((doId) => {
-        const doInfo = selectedProductForDOSelection.deliveryOrders.find(
+        const doInfo = (selectedProductForDOSelection.deliveryOrders as DeliveryOrderForSelection[]).find(
           (deliveryOrder) => deliveryOrder.id === doId
         );
         if (!doInfo) return null;
@@ -531,7 +523,8 @@ export default function DetailPengiriman() {
             id: selectedProductForDOSelection.id,
             name: selectedProductForDOSelection.name,
             quantity: doInfo.items.reduce(
-              (sum, item) => sum + item.requestedQuantity,
+              (sum: number, item: { id: string; productId: string; requestedQuantity: number; pendingQuantity: number; status: string }) =>
+                sum + item.requestedQuantity,
               0
             ),
             satuan: selectedProductForDOSelection.satuan,
@@ -1065,7 +1058,12 @@ export default function DetailPengiriman() {
 
     // Check if this product has already been chosen with a specific weighing method
     const existingWeighingMethod = getProductWeighingMethod(productId);
-    console.log("Existing weighing method for product:", productId, "is:", existingWeighingMethod);
+    console.log(
+      "Existing weighing method for product:",
+      productId,
+      "is:",
+      existingWeighingMethod
+    );
     setSelectedWeighingMethod(existingWeighingMethod);
 
     setSelectedProductId(productId);
@@ -1080,7 +1078,7 @@ export default function DetailPengiriman() {
     setSelectedWeighingMethod(null); // Reset to no selection
   };
 
-  // Open DO selection for weighing
+  // Open loading group selection for weighing
   const handleOpenWeighingDOSelection = (productId: string) => {
     if (!shipment || !chosenProducts) {
       console.log("Missing shipment or chosenProducts data");
@@ -1095,108 +1093,78 @@ export default function DetailPengiriman() {
       return;
     }
 
-    // Get delivery orders for this product from shipment items
-    // Only include DOs that have unweighed items (status !== "COMPLETED")
-    const uniqueDOs = new Map();
+    // Group items by loadingGroupId
+    // Only include items that have unweighed items (status !== "COMPLETED")
+    const loadingGroups = new Map();
 
     shipment.shipmentItems
-      .filter((item) => item.productId === productId && item.chosenProduct && item.status !== "COMPLETED")
+      .filter(
+        (item) =>
+          item.productId === productId &&
+          item.chosenProduct &&
+          item.status !== "COMPLETED"
+      )
       .forEach((item) => {
-        if (!uniqueDOs.has(item.deliveryOrderId)) {
-          uniqueDOs.set(item.deliveryOrderId, {
-            id: item.deliveryOrder.id,
-            doNumber: item.deliveryOrder.doNumber,
-            customer: item.deliveryOrder.customer,
+        const groupId = item.loadingGroupId || "unknown";
+
+        if (!loadingGroups.has(groupId)) {
+          loadingGroups.set(groupId, {
+            id: groupId,
+            doNumbers: [],
+            deliveryOrderIds: [],
+            customers: new Set(),
             items: [],
           });
         }
-        // Add the item to the DO's items array
-        uniqueDOs.get(item.deliveryOrderId).items.push({
+
+        const group = loadingGroups.get(groupId);
+
+        // Add DO number if not already added
+        if (!group.deliveryOrderIds.includes(item.deliveryOrderId)) {
+          group.doNumbers.push(item.deliveryOrder.doNumber);
+          group.deliveryOrderIds.push(item.deliveryOrderId);
+          group.customers.add(item.deliveryOrder.customer.name);
+        }
+
+        // Add the item to the group's items array
+        group.items.push({
           id: item.id,
           productId: item.productId,
           requestedQuantity: item.requestedQuantity,
-          pendingQuantity: item.requestedQuantity, // For weighing, use requestedQuantity as pendingQuantity
+          pendingQuantity: item.requestedQuantity,
           status: item.status,
         });
       });
 
-    const dosWithChosenItems = Array.from(uniqueDOs.values());
+    const loadingGroupsArray = Array.from(loadingGroups.values()).map(
+      (group) => ({
+        ...group,
+        customers: Array.from(group.customers),
+      })
+    );
 
     setSelectedProductForDOSelection({
       id: productId,
       name: chosenProduct.product.name,
       satuan: chosenProduct.product.satuan,
-      deliveryOrders: dosWithChosenItems,
+      deliveryOrders: loadingGroupsArray,
     });
     setWeighingDOSelectionOpen(true);
   };
 
-  // Handle DO selection confirmation for weighing - opens method modal
+  // Handle loading group selection confirmation for weighing - goes directly to bulk weighing
   const handleWeighingDOSelectionConfirm = (selectedDOIds: string[]) => {
     if (!selectedProductForDOSelection) {
       return;
     }
 
-    // Count actual unweighed items from selected DOs
-    const unweighedItemsCount =
-      shipment?.shipmentItems.filter(
-        (item) =>
-          item.productId === selectedProductForDOSelection.id &&
-          item.chosenProduct &&
-          item.status !== "COMPLETED" &&
-          selectedDOIds.includes(item.deliveryOrderId)
-      ).length || 0;
-
     // Store selected DOs and product info
     setSelectedDOsForWeighing(selectedDOIds);
-    setSelectedProductForWeighing({
-      id: selectedProductForDOSelection.id,
-      name: selectedProductForDOSelection.name,
-      unweighedCount: unweighedItemsCount,
-    });
 
-    // Close DO selection modal and open method modal
+    // Close DO selection modal and open bulk weighing modal directly
     setWeighingDOSelectionOpen(false);
-    setWeighingMethodModalOpen(true);
-  };
-
-  // Handle weighing method selection (combined/individual)
-  const handleWeighingMethodSelect = (method: "combined" | "individual") => {
-    setWeighingMethodModalOpen(false);
-
-    if (!selectedProductForWeighing) {
-      return;
-    }
-
-    if (method === "combined") {
-      // Bulk weighing with selected DOs
-      setWeighingProductId(selectedProductForWeighing.id);
-      setWeighingModalOpen(true);
-    } else if (method === "individual") {
-      // Individual weighing - get items from selected DOs only
-      const selectedItems =
-        shipment?.shipmentItems
-          .filter(
-            (item) =>
-              item.productId === selectedProductForWeighing.id &&
-              item.chosenProduct &&
-              item.status !== "COMPLETED" &&
-              selectedDOsForWeighing.includes(item.deliveryOrderId)
-          )
-          .map((item) => ({
-            shipmentItemId: item.id,
-            deliveryOrderId: item.deliveryOrderId,
-            deliveryOrderNumber: item.deliveryOrder.doNumber,
-            customerName: item.deliveryOrder.customer.name,
-            productName: item.product.name,
-            productUnit: item.product.satuan,
-            requestedQuantity: item.requestedQuantity,
-          })) || [];
-
-      setIndividualWeighingItems(selectedItems);
-      setCurrentWeighingIndex(0);
-      setIndividualWeighingModalOpen(true);
-    }
+    setWeighingProductId(selectedProductForDOSelection.id);
+    setWeighingModalOpen(true);
   };
 
   const handleIndividualWeighItem = (data: {
@@ -1216,7 +1184,6 @@ export default function DetailPengiriman() {
   const handleCloseWeighingModal = () => {
     setWeighingModalOpen(false);
     setWeighingProductId("");
-    setSelectedProductForWeighing(null); // Clear selected product
     setSelectedDOsForWeighing([]); // Clear selected DOs
     // Reset weight values and displays when closing modal
     setGrossWeight("");
@@ -1229,7 +1196,6 @@ export default function DetailPengiriman() {
 
   const handleCloseIndividualWeighingModal = () => {
     setIndividualWeighingModalOpen(false);
-    setSelectedProductForWeighing(null); // Clear selected product
     setCurrentWeighingIndex(0);
     setIndividualWeighingItems([]);
   };
@@ -3403,8 +3369,10 @@ export default function DetailPengiriman() {
 
                   {(() => {
                     // Get existing method directly in the render to ensure it's always current
-                    const existingMethod = getProductWeighingMethod(selectedProductId);
-                    const currentMethod = existingMethod || selectedWeighingMethod;
+                    const existingMethod =
+                      getProductWeighingMethod(selectedProductId);
+                    const currentMethod =
+                      existingMethod || selectedWeighingMethod;
 
                     return (
                       <div className="p-3 sm:p-4 mb-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
@@ -3434,14 +3402,16 @@ export default function DetailPengiriman() {
                             />
                             <label
                               htmlFor="manual-weighing"
-                              className={`ml-3 text-sm ${existingMethod ? 'opacity-90' : ''}`}
+                              className={`ml-3 text-sm ${
+                                existingMethod ? "opacity-90" : ""
+                              }`}
                             >
                               <span className="font-medium text-gray-900 text-sm sm:text-base">
                                 Penimbangan Manual
                               </span>
                               <p className="text-xs text-gray-600 mt-1">
-                                Penimbangan dilakukan secara manual melalui sistem
-                                internal
+                                Penimbangan dilakukan secara manual melalui
+                                sistem internal
                               </p>
                             </label>
                           </div>
@@ -3462,14 +3432,16 @@ export default function DetailPengiriman() {
                             />
                             <label
                               htmlFor="vendor-weighing"
-                              className={`ml-3 text-sm ${existingMethod ? 'opacity-90' : ''}`}
+                              className={`ml-3 text-sm ${
+                                existingMethod ? "opacity-90" : ""
+                              }`}
                             >
-                          <span className="font-medium text-gray-900 text-sm sm:text-base">
-                            Penimbangan Vendor (API)
-                          </span>
+                              <span className="font-medium text-gray-900 text-sm sm:text-base">
+                                Penimbangan Vendor (API)
+                              </span>
                               <p className="text-xs text-gray-600 mt-1">
-                                Penimbangan dilakukan melalui sistem vendor pihak
-                                ketiga
+                                Penimbangan dilakukan melalui sistem vendor
+                                pihak ketiga
                               </p>
                             </label>
                           </div>
@@ -3538,13 +3510,14 @@ export default function DetailPengiriman() {
                   onClick={() => {
                     if (selectedProductId && selectedProductDOs.length > 0) {
                       // Store the data we need for the confirmation
+                      const currentMethod = selectedWeighingMethod || getProductWeighingMethod(selectedProductId);
                       const methodText =
-                        selectedWeighingMethod === "MANUAL"
+                        currentMethod === "MANUAL"
                           ? "Manual"
                           : "Vendor";
                       const productName = selectedProductDOs[0].product.name;
                       const productId = selectedProductId;
-                      const weighingMethod = selectedWeighingMethod;
+                      const weighingMethod = currentMethod;
 
                       // Check if this is a selective loading case
                       // We need to track the loading method that was selected
@@ -3606,7 +3579,7 @@ export default function DetailPengiriman() {
                   disabled={
                     chooseProduct.isPending ||
                     selectiveChooseProduct.isPending ||
-                    !selectedWeighingMethod
+                    !(selectedWeighingMethod || getProductWeighingMethod(selectedProductId))
                   }
                   className="flex-1 text-white bg-blue-600 shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg"
                 >
@@ -3895,7 +3868,7 @@ export default function DetailPengiriman() {
           }
         }}
         items={individualWeighingItems}
-        productName={selectedProductForWeighing?.name || ""}
+        productName={individualWeighingItems[0]?.productName || ""}
         currentIndex={currentWeighingIndex}
         onIndexChange={setCurrentWeighingIndex}
         onWeighItem={handleIndividualWeighItem}
@@ -3907,8 +3880,8 @@ export default function DetailPengiriman() {
       />
 
       {/* Weighing DO Selection Modal */}
-      {selectedProductForDOSelection && (
-        <DOSelectionModal
+      {selectedProductForDOSelection && weighingDOSelectionOpen && (
+        <LoadingGroupSelectionModal
           isOpen={weighingDOSelectionOpen}
           onClose={() => {
             setWeighingDOSelectionOpen(false);
@@ -3916,19 +3889,8 @@ export default function DetailPengiriman() {
           }}
           productName={selectedProductForDOSelection.name}
           productUnit={selectedProductForDOSelection.satuan}
-          deliveryOrders={selectedProductForDOSelection.deliveryOrders}
+          loadingGroups={selectedProductForDOSelection.deliveryOrders as LoadingGroup[]}
           onConfirm={handleWeighingDOSelectionConfirm}
-        />
-      )}
-
-      {/* Weighing Method Selection Modal */}
-      {selectedProductForWeighing && (
-        <WeighingMethodModal
-          open={weighingMethodModalOpen}
-          onOpenChange={setWeighingMethodModalOpen}
-          productName={selectedProductForWeighing.name}
-          unweighedCount={selectedProductForWeighing.unweighedCount}
-          onSelectMethod={handleWeighingMethodSelect}
         />
       )}
 
@@ -4083,7 +4045,7 @@ export default function DetailPengiriman() {
       )}
 
       {/* DO Selection Modal */}
-      {selectedProductForDOSelection && (
+      {selectedProductForDOSelection && doSelectionModalOpen && (
         <DOSelectionModal
           isOpen={doSelectionModalOpen}
           onClose={() => {
@@ -4092,7 +4054,7 @@ export default function DetailPengiriman() {
           }}
           productName={selectedProductForDOSelection.name}
           productUnit={selectedProductForDOSelection.satuan}
-          deliveryOrders={selectedProductForDOSelection.deliveryOrders}
+          deliveryOrders={selectedProductForDOSelection.deliveryOrders as DeliveryOrderForSelection[]}
           onConfirm={handleDOSelectionConfirm}
           isLoading={selectiveChooseProduct.isPending}
         />
