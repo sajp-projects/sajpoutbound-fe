@@ -276,7 +276,7 @@ export default function DetailPengiriman() {
   const hasCancelItemAccess = hasPermission(
     permissions,
     PERMISSION.RESOURCES.PENGIRIMAN,
-    PERMISSION.ACTIONS.DELETE
+    PERMISSION.ACTIONS.CANCEL_ITEMS
   );
 
   // Modal states for customer change and DO revision
