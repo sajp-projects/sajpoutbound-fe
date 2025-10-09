@@ -121,7 +121,10 @@ export function useShipmentsWithParams(
   });
 }
 
-export function useShipment({ id }: { id: string }, options: Record<string, unknown> = {}) {
+export function useShipment(
+  { id }: { id: string },
+  options: Record<string, unknown> = {}
+) {
   return useQuery({
     queryKey: shipmentKeys.detail(id),
     queryFn: async () => {
@@ -520,7 +523,9 @@ export function useShipmentsByDeliveryOrderId(
   });
 }
 
-export function useBulkWeighShipmentItems(options: Record<string, unknown> = {}) {
+export function useBulkWeighShipmentItems(
+  options: Record<string, unknown> = {}
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -564,7 +569,9 @@ export function useBulkWeighShipmentItems(options: Record<string, unknown> = {})
   });
 }
 
-export function useIndividualWeighShipmentItem(options: Record<string, unknown> = {}) {
+export function useIndividualWeighShipmentItem(
+  options: Record<string, unknown> = {}
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -725,7 +732,7 @@ export function useReviseShipmentItemAfterWeighing(
           body: JSON.stringify({
             shipmentId,
             shipmentItemId,
-            newQuantity
+            newQuantity,
           }),
           headers: { "Content-Type": "application/json" },
         }
@@ -1145,6 +1152,118 @@ export function useReduceQuantity(
 
       if (options.onSuccess) {
         options.onSuccess(data, variables, undefined);
+      }
+    },
+    ...options,
+  });
+}
+
+/**
+ * Cancel shipment item - Reflected to DO
+ * This will cancel the item in shipment and reduce the quantity in delivery order
+ */
+export function useCancelItemReflectedToDO(
+  options: UseMutationOptions<
+    ApiResponse<{ message: string; shipmentItemId: string }>,
+    ApiErrorResult,
+    string
+  > = {}
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<{ message: string; shipmentItemId: string }>,
+    ApiErrorResult,
+    string
+  >({
+    mutationFn: async (shipmentItemId: string) => {
+      const response = await fetchApi(
+        `${BASE_URL}/shipments/items/${shipmentItemId}/cancel-reflected`,
+        {},
+        {
+          method: "DELETE",
+        }
+      );
+
+      //eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result: any = await response.json();
+
+      if (!result.success) {
+        // Backend returns error in flat format: { success, message, errorType, details }
+        throw new Error(
+          result.message || "Terjadi kesalahan saat membatalkan item"
+        );
+      }
+
+      return result;
+    },
+    onSuccess: (data, variables, context) => {
+      // Invalidate shipment queries to refetch data
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.all,
+      });
+
+      if (options.onSuccess) {
+        options.onSuccess(data, variables, context);
+      }
+    },
+    ...options,
+  });
+}
+
+/**
+ * Cancel shipment item - Shipment Only
+ * This will cancel the item only in shipment, returning quantity to pending in DO
+ */
+export function useCancelItemShipmentOnly(
+  options: UseMutationOptions<
+    ApiResponse<{ message: string; shipmentItemId: string }>,
+    ApiErrorResult,
+    string
+  > = {}
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<{ message: string; shipmentItemId: string }>,
+    ApiErrorResult,
+    string
+  >({
+    mutationFn: async (shipmentItemId: string) => {
+      const response = await fetchApi(
+        `${BASE_URL}/shipments/items/${shipmentItemId}/cancel-shipment-only`,
+        {},
+        {
+          method: "DELETE",
+        }
+      );
+
+      //eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result: any = await response.json();
+
+      if (!result.success) {
+        // Backend returns error in flat format: { success, message, errorType, details }
+        throw new Error(
+          result.message || "Terjadi kesalahan saat membatalkan item"
+        );
+      }
+
+      return result;
+    },
+    onSuccess: (data, variables, context) => {
+      // Invalidate shipment queries to refetch data
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.all,
+      });
+
+      if (options.onSuccess) {
+        options.onSuccess(data, variables, context);
       }
     },
     ...options,

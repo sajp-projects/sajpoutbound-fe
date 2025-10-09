@@ -1,6 +1,8 @@
 import { useUploadPlatePhoto, useVerifyPlateNumber } from "@/hooks/media";
 import {
   useBulkWeighShipmentItems,
+  useCancelItemReflectedToDO,
+  useCancelItemShipmentOnly,
   useChooseProduct,
   useDeleteShipment,
   useIndividualWeighShipmentItem,
@@ -34,6 +36,7 @@ import {
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 
 import { ChangeCustomerModal } from "@/components/ChangeCustomerModal";
+import { CancelItemModal } from "@/components/CancelItemModal";
 import { ErrorState } from "@/components/ErrorState";
 import { IndividualWeighingModal } from "@/components/IndividualWeighingModal";
 import { LoadingState } from "@/components/LoadingState";
@@ -211,6 +214,9 @@ export default function DetailPengiriman() {
   const [selectedDOsForWeighing, setSelectedDOsForWeighing] = useState<
     string[]
   >([]);
+  const [selectedLoadingGroupId, setSelectedLoadingGroupId] = useState<
+    string | undefined
+  >(undefined);
 
   // States for individual weighing modal
   const [individualWeighingModalOpen, setIndividualWeighingModalOpen] =
@@ -266,6 +272,13 @@ export default function DetailPengiriman() {
     PERMISSION.ACTIONS.REDUCE_ITEMS
   );
 
+  // Permission check for cancel items - using DELETE permission for shipment resource
+  const hasCancelItemAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PENGIRIMAN,
+    PERMISSION.ACTIONS.DELETE
+  );
+
   // Modal states for customer change and DO revision
   const [showChangeCustomerModal, setShowChangeCustomerModal] = useState(false);
   const [showReviseModal, setShowReviseModal] = useState(false);
@@ -304,6 +317,14 @@ export default function DetailPengiriman() {
   // Reduce Quantity Modal states
   const [reduceQuantityModalOpen, setReduceQuantityModalOpen] = useState(false);
   const [selectedReduceQuantityItem, setSelectedReduceQuantityItem] = useState<{
+    shipmentItem: ShipmentItem;
+    product: ProductItem;
+    deliveryOrder: GroupedDeliveryOrder;
+  } | null>(null);
+
+  // Cancel Item Modal states
+  const [cancelItemModalOpen, setCancelItemModalOpen] = useState(false);
+  const [selectedCancelItem, setSelectedCancelItem] = useState<{
     shipmentItem: ShipmentItem;
     product: ProductItem;
     deliveryOrder: GroupedDeliveryOrder;
@@ -355,6 +376,49 @@ export default function DetailPengiriman() {
       showErrorAlert(
         "Gagal Transfer Items",
         error.message || "Terjadi kesalahan saat transfer items"
+      );
+    },
+  });
+
+  // Cancel item mutations
+  const cancelItemReflected = useCancelItemReflectedToDO({
+    onSuccess: () => {
+      showSuccessAlert(
+        "Item Dibatalkan!",
+        "Item berhasil dibatalkan dan direfleksikan ke Delivery Order"
+      );
+      setCancelItemModalOpen(false);
+      setSelectedCancelItem(null);
+      refetch();
+      refetchChosenProducts();
+    },
+    onError: (error) => {
+      setCancelItemModalOpen(false);
+      setSelectedCancelItem(null);
+      showErrorAlert(
+        "Gagal Membatalkan Item",
+        error.message || "Terjadi kesalahan saat membatalkan item"
+      );
+    },
+  });
+
+  const cancelItemShipmentOnly = useCancelItemShipmentOnly({
+    onSuccess: () => {
+      showSuccessAlert(
+        "Item Dibatalkan!",
+        "Item berhasil dibatalkan dari pengiriman"
+      );
+      setCancelItemModalOpen(false);
+      setSelectedCancelItem(null);
+      refetch();
+      refetchChosenProducts();
+    },
+    onError: (error) => {
+      setCancelItemModalOpen(false);
+      setSelectedCancelItem(null);
+      showErrorAlert(
+        "Gagal Membatalkan Item",
+        error.message || "Terjadi kesalahan saat membatalkan item"
       );
     },
   });
@@ -511,9 +575,9 @@ export default function DetailPengiriman() {
     // Store the selected DOs and open the weighing method selection modal
     const selectedDOs = selectedDOIds
       .map((doId) => {
-        const doInfo = (selectedProductForDOSelection.deliveryOrders as DeliveryOrderForSelection[]).find(
-          (deliveryOrder) => deliveryOrder.id === doId
-        );
+        const doInfo = (
+          selectedProductForDOSelection.deliveryOrders as DeliveryOrderForSelection[]
+        ).find((deliveryOrder) => deliveryOrder.id === doId);
         if (!doInfo) return null;
 
         return {
@@ -523,8 +587,16 @@ export default function DetailPengiriman() {
             id: selectedProductForDOSelection.id,
             name: selectedProductForDOSelection.name,
             quantity: doInfo.items.reduce(
-              (sum: number, item: { id: string; productId: string; requestedQuantity: number; pendingQuantity: number; status: string }) =>
-                sum + item.requestedQuantity,
+              (
+                sum: number,
+                item: {
+                  id: string;
+                  productId: string;
+                  requestedQuantity: number;
+                  pendingQuantity: number;
+                  status: string;
+                }
+              ) => sum + item.requestedQuantity,
               0
             ),
             satuan: selectedProductForDOSelection.satuan,
@@ -977,6 +1049,33 @@ export default function DetailPengiriman() {
     setSelectedReduceQuantityItem(null);
   };
 
+  // Cancel item handlers
+  const handleOpenCancelItemModal = (
+    shipmentItem: ShipmentItem,
+    product: ProductItem,
+    deliveryOrder: GroupedDeliveryOrder
+  ) => {
+    setSelectedCancelItem({ shipmentItem, product, deliveryOrder });
+    setCancelItemModalOpen(true);
+  };
+
+  const handleCloseCancelItemModal = () => {
+    setCancelItemModalOpen(false);
+    setSelectedCancelItem(null);
+  };
+
+  const handleCancelItemConfirm = (mode: "reflected" | "shipment-only") => {
+    if (!selectedCancelItem) return;
+
+    const shipmentItemId = selectedCancelItem.shipmentItem.id;
+
+    if (mode === "reflected") {
+      cancelItemReflected.mutate(shipmentItemId);
+    } else {
+      cancelItemShipmentOnly.mutate(shipmentItemId);
+    }
+  };
+
   const handleTransferSubmit = (
     targetCustomerId: string,
     items: TransferItem[]
@@ -1094,7 +1193,7 @@ export default function DetailPengiriman() {
     }
 
     // Group items by loadingGroupId
-    // Only include items that have unweighed items (status !== "COMPLETED")
+    // Only include items that have unweighed items (status !== "COMPLETED" and status !== "CANCELLED")
     const loadingGroups = new Map();
 
     shipment.shipmentItems
@@ -1102,7 +1201,8 @@ export default function DetailPengiriman() {
         (item) =>
           item.productId === productId &&
           item.chosenProduct &&
-          item.status !== "COMPLETED"
+          item.status !== "COMPLETED" &&
+          item.status !== "CANCELLED"
       )
       .forEach((item) => {
         const groupId = item.loadingGroupId || "unknown";
@@ -1153,13 +1253,13 @@ export default function DetailPengiriman() {
   };
 
   // Handle loading group selection confirmation for weighing - goes directly to bulk weighing
-  const handleWeighingDOSelectionConfirm = (selectedDOIds: string[]) => {
+  const handleWeighingDOSelectionConfirm = (loadingGroupId: string) => {
     if (!selectedProductForDOSelection) {
       return;
     }
 
-    // Store selected DOs and product info
-    setSelectedDOsForWeighing(selectedDOIds);
+    // Store selected loading group ID
+    setSelectedLoadingGroupId(loadingGroupId);
 
     // Close DO selection modal and open bulk weighing modal directly
     setWeighingDOSelectionOpen(false);
@@ -1184,7 +1284,8 @@ export default function DetailPengiriman() {
   const handleCloseWeighingModal = () => {
     setWeighingModalOpen(false);
     setWeighingProductId("");
-    setSelectedDOsForWeighing([]); // Clear selected DOs
+    setSelectedDOsForWeighing([]); // Clear selected DOs (kept for backward compat)
+    setSelectedLoadingGroupId(undefined); // Clear selected loading group
     // Reset weight values and displays when closing modal
     setGrossWeight("");
     setNetWeight("");
@@ -1286,13 +1387,15 @@ export default function DetailPengiriman() {
       "Apakah Anda yakin ingin menyimpan hasil penimbangan untuk produk ini?"
     ).then((result) => {
       if (isConfirmed(result)) {
+        if (!selectedLoadingGroupId) {
+          console.error("Loading group ID is required for weighing");
+          return;
+        }
+        
         bulkWeighItems.mutate({
           shipmentId,
           productId: weighingProductId,
-          deliveryOrderIds:
-            selectedDOsForWeighing.length > 0
-              ? selectedDOsForWeighing
-              : undefined,
+          loadingGroupId: selectedLoadingGroupId,
           grossWeight: parseFloat(grossWeight),
           netWeight: netWeight ? parseFloat(netWeight) : undefined,
           tareWeight: parseFloat(tareWeight),
@@ -1812,6 +1915,7 @@ export default function DetailPengiriman() {
                         shipment &&
                         !shipment.deletedAt &&
                         shipment.status !== "SELESAI" &&
+                        shipment.status !== "CANCEL" &&
                         shipment.status !== "COMPLETED" && (
                           <Link
                             to={`/pengiriman/${shipmentId}/edit`}
@@ -1830,6 +1934,7 @@ export default function DetailPengiriman() {
                         shipment &&
                         !shipment.deletedAt &&
                         shipment.status !== "SELESAI" &&
+                        shipment.status !== "CANCEL" &&
                         shipment.status !== "COMPLETED" && (
                           <Button
                             variant="outline"
@@ -1935,6 +2040,7 @@ export default function DetailPengiriman() {
                             }
                           >();
 
+                          // Don't filter by CANCELLED here - show all items in the table
                           shipment.shipmentItems.forEach((item) => {
                             const productId = item.productId;
                             if (!productMap.has(productId)) {
@@ -2018,11 +2124,14 @@ export default function DetailPengiriman() {
                                       shipment.shipmentItems.filter(
                                         (si) =>
                                           si.productId === product.id &&
-                                          si.chosenProduct
+                                          si.chosenProduct &&
+                                          si.status !== "CANCELLED"
                                       ).length;
                                     const totalCount =
                                       shipment.shipmentItems.filter(
-                                        (si) => si.productId === product.id
+                                        (si) =>
+                                          si.productId === product.id &&
+                                          si.status !== "CANCELLED"
                                       ).length;
 
                                     if (chosenCount === 0) {
@@ -2067,17 +2176,21 @@ export default function DetailPengiriman() {
                                         shipment.shipmentItems.filter(
                                           (si) =>
                                             si.productId === product.id &&
-                                            si.chosenProduct
+                                            si.chosenProduct &&
+                                            si.status !== "CANCELLED"
                                         ).length;
                                       const totalCount =
                                         shipment.shipmentItems.filter(
-                                          (si) => si.productId === product.id
+                                          (si) =>
+                                            si.productId === product.id &&
+                                            si.status !== "CANCELLED"
                                         ).length;
                                       const allWeighed = shipment.shipmentItems
                                         .filter(
                                           (si) =>
                                             si.productId === product.id &&
-                                            si.chosenProduct
+                                            si.chosenProduct &&
+                                            si.status !== "CANCELLED"
                                         )
                                         .every(
                                           (si) => si.status === "COMPLETED"
@@ -2339,6 +2452,9 @@ export default function DetailPengiriman() {
 
                       shipment.shipmentItems.forEach((item) => {
                         const productId = item.productId;
+                        // Track all items for display, but don't count CANCELLED items for status/actions
+                        const isCancelled = item.status === "CANCELLED";
+
                         if (!productMap.has(productId)) {
                           productMap.set(productId, {
                             id: productId,
@@ -2348,19 +2464,23 @@ export default function DetailPengiriman() {
                             warehouse: item.warehouse,
                             doIds: new Set([item.deliveryOrderId]),
                             totalQuantity: item.requestedQuantity,
-                            chosenCount: item.chosenProduct ? 1 : 0,
-                            totalCount: 1,
-                            hasPendingItems: !item.chosenProduct,
+                            chosenCount:
+                              !isCancelled && item.chosenProduct ? 1 : 0,
+                            totalCount: !isCancelled ? 1 : 0,
+                            hasPendingItems:
+                              !isCancelled && !item.chosenProduct,
                           });
                         } else {
                           const product = productMap.get(productId)!;
                           product.doIds.add(item.deliveryOrderId);
                           product.totalQuantity += item.requestedQuantity;
-                          product.totalCount += 1;
-                          if (item.chosenProduct) {
-                            product.chosenCount += 1;
-                          } else {
-                            product.hasPendingItems = true;
+                          if (!isCancelled) {
+                            product.totalCount += 1;
+                            if (item.chosenProduct) {
+                              product.chosenCount += 1;
+                            } else {
+                              product.hasPendingItems = true;
+                            }
                           }
                         }
                       });
@@ -2454,7 +2574,8 @@ export default function DetailPengiriman() {
                                   .filter(
                                     (si) =>
                                       si.productId === product.id &&
-                                      si.chosenProduct
+                                      si.chosenProduct &&
+                                      si.status !== "CANCELLED"
                                   )
                                   .every((si) => si.status === "COMPLETED");
 
@@ -2681,6 +2802,8 @@ export default function DetailPengiriman() {
                   hasTransferItemsAccess={hasTransferItemsAccess}
                   onOpenReduceQuantityModal={handleOpenReduceQuantityModal}
                   hasReduceQuantityAccess={hasReduceQuantityAccess}
+                  onOpenCancelItemModal={handleOpenCancelItemModal}
+                  hasCancelItemAccess={hasCancelItemAccess}
                 />
               </div>
             )}
@@ -3510,11 +3633,11 @@ export default function DetailPengiriman() {
                   onClick={() => {
                     if (selectedProductId && selectedProductDOs.length > 0) {
                       // Store the data we need for the confirmation
-                      const currentMethod = selectedWeighingMethod || getProductWeighingMethod(selectedProductId);
+                      const currentMethod =
+                        selectedWeighingMethod ||
+                        getProductWeighingMethod(selectedProductId);
                       const methodText =
-                        currentMethod === "MANUAL"
-                          ? "Manual"
-                          : "Vendor";
+                        currentMethod === "MANUAL" ? "Manual" : "Vendor";
                       const productName = selectedProductDOs[0].product.name;
                       const productId = selectedProductId;
                       const weighingMethod = currentMethod;
@@ -3579,7 +3702,10 @@ export default function DetailPengiriman() {
                   disabled={
                     chooseProduct.isPending ||
                     selectiveChooseProduct.isPending ||
-                    !(selectedWeighingMethod || getProductWeighingMethod(selectedProductId))
+                    !(
+                      selectedWeighingMethod ||
+                      getProductWeighingMethod(selectedProductId)
+                    )
                   }
                   className="flex-1 text-white bg-blue-600 shadow-md transition-all duration-200 hover:bg-blue-700 hover:shadow-lg"
                 >
@@ -3889,7 +4015,9 @@ export default function DetailPengiriman() {
           }}
           productName={selectedProductForDOSelection.name}
           productUnit={selectedProductForDOSelection.satuan}
-          loadingGroups={selectedProductForDOSelection.deliveryOrders as LoadingGroup[]}
+          loadingGroups={
+            selectedProductForDOSelection.deliveryOrders as LoadingGroup[]
+          }
           onConfirm={handleWeighingDOSelectionConfirm}
         />
       )}
@@ -3950,6 +4078,22 @@ export default function DetailPengiriman() {
           onError={(message) => {
             showErrorAlert("Gagal Mengurangi Kuantitas", message);
           }}
+        />
+      )}
+
+      {/* Cancel Item Modal */}
+      {selectedCancelItem && (
+        <CancelItemModal
+          isOpen={cancelItemModalOpen}
+          onClose={handleCloseCancelItemModal}
+          onConfirm={handleCancelItemConfirm}
+          productName={selectedCancelItem.product.name}
+          customerName={selectedCancelItem.deliveryOrder.customer.name}
+          quantity={selectedCancelItem.shipmentItem.requestedQuantity}
+          unit={selectedCancelItem.product.satuan}
+          isLoading={
+            cancelItemReflected.isPending || cancelItemShipmentOnly.isPending
+          }
         />
       )}
 
@@ -4054,7 +4198,9 @@ export default function DetailPengiriman() {
           }}
           productName={selectedProductForDOSelection.name}
           productUnit={selectedProductForDOSelection.satuan}
-          deliveryOrders={selectedProductForDOSelection.deliveryOrders as DeliveryOrderForSelection[]}
+          deliveryOrders={
+            selectedProductForDOSelection.deliveryOrders as DeliveryOrderForSelection[]
+          }
           onConfirm={handleDOSelectionConfirm}
           isLoading={selectiveChooseProduct.isPending}
         />

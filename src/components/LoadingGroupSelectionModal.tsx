@@ -19,7 +19,7 @@ interface LoadingGroupSelectionModalProps {
   productName: string;
   productUnit: string;
   loadingGroups: LoadingGroup[];
-  onConfirm: (selectedDOIds: string[]) => void;
+  onConfirm: (loadingGroupId: string) => void;
   isLoading?: boolean;
 }
 
@@ -43,7 +43,7 @@ export function LoadingGroupSelectionModal({
     const selectedGroup = loadingGroups.find(g => g.id === selectedGroupId);
     if (!selectedGroup) return;
 
-    onConfirm(selectedGroup.deliveryOrderIds);
+    onConfirm(selectedGroup.id);
     setSelectedGroupId(null);
     onClose();
   };

@@ -1,5 +1,15 @@
 export type ShipmentType = "ANTAR" | "JEMPUT";
-export type ShipmentStatus = "PENDING" | "PROSES" | "SELESAI" | "COMPLETED";
+export type ShipmentStatus =
+  | "PENDING"
+  | "PROSES"
+  | "SELESAI"
+  | "COMPLETED"
+  | "CANCEL";
+export type ShipmentItemStatus =
+  | "PENDING"
+  | "CHOSEN"
+  | "COMPLETED"
+  | "CANCELLED";
 export type WeighingMethod = "MANUAL" | "VENDOR";
 
 export interface ShipmentItem {
@@ -9,7 +19,7 @@ export interface ShipmentItem {
   productId: string;
   requestedQuantity: number;
   weightedQuantity: number | null;
-  status: ShipmentStatus;
+  status: ShipmentItemStatus;
   locationType: string;
   chosenProduct?: boolean;
   warehouseId: string;
@@ -379,8 +389,8 @@ export interface GroupedDeliveryOrder {
 export interface BulkWeighShipmentInput {
   shipmentId: string;
   productId: string;
+  loadingGroupId: string;
   grossWeight: number;
-  deliveryOrderIds?: string[];
   netWeight?: number;
   tareWeight?: number;
 }

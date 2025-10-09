@@ -552,6 +552,16 @@ export default function DetailDo() {
                                 </Badge>
                               </div>
                             </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-right text-gray-700">
+                              <div className="inline-block ml-1">
+                                <Badge
+                                  variant="outline"
+                                  className="font-medium px-2 py-0.5 bg-orange-100 text-orange-800 border-orange-200"
+                                >
+                                  Kuantitas Dibatalkan
+                                </Badge>
+                              </div>
+                            </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
                               Satuan
                             </TableHead>
@@ -561,7 +571,7 @@ export default function DetailDo() {
                           {deliveryOrder.items.length === 0 ? (
                             <TableRow>
                               <TableCell
-                                colSpan={7}
+                                colSpan={8}
                                 className="px-4 py-6 text-sm text-center text-gray-500"
                               >
                                 Tidak ada item dalam delivery order ini
@@ -593,6 +603,9 @@ export default function DetailDo() {
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
                                   {formatInputNumber(item.completedQuantity)}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                  {formatInputNumber(item.cancelledQuantity || 0)}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   {item.product.satuan}
@@ -643,7 +656,7 @@ export default function DetailDo() {
                               </span>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-2 mt-3">
+                            <div className="grid grid-cols-2 gap-2 mt-3">
                               <div className="flex flex-col items-center p-2 bg-red-50 rounded-md border border-red-100">
                                 <Badge
                                   variant="outline"
@@ -671,10 +684,21 @@ export default function DetailDo() {
                                   variant="outline"
                                   className="mb-1 font-medium px-1.5 py-0.5 text-xs bg-green-100 text-green-800 border-green-200"
                                 >
-                                  Completed
+                                  Selesai
                                 </Badge>
                                 <span className="text-sm font-medium text-green-800">
                                   {formatInputNumber(item.completedQuantity)}
+                                </span>
+                              </div>
+                              <div className="flex flex-col items-center p-2 bg-orange-50 rounded-md border border-orange-100">
+                                <Badge
+                                  variant="outline"
+                                  className="mb-1 font-medium px-1.5 py-0.5 text-xs bg-orange-100 text-orange-800 border-orange-200"
+                                >
+                                  Dibatalkan
+                                </Badge>
+                                <span className="text-sm font-medium text-orange-800">
+                                  {formatInputNumber(item.cancelledQuantity || 0)}
                                 </span>
                               </div>
                             </div>

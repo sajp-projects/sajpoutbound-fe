@@ -1,4 +1,12 @@
-import { ArrowRightLeft, Loader2, MapPin, MinusCircle, Pencil, UserCheck } from "lucide-react";
+import {
+  ArrowRightLeft,
+  Loader2,
+  MapPin,
+  MinusCircle,
+  Pencil,
+  UserCheck,
+  XCircle,
+} from "lucide-react";
 import { Link } from "react-router";
 
 import {
@@ -40,8 +48,19 @@ interface DeliveryOrderAccordionProps {
   onOpenTransferItemsModal: () => void;
   hasTransferItemsAccess?: boolean;
   // Reduce quantity props
-  onOpenReduceQuantityModal?: (shipmentItem: ShipmentItem, product: ProductItem, deliveryOrder: GroupedDeliveryOrder) => void;
+  onOpenReduceQuantityModal?: (
+    shipmentItem: ShipmentItem,
+    product: ProductItem,
+    deliveryOrder: GroupedDeliveryOrder
+  ) => void;
   hasReduceQuantityAccess?: boolean;
+  // Cancel item props
+  onOpenCancelItemModal?: (
+    shipmentItem: ShipmentItem,
+    product: ProductItem,
+    deliveryOrder: GroupedDeliveryOrder
+  ) => void;
+  hasCancelItemAccess?: boolean;
 }
 
 export function DeliveryOrderAccordion({
@@ -58,6 +77,8 @@ export function DeliveryOrderAccordion({
   hasTransferItemsAccess = false,
   onOpenReduceQuantityModal,
   hasReduceQuantityAccess = false,
+  onOpenCancelItemModal,
+  hasCancelItemAccess = false,
 }: DeliveryOrderAccordionProps) {
   // Group items by delivery order
   const doMap = new Map<string, GroupedDeliveryOrder>();
@@ -88,9 +109,13 @@ export function DeliveryOrderAccordion({
   const groupedDeliveryOrders = Array.from(doMap.values());
 
   // Helper function to check if an item is selected for transfer
-  const isItemSelected = (deliveryOrderId: string, productId: string): boolean => {
+  const isItemSelected = (
+    deliveryOrderId: string,
+    productId: string
+  ): boolean => {
     return selectedTransferItems.some(
-      (item) => item.deliveryOrderId === deliveryOrderId && item.productId === productId
+      (item) =>
+        item.deliveryOrderId === deliveryOrderId && item.productId === productId
     );
   };
 
@@ -117,9 +142,10 @@ export function DeliveryOrderAccordion({
   };
 
   // Check if there are any items that can be transferred
-  const hasTransferableItems = shipmentStatus === "SELESAI" &&
-    groupedDeliveryOrders.some(deliveryOrder =>
-      deliveryOrder.products.some(product => product.chosenProduct)
+  const hasTransferableItems =
+    shipmentStatus === "SELESAI" &&
+    groupedDeliveryOrders.some((deliveryOrder) =>
+      deliveryOrder.products.some((product) => product.chosenProduct)
     );
 
   return (
@@ -129,16 +155,19 @@ export function DeliveryOrderAccordion({
           Daftar Delivery Order
         </h4>
         {/* Transfer Items button - only show for completed shipments with selected items */}
-        {hasTransferItemsAccess && hasTransferableItems && selectedTransferItems.length > 0 && (
-          <Button
-            onClick={onOpenTransferItemsModal}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-            size="sm"
-          >
-            <ArrowRightLeft className="w-4 h-4 mr-2" />
-            Transfer {selectedTransferItems.length} Item{selectedTransferItems.length > 1 ? 's' : ''}
-          </Button>
-        )}
+        {hasTransferItemsAccess &&
+          hasTransferableItems &&
+          selectedTransferItems.length > 0 && (
+            <Button
+              onClick={onOpenTransferItemsModal}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+              size="sm"
+            >
+              <ArrowRightLeft className="w-4 h-4 mr-2" />
+              Transfer {selectedTransferItems.length} Item
+              {selectedTransferItems.length > 1 ? "s" : ""}
+            </Button>
+          )}
       </div>
       <Accordion type="multiple" className="space-y-4">
         {groupedDeliveryOrders.map(
@@ -256,8 +285,8 @@ export function DeliveryOrderAccordion({
                         <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
                           Status
                         </TableHead>
-                        {/* Actions column for reduce quantity - only show for completed shipments */}
-                        {hasReduceQuantityAccess && shipmentStatus === "SELESAI" && (
+                        {/* Actions column for reduce quantity or cancel - only show for chosen items */}
+                        {(hasReduceQuantityAccess || hasCancelItemAccess) && (
                           <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
                             Aksi
                           </TableHead>
@@ -269,97 +298,172 @@ export function DeliveryOrderAccordion({
                         (product: ProductItem, index: number) => {
                           // Find the corresponding shipment item
                           const shipmentItem = shipmentItems.find(
-                            item => item.deliveryOrderId === deliveryOrder.id && item.productId === product.id
+                            (item) =>
+                              item.deliveryOrderId === deliveryOrder.id &&
+                              item.productId === product.id
                           );
 
-                          const isSelected = isItemSelected(deliveryOrder.id, product.id);
-                          const canBeTransferred = product.chosenProduct && hasTransferItemsAccess && hasTransferableItems;
-                          const isDisabled = shipmentItem?.requestedQuantity === 0;
+                          const isSelected = isItemSelected(
+                            deliveryOrder.id,
+                            product.id
+                          );
+                          const canBeTransferred =
+                            product.chosenProduct &&
+                            hasTransferItemsAccess &&
+                            hasTransferableItems;
+                          const isDisabled =
+                            shipmentItem?.requestedQuantity === 0;
 
                           return (
-                            <TableRow 
+                            <TableRow
                               key={`${deliveryOrder.id}-${product.id}`}
-                              className={isDisabled ? "opacity-50 bg-gray-50" : ""}
+                              className={
+                                isDisabled ? "opacity-50 bg-gray-50" : ""
+                              }
                             >
                               {/* Transfer checkbox column */}
-                              {hasTransferItemsAccess && hasTransferableItems && (
-                                <TableCell className="pl-2 pr-2 py-3 text-center">
-                                  {canBeTransferred && shipmentItem && !isDisabled ? (
-                                    <SimpleCheckbox
-                                      checked={isSelected}
-                                      onCheckedChange={(checked: boolean) => {
-                                        const transferItem = createTransferItem(deliveryOrder, product, shipmentItem);
-                                        onTransferItemSelect(transferItem, checked);
-                                      }}
-                                    />
-                                  ) : (
-                                    <div className="w-4 h-4" /> // Empty space for items that can't be transferred
-                                  )}
-                                </TableCell>
-                              )}
+                              {hasTransferItemsAccess &&
+                                hasTransferableItems && (
+                                  <TableCell className="pl-2 pr-2 py-3 text-center">
+                                    {canBeTransferred &&
+                                    shipmentItem &&
+                                    !isDisabled ? (
+                                      <SimpleCheckbox
+                                        checked={isSelected}
+                                        onCheckedChange={(checked: boolean) => {
+                                          const transferItem =
+                                            createTransferItem(
+                                              deliveryOrder,
+                                              product,
+                                              shipmentItem
+                                            );
+                                          onTransferItemSelect(
+                                            transferItem,
+                                            checked
+                                          );
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="w-4 h-4" /> // Empty space for items that can't be transferred
+                                    )}
+                                  </TableCell>
+                                )}
                               <TableCell className="px-4 py-3 text-sm text-gray-600">
                                 {index + 1}
                               </TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">
-                              <Link
-                                to={`/barang/${product.id}`}
-                                className="text-blue-600 hover:underline"
-                              >
-                                {product.name}
-                              </Link>
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">
-                              {product.warehouse.name}
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">
-                              <span className="flex items-center">
-                                <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
-                                {product.locationType || "GUDANG"}
-                              </span>
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                              {formatInputNumber(product.quantity)}{" "}
-                              {product.satuan}
-                            </TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                              {product.chosenProduct ? (
-                                <Badge
-                                  variant="outline"
-                                  className="text-green-700 bg-green-50 border-green-200"
+                              <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                <Link
+                                  to={`/barang/${product.id}`}
+                                  className="text-blue-600 hover:underline"
                                 >
-                                  Sudah Dimuat
-                                </Badge>
-                              ) : (
-                                <Badge
-                                  variant="outline"
-                                  className="text-yellow-700 bg-yellow-50 border-yellow-200 text-center"
-                                >
-                                  Belum Dimuat
-                                </Badge>
-                              )}
-                            </TableCell>
-                            {/* Actions cell for reduce quantity - only show for items that are chosen but not yet weighted */}
-                            {hasReduceQuantityAccess && shipmentItem && shipmentItem.chosenProduct && !shipmentItem.weightedQuantity && onOpenReduceQuantityModal && !isDisabled && (
-                              <TableCell className="px-4 py-3 text-center">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onOpenReduceQuantityModal(shipmentItem, product, deliveryOrder);
-                                  }}
-                                  title="Kurangi Kuantitas"
-                                >
-                                  <MinusCircle className="w-3 h-3" />
-                                  <span className="hidden sm:inline ml-1">Kurangi</span>
-                                </Button>
+                                  {product.name}
+                                </Link>
                               </TableCell>
-                            )}
-                          </TableRow>
-                        );
-                      }
-                    )}
+                              <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                {product.warehouse.name}
+                              </TableCell>
+                              <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                <span className="flex items-center">
+                                  <MapPin className="w-3.5 h-3.5 mr-1 text-gray-400" />
+                                  {product.locationType || "GUDANG"}
+                                </span>
+                              </TableCell>
+                              <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
+                                {formatInputNumber(product.quantity)}{" "}
+                                {product.satuan}
+                              </TableCell>
+                              <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
+                                {shipmentItem?.status === "CANCELLED" ? (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-red-700 bg-red-50 border-red-200"
+                                  >
+                                    Dibatalkan
+                                  </Badge>
+                                ) : product.chosenProduct ? (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-green-700 bg-green-50 border-green-200"
+                                  >
+                                    Sudah Dimuat
+                                  </Badge>
+                                ) : (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-yellow-700 bg-yellow-50 border-yellow-200 text-center"
+                                  >
+                                    Belum Dimuat
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              {/* Actions cell for reduce quantity or cancel */}
+                              {(hasReduceQuantityAccess ||
+                                hasCancelItemAccess) &&
+                                shipmentItem &&
+                                shipmentItem.chosenProduct &&
+                                !isDisabled && (
+                                  <TableCell className="px-4 py-3 text-center">
+                                    <div className="flex justify-center gap-2">
+                                      {/* Reduce quantity button - show for chosen items that aren't weighted yet */}
+                                      {hasReduceQuantityAccess &&
+                                        shipmentItem &&
+                                        shipmentItem.chosenProduct &&
+                                        !shipmentItem.weightedQuantity &&
+                                        onOpenReduceQuantityModal &&
+                                        !isDisabled && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              onOpenReduceQuantityModal(
+                                                shipmentItem,
+                                                product,
+                                                deliveryOrder
+                                              );
+                                            }}
+                                            title="Kurangi Kuantitas"
+                                          >
+                                            <MinusCircle className="w-3 h-3" />
+                                            <span className="hidden sm:inline ml-1">
+                                              Kurangi
+                                            </span>
+                                          </Button>
+                                        )}
+
+                                      {/* Cancel button - only show for items that have been CHOSEN (loaded) but not yet COMPLETED or CANCELLED */}
+                                      {hasCancelItemAccess &&
+                                        product.chosenProduct &&
+                                        shipmentItem.status === "CHOSEN" &&
+                                        onOpenCancelItemModal && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="text-red-600 border-red-200 hover:bg-red-50"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              onOpenCancelItemModal(
+                                                shipmentItem,
+                                                product,
+                                                deliveryOrder
+                                              );
+                                            }}
+                                            title="Batalkan Item"
+                                          >
+                                            <XCircle className="w-3 h-3" />
+                                            <span className="hidden sm:inline ml-1">
+                                              Batalkan
+                                            </span>
+                                          </Button>
+                                        )}
+                                    </div>
+                                  </TableCell>
+                                )}
+                            </TableRow>
+                          );
+                        }
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -367,43 +471,70 @@ export function DeliveryOrderAccordion({
                 {/* Mobile view untuk product dalam DO */}
                 <div className="sm:hidden">
                   <div className="p-4 space-y-3">
-                    {deliveryOrder.products.map(
-                      (product: ProductItem) => {
-                        // Find the corresponding shipment item for mobile view too
-                        const shipmentItem = shipmentItems.find(
-                          item => item.deliveryOrderId === deliveryOrder.id && item.productId === product.id
-                        );
+                    {deliveryOrder.products.map((product: ProductItem) => {
+                      // Find the corresponding shipment item for mobile view too
+                      const shipmentItem = shipmentItems.find(
+                        (item) =>
+                          item.deliveryOrderId === deliveryOrder.id &&
+                          item.productId === product.id
+                      );
 
-                        const isSelected = isItemSelected(deliveryOrder.id, product.id);
-                        const canBeTransferred = product.chosenProduct && hasTransferItemsAccess && hasTransferableItems;
-                        const isDisabled = shipmentItem?.requestedQuantity === 0;
+                      const isSelected = isItemSelected(
+                        deliveryOrder.id,
+                        product.id
+                      );
+                      const canBeTransferred =
+                        product.chosenProduct &&
+                        hasTransferItemsAccess &&
+                        hasTransferableItems;
+                      const isDisabled = shipmentItem?.requestedQuantity === 0;
 
-                        return (
-                          <div
-                            key={`${deliveryOrder.id}-${product.id}`}
-                            className={`p-3 rounded-lg border border-gray-200 ${isDisabled ? "opacity-50 bg-gray-50" : ""}`}
-                          >
-                            <div className="flex justify-between items-center mb-2">
-                              <div className="flex items-center">
-                                {/* Transfer checkbox for mobile */}
-                                {hasTransferItemsAccess && hasTransferableItems && canBeTransferred && shipmentItem && !isDisabled && (
+                      return (
+                        <div
+                          key={`${deliveryOrder.id}-${product.id}`}
+                          className={`p-3 rounded-lg border border-gray-200 ${
+                            isDisabled ? "opacity-50 bg-gray-50" : ""
+                          }`}
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center">
+                              {/* Transfer checkbox for mobile */}
+                              {hasTransferItemsAccess &&
+                                hasTransferableItems &&
+                                canBeTransferred &&
+                                shipmentItem &&
+                                !isDisabled && (
                                   <Checkbox
                                     checked={isSelected}
                                     onCheckedChange={(checked: boolean) => {
-                                      const transferItem = createTransferItem(deliveryOrder, product, shipmentItem);
-                                      onTransferItemSelect(transferItem, checked);
+                                      const transferItem = createTransferItem(
+                                        deliveryOrder,
+                                        product,
+                                        shipmentItem
+                                      );
+                                      onTransferItemSelect(
+                                        transferItem,
+                                        checked
+                                      );
                                     }}
                                     className="mr-3"
                                   />
                                 )}
-                                <Link
-                                  to={`/barang/${product.id}`}
-                                  className="font-medium text-blue-600 hover:underline"
-                                >
-                                  {product.name}
-                                </Link>
-                              </div>
-                            {product.chosenProduct ? (
+                              <Link
+                                to={`/barang/${product.id}`}
+                                className="font-medium text-blue-600 hover:underline"
+                              >
+                                {product.name}
+                              </Link>
+                            </div>
+                            {shipmentItem?.status === "CANCELLED" ? (
+                              <Badge
+                                variant="outline"
+                                className="text-red-700 bg-red-50 border-red-200 text-center text-xs whitespace-nowrap px-1"
+                              >
+                                Dibatalkan
+                              </Badge>
+                            ) : product.chosenProduct ? (
                               <Badge
                                 variant="outline"
                                 className="text-green-700 bg-green-50 border-green-200 text-center text-xs whitespace-nowrap px-1"
@@ -437,33 +568,62 @@ export function DeliveryOrderAccordion({
                               {product.satuan}
                             </p>
                           </div>
-                          
-                          {/* Reduce quantity button for mobile - only show for completed shipments */}
-                          {hasReduceQuantityAccess && 
-                           shipmentStatus === "SELESAI" && 
-                           product.chosenProduct && 
-                           shipmentItem && 
-                           onOpenReduceQuantityModal && 
-                           !isDisabled && (
-                            <div className="mt-3 pt-3 border-t border-gray-200">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-orange-600 border-orange-200 hover:bg-orange-50 w-full"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onOpenReduceQuantityModal(shipmentItem, product, deliveryOrder);
-                                }}
-                              >
-                                <MinusCircle className="w-3 h-3 mr-2" />
-                                Kurangi Kuantitas
-                              </Button>
-                            </div>
-                          )}
+
+                          {/* Action buttons for mobile - reduce quantity and cancel */}
+                          {(hasReduceQuantityAccess || hasCancelItemAccess) &&
+                            product.chosenProduct &&
+                            shipmentItem &&
+                            !isDisabled && (
+                              <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
+                                {/* Reduce quantity button for mobile - show for chosen items that aren't weighted yet */}
+                                {hasReduceQuantityAccess &&
+                                  !shipmentItem.weightedQuantity &&
+                                  onOpenReduceQuantityModal && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-orange-600 border-orange-200 hover:bg-orange-50 w-full"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onOpenReduceQuantityModal(
+                                          shipmentItem,
+                                          product,
+                                          deliveryOrder
+                                        );
+                                      }}
+                                    >
+                                      <MinusCircle className="w-3 h-3 mr-2" />
+                                      Kurangi Kuantitas
+                                    </Button>
+                                  )}
+
+                                {/* Cancel button for mobile - only show for items that have been CHOSEN (loaded) but not yet COMPLETED or CANCELLED */}
+                                {hasCancelItemAccess &&
+                                  product.chosenProduct &&
+                                  shipmentItem.status === "CHOSEN" &&
+                                  onOpenCancelItemModal && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-red-600 border-red-200 hover:bg-red-50 w-full"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onOpenCancelItemModal(
+                                          shipmentItem,
+                                          product,
+                                          deliveryOrder
+                                        );
+                                      }}
+                                    >
+                                      <XCircle className="w-3 h-3 mr-2" />
+                                      Batalkan Item
+                                    </Button>
+                                  )}
+                              </div>
+                            )}
                         </div>
-                        );
-                      }
-                    )}
+                      );
+                    })}
                   </div>
                 </div>
               </AccordionContent>

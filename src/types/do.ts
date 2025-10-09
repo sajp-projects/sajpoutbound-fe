@@ -14,6 +14,7 @@ export interface DeliveryOrderProduct {
   pendingQuantity: number;
   processingQuantity: number;
   completedQuantity: number;
+  cancelledQuantity: number;
   createdAt: string;
   updatedAt: string;
   product: {
