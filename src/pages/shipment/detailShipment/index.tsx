@@ -1391,7 +1391,7 @@ export default function DetailPengiriman() {
           console.error("Loading group ID is required for weighing");
           return;
         }
-        
+
         bulkWeighItems.mutate({
           shipmentId,
           productId: weighingProductId,
