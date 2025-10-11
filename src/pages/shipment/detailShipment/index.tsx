@@ -2043,6 +2043,8 @@ export default function DetailPengiriman() {
                           // Don't filter by CANCELLED here - show all items in the table
                           shipment.shipmentItems.forEach((item) => {
                             const productId = item.productId;
+                            const isCancelled = item.status === "CANCELLED";
+
                             if (!productMap.has(productId)) {
                               productMap.set(productId, {
                                 id: productId,
@@ -2053,7 +2055,7 @@ export default function DetailPengiriman() {
                                 doIds: new Set([item.deliveryOrderId]),
                                 totalQuantity: item.requestedQuantity,
                                 isChosen: item.chosenProduct || false,
-                                hasPendingItems: !item.chosenProduct,
+                                hasPendingItems: !isCancelled && !item.chosenProduct,
                               } as {
                                 id: string;
                                 name: string;
@@ -2082,8 +2084,8 @@ export default function DetailPengiriman() {
                               if (item.chosenProduct) {
                                 product.isChosen = true;
                               }
-                              // Track if there are any pending items for this product
-                              if (!item.chosenProduct) {
+                              // Track if there are any pending items for this product (excluding cancelled items)
+                              if (!isCancelled && !item.chosenProduct) {
                                 product.hasPendingItems = true;
                               }
                             }
@@ -2120,6 +2122,22 @@ export default function DetailPengiriman() {
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                   {(() => {
+                                    const allCancelled =
+                                      shipment.shipmentItems
+                                        .filter((si) => si.productId === product.id)
+                                        .every((si) => si.status === "CANCELLED");
+
+                                    if (allCancelled) {
+                                      return (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-red-700 bg-red-50 border-red-200 whitespace-nowrap text-center"
+                                        >
+                                          Dibatalkan
+                                        </Badge>
+                                      );
+                                    }
+
                                     const chosenCount =
                                       shipment.shipmentItems.filter(
                                         (si) =>
@@ -2172,6 +2190,17 @@ export default function DetailPengiriman() {
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                   <div className="flex justify-center space-x-2">
                                     {(() => {
+                                      // Check if all items for this product are cancelled
+                                      const allCancelled =
+                                        shipment.shipmentItems
+                                          .filter((si) => si.productId === product.id)
+                                          .every((si) => si.status === "CANCELLED");
+
+                                      // If all items are cancelled, don't show any buttons
+                                      if (allCancelled) {
+                                        return null;
+                                      }
+
                                       const chosenCount =
                                         shipment.shipmentItems.filter(
                                           (si) =>
@@ -2349,7 +2378,8 @@ export default function DetailPengiriman() {
                                           shipment.shipmentItems.filter(
                                             (si) =>
                                               si.productId === product.id &&
-                                              si.chosenProduct
+                                              si.chosenProduct &&
+                                              si.status !== "CANCELLED"
                                           );
                                         const unweighedCount =
                                           chosenItems.filter(
@@ -2385,7 +2415,8 @@ export default function DetailPengiriman() {
                                           shipment.shipmentItems.filter(
                                             (si) =>
                                               si.productId === product.id &&
-                                              si.chosenProduct
+                                              si.chosenProduct &&
+                                              si.status !== "CANCELLED"
                                           );
                                         const unweighedCount =
                                           chosenItems.filter(
@@ -2503,6 +2534,23 @@ export default function DetailPengiriman() {
                               </Link>
                             </div>
                             {(() => {
+                              // Check if all items for this product are cancelled
+                              const allCancelled =
+                                shipment.shipmentItems
+                                  .filter((si) => si.productId === product.id)
+                                  .every((si) => si.status === "CANCELLED");
+
+                              if (allCancelled) {
+                                return (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-red-700 bg-red-50 border-red-200 whitespace-nowrap text-center"
+                                  >
+                                    Dibatalkan
+                                  </Badge>
+                                );
+                              }
+
                               if (product.chosenCount === 0) {
                                 return (
                                   <Badge
@@ -2567,6 +2615,17 @@ export default function DetailPengiriman() {
                             hasPengirimanWeighAccess) && (
                             <div className="pt-3 mt-3 space-y-2 border-t border-gray-100">
                               {(() => {
+                                // Check if all items for this product are cancelled
+                                const allCancelled =
+                                  shipment.shipmentItems
+                                    .filter((si) => si.productId === product.id)
+                                    .every((si) => si.status === "CANCELLED");
+
+                                // If all items are cancelled, don't show any buttons
+                                if (allCancelled) {
+                                  return null;
+                                }
+
                                 // Use the pre-calculated counts from the product object
                                 const chosenCount = product.chosenCount;
                                 const totalCount = product.totalCount;
@@ -2720,7 +2779,8 @@ export default function DetailPengiriman() {
                                     shipment.shipmentItems.filter(
                                       (si) =>
                                         si.productId === product.id &&
-                                        si.chosenProduct
+                                        si.chosenProduct &&
+                                        si.status !== "CANCELLED"
                                     );
                                   const unweighedCount = chosenItems.filter(
                                     (si) => si.status !== "COMPLETED"
@@ -2753,7 +2813,8 @@ export default function DetailPengiriman() {
                                     shipment.shipmentItems.filter(
                                       (si) =>
                                         si.productId === product.id &&
-                                        si.chosenProduct
+                                        si.chosenProduct &&
+                                        si.status !== "CANCELLED"
                                     );
                                   const unweighedCount = chosenItems.filter(
                                     (si) => si.status !== "COMPLETED"
@@ -3274,6 +3335,9 @@ export default function DetailPengiriman() {
                               ID Delivery Order{" "}
                             </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                              Customer
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
                               Tanggal Dibuat
                             </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
@@ -3308,6 +3372,9 @@ export default function DetailPengiriman() {
                                     {spmb.deliveryOrder?.doNumber ||
                                       spmb.deliveryOrderId}
                                   </Link>
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                  {spmb.deliveryOrder?.customer?.name || "-"}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   {formatDate(spmb.createdAt)}
@@ -3373,6 +3440,10 @@ export default function DetailPengiriman() {
                                 {spmb.deliveryOrder?.doNumber ||
                                   spmb.deliveryOrderId}
                               </Link>
+                            </p>
+                            <p>
+                              <span className="font-medium">Customer: </span>
+                              {spmb.deliveryOrder?.customer?.name || "-"}
                             </p>
                             <p>
                               <span className="font-medium">

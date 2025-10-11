@@ -65,6 +65,10 @@ export interface SPMB {
   updatedAt: string;
   deliveryOrder: {
     doNumber: string;
+    customer?: {
+      id: string;
+      name: string;
+    };
   };
 }
 

@@ -230,28 +230,33 @@ export function DeliveryOrderAccordion({
                             </span>
                           </Button>
                         )}
-                        {hasReviseDoAfterWeighAccess && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-green-600 border-green-200 hover:bg-green-50 flex-shrink-0 min-w-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onOpenReviseModal(deliveryOrder);
-                            }}
-                            disabled={isLoadingFullDOHook}
-                            title="Revisi DO"
-                          >
-                            {isLoadingFullDOHook ? (
-                              <Loader2 className="w-3 h-3 animate-spin sm:mr-1" />
-                            ) : (
-                              <Pencil className="w-3 h-3 sm:mr-1" />
-                            )}
-                            <span className="hidden sm:inline ml-1">
-                              {isLoadingFullDOHook ? "Loading..." : "Revisi DO"}
-                            </span>
-                          </Button>
-                        )}
+                        {hasReviseDoAfterWeighAccess &&
+                          !shipmentItems.some(
+                            (item) =>
+                              item.deliveryOrderId === deliveryOrder.id &&
+                              item.status === "CANCELLED"
+                          ) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-green-600 border-green-200 hover:bg-green-50 flex-shrink-0 min-w-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenReviseModal(deliveryOrder);
+                              }}
+                              disabled={isLoadingFullDOHook}
+                              title="Revisi DO"
+                            >
+                              {isLoadingFullDOHook ? (
+                                <Loader2 className="w-3 h-3 animate-spin sm:mr-1" />
+                              ) : (
+                                <Pencil className="w-3 h-3 sm:mr-1" />
+                              )}
+                              <span className="hidden sm:inline ml-1">
+                                {isLoadingFullDOHook ? "Loading..." : "Revisi DO"}
+                              </span>
+                            </Button>
+                          )}
                       </div>
                     )}
                 </div>
@@ -435,7 +440,9 @@ export function DeliveryOrderAccordion({
                                       {/* Cancel button - only show for items that have been CHOSEN (loaded) but not yet COMPLETED or CANCELLED */}
                                       {hasCancelItemAccess &&
                                         product.chosenProduct &&
-                                        shipmentItem.status === "CHOSEN" &&
+                                        (shipmentItem.status === "CHOSEN" ||
+                                          shipmentItem.status ===
+                                            "COMPLETED") &&
                                         onOpenCancelItemModal && (
                                           <Button
                                             variant="outline"
