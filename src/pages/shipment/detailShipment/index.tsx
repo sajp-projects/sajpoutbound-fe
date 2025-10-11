@@ -148,6 +148,8 @@ function StatusBadge({ status }: StatusBadgeProps) {
         return "bg-green-100 text-green-800 border-green-200";
       case "SELESAI":
         return "bg-green-100 text-green-800 border-green-200";
+      case "CANCEL":
+        return "bg-red-100 text-red-800 border-red-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -2055,7 +2057,8 @@ export default function DetailPengiriman() {
                                 doIds: new Set([item.deliveryOrderId]),
                                 totalQuantity: item.requestedQuantity,
                                 isChosen: item.chosenProduct || false,
-                                hasPendingItems: !isCancelled && !item.chosenProduct,
+                                hasPendingItems:
+                                  !isCancelled && !item.chosenProduct,
                               } as {
                                 id: string;
                                 name: string;
@@ -2122,10 +2125,11 @@ export default function DetailPengiriman() {
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                   {(() => {
-                                    const allCancelled =
-                                      shipment.shipmentItems
-                                        .filter((si) => si.productId === product.id)
-                                        .every((si) => si.status === "CANCELLED");
+                                    const allCancelled = shipment.shipmentItems
+                                      .filter(
+                                        (si) => si.productId === product.id
+                                      )
+                                      .every((si) => si.status === "CANCELLED");
 
                                     if (allCancelled) {
                                       return (
@@ -2193,8 +2197,12 @@ export default function DetailPengiriman() {
                                       // Check if all items for this product are cancelled
                                       const allCancelled =
                                         shipment.shipmentItems
-                                          .filter((si) => si.productId === product.id)
-                                          .every((si) => si.status === "CANCELLED");
+                                          .filter(
+                                            (si) => si.productId === product.id
+                                          )
+                                          .every(
+                                            (si) => si.status === "CANCELLED"
+                                          );
 
                                       // If all items are cancelled, don't show any buttons
                                       if (allCancelled) {
@@ -2535,10 +2543,9 @@ export default function DetailPengiriman() {
                             </div>
                             {(() => {
                               // Check if all items for this product are cancelled
-                              const allCancelled =
-                                shipment.shipmentItems
-                                  .filter((si) => si.productId === product.id)
-                                  .every((si) => si.status === "CANCELLED");
+                              const allCancelled = shipment.shipmentItems
+                                .filter((si) => si.productId === product.id)
+                                .every((si) => si.status === "CANCELLED");
 
                               if (allCancelled) {
                                 return (
@@ -2616,10 +2623,9 @@ export default function DetailPengiriman() {
                             <div className="pt-3 mt-3 space-y-2 border-t border-gray-100">
                               {(() => {
                                 // Check if all items for this product are cancelled
-                                const allCancelled =
-                                  shipment.shipmentItems
-                                    .filter((si) => si.productId === product.id)
-                                    .every((si) => si.status === "CANCELLED");
+                                const allCancelled = shipment.shipmentItems
+                                  .filter((si) => si.productId === product.id)
+                                  .every((si) => si.status === "CANCELLED");
 
                                 // If all items are cancelled, don't show any buttons
                                 if (allCancelled) {
@@ -2973,19 +2979,30 @@ export default function DetailPengiriman() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                    {formatInputNumber(
-                                      item.totalRequestedQuantity
-                                    )}{" "}
-                                    {item.product.satuan}
+                                    {(() => {
+                                      // Calculate total including cancelled items
+                                      const totalQty =
+                                        item.shipmentItems.reduce(
+                                          (sum, si) =>
+                                            sum + si.requestedQuantity,
+                                          0
+                                        );
+                                      return `${formatInputNumber(totalQty)} ${
+                                        item.product.satuan
+                                      }`;
+                                    })()}
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                                     {(() => {
-                                      const completedItems =
+                                      // Exclude cancelled items from weighing status calculation
+                                      const activeItems =
                                         item.shipmentItems.filter(
-                                          (si) => si.status === "COMPLETED"
+                                          (si) => si.status !== "CANCELLED"
                                         );
-                                      const totalItems =
-                                        item.shipmentItems.length;
+                                      const completedItems = activeItems.filter(
+                                        (si) => si.status === "COMPLETED"
+                                      );
+                                      const totalItems = activeItems.length;
 
                                       if (
                                         completedItems.length === totalItems
@@ -3023,10 +3040,7 @@ export default function DetailPengiriman() {
                                     })()}
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                                    {item.shipmentItems.some(
-                                      (si) => si.status === "COMPLETED"
-                                    ) &&
-                                    item.weighings &&
+                                    {item.weighings &&
                                     item.weighings.length > 0 &&
                                     item.weighings.some(
                                       (w) => w.notaTimbangan
@@ -3136,11 +3150,14 @@ export default function DetailPengiriman() {
                                   </Link>
                                 </div>
                                 {(() => {
-                                  const completedItems =
-                                    item.shipmentItems.filter(
-                                      (si) => si.status === "COMPLETED"
-                                    );
-                                  const totalItems = item.shipmentItems.length;
+                                  // Exclude cancelled items from weighing status calculation
+                                  const activeItems = item.shipmentItems.filter(
+                                    (si) => si.status !== "CANCELLED"
+                                  );
+                                  const completedItems = activeItems.filter(
+                                    (si) => si.status === "COMPLETED"
+                                  );
+                                  const totalItems = activeItems.length;
 
                                   if (completedItems.length === totalItems) {
                                     // All items completed
@@ -3197,10 +3214,14 @@ export default function DetailPengiriman() {
                                     Kuantitas:
                                   </span>
                                   <span>
-                                    {formatInputNumber(
-                                      item.totalRequestedQuantity
-                                    )}{" "}
-                                    {item.product.satuan}
+                                    {(() => {
+                                      // Calculate total including cancelled items
+                                      const totalQty = item.shipmentItems.reduce(
+                                        (sum, si) => sum + si.requestedQuantity,
+                                        0
+                                      );
+                                      return `${formatInputNumber(totalQty)} ${item.product.satuan}`;
+                                    })()}
                                   </span>
                                 </div>
                                 <div className="flex items-start">
@@ -3224,10 +3245,7 @@ export default function DetailPengiriman() {
                                     Nota Timbangan:
                                   </span>
                                   <div className="flex-1 flex items-end">
-                                    {item.shipmentItems.some(
-                                      (si) => si.status === "COMPLETED"
-                                    ) &&
-                                    item.weighings &&
+                                    {item.weighings &&
                                     item.weighings.length > 0 &&
                                     item.weighings.some(
                                       (w) => w.notaTimbangan

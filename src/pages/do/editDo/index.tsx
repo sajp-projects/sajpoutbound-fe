@@ -347,7 +347,8 @@ export default function EditDo() {
     const originalDOItem = deliveryOrder?.items?.find(doItem => doItem.id === item.id);
     return !!(originalDOItem &&
       ((originalDOItem.processingQuantity || 0) > 0 ||
-       (originalDOItem.completedQuantity || 0) > 0));
+       (originalDOItem.completedQuantity || 0) > 0 ||
+       (originalDOItem.cancelledQuantity || 0) > 0));
   };
 
   const handleAddItem = (product: (typeof products)[0], quantity: number) => {
@@ -412,6 +413,25 @@ export default function EditDo() {
           "Item ini sudah digunakan dalam shipment. Anda hanya dapat mengubah quantity, tidak dapat mengubah produk."
         );
         return;
+      }
+
+      // Check if quantity is being reduced below used quantity
+      if (isUsedInShipments) {
+        const originalDOItem = deliveryOrder?.items?.find(doItem => doItem.id === currentItem.id);
+        if (originalDOItem) {
+          const usedQuantity =
+            (originalDOItem.processingQuantity || 0) +
+            (originalDOItem.completedQuantity || 0) +
+            (originalDOItem.cancelledQuantity || 0);
+
+          if (quantity < usedQuantity) {
+            showErrorAlert(
+              "Tidak Dapat Mengurangi Kuantitas",
+              `Kuantitas tidak boleh kurang dari jumlah yang sudah digunakan (${usedQuantity}). Anda hanya dapat menambah kuantitas atau membiarkannya tetap.`
+            );
+            return;
+          }
+        }
       }
 
       const isDuplicate = watchItems.some(
@@ -933,9 +953,15 @@ export default function EditDo() {
                                       onClick={() => {
                                         const isUsedInShipments = isItemUsedInShipments(item);
                                         if (isUsedInShipments) {
+                                          const originalDOItem = deliveryOrder?.items?.find(doItem => doItem.id === item.id);
+                                          const usedQuantity = originalDOItem
+                                            ? (originalDOItem.processingQuantity || 0) +
+                                              (originalDOItem.completedQuantity || 0) +
+                                              (originalDOItem.cancelledQuantity || 0)
+                                            : 0;
                                           showErrorAlert(
                                             "Tidak Dapat Menghapus Item",
-                                            "Item ini sudah digunakan dalam shipment dan tidak dapat dihapus."
+                                            `Item ini sudah memiliki kuantitas yang digunakan (${usedQuantity}) dan tidak dapat dihapus. Hanya kuantitas pending yang dapat dikurangi.`
                                           );
                                         } else {
                                           remove(index);

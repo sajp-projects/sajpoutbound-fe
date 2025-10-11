@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useReduceQuantity } from "@/hooks/shipment";
 import { formatInputNumber, handleDecimalInput } from "@/utils/formatNumber";
+import { showConfirmationAlert, isConfirmed } from "@/utils/sweetAlert";
 
 interface ReduceQuantityModalProps {
   isOpen: boolean;
@@ -75,7 +76,7 @@ export function ReduceQuantityModal({
     setNewQuantity(result.numericValue ?? 0);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validation
     if (newQuantity <= 0) {
       if (onError) {
@@ -95,10 +96,26 @@ export function ReduceQuantityModal({
       return;
     }
 
-    reduceQuantity({
-      shipmentItemId,
-      newQuantity,
-    });
+    // Close modal first before showing confirmation
+    onOpenChange(false);
+
+    // Show confirmation alert
+    const result = await showConfirmationAlert(
+      "Konfirmasi Pengurangan Kuantitas",
+      `Anda akan mengurangi kuantitas dari ${formatInputNumber(currentQuantity)} ${productUnit} menjadi ${formatInputNumber(newQuantity)} ${productUnit}. Pengurangan sebesar ${formatInputNumber(reductionAmount)} ${productUnit} akan dikembalikan ke status pending. Apakah Anda yakin?`,
+      "Ya, Kurangi",
+      "Batal"
+    );
+
+    if (isConfirmed(result)) {
+      reduceQuantity({
+        shipmentItemId,
+        newQuantity,
+      });
+    } else {
+      // If user cancels, reopen the modal
+      onOpenChange(true);
+    }
   };
 
   const handleClose = () => {
