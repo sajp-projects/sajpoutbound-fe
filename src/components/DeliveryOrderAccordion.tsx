@@ -253,7 +253,9 @@ export function DeliveryOrderAccordion({
                                 <Pencil className="w-3 h-3 sm:mr-1" />
                               )}
                               <span className="hidden sm:inline ml-1">
-                                {isLoadingFullDOHook ? "Loading..." : "Revisi DO"}
+                                {isLoadingFullDOHook
+                                  ? "Loading..."
+                                  : "Revisi DO"}
                               </span>
                             </Button>
                           )}
@@ -401,72 +403,64 @@ export function DeliveryOrderAccordion({
                                   </Badge>
                                 )}
                               </TableCell>
-                              {/* Actions cell for reduce quantity or cancel */}
-                              {(hasReduceQuantityAccess ||
-                                hasCancelItemAccess) &&
-                                shipmentItem &&
-                                shipmentItem.chosenProduct &&
-                                !isDisabled && (
-                                  <TableCell className="px-4 py-3 text-center">
-                                    <div className="flex justify-center gap-2">
-                                      {/* Reduce quantity button - show for chosen items that aren't weighted yet */}
-                                      {hasReduceQuantityAccess &&
-                                        shipmentItem &&
-                                        shipmentItem.chosenProduct &&
-                                        !shipmentItem.weightedQuantity &&
-                                        onOpenReduceQuantityModal &&
-                                        !isDisabled && (
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              onOpenReduceQuantityModal(
-                                                shipmentItem,
-                                                product,
-                                                deliveryOrder
-                                              );
-                                            }}
-                                            title="Kurangi Kuantitas"
-                                          >
-                                            <MinusCircle className="w-3 h-3" />
-                                            <span className="hidden sm:inline ml-1">
-                                              Kurangi
-                                            </span>
-                                          </Button>
-                                        )}
 
-                                      {/* Cancel button - only show for items that have been CHOSEN (loaded) but not yet COMPLETED or CANCELLED */}
-                                      {hasCancelItemAccess &&
-                                        product.chosenProduct &&
-                                        (shipmentItem.status === "CHOSEN" ||
-                                          shipmentItem.status ===
-                                            "COMPLETED") &&
-                                        onOpenCancelItemModal && (
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="text-red-600 border-red-200 hover:bg-red-50"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              onOpenCancelItemModal(
-                                                shipmentItem,
-                                                product,
-                                                deliveryOrder
-                                              );
-                                            }}
-                                            title="Batalkan Item"
-                                          >
-                                            <XCircle className="w-3 h-3" />
-                                            <span className="hidden sm:inline ml-1">
-                                              Batalkan
-                                            </span>
-                                          </Button>
-                                        )}
-                                    </div>
-                                  </TableCell>
-                                )}
+                              <TableCell className="px-4 py-3 text-center">
+                                <div className="flex justify-center gap-2">
+                                  {/* Reduce quantity button - show for chosen items that aren't weighted yet */}
+                                  {hasReduceQuantityAccess &&
+                                    shipmentItem &&
+                                    shipmentItem.chosenProduct &&
+                                    !shipmentItem.weightedQuantity &&
+                                    shipmentItem.status !== "CANCELLED" &&
+                                    onOpenReduceQuantityModal &&
+                                    !isDisabled && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onOpenReduceQuantityModal(
+                                            shipmentItem,
+                                            product,
+                                            deliveryOrder
+                                          );
+                                        }}
+                                        title="Kurangi Kuantitas"
+                                      >
+                                        <MinusCircle className="w-3 h-3" />
+                                        <span className="hidden sm:inline ml-1">
+                                          Kurangi
+                                        </span>
+                                      </Button>
+                                    )}
+
+                                  {/* Cancel button */}
+                                  {hasCancelItemAccess &&
+                                    shipmentItem?.status !== "CANCELLED" &&
+                                    onOpenCancelItemModal && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-red-600 border-red-200 hover:bg-red-50"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onOpenCancelItemModal(
+                                            shipmentItem!,
+                                            product,
+                                            deliveryOrder
+                                          );
+                                        }}
+                                        title="Batalkan Item"
+                                      >
+                                        <XCircle className="w-3 h-3" />
+                                        <span className="hidden sm:inline ml-1">
+                                          Batalkan
+                                        </span>
+                                      </Button>
+                                    )}
+                                </div>
+                              </TableCell>
                             </TableRow>
                           );
                         }
