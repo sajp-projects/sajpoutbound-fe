@@ -81,6 +81,7 @@ export function DeliveryOrderAccordion({
   hasCancelItemAccess = false,
 }: DeliveryOrderAccordionProps) {
   // Group items by delivery order
+  // Include all items (even cancelled) to display them with "Dibatalkan" badge
   const doMap = new Map<string, GroupedDeliveryOrder>();
 
   shipmentItems.forEach((item) => {
@@ -231,11 +232,11 @@ export function DeliveryOrderAccordion({
                           </Button>
                         )}
                         {hasReviseDoAfterWeighAccess &&
-                          !shipmentItems.some(
-                            (item) =>
-                              item.deliveryOrderId === deliveryOrder.id &&
-                              item.status === "CANCELLED"
-                          ) && (
+                          !shipmentItems
+                            .filter(
+                              (item) => item.deliveryOrderId === deliveryOrder.id
+                            )
+                            .every((item) => item.status === "CANCELLED") && (
                             <Button
                               variant="outline"
                               size="sm"

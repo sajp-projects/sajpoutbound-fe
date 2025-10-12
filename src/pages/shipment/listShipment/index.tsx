@@ -181,22 +181,24 @@ export default function DaftarPengiriman() {
   const getShipmentActions = (shipment: Shipment) => {
     const actions: ActionConfig[] = [{ type: ActionType.VIEW }];
 
-    // Hanya tampilkan aksi edit jika user memiliki akses dan status bukan SELESAI/COMPLETED
+    // Hanya tampilkan aksi edit jika user memiliki akses dan status bukan SELESAI/COMPLETED/CANCEL
     if (
       hasPengirimanUpdateAccess &&
       shipment.status !== "SELESAI" &&
-      shipment.status !== "COMPLETED"
+      shipment.status !== "COMPLETED" &&
+      shipment.status !== "CANCEL"
     ) {
       actions.push({ type: ActionType.EDIT });
     }
 
     actions.push({ type: ActionType.LOG });
 
-    // Hanya tampilkan aksi arsip jika user memiliki akses dan status bukan SELESAI/COMPLETED
+    // Hanya tampilkan aksi arsip jika user memiliki akses dan status bukan SELESAI/COMPLETED/CANCEL
     if (
       hasPengirimanDeleteAccess &&
       shipment.status !== "SELESAI" &&
-      shipment.status !== "COMPLETED"
+      shipment.status !== "COMPLETED" &&
+      shipment.status !== "CANCEL"
     ) {
       actions.push({
         type: ActionType.ARCHIVE,
@@ -219,6 +221,8 @@ export default function DaftarPengiriman() {
         return "Proses";
       case SHIPMENT_STATUS.SELESAI:
         return "Selesai";
+      case SHIPMENT_STATUS.CANCEL:
+        return "Cancel";
       default:
         return "Status";
     }
@@ -318,6 +322,15 @@ export default function DaftarPengiriman() {
                     )}
                   >
                     Selesai
+                  </SelectItem>
+                  <SelectItem
+                    value={SHIPMENT_STATUS.CANCEL}
+                    className={cn(
+                      statusFilter === SHIPMENT_STATUS.CANCEL &&
+                        "font-medium text-blue-600"
+                    )}
+                  >
+                    Cancel
                   </SelectItem>
                 </SelectContent>
               </Select>

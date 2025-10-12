@@ -4,7 +4,8 @@ export type DeliveryOrderStatus =
   | "PENDING"
   | "PROSES"
   | "COMPLETED"
-  | "SELESAI";
+  | "SELESAI"
+  | "CANCEL";
 
 export interface DeliveryOrderProduct {
   id: string;

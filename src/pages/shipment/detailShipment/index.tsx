@@ -479,10 +479,14 @@ export default function DetailPengiriman() {
   const handleOpenLoadingMethodModal = (productId: string) => {
     if (!shipment) return;
 
-    // Check how many unique DOs this product has in the shipment
+    // Check how many unique DOs this product has in the shipment (exclude cancelled items)
     const uniqueDOs = new Set<string>();
     shipment.shipmentItems.forEach((item) => {
-      if (item.productId === productId && !item.chosenProduct) {
+      if (
+        item.productId === productId &&
+        !item.chosenProduct &&
+        item.status !== "CANCELLED"
+      ) {
         uniqueDOs.add(item.deliveryOrderId);
       }
     });
@@ -537,11 +541,15 @@ export default function DetailPengiriman() {
       shipment.shipmentItems.find((item) => item.productId === productId)
         ?.product.satuan || "";
 
-    // Group items by delivery order for this product
+    // Group items by delivery order for this product (exclude cancelled items)
     const doMap = new Map<string, DeliveryOrderForSelection>();
 
     shipment.shipmentItems.forEach((item) => {
-      if (item.productId === productId && !item.chosenProduct) {
+      if (
+        item.productId === productId &&
+        !item.chosenProduct &&
+        item.status !== "CANCELLED"
+      ) {
         const doId = item.deliveryOrderId;
         if (!doMap.has(doId)) {
           doMap.set(doId, {
@@ -588,24 +596,26 @@ export default function DetailPengiriman() {
           product: {
             id: selectedProductForDOSelection.id,
             name: selectedProductForDOSelection.name,
-            quantity: doInfo.items.reduce(
-              (
-                sum: number,
-                item: {
-                  id: string;
-                  productId: string;
-                  requestedQuantity: number;
-                  pendingQuantity: number;
-                  status: string;
-                }
-              ) => sum + item.requestedQuantity,
-              0
-            ),
+            quantity: doInfo.items
+              .filter((item: { status: string }) => item.status !== "CANCELLED")
+              .reduce(
+                (
+                  sum: number,
+                  item: {
+                    id: string;
+                    productId: string;
+                    requestedQuantity: number;
+                    pendingQuantity: number;
+                    status: string;
+                  }
+                ) => sum + item.requestedQuantity,
+                0
+              ),
             satuan: selectedProductForDOSelection.satuan,
           },
         };
       })
-      .filter((item) => item !== null) as {
+      .filter((item) => item !== null && item.product.quantity > 0) as {
       doId: string;
       customer: {
         id: string;
@@ -1141,9 +1151,13 @@ export default function DetailPengiriman() {
       };
     }[] = [];
 
-    // Collect only UNCHOSEN DOs containing this product
+    // Collect only UNCHOSEN DOs containing this product (exclude cancelled items)
     shipment.shipmentItems.forEach((item) => {
-      if (item.productId === productId && !item.chosenProduct) {
+      if (
+        item.productId === productId &&
+        !item.chosenProduct &&
+        item.status !== "CANCELLED"
+      ) {
         productDOs.push({
           doId: item.deliveryOrderId,
           customer: item.deliveryOrder.customer,
@@ -1204,7 +1218,7 @@ export default function DetailPengiriman() {
           item.productId === productId &&
           item.chosenProduct &&
           item.status !== "COMPLETED" &&
-          item.status !== "CANCELLED"
+          item.status !== "CANCELLED" // Exclude cancelled shipment items
       )
       .forEach((item) => {
         const groupId = item.loadingGroupId || "unknown";
@@ -1431,9 +1445,9 @@ export default function DetailPengiriman() {
       const activeItems = shipment.shipmentItems.filter(
         (item) => item.status !== "CANCELLED"
       );
-      const allCompleted = activeItems.length > 0 && activeItems.every(
-        (item) => item.status === "COMPLETED"
-      );
+      const allCompleted =
+        activeItems.length > 0 &&
+        activeItems.every((item) => item.status === "COMPLETED");
       setAllItemsCompleted(allCompleted);
     }
   }, [shipment]);
@@ -2059,7 +2073,9 @@ export default function DetailPengiriman() {
                                 warehouseId: item.warehouseId,
                                 warehouse: item.warehouse,
                                 doIds: new Set([item.deliveryOrderId]),
-                                totalQuantity: isCancelled ? 0 : item.requestedQuantity,
+                                totalQuantity: isCancelled
+                                  ? 0
+                                  : item.requestedQuantity,
                                 isChosen: item.chosenProduct || false,
                                 hasPendingItems:
                                   !isCancelled && !item.chosenProduct,
@@ -2509,7 +2525,9 @@ export default function DetailPengiriman() {
                             warehouseId: item.warehouseId,
                             warehouse: item.warehouse,
                             doIds: new Set([item.deliveryOrderId]),
-                            totalQuantity: isCancelled ? 0 : item.requestedQuantity,
+                            totalQuantity: isCancelled
+                              ? 0
+                              : item.requestedQuantity,
                             chosenCount:
                               !isCancelled && item.chosenProduct ? 1 : 0,
                             totalCount: !isCancelled ? 1 : 0,
@@ -2992,7 +3010,9 @@ export default function DetailPengiriman() {
                                     {(() => {
                                       // Calculate total excluding cancelled items
                                       const totalQty = item.shipmentItems
-                                        .filter((si) => si.status !== "CANCELLED")
+                                        .filter(
+                                          (si) => si.status !== "CANCELLED"
+                                        )
                                         .reduce(
                                           (sum, si) =>
                                             sum + si.requestedQuantity,
@@ -3228,12 +3248,17 @@ export default function DetailPengiriman() {
                                     {(() => {
                                       // Calculate total excluding cancelled items
                                       const totalQty = item.shipmentItems
-                                        .filter((si) => si.status !== "CANCELLED")
+                                        .filter(
+                                          (si) => si.status !== "CANCELLED"
+                                        )
                                         .reduce(
-                                          (sum, si) => sum + si.requestedQuantity,
+                                          (sum, si) =>
+                                            sum + si.requestedQuantity,
                                           0
                                         );
-                                      return `${formatInputNumber(totalQty)} ${item.product.satuan}`;
+                                      return `${formatInputNumber(totalQty)} ${
+                                        item.product.satuan
+                                      }`;
                                     })()}
                                   </span>
                                 </div>
@@ -3851,17 +3876,21 @@ export default function DetailPengiriman() {
                   {(() => {
                     // Find all chosen items for this product (items that were loaded into the shipment)
                     // Filter by selected DOs if any are selected
+                    // Exclude cancelled shipment items
                     const chosenItems = shipment.shipmentItems.filter(
                       (item) =>
                         item.productId === weighingProductId &&
                         item.chosenProduct &&
+                        item.status !== "CANCELLED" &&
                         (selectedDOsForWeighing.length === 0 ||
                           selectedDOsForWeighing.includes(item.deliveryOrderId))
                     );
 
                     // Find unweighed items (those that need weighing)
                     const unweighedItems = chosenItems.filter(
-                      (item) => item.status !== "COMPLETED"
+                      (item) =>
+                        item.status !== "COMPLETED" &&
+                        item.status !== "CANCELLED"
                     );
 
                     if (chosenItems.length === 0) return null;

@@ -47,6 +47,7 @@ const DO_STATUS = {
   PROSES: "PROSES",
   COMPLETED: "COMPLETED",
   SELESAI: "SELESAI",
+  CANCEL: "CANCEL",
 };
 
 interface ActionConfig {
@@ -92,7 +93,6 @@ export default function DaftarDo() {
     endDate: dateRange.endDate,
   });
 
-
   const deliveryOrders = data?.deliveryOrders || [];
   const pagination = data?.pagination || {
     total: 0,
@@ -130,7 +130,10 @@ export default function DaftarDo() {
     setSearchParams(params);
   };
 
-  const handleDateRangeChange = (range: { startDate: string; endDate: string }) => {
+  const handleDateRangeChange = (range: {
+    startDate: string;
+    endDate: string;
+  }) => {
     setDateRange(range);
     const params = new URLSearchParams(searchParams);
     params.set("startDate", range.startDate);
@@ -221,6 +224,8 @@ export default function DaftarDo() {
         return "bg-green-100 text-green-800";
       case "SELESAI":
         return "bg-green-100 text-green-800";
+      case "CANCEL":
+        return "bg-red-100 text-red-800 border-red-200";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -236,6 +241,8 @@ export default function DaftarDo() {
         return "Selesai";
       case DO_STATUS.SELESAI:
         return "Selesai";
+      case DO_STATUS.CANCEL:
+        return "Cancel";
       default:
         return "Status";
     }
@@ -327,6 +334,15 @@ export default function DaftarDo() {
                     )}
                   >
                     Selesai
+                  </SelectItem>
+                  <SelectItem
+                    value={DO_STATUS.CANCEL}
+                    className={cn(
+                      statusFilter === DO_STATUS.CANCEL &&
+                        "font-medium text-blue-600"
+                    )}
+                  >
+                    Cancel
                   </SelectItem>
                 </SelectContent>
               </Select>
