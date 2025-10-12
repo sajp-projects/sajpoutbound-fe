@@ -1427,7 +1427,11 @@ export default function DetailPengiriman() {
   // Check if all items are completed
   useEffect(() => {
     if (shipment && shipment.shipmentItems) {
-      const allCompleted = shipment.shipmentItems.every(
+      // Check if all non-cancelled items are completed
+      const activeItems = shipment.shipmentItems.filter(
+        (item) => item.status !== "CANCELLED"
+      );
+      const allCompleted = activeItems.length > 0 && activeItems.every(
         (item) => item.status === "COMPLETED"
       );
       setAllItemsCompleted(allCompleted);
@@ -2055,7 +2059,7 @@ export default function DetailPengiriman() {
                                 warehouseId: item.warehouseId,
                                 warehouse: item.warehouse,
                                 doIds: new Set([item.deliveryOrderId]),
-                                totalQuantity: item.requestedQuantity,
+                                totalQuantity: isCancelled ? 0 : item.requestedQuantity,
                                 isChosen: item.chosenProduct || false,
                                 hasPendingItems:
                                   !isCancelled && !item.chosenProduct,
@@ -2083,7 +2087,10 @@ export default function DetailPengiriman() {
                                 hasPendingItems: boolean;
                               };
                               product.doIds.add(item.deliveryOrderId);
-                              product.totalQuantity += item.requestedQuantity;
+                              // Only add to total if not cancelled
+                              if (!isCancelled) {
+                                product.totalQuantity += item.requestedQuantity;
+                              }
                               if (item.chosenProduct) {
                                 product.isChosen = true;
                               }
@@ -2502,7 +2509,7 @@ export default function DetailPengiriman() {
                             warehouseId: item.warehouseId,
                             warehouse: item.warehouse,
                             doIds: new Set([item.deliveryOrderId]),
-                            totalQuantity: item.requestedQuantity,
+                            totalQuantity: isCancelled ? 0 : item.requestedQuantity,
                             chosenCount:
                               !isCancelled && item.chosenProduct ? 1 : 0,
                             totalCount: !isCancelled ? 1 : 0,
@@ -2512,7 +2519,10 @@ export default function DetailPengiriman() {
                         } else {
                           const product = productMap.get(productId)!;
                           product.doIds.add(item.deliveryOrderId);
-                          product.totalQuantity += item.requestedQuantity;
+                          // Only add to total if not cancelled
+                          if (!isCancelled) {
+                            product.totalQuantity += item.requestedQuantity;
+                          }
                           if (!isCancelled) {
                             product.totalCount += 1;
                             if (item.chosenProduct) {
@@ -2980,9 +2990,10 @@ export default function DetailPengiriman() {
                                   </TableCell>
                                   <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
                                     {(() => {
-                                      // Calculate total including cancelled items
-                                      const totalQty =
-                                        item.shipmentItems.reduce(
+                                      // Calculate total excluding cancelled items
+                                      const totalQty = item.shipmentItems
+                                        .filter((si) => si.status !== "CANCELLED")
+                                        .reduce(
                                           (sum, si) =>
                                             sum + si.requestedQuantity,
                                           0
@@ -3215,11 +3226,13 @@ export default function DetailPengiriman() {
                                   </span>
                                   <span>
                                     {(() => {
-                                      // Calculate total including cancelled items
-                                      const totalQty = item.shipmentItems.reduce(
-                                        (sum, si) => sum + si.requestedQuantity,
-                                        0
-                                      );
+                                      // Calculate total excluding cancelled items
+                                      const totalQty = item.shipmentItems
+                                        .filter((si) => si.status !== "CANCELLED")
+                                        .reduce(
+                                          (sum, si) => sum + si.requestedQuantity,
+                                          0
+                                        );
                                       return `${formatInputNumber(totalQty)} ${item.product.satuan}`;
                                     })()}
                                   </span>

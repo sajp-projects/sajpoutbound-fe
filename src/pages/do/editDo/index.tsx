@@ -1,6 +1,14 @@
 import { joiResolver } from "@hookform/resolvers/joi";
 import Joi from "joi";
-import { AlertTriangle, ArrowLeft, Edit, Loader2, Plus, Save, X } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Edit,
+  Loader2,
+  Plus,
+  Save,
+  X,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router";
@@ -276,13 +284,15 @@ export default function EditDo() {
                 return schedule;
               }
 
-              if (typeof schedule === 'string') {
+              if (typeof schedule === "string") {
                 // The backend stores Jakarta time but sends it as UTC string
                 // We need to parse it and adjust for the timezone difference
                 const utcDate = new Date(schedule);
                 // Since the backend added 7 hours when storing, we need to subtract 7 hours
                 // to get back to the intended Jakarta time display
-                const jakartaDate = new Date(utcDate.getTime() - (7 * 60 * 60 * 1000));
+                const jakartaDate = new Date(
+                  utcDate.getTime() - 7 * 60 * 60 * 1000
+                );
                 return jakartaDate;
               }
 
@@ -344,11 +354,15 @@ export default function EditDo() {
 
   // Helper function to check if item is used in shipments
   const isItemUsedInShipments = (item: ExtendedProduct): boolean => {
-    const originalDOItem = deliveryOrder?.items?.find(doItem => doItem.id === item.id);
-    return !!(originalDOItem &&
+    const originalDOItem = deliveryOrder?.items?.find(
+      (doItem) => doItem.id === item.id
+    );
+    return !!(
+      originalDOItem &&
       ((originalDOItem.processingQuantity || 0) > 0 ||
-       (originalDOItem.completedQuantity || 0) > 0 ||
-       (originalDOItem.cancelledQuantity || 0) > 0));
+        (originalDOItem.completedQuantity || 0) > 0 ||
+        (originalDOItem.cancelledQuantity || 0) > 0)
+    );
   };
 
   const handleAddItem = (product: (typeof products)[0], quantity: number) => {
@@ -417,7 +431,9 @@ export default function EditDo() {
 
       // Check if quantity is being reduced below used quantity
       if (isUsedInShipments) {
-        const originalDOItem = deliveryOrder?.items?.find(doItem => doItem.id === currentItem.id);
+        const originalDOItem = deliveryOrder?.items?.find(
+          (doItem) => doItem.id === currentItem.id
+        );
         if (originalDOItem) {
           const usedQuantity =
             (originalDOItem.processingQuantity || 0) +
@@ -532,7 +548,6 @@ export default function EditDo() {
         quantity: Number(item.quantity),
       })),
     });
-
   };
 
   const handleProductSelect = (item: ComboboxItem) => {
@@ -747,8 +762,8 @@ export default function EditDo() {
                           )}
                         />
                         <p className="mt-1 text-sm text-gray-500">
-                          Masukkan jadwal pengiriman.
-                          Jika tidak diisi, akan otomatis diset ke hari ini.
+                          Masukkan jadwal pengiriman. Jika tidak diisi, akan
+                          otomatis diset ke hari ini.
                         </p>
                       </div>
                     </div>
@@ -769,8 +784,11 @@ export default function EditDo() {
                           name="tempProductId"
                           control={control}
                           render={({ field: { value, onChange } }) => {
-                            const isEditingUsedItem = editingItemIndex !== null &&
-                              isItemUsedInShipments(watchItems[editingItemIndex]);
+                            const isEditingUsedItem =
+                              editingItemIndex !== null &&
+                              isItemUsedInShipments(
+                                watchItems[editingItemIndex]
+                              );
 
                             return (
                               <Combobox
@@ -778,7 +796,11 @@ export default function EditDo() {
                                 value={value || ""}
                                 onValueChange={onChange}
                                 onSelect={handleProductSelect}
-                                placeholder={isEditingUsedItem ? "Produk tidak dapat diubah" : "Masukkan nama barang"}
+                                placeholder={
+                                  isEditingUsedItem
+                                    ? "Produk tidak dapat diubah"
+                                    : "Masukkan nama barang"
+                                }
                                 searchPlaceholder="Cari barang..."
                                 isLoading={loadingProducts}
                                 error={errors.items ? " " : ""}
@@ -822,7 +844,9 @@ export default function EditDo() {
                                 )}
                                 value={tempQuantityDisplay}
                                 onChange={(e) => {
-                                  const result = handleDecimalInput(e.target.value);
+                                  const result = handleDecimalInput(
+                                    e.target.value
+                                  );
                                   setTempQuantityDisplay(result.displayValue);
                                   field.onChange(result.numericValue);
                                 }}
@@ -951,13 +975,20 @@ export default function EditDo() {
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => {
-                                        const isUsedInShipments = isItemUsedInShipments(item);
+                                        const isUsedInShipments =
+                                          isItemUsedInShipments(item);
                                         if (isUsedInShipments) {
-                                          const originalDOItem = deliveryOrder?.items?.find(doItem => doItem.id === item.id);
+                                          const originalDOItem =
+                                            deliveryOrder?.items?.find(
+                                              (doItem) => doItem.id === item.id
+                                            );
                                           const usedQuantity = originalDOItem
-                                            ? (originalDOItem.processingQuantity || 0) +
-                                              (originalDOItem.completedQuantity || 0) +
-                                              (originalDOItem.cancelledQuantity || 0)
+                                            ? (originalDOItem.processingQuantity ||
+                                                0) +
+                                              (originalDOItem.completedQuantity ||
+                                                0) +
+                                              (originalDOItem.cancelledQuantity ||
+                                                0)
                                             : 0;
                                           showErrorAlert(
                                             "Tidak Dapat Menghapus Item",
@@ -1103,8 +1134,8 @@ export default function EditDo() {
               <DialogDescription>
                 Anda telah memilih produk{" "}
                 <strong>{pendingProduct?.name}</strong> dengan jumlah{" "}
-                <strong>{pendingProduct?.quantity}</strong> tetapi belum
-                menekan tombol + untuk menambahkannya.
+                <strong>{pendingProduct?.quantity}</strong> tetapi belum menekan
+                tombol + untuk menambahkannya.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
