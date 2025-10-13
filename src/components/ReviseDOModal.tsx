@@ -65,10 +65,10 @@ export function ReviseDOModal({
 }: ReviseDOModalProps) {
   const [revisedItems, setRevisedItems] = useState<RevisedItem[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
-  const [quantityDisplays, setQuantityDisplays] = useState<Record<string, string>>({});
+  const [quantityDisplays, setQuantityDisplays] = useState<
+    Record<string, string>
+  >({});
   const [isProcessing, setIsProcessing] = useState(false);
-
-
 
   const reviseShipmentItemMutation = useReviseShipmentItemAfterWeighing({
     onSuccess: () => {
@@ -85,9 +85,9 @@ export function ReviseDOModal({
   // Initialize revised items when modal opens - focus on shipment items, not DO items
   useEffect(() => {
     if (isOpen && shipment?.shipmentItems) {
-      // Filter shipment items that belong to this delivery order
+      // Filter shipment items that belong to this delivery order and are not cancelled
       const relevantShipmentItems = shipment.shipmentItems.filter(
-        (si) => si.deliveryOrderId === deliveryOrder.id
+        (si) => si.deliveryOrderId === deliveryOrder.id && si.status !== "CANCELLED"
       );
 
       const items: RevisedItem[] = relevantShipmentItems.map((shipmentItem) => {
@@ -99,13 +99,17 @@ export function ReviseDOModal({
         return {
           id: shipmentItem.id, // Use shipment item ID
           productId: shipmentItem.productId,
-          productName: shipmentItem.product?.name || doItem?.product?.name || "Unknown Product",
+          productName:
+            shipmentItem.product?.name ||
+            doItem?.product?.name ||
+            "Unknown Product",
           originalQuantity: shipmentItem.requestedQuantity, // Current shipment item quantity
           revisedQuantity: shipmentItem.requestedQuantity, // Start with current shipment quantity
           completedQuantity: doItem?.completedQuantity || 0,
           processingQuantity: doItem?.processingQuantity || 0,
           pendingQuantity: doItem?.pendingQuantity || 0,
-          unit: shipmentItem.product?.satuan || doItem?.product?.satuan || "pcs",
+          unit:
+            shipmentItem.product?.satuan || doItem?.product?.satuan || "pcs",
           estimatedWeight: shipmentItem.weightedQuantity ?? 0, // Current weighted quantity
         };
       });
@@ -132,9 +136,9 @@ export function ReviseDOModal({
     const quantity = result.numericValue || 0;
 
     // Update display value with the formatted result
-    setQuantityDisplays(prev => ({
+    setQuantityDisplays((prev) => ({
       ...prev,
-      [itemId]: result.displayValue
+      [itemId]: result.displayValue,
     }));
 
     setRevisedItems((prev) =>
@@ -151,14 +155,12 @@ export function ReviseDOModal({
     );
 
     // Check if there are changes compared to original shipment item quantities
-    const hasItemChanges = revisedItems.some(
-      (item) => {
-        if (item.id === itemId) {
-          return quantity !== item.originalQuantity;
-        }
-        return item.revisedQuantity !== item.originalQuantity;
+    const hasItemChanges = revisedItems.some((item) => {
+      if (item.id === itemId) {
+        return quantity !== item.originalQuantity;
       }
-    );
+      return item.revisedQuantity !== item.originalQuantity;
+    });
     setHasChanges(hasItemChanges);
   };
 
@@ -244,8 +246,10 @@ export function ReviseDOModal({
 
           successCount++;
         } catch (error) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          errorMessages.push(`${item.productName}: ${(error as any).message || 'Unknown error'}`);
+          errorMessages.push(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            `${item.productName}: ${(error as any).message || "Unknown error"}`
+          );
           continue;
         }
       }
@@ -262,13 +266,17 @@ export function ReviseDOModal({
       } else if (successCount > 0) {
         showErrorAlert(
           "Sebagian Berhasil",
-          `${successCount} dari ${changedItems.length} item berhasil direvisi.\n\nError:\n${errorMessages.join('\n')}`
+          `${successCount} dari ${
+            changedItems.length
+          } item berhasil direvisi.\n\nError:\n${errorMessages.join("\n")}`
         );
         onSuccess?.(); // Still trigger refetch for successful items
       } else {
         showErrorAlert(
           "Gagal Merevisi",
-          `Tidak ada item yang berhasil direvisi.\n\nError:\n${errorMessages.join('\n')}`
+          `Tidak ada item yang berhasil direvisi.\n\nError:\n${errorMessages.join(
+            "\n"
+          )}`
         );
       }
     }
@@ -280,10 +288,17 @@ export function ReviseDOModal({
         <DialogHeader>
           <DialogTitle>Revisi Shipment Items</DialogTitle>
           <div className="text-sm text-gray-600 mt-2">
-            <p><strong>Shipment:</strong> {shipment.armada?.plateNumber || 'N/A'} - {shipment.driver?.name || 'N/A'}</p>
-            <p><strong>DO:</strong> {deliveryOrder.doNumber} - {deliveryOrder.customer?.name}</p>
+            <p>
+              <strong>Shipment:</strong> {shipment.armada?.plateNumber || "N/A"}{" "}
+              - {shipment.driver?.name || "N/A"}
+            </p>
+            <p>
+              <strong>DO:</strong> {deliveryOrder.doNumber} -{" "}
+              {deliveryOrder.customer?.name}
+            </p>
             <p className="text-xs text-amber-600 mt-1">
-              💡 Merevisi item shipment akan mempengaruhi distribusi quantity di DO terkait
+              💡 Merevisi item shipment akan mempengaruhi distribusi quantity di
+              DO terkait
             </p>
           </div>
         </DialogHeader>
@@ -296,14 +311,21 @@ export function ReviseDOModal({
             </h4>
             <ul className="text-sm text-amber-700 space-y-1">
               <li>
-                • Merevisi quantity shipment item akan mempengaruhi distribusi quantity di DO
+                • Merevisi quantity shipment item akan mempengaruhi distribusi
+                quantity di DO
               </li>
-              <li>• Quantity DO asli tetap sama, hanya distribusi Pending/Proses yang berubah</li>
               <li>
-                • Berat akan dihitung ulang berdasarkan rasio penimbangan sebelumnya
+                • Quantity DO asli tetap sama, hanya distribusi Pending/Proses
+                yang berubah
+              </li>
+              <li>
+                • Berat akan dihitung ulang berdasarkan rasio penimbangan
+                sebelumnya
               </li>
               <li>• Item dengan quantity 0 akan dihapus dari shipment</li>
-              <li>• SPMB dan nota timbangan akan dibuat ulang untuk shipment ini</li>
+              <li>
+                • SPMB dan nota timbangan akan dibuat ulang untuk shipment ini
+              </li>
             </ul>
           </div>
 
@@ -350,13 +372,20 @@ export function ReviseDOModal({
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                      <span className="font-medium">{formatInputNumber(item.originalQuantity)}</span>
+                      <span className="font-medium">
+                        {formatInputNumber(item.originalQuantity)}
+                      </span>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                       <div className="flex justify-center">
                         <Input
                           type="text"
-                          value={quantityDisplays[item.id] || (item.revisedQuantity > 0 ? item.revisedQuantity.toString() : "")}
+                          value={
+                            quantityDisplays[item.id] ||
+                            (item.revisedQuantity > 0
+                              ? item.revisedQuantity.toString()
+                              : "")
+                          }
                           onChange={(e) =>
                             handleQuantityChange(item.id, e.target.value)
                           }
@@ -368,7 +397,11 @@ export function ReviseDOModal({
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
                       <span className="text-xs">
-                        {item.estimatedWeight ? `${formatInputNumber(item.estimatedWeight.toFixed(2))} kg` : '-'}
+                        {item.estimatedWeight
+                          ? `${formatInputNumber(
+                              item.estimatedWeight.toFixed(2)
+                            )} kg`
+                          : "-"}
                       </span>
                     </TableCell>
                     <TableCell className="px-4 py-3 text-sm text-center text-gray-500">
@@ -396,21 +429,34 @@ export function ReviseDOModal({
                 }`}
               >
                 <div className="mb-3">
-                  <h4 className="font-medium text-gray-900">{item.productName}</h4>
+                  <h4 className="font-medium text-gray-900">
+                    {item.productName}
+                  </h4>
                   <p className="text-xs text-gray-500">Unit: {item.unit}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="text-center">
-                    <p className="text-xs font-medium text-gray-600 mb-1">Qty Shipment Saat Ini</p>
-                    <p className="font-semibold text-gray-800">{formatInputNumber(item.originalQuantity)}</p>
+                    <p className="text-xs font-medium text-gray-600 mb-1">
+                      Qty Shipment Saat Ini
+                    </p>
+                    <p className="font-semibold text-gray-800">
+                      {formatInputNumber(item.originalQuantity)}
+                    </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs font-medium text-gray-600 mb-1">Qty Shipment Baru</p>
+                    <p className="text-xs font-medium text-gray-600 mb-1">
+                      Qty Shipment Baru
+                    </p>
                     <div className="flex justify-center">
                       <Input
                         type="text"
-                        value={quantityDisplays[item.id] || (item.revisedQuantity > 0 ? item.revisedQuantity.toString() : "")}
+                        value={
+                          quantityDisplays[item.id] ||
+                          (item.revisedQuantity > 0
+                            ? item.revisedQuantity.toString()
+                            : "")
+                        }
                         onChange={(e) =>
                           handleQuantityChange(item.id, e.target.value)
                         }
@@ -421,22 +467,38 @@ export function ReviseDOModal({
                     </div>
                   </div>
                   <div className="text-center col-span-2">
-                    <p className="text-xs font-medium text-gray-600 mb-1">Berat Saat Ini</p>
+                    <p className="text-xs font-medium text-gray-600 mb-1">
+                      Berat Saat Ini
+                    </p>
                     <p className="font-semibold text-gray-800">
-                      {item.estimatedWeight ? `${formatInputNumber(item.estimatedWeight)} kg` : '-'}
+                      {item.estimatedWeight
+                        ? `${formatInputNumber(item.estimatedWeight)} kg`
+                        : "-"}
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs font-medium text-gray-500 mb-1">DO: Selesai</p>
-                    <p className="text-gray-600">{formatInputNumber(item.completedQuantity)}</p>
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      DO: Selesai
+                    </p>
+                    <p className="text-gray-600">
+                      {formatInputNumber(item.completedQuantity)}
+                    </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs font-medium text-gray-500 mb-1">DO: Proses</p>
-                    <p className="text-gray-600">{formatInputNumber(item.processingQuantity)}</p>
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      DO: Proses
+                    </p>
+                    <p className="text-gray-600">
+                      {formatInputNumber(item.processingQuantity)}
+                    </p>
                   </div>
                   <div className="text-center col-span-2">
-                    <p className="text-xs font-medium text-gray-500 mb-1">DO: Pending</p>
-                    <p className="text-gray-600">{formatInputNumber(item.pendingQuantity)}</p>
+                    <p className="text-xs font-medium text-gray-500 mb-1">
+                      DO: Pending
+                    </p>
+                    <p className="text-gray-600">
+                      {formatInputNumber(item.pendingQuantity)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -445,20 +507,12 @@ export function ReviseDOModal({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isProcessing}
-          >
+          <Button variant="outline" onClick={onClose} disabled={isProcessing}>
             Batal
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={
-              isProcessing ||
-              !hasChanges ||
-              validateChanges() !== null
-            }
+            disabled={isProcessing || !hasChanges || validateChanges() !== null}
           >
             {isProcessing ? "Merevisi..." : "Revisi Shipment Items"}
           </Button>

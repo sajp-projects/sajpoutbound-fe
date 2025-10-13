@@ -15,6 +15,7 @@ import { Link, useNavigate, useParams } from "react-router";
 
 import { LoadingState } from "@/components/LoadingState";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Card,
   CardContent,
@@ -946,7 +947,54 @@ export default function EditDo() {
                                   </Link>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                  {formatInputNumber(item.quantity)}
+                                  {(() => {
+                                    const originalDOItem = deliveryOrder?.items?.find(
+                                      (doItem) => doItem.id === item.id
+                                    );
+                                    if (originalDOItem) {
+                                      return (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span className="cursor-help">
+                                              {formatInputNumber(item.quantity)}
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top" className="bg-white border-gray-200 text-gray-900 shadow-xl p-0 max-w-xs">
+                                            <div className="p-3 border-b border-gray-100">
+                                              <h4 className="font-medium text-sm text-gray-900">
+                                                Breakdown Kuantitas
+                                              </h4>
+                                            </div>
+                                            <div className="p-3">
+                                              <div className="space-y-2">
+                                                <div className="flex justify-between items-start text-xs">
+                                                  <span className="text-gray-600">Total:</span>
+                                                  <span className="font-medium text-gray-900">{formatInputNumber(originalDOItem.quantity)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-start text-xs">
+                                                  <span className="text-gray-600">Pending:</span>
+                                                  <span className="font-medium text-gray-900">{formatInputNumber(originalDOItem.pendingQuantity)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-start text-xs">
+                                                  <span className="text-gray-600">Proses:</span>
+                                                  <span className="font-medium text-gray-900">{formatInputNumber(originalDOItem.processingQuantity)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-start text-xs">
+                                                  <span className="text-gray-600">Selesai:</span>
+                                                  <span className="font-medium text-gray-900">{formatInputNumber(originalDOItem.completedQuantity)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-start text-xs">
+                                                  <span className="text-gray-600">Dibatalkan:</span>
+                                                  <span className="font-medium text-gray-900">{formatInputNumber(originalDOItem.cancelledQuantity || 0)}</span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      );
+                                    }
+                                    return <span>{formatInputNumber(item.quantity)}</span>;
+                                  })()}
                                 </td>
                                 <td className="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                                   <div className="flex justify-end space-x-2">

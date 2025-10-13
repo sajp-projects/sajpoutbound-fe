@@ -801,8 +801,8 @@ export default function TambahPengiriman() {
 
   return (
     <div className="px-4 space-y-6 sm:px-0 relative">
-      {/* Sticky Floating Action Button for mobile/tablet */}
-      <div className="fixed bottom-6 right-6 z-50 md:hidden group">
+      {/* Sticky Floating Action Button for all screen sizes */}
+      <div className="fixed bottom-6 right-6 z-50 group">
         <div className="absolute -top-10 right-0 bg-gray-800 text-white text-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
           Tambah DO
         </div>

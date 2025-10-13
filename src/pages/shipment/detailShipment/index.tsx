@@ -716,7 +716,37 @@ export default function DetailPengiriman() {
   });
 
   // Combined for backward compatibility
-  const chosenProducts = [...manualProducts, ...vendorProducts];
+  const chosenProductsRaw = [...manualProducts, ...vendorProducts];
+
+  // Filter customers to only show those from non-cancelled items
+  const chosenProducts = chosenProductsRaw.map((product) => {
+    if (!shipment) return product;
+
+    // Get non-cancelled shipment items for this product
+    const activeItems = shipment.shipmentItems.filter(
+      (item) =>
+        item.productId === product.productId &&
+        item.chosenProduct &&
+        item.status !== "CANCELLED"
+    );
+
+    // Extract unique customers from active items
+    const activeCustomers = Array.from(
+      new Map(
+        activeItems.map((item) => [
+          item.deliveryOrder.customer.id,
+          item.deliveryOrder.customer,
+        ])
+      ).values()
+    );
+
+    // Return product with filtered customers
+    return {
+      ...product,
+      customers: activeCustomers,
+    };
+  });
+
   const isLoadingChosenProducts =
     isLoadingManualProducts || isLoadingVendorProducts;
   const isChosenProductsError = isManualProductsError || isVendorProductsError;
