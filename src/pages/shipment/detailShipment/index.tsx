@@ -718,7 +718,7 @@ export default function DetailPengiriman() {
   // Combined for backward compatibility
   const chosenProductsRaw = [...manualProducts, ...vendorProducts];
 
-  // Filter customers to only show those from non-cancelled items
+  // Filter customers and location types to only show those from non-cancelled items
   const chosenProducts = chosenProductsRaw.map((product) => {
     if (!shipment) return product;
 
@@ -740,10 +740,18 @@ export default function DetailPengiriman() {
       ).values()
     );
 
-    // Return product with filtered customers
+    // Extract unique location types from active items
+    const activeLocationTypes = Array.from(
+      new Set(
+        activeItems.map((item) => item.locationType).filter(Boolean) // Remove null/undefined values
+      )
+    );
+
+    // Return product with filtered customers and location types
     return {
       ...product,
       customers: activeCustomers,
+      locationType: activeLocationTypes.join(", "), // Join location types like backend does
     };
   });
 
