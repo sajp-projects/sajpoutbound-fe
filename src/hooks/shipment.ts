@@ -376,6 +376,10 @@ export function useChooseProduct(options: Record<string, unknown> = {}) {
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.chosenProducts(variables.shipmentId),
       });
+      // Invalidate delivery order to refresh item quantities and status
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.detail(variables.deliveryOrderId),
+      });
     },
     ...options,
   });
@@ -1031,6 +1035,12 @@ export function useSelectiveChooseProduct(
       });
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.all,
+      });
+      // Invalidate all affected delivery orders to refresh item quantities and status
+      variables.deliveryOrderIds.forEach((deliveryOrderId) => {
+        queryClient.invalidateQueries({
+          queryKey: deliveryOrderKeys.detail(deliveryOrderId),
+        });
       });
 
       if (options.onSuccess) {

@@ -1664,11 +1664,21 @@ export default function DetailPengiriman() {
               >
                 <Package className="flex-shrink-0 mr-2 w-4 h-4" />
                 Item Pengiriman
-                {chosenProducts && chosenProducts.length > 0 && (
-                  <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
-                    {chosenProducts.length}
-                  </span>
-                )}
+                {(() => {
+                  // Count only products with active (non-cancelled) items
+                  const activeProductsCount = chosenProducts?.filter((item) => {
+                    const activeItems = item.shipmentItems.filter(
+                      (si) => si.status !== "CANCELLED"
+                    );
+                    return activeItems.length > 0;
+                  }).length || 0;
+
+                  return activeProductsCount > 0 ? (
+                    <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+                      {activeProductsCount}
+                    </span>
+                  ) : null;
+                })()}
               </button>
               <button
                 className={cn(
@@ -2996,19 +3006,31 @@ export default function DetailPengiriman() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {!chosenProducts || chosenProducts.length === 0 ? (
-                              <TableRow>
-                                <TableCell
-                                  colSpan={9}
-                                  className="px-4 py-6 text-sm text-center text-gray-500"
-                                >
-                                  Tidak ada item yang dipilih dalam pengiriman
-                                  ini. Muat Barang di tab "Delivery Orders &
-                                  Barang".
-                                </TableCell>
-                              </TableRow>
-                            ) : (
-                              chosenProducts.map((item) => (
+                            {(() => {
+                              // Filter out products with all items cancelled
+                              const activeProducts = chosenProducts?.filter((item) => {
+                                const activeItems = item.shipmentItems.filter(
+                                  (si) => si.status !== "CANCELLED"
+                                );
+                                return activeItems.length > 0;
+                              }) || [];
+
+                              if (activeProducts.length === 0) {
+                                return (
+                                  <TableRow>
+                                    <TableCell
+                                      colSpan={9}
+                                      className="px-4 py-6 text-sm text-center text-gray-500"
+                                    >
+                                      Tidak ada item yang dipilih dalam pengiriman
+                                      ini. Muat Barang di tab "Delivery Orders &
+                                      Barang".
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              }
+
+                              return activeProducts.map((item) => (
                                 <TableRow key={item.id}>
                                   <TableCell className="px-4 py-3 text-sm text-gray-600">
                                     <Link
@@ -3074,6 +3096,7 @@ export default function DetailPengiriman() {
                                       const totalItems = activeItems.length;
 
                                       if (
+                                        totalItems > 0 &&
                                         completedItems.length === totalItems
                                       ) {
                                         // All items completed
@@ -3183,8 +3206,8 @@ export default function DetailPengiriman() {
                                     )}
                                   </TableCell>
                                 </TableRow>
-                              ))
-                            )}
+                              ));
+                            })()}
                           </TableBody>
                         </Table>
                       </div>
@@ -3193,15 +3216,27 @@ export default function DetailPengiriman() {
                     {/* Mobile view */}
                     <div className="block sm:hidden">
                       <div className="space-y-4">
-                        {!chosenProducts || chosenProducts.length === 0 ? (
-                          <div className="p-4 text-center rounded-lg border border-gray-200">
-                            <p className="text-sm text-gray-500">
-                              Tidak ada item yang dipilih dalam pengiriman ini.
-                              Muat Barang di tab "Delivery Orders & Barang".
-                            </p>
-                          </div>
-                        ) : (
-                          chosenProducts.map((item) => (
+                        {(() => {
+                          // Filter out products with all items cancelled
+                          const activeProducts = chosenProducts?.filter((item) => {
+                            const activeItems = item.shipmentItems.filter(
+                              (si) => si.status !== "CANCELLED"
+                            );
+                            return activeItems.length > 0;
+                          }) || [];
+
+                          if (activeProducts.length === 0) {
+                            return (
+                              <div className="p-4 text-center rounded-lg border border-gray-200">
+                                <p className="text-sm text-gray-500">
+                                  Tidak ada item yang dipilih dalam pengiriman ini.
+                                  Muat Barang di tab "Delivery Orders & Barang".
+                                </p>
+                              </div>
+                            );
+                          }
+
+                          return activeProducts.map((item) => (
                             <div
                               key={item.id}
                               className="p-4 rounded-lg border border-gray-200"
@@ -3228,7 +3263,10 @@ export default function DetailPengiriman() {
                                   );
                                   const totalItems = activeItems.length;
 
-                                  if (completedItems.length === totalItems) {
+                                  if (
+                                    totalItems > 0 &&
+                                    completedItems.length === totalItems
+                                  ) {
                                     // All items completed
                                     return (
                                       <Badge
@@ -3396,8 +3434,8 @@ export default function DetailPengiriman() {
                                   </div>
                                 )}
                             </div>
-                          ))
-                        )}
+                          ));
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -3913,13 +3951,17 @@ export default function DetailPengiriman() {
                 <>
                   {(() => {
                     // Find all chosen items for this product (items that were loaded into the shipment)
-                    // Filter by selected DOs if any are selected
+                    // Filter by selected loading group if one is selected
                     // Exclude cancelled shipment items
                     const chosenItems = shipment.shipmentItems.filter(
                       (item) =>
                         item.productId === weighingProductId &&
                         item.chosenProduct &&
                         item.status !== "CANCELLED" &&
+                        // Filter by loading group if selected (for group-based weighing)
+                        (!selectedLoadingGroupId ||
+                          item.loadingGroupId === selectedLoadingGroupId) &&
+                        // Fallback to DO filter for backward compatibility
                         (selectedDOsForWeighing.length === 0 ||
                           selectedDOsForWeighing.includes(item.deliveryOrderId))
                     );

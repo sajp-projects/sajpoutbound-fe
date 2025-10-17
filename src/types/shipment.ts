@@ -248,6 +248,7 @@ export interface DeliveryOrderProduct {
 export interface ShipmentItemFromDO {
   id: string;
   requestedQuantity: number;
+  status: string;
   product: {
     id: string;
     name: string;

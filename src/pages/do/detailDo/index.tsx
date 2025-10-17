@@ -226,7 +226,14 @@ export default function DetailDo() {
         replace: true,
       });
     }
-  }, [hasProductReadAccess, hasShipmentReadAccess, activeTab, location.pathname, location.search, navigate]);
+  }, [
+    hasProductReadAccess,
+    hasShipmentReadAccess,
+    activeTab,
+    location.pathname,
+    location.search,
+    navigate,
+  ]);
 
   // Fetch shipments that use this DO
   const {
@@ -234,7 +241,8 @@ export default function DetailDo() {
     isLoading: isLoadingShipments,
     error: shipmentsError,
   } = useShipmentsByDeliveryOrderId(deliveryOrderId, {
-    enabled: hasShipmentReadAccess && activeTab === "shipments" && !!deliveryOrderId,
+    enabled:
+      hasShipmentReadAccess && activeTab === "shipments" && !!deliveryOrderId,
   });
 
   return (
@@ -396,7 +404,9 @@ export default function DetailDo() {
                         Jadwal Kirim
                       </h3>
                       <p className="text-gray-700">
-                        {formatDate(new Date(deliveryOrder.deliverySchedule).toISOString())}
+                        {formatDate(
+                          new Date(deliveryOrder.deliverySchedule).toISOString()
+                        )}
                       </p>
                     </div>
                   )}
@@ -437,7 +447,9 @@ export default function DetailDo() {
                     </div>
                   </div>
 
-                  {(hasDoLogAccess || hasDoUpdateAccess || hasDoDeleteAccess) && (
+                  {(hasDoLogAccess ||
+                    hasDoUpdateAccess ||
+                    hasDoDeleteAccess) && (
                     <div className="p-4 rounded-lg border border-gray-200">
                       <h3 className="mb-4 text-lg font-medium text-gray-900">
                         Tindakan
@@ -579,7 +591,12 @@ export default function DetailDo() {
                             </TableRow>
                           ) : (
                             deliveryOrder.items.map((item, index) => (
-                              <TableRow key={item.id} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                              <TableRow
+                                key={item.id}
+                                className={
+                                  index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                                }
+                              >
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   {index + 1}
                                 </TableCell>
@@ -605,7 +622,9 @@ export default function DetailDo() {
                                   {formatInputNumber(item.completedQuantity)}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-right text-gray-600">
-                                  {formatInputNumber(item.cancelledQuantity || 0)}
+                                  {formatInputNumber(
+                                    item.cancelledQuantity || 0
+                                  )}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   {item.product.satuan}
@@ -698,7 +717,9 @@ export default function DetailDo() {
                                   Dibatalkan
                                 </Badge>
                                 <span className="text-sm font-medium text-orange-800">
-                                  {formatInputNumber(item.cancelledQuantity || 0)}
+                                  {formatInputNumber(
+                                    item.cancelledQuantity || 0
+                                  )}
                                 </span>
                               </div>
                             </div>
@@ -794,7 +815,7 @@ export default function DetailDo() {
                                       <TableRow>
                                         <TableHead>Nama Barang</TableHead>
                                         <TableHead>Kuantitas</TableHead>
-
+                                        <TableHead>Status</TableHead>
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -807,9 +828,33 @@ export default function DetailDo() {
                                             <TableCell>
                                               {formatInputNumber(
                                                 item.requestedQuantity
-                                              )} {item.product.satuan}
+                                              )}{" "}
+                                              {item.product.satuan}
                                             </TableCell>
-
+                                            <TableCell>
+                                              <Badge
+                                                variant="outline"
+                                                className={cn(
+                                                  "font-medium px-2.5 py-0.5",
+                                                  item.status === "PENDING" &&
+                                                    "bg-yellow-100 text-yellow-800 border-yellow-200",
+                                                  item.status === "CHOSEN" &&
+                                                    "bg-blue-100 text-blue-800 border-blue-200",
+                                                  item.status === "COMPLETED" &&
+                                                    "bg-green-100 text-green-800 border-green-200",
+                                                  item.status === "CANCELLED" &&
+                                                    "bg-red-100 text-red-800 border-red-200"
+                                                )}
+                                              >
+                                                {item.status === "COMPLETED"
+                                                  ? "Sudah Ditimbang"
+                                                  : item.status === "CHOSEN"
+                                                  ? "Sudah Dimuat"
+                                                  : item.status === "CANCELLED"
+                                                  ? "Dibatalkan"
+                                                  : item.status}
+                                              </Badge>
+                                            </TableCell>
                                           </TableRow>
                                         )
                                       )}
@@ -888,15 +933,40 @@ export default function DetailDo() {
                                           key={item.id}
                                           className="p-2 bg-gray-50 rounded-md border border-gray-100"
                                         >
-                                          <p className="text-sm font-medium text-gray-800">
-                                            {item.product.name}
-                                          </p>
+                                          <div className="flex justify-between items-start">
+                                            <p className="text-sm font-medium text-gray-800">
+                                              {item.product.name}
+                                            </p>
+                                            <Badge
+                                              variant="outline"
+                                              className={cn(
+                                                "font-medium px-2 py-0.5 text-xs",
+                                                item.status === "PENDING" &&
+                                                  "bg-yellow-100 text-yellow-800 border-yellow-200",
+                                                item.status === "CHOSEN" &&
+                                                  "bg-blue-100 text-blue-800 border-blue-200",
+                                                item.status === "COMPLETED" &&
+                                                  "bg-green-100 text-green-800 border-green-200",
+                                                item.status === "CANCELLED" &&
+                                                  "bg-red-100 text-red-800 border-red-200"
+                                              )}
+                                            >
+                                              {item.status === "COMPLETED"
+                                                ? "Sudah Ditimbang"
+                                                : item.status === "CHOSEN"
+                                                ? "Sudah Dimuat"
+                                                : item.status === "CANCELLED"
+                                                ? "Dibatalkan"
+                                                : item.status}
+                                            </Badge>
+                                          </div>
                                           <div className="flex justify-between mt-1">
                                             <p className="text-xs text-gray-600">
                                               Kuantitas:{" "}
                                               {formatInputNumber(
                                                 item.requestedQuantity
-                                              )} {item.product.satuan}
+                                              )}{" "}
+                                              {item.product.satuan}
                                             </p>
                                           </div>
                                         </div>
