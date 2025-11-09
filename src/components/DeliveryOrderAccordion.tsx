@@ -142,6 +142,22 @@ export function DeliveryOrderAccordion({
     };
   };
 
+  // Helper function to check if an item can be transferred
+  // Items cannot be transferred if they are cancelled or have cancelledQuantity > 0
+  const canItemBeTransferred = (shipmentItem: ShipmentItem): boolean => {
+    // Check if item status is CANCELLED
+    if (shipmentItem.status === "CANCELLED") {
+      return false;
+    }
+    
+    // Check if item has been cancelled in the delivery order
+    // This requires checking the delivery order items for cancelledQuantity
+    // Since we don't have direct access to DO items here, we rely on status
+    // The backend will validate this on transfer anyway
+    
+    return true;
+  };
+
   // Check if there are any items that can be transferred
   const hasTransferableItems =
     shipmentStatus === "SELESAI" &&
@@ -318,9 +334,12 @@ export function DeliveryOrderAccordion({
                           const canBeTransferred =
                             product.chosenProduct &&
                             hasTransferItemsAccess &&
-                            hasTransferableItems;
+                            hasTransferableItems &&
+                            shipmentItem &&
+                            canItemBeTransferred(shipmentItem);
                           const isDisabled =
-                            shipmentItem?.requestedQuantity === 0;
+                            shipmentItem?.requestedQuantity === 0 ||
+                            shipmentItem?.status === "CANCELLED";
 
                           return (
                             <TableRow
@@ -488,8 +507,12 @@ export function DeliveryOrderAccordion({
                       const canBeTransferred =
                         product.chosenProduct &&
                         hasTransferItemsAccess &&
-                        hasTransferableItems;
-                      const isDisabled = shipmentItem?.requestedQuantity === 0;
+                        hasTransferableItems &&
+                        shipmentItem &&
+                        canItemBeTransferred(shipmentItem);
+                      const isDisabled =
+                        shipmentItem?.requestedQuantity === 0 ||
+                        shipmentItem?.status === "CANCELLED";
 
                       return (
                         <div
