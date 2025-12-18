@@ -1,36 +1,36 @@
 import {
-  ArrowRightLeft,
-  Loader2,
-  MapPin,
-  MinusCircle,
-  Pencil,
-  UserCheck,
-  XCircle,
+    ArrowRightLeft,
+    Loader2,
+    MapPin,
+    MinusCircle,
+    Pencil,
+    UserCheck,
+    XCircle,
 } from "lucide-react";
 import { Link } from "react-router";
 
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox, SimpleCheckbox } from "@/components/ui/checkbox";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import {
-  GroupedDeliveryOrder,
-  ProductItem,
-  ShipmentItem,
-  TransferItem,
+    GroupedDeliveryOrder,
+    ProductItem,
+    ShipmentItem,
+    TransferItem,
 } from "@/types/shipment";
 import { formatInputNumber } from "@/utils/formatNumber";
 
@@ -149,12 +149,12 @@ export function DeliveryOrderAccordion({
     if (shipmentItem.status === "CANCELLED") {
       return false;
     }
-    
+
     // Check if item has been cancelled in the delivery order
     // This requires checking the delivery order items for cancelledQuantity
     // Since we don't have direct access to DO items here, we rely on status
     // The backend will validate this on transfer anyway
-    
+
     return true;
   };
 
@@ -232,7 +232,14 @@ export function DeliveryOrderAccordion({
                               e.stopPropagation();
                               onOpenChangeCustomerModal(deliveryOrder);
                             }}
-                            disabled={isLoadingFullDOHook}
+                            disabled={
+                              isLoadingFullDOHook ||
+                              shipmentItems
+                                .filter(
+                                  (item) => item.deliveryOrderId === deliveryOrder.id
+                                )
+                                .every((item) => item.status === "CANCELLED")
+                            }
                             title="Ubah Customer"
                           >
                             {isLoadingFullDOHook ? (

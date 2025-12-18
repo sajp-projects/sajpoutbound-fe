@@ -1,32 +1,39 @@
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import { useReviseShipmentItemAfterWeighing } from "@/hooks/shipment";
 import { DeliveryOrder, RevisedItem } from "@/types/do";
 import { Shipment } from "@/types/shipment";
 import { formatInputNumber, handleDecimalInput } from "@/utils/formatNumber";
 import {
-  isConfirmed,
-  showConfirmationAlert,
-  showErrorAlert,
-  showSuccessAlert,
+    isConfirmed,
+    showConfirmationAlert,
+    showErrorAlert,
+    showSuccessAlert,
 } from "@/utils/sweetAlert";
 import Joi from "joi";
+import { AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
+
+type DecreaseMode = "to_cancelled" | "to_pending";
 
 // Joi schema for revised item validation
 const revisedItemSchema = Joi.object({
@@ -68,6 +75,11 @@ export function ReviseDOModal({
   const [quantityDisplays, setQuantityDisplays] = useState<
     Record<string, string>
   >({});
+  const [decreaseMode, setDecreaseMode] = useState<DecreaseMode>("to_pending");
+  const [showDecreaseModeModal, setShowDecreaseModeModal] = useState(false);
+  const [pendingChangedItems, setPendingChangedItems] = useState<RevisedItem[]>(
+    []
+  );
   const [isProcessing, setIsProcessing] = useState(false);
 
   const reviseShipmentItemMutation = useReviseShipmentItemAfterWeighing({
@@ -116,15 +128,15 @@ export function ReviseDOModal({
 
       setRevisedItems(items);
       setHasChanges(false);
+      setDecreaseMode("to_pending");
+      setShowDecreaseModeModal(false);
+      setPendingChangedItems([]);
 
       // Initialize display values with properly formatted quantities (including decimals)
       const displays: Record<string, string> = {};
       items.forEach((item) => {
-        if (item.revisedQuantity > 0) {
-          displays[item.id] = formatInputNumber(item.revisedQuantity);
-        } else {
-          displays[item.id] = ""; // Empty for 0 values
-        }
+        // Important: allow explicit "0" to be displayed/entered (0 means delete shipment item)
+        displays[item.id] = formatInputNumber(item.revisedQuantity ?? 0);
       });
       setQuantityDisplays(displays);
     }
@@ -217,6 +229,19 @@ export function ReviseDOModal({
       (item) => item.revisedQuantity !== item.originalQuantity
     );
 
+    const hasDecrease = changedItems.some(
+      (item) => item.revisedQuantity < item.originalQuantity
+    );
+    if (hasDecrease) {
+      setPendingChangedItems(changedItems);
+      setShowDecreaseModeModal(true);
+      return;
+    }
+
+    await continueSubmit(changedItems);
+  };
+
+  const continueSubmit = async (changedItems: RevisedItem[]) => {
     // Close modal first to show SweetAlert properly
     onClose();
 
@@ -236,12 +261,14 @@ export function ReviseDOModal({
 
       for (const item of changedItems) {
         try {
+          const isDecrease = item.revisedQuantity < item.originalQuantity;
           // The item.id is now the shipment item ID directly
           // Call the new API for this specific shipment item
           await reviseShipmentItemMutation.mutateAsync({
             shipmentId: shipment.id,
             shipmentItemId: item.id, // This is now the shipment item ID
             newQuantity: item.revisedQuantity,
+            ...(isDecrease ? { decreaseMode } : {}),
           });
 
           successCount++;
@@ -283,6 +310,7 @@ export function ReviseDOModal({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[900px] max-h-[80vh] overflow-y-auto bg-white border-0 rounded-lg shadow-lg">
         <DialogHeader>
@@ -381,10 +409,8 @@ export function ReviseDOModal({
                         <Input
                           type="text"
                           value={
-                            quantityDisplays[item.id] ||
-                            (item.revisedQuantity > 0
-                              ? item.revisedQuantity.toString()
-                              : "")
+                            quantityDisplays[item.id] ??
+                            formatInputNumber(item.revisedQuantity ?? 0)
                           }
                           onChange={(e) =>
                             handleQuantityChange(item.id, e.target.value)
@@ -452,10 +478,8 @@ export function ReviseDOModal({
                       <Input
                         type="text"
                         value={
-                          quantityDisplays[item.id] ||
-                          (item.revisedQuantity > 0
-                            ? item.revisedQuantity.toString()
-                            : "")
+                          quantityDisplays[item.id] ??
+                          formatInputNumber(item.revisedQuantity ?? 0)
                         }
                         onChange={(e) =>
                           handleQuantityChange(item.id, e.target.value)
@@ -519,5 +543,144 @@ export function ReviseDOModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+      {/* Decrease mode picker (only shown when there is at least one decreased item) */}
+      <Dialog
+        open={showDecreaseModeModal}
+        onOpenChange={(open) => {
+          if (isProcessing) return;
+          setShowDecreaseModeModal(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-[560px] bg-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+              Pilih mode pengurangan quantity
+            </DialogTitle>
+          </DialogHeader>
+
+          {(() => {
+            const decreasedItems = pendingChangedItems.filter(
+              (i) => i.revisedQuantity < i.originalQuantity
+            );
+            const totalReduced = decreasedItems.reduce(
+              (sum, i) => sum + (i.originalQuantity - i.revisedQuantity),
+              0
+            );
+            return (
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <Badge variant="warning">
+                    {decreasedItems.length} item berkurang
+                  </Badge>
+                  <Badge variant="secondary">
+                    Total selisih: {formatInputNumber(totalReduced)}
+                  </Badge>
+                </div>
+                <Separator />
+
+                <RadioGroup
+                  value={decreaseMode}
+                  onValueChange={(v) =>
+                    setDecreaseMode(v as DecreaseMode)
+                  }
+                  className="gap-3"
+                >
+                  <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 cursor-pointer">
+                    <RadioGroupItem
+                      value="to_pending"
+                      disabled={isProcessing}
+                      className="mt-1"
+                    />
+                    <div className="min-w-0">
+                      <div className="font-medium text-gray-900">
+                        Kembalikan selisih ke Pending
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        Selisih pengurangan akan kembali menjadi stok{" "}
+                        <strong>Pending</strong> di DO (bisa dipakai untuk
+                        shipment lain).
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 cursor-pointer">
+                    <RadioGroupItem
+                      value="to_cancelled"
+                      disabled={isProcessing}
+                      className="mt-1"
+                    />
+                    <div className="min-w-0">
+                      <div className="font-medium text-gray-900">
+                        Pindahkan selisih ke Cancelled
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        Selisih pengurangan akan dihitung sebagai{" "}
+                        <strong>Cancelled</strong> di DO (tidak bisa dipakai
+                        lagi).
+                      </div>
+                    </div>
+                  </label>
+                </RadioGroup>
+
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                  <div className="text-xs font-medium text-gray-700 mb-2">
+                    Preview item yang berkurang
+                  </div>
+                  <div className="space-y-1 max-h-40 overflow-auto pr-1">
+                    {decreasedItems.slice(0, 8).map((i) => (
+                      <div
+                        key={i.id}
+                        className="flex items-center justify-between gap-3 text-xs text-gray-700"
+                      >
+                        <div className="truncate">{i.productName}</div>
+                        <div className="shrink-0 tabular-nums">
+                          {formatInputNumber(i.originalQuantity)} →{" "}
+                          {formatInputNumber(i.revisedQuantity)}{" "}
+                          <span className="text-amber-700">
+                            (−{formatInputNumber(i.originalQuantity - i.revisedQuantity)})
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {decreasedItems.length > 8 && (
+                      <div className="text-xs text-gray-500">
+                        +{decreasedItems.length - 8} item lainnya
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (isProcessing) return;
+                setShowDecreaseModeModal(false);
+                setPendingChangedItems([]);
+              }}
+              disabled={isProcessing}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={async () => {
+                setShowDecreaseModeModal(false);
+                const itemsToSubmit = pendingChangedItems;
+                setPendingChangedItems([]);
+                await continueSubmit(itemsToSubmit);
+              }}
+              disabled={isProcessing || pendingChangedItems.length === 0}
+            >
+              Lanjut
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

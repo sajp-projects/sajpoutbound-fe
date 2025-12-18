@@ -15,7 +15,6 @@ import { Link, useNavigate, useParams } from "react-router";
 
 import { LoadingState } from "@/components/LoadingState";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Card,
   CardContent,
@@ -36,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useInfiniteCustomers } from "@/hooks/customer";
 import {
   deliveryOrderKeys,
@@ -631,6 +631,10 @@ export default function EditDo() {
     );
   }
 
+  const isAllItemsCancelled =
+    (deliveryOrder.items?.length || 0) > 0 &&
+    deliveryOrder.items.every((i) => (i.quantity || 0) - (i.cancelledQuantity || 0) <= 0);
+
   return (
     <div className="px-4 space-y-6 sm:px-0">
       <div className="flex items-center">
@@ -676,8 +680,14 @@ export default function EditDo() {
                     name="customerId"
                     label="Pelanggan"
                     required
-                    helpText="Ketik untuk mencari pelanggan"
+                    helpText={
+                      isAllItemsCancelled
+                        ? "Customer tidak bisa diubah karena semua item DO sudah dibatalkan"
+                        : "Ketik untuk mencari pelanggan"
+                    }
+                    disabled={isAllItemsCancelled}
                     onClear={() => {
+                      if (isAllItemsCancelled) return;
                       setValue("customerId", "", { shouldValidate: true });
                       setValue("customerName", "");
                       setValue("address", "", { shouldValidate: true });
@@ -730,6 +740,7 @@ export default function EditDo() {
                         id="useCustomerAddress"
                         checked={useCustomerAddress}
                         onCheckedChange={handleUseCustomerAddressChange}
+                        disabled={isAllItemsCancelled}
                       />
                       <label
                         htmlFor="useCustomerAddress"

@@ -1,27 +1,27 @@
 import { BASE_URL } from "@/constant/baseUrl";
 import { ApiErrorResult, ApiResponse } from "@/types/api";
 import {
-  BulkWeighShipmentInput,
-  ChosenProduct,
-  ChosenProductsResponse,
-  CreateShipmentInput,
-  IndividualWeighShipmentInput,
-  ReduceQuantityInput,
-  ReduceQuantityResponse,
-  SelectiveProductLoadingInput,
-  Shipment,
-  ShipmentPagination,
-  TransferItemsInput,
-  TransferItemsResponse,
-  UpdateShipmentInput,
+    BulkWeighShipmentInput,
+    ChosenProduct,
+    ChosenProductsResponse,
+    CreateShipmentInput,
+    IndividualWeighShipmentInput,
+    ReduceQuantityInput,
+    ReduceQuantityResponse,
+    SelectiveProductLoadingInput,
+    Shipment,
+    ShipmentPagination,
+    TransferItemsInput,
+    TransferItemsResponse,
+    UpdateShipmentInput,
 } from "@/types/shipment";
 import { fetchApi } from "@/utils/api";
 import { createErrorResponse, handleApiError } from "@/utils/errorHandler";
 import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type UseMutationOptions,
+    useMutation,
+    useQuery,
+    useQueryClient,
+    type UseMutationOptions,
 } from "@tanstack/react-query";
 import { deliveryOrderKeys } from "./do";
 
@@ -717,7 +717,12 @@ export function useReviseShipmentItemAfterWeighing(
   options?: UseMutationOptions<
     ApiErrorResult,
     Error,
-    { shipmentId: string; shipmentItemId: string; newQuantity: number }
+    {
+      shipmentId: string;
+      shipmentItemId: string;
+      newQuantity: number;
+      decreaseMode?: "to_cancelled" | "to_pending";
+    }
   >
 ) {
   const queryClient = useQueryClient();
@@ -725,9 +730,14 @@ export function useReviseShipmentItemAfterWeighing(
   return useMutation<
     ApiErrorResult,
     Error,
-    { shipmentId: string; shipmentItemId: string; newQuantity: number }
+    {
+      shipmentId: string;
+      shipmentItemId: string;
+      newQuantity: number;
+      decreaseMode?: "to_cancelled" | "to_pending";
+    }
   >({
-    mutationFn: async ({ shipmentId, shipmentItemId, newQuantity }) => {
+    mutationFn: async ({ shipmentId, shipmentItemId, newQuantity, decreaseMode }) => {
       const response = await fetchApi(
         `${BASE_URL}/delivery-orders/revise-shipment-item`,
         {},
@@ -737,6 +747,7 @@ export function useReviseShipmentItemAfterWeighing(
             shipmentId,
             shipmentItemId,
             newQuantity,
+            ...(decreaseMode ? { decreaseMode } : {}),
           }),
           headers: { "Content-Type": "application/json" },
         }
