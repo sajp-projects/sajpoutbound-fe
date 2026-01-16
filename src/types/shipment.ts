@@ -12,6 +12,17 @@ export type ShipmentItemStatus =
   | "CANCELLED";
 export type WeighingMethod = "MANUAL" | "VENDOR";
 
+export interface TruckWeighingStep {
+  weight: number | null;
+  weighedAt: string | null;
+  weighedById: string | null;
+}
+
+export interface TruckWeighing {
+  pre: TruckWeighingStep;
+  post: TruckWeighingStep;
+}
+
 export interface ShipmentItem {
   id: string;
   shipmentId: string;
@@ -100,6 +111,12 @@ export interface Shipment {
     id: string;
     name: string;
   };
+  preWeighingWeight?: number | null;
+  preWeighingAt?: string | null;
+  preWeighingById?: string | null;
+  postWeighingWeight?: number | null;
+  postWeighingAt?: string | null;
+  postWeighingById?: string | null;
   shipmentItems: ShipmentItem[];
   spmbs?: SPMB[];
 }
