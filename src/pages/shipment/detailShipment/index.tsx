@@ -174,16 +174,16 @@ export default function DetailPengiriman() {
   const roleId = getRoleId() || "";
 
   // Get tab from URL query parameter or default to "info"
-  const getTabFromUrl = (): "info" | "items" | "spmb" | "do" => {
+  const getTabFromUrl = (): "info" | "items" | "spmb" | "do" | "weighing" => {
     const params = new URLSearchParams(location.search);
     const tab = params.get("tab");
-    if (tab === "items" || tab === "spmb" || tab === "do") {
+    if (tab === "items" || tab === "spmb" || tab === "do" || tab === "weighing") {
       return tab;
     }
     return "info";
   };
 
-  const [activeTab, setActiveTab] = useState<"info" | "items" | "spmb" | "do">(
+  const [activeTab, setActiveTab] = useState<"info" | "items" | "spmb" | "do" | "weighing">(
     getTabFromUrl()
   );
   const [previewFile, setPreviewFile] = useState<FilePreview | null>(null);
@@ -1208,7 +1208,7 @@ export default function DetailPengiriman() {
     setPreviewModalOpen(true);
   };
 
-  const handleTabChange = (tab: "info" | "items" | "spmb" | "do") => {
+  const handleTabChange = (tab: "info" | "items" | "spmb" | "do" | "weighing") => {
     setActiveTab(tab);
     if (tab === "items") {
       refetchChosenProducts();
@@ -1743,6 +1743,18 @@ export default function DetailPengiriman() {
                     {shipment.spmbs.length}
                   </span>
                 )}
+              </button>
+              <button
+                className={cn(
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                  activeTab === "weighing"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                )}
+                onClick={() => handleTabChange("weighing")}
+              >
+                <Scale className="flex-shrink-0 mr-2 w-4 h-4" />
+                Timbang Truk
               </button>
             </div>
 
@@ -3771,6 +3783,80 @@ export default function DetailPengiriman() {
                       ))
                     )}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "weighing" && (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {/* Pre-Weighing Card */}
+                <div className="p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-medium text-gray-900">Timbang Awal</h3>
+                    <span className={cn(
+                      "px-2 py-1 text-xs font-medium rounded-full",
+                      shipment?.preWeighingAt 
+                        ? "bg-green-100 text-green-800" 
+                        : "bg-yellow-100 text-yellow-800"
+                    )}>
+                      {shipment?.preWeighingAt ? "SELESAI" : "MENUNGGU"}
+                    </span>
+                  </div>
+                  {shipment?.preWeighingAt ? (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm text-gray-500">Berat Truk Kosong</p>
+                        <p className="font-medium text-gray-700">
+                          {shipment?.preWeighingWeight?.toLocaleString('id-ID')} KG
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Waktu Timbang</p>
+                        <p className="font-medium text-gray-700">
+                          {new Date(shipment.preWeighingAt).toLocaleString('id-ID')}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">Menunggu vendor melakukan timbang awal</p>
+                  )}
+                </div>
+                
+                {/* Post-Weighing Card */}
+                <div className="p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-medium text-gray-900">Timbang Akhir</h3>
+                    <span className={cn(
+                      "px-2 py-1 text-xs font-medium rounded-full",
+                      shipment?.postWeighingAt 
+                        ? "bg-green-100 text-green-800" 
+                        : "bg-yellow-100 text-yellow-800"
+                    )}>
+                      {shipment?.postWeighingAt ? "SELESAI" : "MENUNGGU"}
+                    </span>
+                  </div>
+                  {shipment?.postWeighingAt ? (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm text-gray-500">Berat Truk Isi</p>
+                        <p className="font-medium text-gray-700">
+                          {shipment?.postWeighingWeight?.toLocaleString('id-ID')} KG
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Waktu Timbang</p>
+                        <p className="font-medium text-gray-700">
+                          {new Date(shipment.postWeighingAt).toLocaleString('id-ID')}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      {!shipment?.preWeighingAt 
+                        ? "Timbang awal harus dilakukan terlebih dahulu"
+                        : "Menunggu vendor melakukan timbang akhir"}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
