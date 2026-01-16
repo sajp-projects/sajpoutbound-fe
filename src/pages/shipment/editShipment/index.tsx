@@ -105,15 +105,23 @@ const formSchema = Joi.object({
     }),
     otherwise: Joi.string().allow("").optional(),
   }),
-  driverId: Joi.string().required().messages({
-    "string.empty": "Supir harus dipilih",
-    "any.required": "Supir harus dipilih",
+  driverId: Joi.when("type", {
+    is: "ANTAR",
+    then: Joi.string().required().messages({
+      "string.empty": "Supir harus dipilih",
+      "any.required": "Supir harus dipilih",
+    }),
+    otherwise: Joi.string().allow("").optional(),
   }),
-  kenek: Joi.string().required().min(1).max(255).messages({
-    "string.empty": "Kenek harus diisi",
-    "string.min": "Kenek tidak boleh kosong",
-    "string.max": "Kenek tidak boleh lebih dari 255 karakter",
-    "any.required": "Kenek harus diisi",
+  kenek: Joi.when("type", {
+    is: "ANTAR",
+    then: Joi.string().required().min(1).max(255).messages({
+      "string.empty": "Kenek harus diisi",
+      "string.min": "Kenek tidak boleh kosong",
+      "string.max": "Kenek tidak boleh lebih dari 255 karakter",
+      "any.required": "Kenek harus diisi",
+    }),
+    otherwise: Joi.string().allow("").optional().max(255),
   }),
   internalNote: Joi.string().allow("").optional(),
   deliveryOrders: Joi.array()
@@ -130,8 +138,8 @@ interface FormValues {
   type: "ANTAR" | "JEMPUT";
   plateNumber?: string;
   armadaId?: string;
-  driverId: string;
-  kenek: string;
+  driverId?: string;
+  kenek?: string;
   internalNote?: string;
   deliveryOrders: {
     deliveryOrderId: string;
@@ -384,6 +392,14 @@ export default function EditPengiriman() {
 
   const watchType = form.watch("type");
   const watchDeliveryOrders = form.watch("deliveryOrders");
+
+  // Clear driver/kenek when switching to JEMPUT
+  useEffect(() => {
+    if (watchType === "JEMPUT") {
+      form.setValue("driverId", "");
+      form.setValue("kenek", "");
+    }
+  }, [watchType, form]);
 
   // Helper function untuk menghitung stok tersedia untuk edit
   const calculateAvailableStock = useCallback(
@@ -883,12 +899,22 @@ export default function EditPengiriman() {
       items,
     };
 
-    if (values.type === "ANTAR" && values.armadaId) {
-      payload.armadaId = values.armadaId;
+    if (values.type === "ANTAR") {
+      if (values.armadaId) {
+        payload.armadaId = values.armadaId;
+      }
       payload.plateNumber = "";
+      if (values.driverId) {
+        payload.driverId = values.driverId;
+      }
+      if (values.kenek) {
+        payload.kenek = values.kenek;
+      }
     } else if (values.type === "JEMPUT" && values.plateNumber) {
       payload.plateNumber = values.plateNumber;
       payload.armadaId = "";
+      payload.driverId = "";
+      payload.kenek = "";
     }
 
     updateShipment.mutate({
@@ -1117,55 +1143,57 @@ export default function EditPengiriman() {
                       )}
                     </div>
 
-                    {/* Driver and Kenek Selection */}
-                    <div className="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="driverId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              Supir <span className="text-red-500">*</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Combobox
-                                items={drivers}
-                                placeholder="Pilih supir"
-                                emptyMessage="Tidak ada supir tersedia"
-                                value={field.value}
-                                onValueChange={field.onChange}
-                                disabled={loadingDrivers || isSubmitting}
-                                searchable
-                                name="driverId"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="kenek"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              Kenek <span className="text-red-500">*</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                placeholder="Masukkan nama kenek"
-                                disabled={isSubmitting}
-                                className={cn(
-                                  form.formState.errors.kenek && "border-red-500"
-                                )}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    {/* Driver and Kenek Selection - Only for ANTAR */}
+                    {watchType === "ANTAR" && (
+                      <div className="grid grid-cols-1 gap-4 mt-4 sm:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="driverId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                Supir <span className="text-red-500">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <Combobox
+                                  items={drivers}
+                                  placeholder="Pilih supir"
+                                  emptyMessage="Tidak ada supir tersedia"
+                                  value={field.value || ""}
+                                  onValueChange={field.onChange}
+                                  disabled={loadingDrivers || isSubmitting}
+                                  searchable
+                                  name="driverId"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="kenek"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                Kenek <span className="text-red-500">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="Masukkan nama kenek"
+                                  disabled={isSubmitting}
+                                  className={cn(
+                                    form.formState.errors.kenek && "border-red-500"
+                                  )}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
