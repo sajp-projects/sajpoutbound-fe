@@ -70,6 +70,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useDeliveryOrder } from "@/hooks/do";
@@ -174,16 +180,16 @@ export default function DetailPengiriman() {
   const roleId = getRoleId() || "";
 
   // Get tab from URL query parameter or default to "info"
-  const getTabFromUrl = (): "info" | "items" | "spmb" | "do" => {
+  const getTabFromUrl = (): "info" | "items" | "spmb" | "do" | "truck-weighing" => {
     const params = new URLSearchParams(location.search);
     const tab = params.get("tab");
-    if (tab === "items" || tab === "spmb" || tab === "do") {
+    if (tab === "items" || tab === "spmb" || tab === "do" || tab === "truck-weighing") {
       return tab;
     }
     return "info";
   };
 
-  const [activeTab, setActiveTab] = useState<"info" | "items" | "spmb" | "do">(
+  const [activeTab, setActiveTab] = useState<"info" | "items" | "spmb" | "do" | "truck-weighing">(
     getTabFromUrl()
   );
   const [previewFile, setPreviewFile] = useState<FilePreview | null>(null);
@@ -1208,7 +1214,7 @@ export default function DetailPengiriman() {
     setPreviewModalOpen(true);
   };
 
-  const handleTabChange = (tab: "info" | "items" | "spmb" | "do") => {
+  const handleTabChange = (tab: "info" | "items" | "spmb" | "do" | "truck-weighing") => {
     setActiveTab(tab);
     if (tab === "items") {
       refetchChosenProducts();
@@ -1743,6 +1749,18 @@ export default function DetailPengiriman() {
                     {shipment.spmbs.length}
                   </span>
                 )}
+              </button>
+              <button
+                className={cn(
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                  activeTab === "truck-weighing"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                )}
+                onClick={() => handleTabChange("truck-weighing")}
+              >
+                <Scale className="flex-shrink-0 mr-2 w-4 h-4" />
+                Timbang Truk
               </button>
             </div>
 
@@ -3772,6 +3790,119 @@ export default function DetailPengiriman() {
                     )}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === "truck-weighing" && (
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold">Timbang Truk</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Pre-Weighing Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Scale className="h-5 w-5" />
+                        Timbang Awal (Truk Kosong)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Status</span>
+                        {shipment?.preWeighingWeight ? (
+                          <Badge variant="default" className="bg-green-500">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Selesai
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Belum Ditimbang</Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Berat</span>
+                        <span className="font-medium">
+                          {shipment?.preWeighingWeight
+                            ? `${formatInputNumber(shipment.preWeighingWeight)} kg`
+                            : "-"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Waktu</span>
+                        <span className="text-sm">
+                          {shipment?.preWeighingAt
+                            ? new Date(shipment.preWeighingAt).toLocaleString(
+                                "id-ID"
+                              )
+                            : "-"}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Post-Weighing Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Scale className="h-5 w-5" />
+                        Timbang Akhir (Truk Muat)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Status</span>
+                        {shipment?.postWeighingWeight ? (
+                          <Badge variant="default" className="bg-green-500">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Selesai
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Belum Ditimbang</Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Berat</span>
+                        <span className="font-medium">
+                          {shipment?.postWeighingWeight
+                            ? `${formatInputNumber(shipment.postWeighingWeight)} kg`
+                            : "-"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Waktu</span>
+                        <span className="text-sm">
+                          {shipment?.postWeighingAt
+                            ? new Date(shipment.postWeighingAt).toLocaleString(
+                                "id-ID"
+                              )
+                            : "-"}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Net Weight Calculation */}
+                {shipment?.preWeighingWeight && shipment?.postWeighingWeight && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Selisih Berat</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between text-lg">
+                        <span className="text-muted-foreground">
+                          Berat Muatan
+                        </span>
+                        <span className="font-bold text-primary">
+                          {formatInputNumber(
+                            shipment.postWeighingWeight -
+                              shipment.preWeighingWeight
+                          )}{" "}
+                          kg
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             )}
           </div>
