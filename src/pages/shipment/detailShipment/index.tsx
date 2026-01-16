@@ -717,6 +717,12 @@ export default function DetailPengiriman() {
     PERMISSION.ACTIONS.VERIFY_PLATE
   );
 
+  const hasPengirimanUpdateWeighingMethodAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PENGIRIMAN,
+    PERMISSION.ACTIONS.UPDATE_WEIGHING_METHOD
+  );
+
   const shipmentId = id || "";
 
   const {
@@ -1882,6 +1888,7 @@ export default function DetailPengiriman() {
                               {/* Tombol Aksi Foto */}
                               {hasPengirimanVerifyPlateAccess &&
                                 allItemsCompleted &&
+                                shipment.postWeighingWeight &&
                                 !shipment.isVerified && (
                                   <div className="flex gap-2 items-center pt-2 border-t border-gray-200">
                                     <Button
@@ -1901,6 +1908,7 @@ export default function DetailPengiriman() {
                         ) : (
                           <div className="mt-2">
                             {allItemsCompleted &&
+                            shipment?.postWeighingWeight &&
                             hasPengirimanVerifyPlateAccess ? (
                               <>
                                 <div
@@ -2361,7 +2369,7 @@ export default function DetailPengiriman() {
                                             ? "Manual"
                                             : "Vendor"}
                                         </Badge>
-                                        {hasPengirimanUpdateAccess &&
+                                        {hasPengirimanUpdateWeighingMethodAccess &&
                                           weighingMethod &&
                                           !hasWeighedItems && (
                                             <Button
@@ -3802,12 +3810,14 @@ export default function DetailPengiriman() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-500">Status</span>
                         {shipment?.preWeighingWeight ? (
-                          <Badge variant="default" className="bg-green-500">
+                          <Badge variant="outline" className="text-green-700 bg-green-50 border-green-200">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Selesai
                           </Badge>
                         ) : (
-                          <Badge variant="secondary">Belum Ditimbang</Badge>
+                          <Badge variant="outline" className="text-yellow-700 bg-yellow-50 border-yellow-200">
+                            Belum Ditimbang
+                          </Badge>
                         )}
                       </div>
                       <div className="flex items-center justify-between">
@@ -3822,9 +3832,7 @@ export default function DetailPengiriman() {
                         <span className="text-sm text-gray-500">Waktu</span>
                         <span className="text-sm text-gray-700">
                           {shipment?.preWeighingAt
-                            ? new Date(shipment.preWeighingAt).toLocaleString(
-                                "id-ID"
-                              )
+                            ? formatDate(shipment.preWeighingAt)
                             : "-"}
                         </span>
                       </div>
@@ -3841,12 +3849,14 @@ export default function DetailPengiriman() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-500">Status</span>
                         {shipment?.postWeighingWeight ? (
-                          <Badge variant="default" className="bg-green-500">
+                          <Badge variant="outline" className="text-green-700 bg-green-50 border-green-200">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Selesai
                           </Badge>
                         ) : (
-                          <Badge variant="secondary">Belum Ditimbang</Badge>
+                          <Badge variant="outline" className="text-yellow-700 bg-yellow-50 border-yellow-200">
+                            Belum Ditimbang
+                          </Badge>
                         )}
                       </div>
                       <div className="flex items-center justify-between">
@@ -3861,9 +3871,7 @@ export default function DetailPengiriman() {
                         <span className="text-sm text-gray-500">Waktu</span>
                         <span className="text-sm text-gray-700">
                           {shipment?.postWeighingAt
-                            ? new Date(shipment.postWeighingAt).toLocaleString(
-                                "id-ID"
-                              )
+                            ? formatDate(shipment.postWeighingAt)
                             : "-"}
                         </span>
                       </div>
