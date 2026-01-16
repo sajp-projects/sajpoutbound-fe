@@ -12,6 +12,7 @@ import {
   useShipmentChosenProducts,
   useTransferItems,
   useUpdateTally,
+  useUpdateWeighingMethod,
 } from "@/hooks/shipment";
 import {
   Archive,
@@ -471,6 +472,55 @@ export default function DetailPengiriman() {
       );
     },
   });
+
+  // Update weighing method mutation
+  const updateWeighingMethod = useUpdateWeighingMethod({
+    onSuccess: (response) => {
+      const hasWeighings = response.data?.hasWeighings;
+      if (hasWeighings) {
+        showSuccessAlert(
+          "Tipe Penimbangan Diubah",
+          "Tipe penimbangan berhasil diubah. Data timbangan sebelumnya tetap tersimpan."
+        );
+      } else {
+        showSuccessAlert("Berhasil", "Tipe penimbangan berhasil diubah");
+      }
+      refetch();
+      refetchChosenProducts();
+    },
+    onError: (error) => {
+      showErrorAlert(
+        "Gagal Mengubah Tipe Penimbangan",
+        error.message || "Terjadi kesalahan saat mengubah tipe penimbangan"
+      );
+    },
+  });
+
+  // Handler to toggle weighing method
+  const handleToggleWeighingMethod = (
+    productId: string,
+    currentMethod: "MANUAL" | "VENDOR"
+  ) => {
+    if (!shipmentId) return;
+
+    const newMethod = currentMethod === "MANUAL" ? "VENDOR" : "MANUAL";
+    const methodLabel = newMethod === "MANUAL" ? "Manual" : "Vendor";
+
+    showConfirmationAlert(
+      "Ubah Tipe Penimbangan",
+      `Apakah Anda yakin ingin mengubah tipe penimbangan menjadi "${methodLabel}"?`,
+      "Ya, Ubah",
+      "Batal"
+    ).then((result) => {
+      if (isConfirmed(result)) {
+        updateWeighingMethod.mutate({
+          shipmentId,
+          productId,
+          weighingMethod: newMethod,
+        });
+      }
+    });
+  };
 
   // Loading method selection handlers
   // This function checks if a product has multiple DOs in the shipment:
@@ -1524,9 +1574,6 @@ export default function DetailPengiriman() {
   const handleOpenNotaTimbanganModal = (item: ChosenProductExtended) => {
     setSelectedProductId(item.productId);
     setCurrentNotaIndex(0);
-    // Force refresh of Nota Timbangan list for the product before navigating
-    refetchNotaTimbangan();
-    // Directly open the first nota timbangan in preview
     const firstNota = item.weighings.find(
       (w) => w.notaTimbangan
     )?.notaTimbangan;
@@ -2084,6 +2131,9 @@ export default function DetailPengiriman() {
                             Status
                           </TableHead>
                           <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
+                            Tipe Penimbangan
+                          </TableHead>
+                          <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
                             Aksi
                           </TableHead>
                         </TableRow>
@@ -2260,6 +2310,68 @@ export default function DetailPengiriman() {
                                         </div>
                                       );
                                     }
+                                  })()}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
+                                  {(() => {
+                                    const weighingMethod =
+                                      getProductWeighingMethod(product.id);
+                                    const chosenItems =
+                                      shipment.shipmentItems.filter(
+                                        (si) =>
+                                          si.productId === product.id &&
+                                          si.chosenProduct &&
+                                          si.status !== "CANCELLED"
+                                      );
+                                    const chosenCount = chosenItems.length;
+                                    const hasWeighedItems = chosenItems.some(
+                                      (si) => si.status === "COMPLETED"
+                                    );
+
+                                    if (chosenCount === 0) {
+                                      return (
+                                        <span className="text-gray-400">-</span>
+                                      );
+                                    }
+
+                                    return (
+                                      <div className="flex flex-col items-center gap-1">
+                                        <Badge
+                                          variant="outline"
+                                          className={cn(
+                                            "whitespace-nowrap",
+                                            weighingMethod === "MANUAL"
+                                              ? "text-indigo-700 bg-indigo-50 border-indigo-200"
+                                              : "text-orange-700 bg-orange-50 border-orange-200"
+                                          )}
+                                        >
+                                          {weighingMethod === "MANUAL"
+                                            ? "Manual"
+                                            : "Vendor"}
+                                        </Badge>
+                                        {hasPengirimanUpdateAccess &&
+                                          weighingMethod &&
+                                          !hasWeighedItems && (
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700"
+                                              onClick={() =>
+                                                handleToggleWeighingMethod(
+                                                  product.id,
+                                                  weighingMethod
+                                                )
+                                              }
+                                              disabled={
+                                                updateWeighingMethod.isPending
+                                              }
+                                            >
+                                              <RefreshCw className="w-3 h-3 mr-1" />
+                                              Ubah
+                                            </Button>
+                                          )}
+                                      </div>
+                                    );
                                   })()}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
@@ -2693,6 +2805,61 @@ export default function DetailPengiriman() {
                               {formatInputNumber(product.totalQuantity)}{" "}
                               {product.satuan}
                             </p>
+                            {(() => {
+                              const weighingMethod = getProductWeighingMethod(
+                                product.id
+                              );
+                              const chosenItems = shipment.shipmentItems.filter(
+                                (si) =>
+                                  si.productId === product.id &&
+                                  si.chosenProduct &&
+                                  si.status !== "CANCELLED"
+                              );
+                              const chosenCount = chosenItems.length;
+                              const hasWeighedItems = chosenItems.some(
+                                (si) => si.status === "COMPLETED"
+                              );
+
+                              if (chosenCount === 0) return null;
+
+                              return (
+                                <div className="flex items-center gap-2 pt-1">
+                                  <span className="font-medium">Tipe:</span>
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      "text-xs",
+                                      weighingMethod === "MANUAL"
+                                        ? "text-indigo-700 bg-indigo-50 border-indigo-200"
+                                        : "text-orange-700 bg-orange-50 border-orange-200"
+                                    )}
+                                  >
+                                    {weighingMethod === "MANUAL"
+                                      ? "Manual"
+                                      : "Vendor"}
+                                  </Badge>
+                                  {hasPengirimanUpdateAccess &&
+                                    weighingMethod &&
+                                    !hasWeighedItems && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-5 px-1.5 text-[10px] text-gray-500 hover:text-gray-700"
+                                        onClick={() =>
+                                          handleToggleWeighingMethod(
+                                            product.id,
+                                            weighingMethod
+                                          )
+                                        }
+                                        disabled={updateWeighingMethod.isPending}
+                                      >
+                                        <RefreshCw className="w-2.5 h-2.5 mr-0.5" />
+                                        Ubah
+                                      </Button>
+                                    )}
+                                </div>
+                              );
+                            })()}
                           </div>
                           {(hasPengirimanUpdateAccess ||
                             hasPengirimanWeighAccess) && (
