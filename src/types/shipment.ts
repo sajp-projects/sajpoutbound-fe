@@ -12,6 +12,18 @@ export type ShipmentItemStatus =
   | "CANCELLED";
 export type WeighingMethod = "MANUAL" | "VENDOR";
 
+export interface TruckWeighingStep {
+  loadingGroupId: string;
+  status: 'PENDING' | 'COMPLETED';
+  weight: number | null;
+  completedAt: string | null;
+}
+
+export interface TruckWeighing {
+  preWeighing: TruckWeighingStep;
+  postWeighing: TruckWeighingStep;
+}
+
 export interface ShipmentItem {
   id: string;
   shipmentId: string;
@@ -89,6 +101,12 @@ export interface Shipment {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  preWeighingWeight?: number | null;
+  preWeighingAt?: string | null;
+  preWeighingById?: string | null;
+  postWeighingWeight?: number | null;
+  postWeighingAt?: string | null;
+  postWeighingById?: string | null;
   armada: {
     id: string;
     model: string;
