@@ -381,7 +381,6 @@ export function useChooseProduct(options: Record<string, unknown> = {}) {
         (options.onSuccess as (data: unknown, variables: unknown, context: unknown) => void)(data, variables, context);
       }
     },
-    ...options,
   });
 }
 

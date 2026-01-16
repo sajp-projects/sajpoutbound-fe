@@ -3807,7 +3807,7 @@ export default function DetailPengiriman() {
                       <div>
                         <p className="text-sm text-gray-500">Berat Truk Kosong</p>
                         <p className="font-medium text-gray-700">
-                          {shipment?.preWeighingWeight?.toLocaleString('id-ID')} KG
+                          {shipment?.preWeighingWeight?.toLocaleString('id-ID') ?? '-'} KG
                         </p>
                       </div>
                       <div>
@@ -3840,7 +3840,7 @@ export default function DetailPengiriman() {
                       <div>
                         <p className="text-sm text-gray-500">Berat Truk Isi</p>
                         <p className="font-medium text-gray-700">
-                          {shipment?.postWeighingWeight?.toLocaleString('id-ID')} KG
+                          {shipment?.postWeighingWeight?.toLocaleString('id-ID') ?? '-'} KG
                         </p>
                       </div>
                       <div>
