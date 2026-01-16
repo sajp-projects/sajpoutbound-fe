@@ -369,17 +369,90 @@ export function useChooseProduct(options: Record<string, unknown> = {}) {
 
       return result.data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: shipmentKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: deliveryOrderKeys.all,
+      });
+
+      if (options.onSuccess && typeof options.onSuccess === "function") {
+        (options.onSuccess as (data: unknown, variables: unknown, context: unknown) => void)(data, variables, context);
+      }
+    },
+    ...options,
+  });
+}
+
+export function useUpdateWeighingMethod(
+  options: UseMutationOptions<
+    ApiResponse<{
+      message: string;
+      chosenProduct: ChosenProduct;
+      updated: boolean;
+      hasWeighings: boolean;
+    }>,
+    Error,
+    {
+      shipmentId: string;
+      productId: string;
+      weighingMethod: "MANUAL" | "VENDOR";
+    }
+  > = {}
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<{
+      message: string;
+      chosenProduct: ChosenProduct;
+      updated: boolean;
+      hasWeighings: boolean;
+    }>,
+    Error,
+    {
+      shipmentId: string;
+      productId: string;
+      weighingMethod: "MANUAL" | "VENDOR";
+    }
+  >({
+    mutationFn: async ({ shipmentId, productId, weighingMethod }) => {
+      const response = await fetchApi(
+        `${BASE_URL}/shipments/${shipmentId}/choosen-product/${productId}/weighing-method`,
+        {},
+        {
+          method: "PATCH",
+          body: JSON.stringify({ weighingMethod }),
+        }
+      );
+
+      const result: ApiResponse<{
+        message: string;
+        chosenProduct: ChosenProduct;
+        updated: boolean;
+        hasWeighings: boolean;
+      }> = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || "Terjadi kesalahan saat mengubah tipe penimbangan"
+        );
+      }
+
+      return result;
+    },
+    onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.detail(variables.shipmentId),
       });
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.chosenProducts(variables.shipmentId),
       });
-      // Invalidate delivery order to refresh item quantities and status
-      queryClient.invalidateQueries({
-        queryKey: deliveryOrderKeys.detail(variables.deliveryOrderId),
-      });
+
+      if (options.onSuccess) {
+        options.onSuccess(data, variables, context);
+      }
     },
     ...options,
   });
@@ -822,6 +895,10 @@ export function useNotaTimbanganForProduct(
   return useQuery({
     queryKey: shipmentKeys.notaTimbangan(shipmentId, productId),
     queryFn: async () => {
+      if (!shipmentId || !productId) {
+        throw new Error("shipmentId and productId are required");
+      }
+
       const response = await fetchApi(
         `${BASE_URL}/shipments/${shipmentId}/nota-timbangan/${productId}`
       );

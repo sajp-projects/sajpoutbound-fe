@@ -122,8 +122,8 @@ export interface UpdateShipmentItem {
 export interface CreateShipmentInput {
   type: ShipmentType;
   armadaId?: string;
-  driverId: string;
-  kenek: string;
+  driverId?: string;
+  kenek?: string;
   internalNote?: string;
   plateNumber: string;
   items: CreateShipmentItem[];
