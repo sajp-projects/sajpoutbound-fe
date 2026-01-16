@@ -70,12 +70,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useDeliveryOrder } from "@/hooks/do";
@@ -1694,6 +1688,18 @@ export default function DetailPengiriman() {
               <button
                 className={cn(
                   "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
+                  activeTab === "truck-weighing"
+                    ? "border-blue-600 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                )}
+                onClick={() => handleTabChange("truck-weighing")}
+              >
+                <Scale className="flex-shrink-0 mr-2 w-4 h-4" />
+                Timbang Truk
+              </button>
+              <button
+                className={cn(
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
                   activeTab === "do"
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -1749,18 +1755,6 @@ export default function DetailPengiriman() {
                     {shipment.spmbs.length}
                   </span>
                 )}
-              </button>
-              <button
-                className={cn(
-                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px flex items-center whitespace-nowrap",
-                  activeTab === "truck-weighing"
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                )}
-                onClick={() => handleTabChange("truck-weighing")}
-              >
-                <Scale className="flex-shrink-0 mr-2 w-4 h-4" />
-                Timbang Truk
               </button>
             </div>
 
@@ -3795,20 +3789,18 @@ export default function DetailPengiriman() {
 
             {activeTab === "truck-weighing" && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold">Timbang Truk</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Timbang Truk</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Pre-Weighing Card */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Scale className="h-5 w-5" />
-                        Timbang Awal (Truk Kosong)
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
+                  {/* Pre-Weighing */}
+                  <div className="p-4 rounded-lg border border-gray-200">
+                    <h4 className="mb-4 text-lg font-medium text-gray-900 flex items-center gap-2">
+                      <Scale className="h-5 w-5" />
+                      Timbang Awal (Truk Kosong)
+                    </h4>
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Status</span>
+                        <span className="text-sm text-gray-500">Status</span>
                         {shipment?.preWeighingWeight ? (
                           <Badge variant="default" className="bg-green-500">
                             <CheckCircle className="h-3 w-3 mr-1" />
@@ -3819,16 +3811,16 @@ export default function DetailPengiriman() {
                         )}
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Berat</span>
-                        <span className="font-medium">
+                        <span className="text-sm text-gray-500">Berat</span>
+                        <span className="font-medium text-gray-700">
                           {shipment?.preWeighingWeight
                             ? `${formatInputNumber(shipment.preWeighingWeight)} kg`
                             : "-"}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Waktu</span>
-                        <span className="text-sm">
+                        <span className="text-sm text-gray-500">Waktu</span>
+                        <span className="text-sm text-gray-700">
                           {shipment?.preWeighingAt
                             ? new Date(shipment.preWeighingAt).toLocaleString(
                                 "id-ID"
@@ -3836,20 +3828,18 @@ export default function DetailPengiriman() {
                             : "-"}
                         </span>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
 
-                  {/* Post-Weighing Card */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Scale className="h-5 w-5" />
-                        Timbang Akhir (Truk Muat)
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
+                  {/* Post-Weighing */}
+                  <div className="p-4 rounded-lg border border-gray-200">
+                    <h4 className="mb-4 text-lg font-medium text-gray-900 flex items-center gap-2">
+                      <Scale className="h-5 w-5" />
+                      Timbang Akhir (Truk Muat)
+                    </h4>
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Status</span>
+                        <span className="text-sm text-gray-500">Status</span>
                         {shipment?.postWeighingWeight ? (
                           <Badge variant="default" className="bg-green-500">
                             <CheckCircle className="h-3 w-3 mr-1" />
@@ -3860,16 +3850,16 @@ export default function DetailPengiriman() {
                         )}
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Berat</span>
-                        <span className="font-medium">
+                        <span className="text-sm text-gray-500">Berat</span>
+                        <span className="font-medium text-gray-700">
                           {shipment?.postWeighingWeight
                             ? `${formatInputNumber(shipment.postWeighingWeight)} kg`
                             : "-"}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Waktu</span>
-                        <span className="text-sm">
+                        <span className="text-sm text-gray-500">Waktu</span>
+                        <span className="text-sm text-gray-700">
                           {shipment?.postWeighingAt
                             ? new Date(shipment.postWeighingAt).toLocaleString(
                                 "id-ID"
@@ -3877,31 +3867,25 @@ export default function DetailPengiriman() {
                             : "-"}
                         </span>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Net Weight Calculation */}
                 {shipment?.preWeighingWeight && shipment?.postWeighingWeight && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Selisih Berat</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between text-lg">
-                        <span className="text-muted-foreground">
-                          Berat Muatan
-                        </span>
-                        <span className="font-bold text-primary">
-                          {formatInputNumber(
-                            shipment.postWeighingWeight -
-                              shipment.preWeighingWeight
-                          )}{" "}
-                          kg
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div className="p-4 rounded-lg border border-gray-200">
+                    <h4 className="mb-4 text-lg font-medium text-gray-900">Selisih Berat</h4>
+                    <div className="flex items-center justify-between text-lg">
+                      <span className="text-sm text-gray-500">Berat Muatan</span>
+                      <span className="font-bold text-blue-600">
+                        {formatInputNumber(
+                          shipment.postWeighingWeight -
+                            shipment.preWeighingWeight
+                        )}{" "}
+                        kg
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
