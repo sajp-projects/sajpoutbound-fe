@@ -1367,3 +1367,53 @@ export function useCancelItemShipmentOnly(
     ...options,
   });
 }
+
+export function useManualTruckWeigh(
+  options: UseMutationOptions<
+    ApiResponse<{ message: string; weighing: { type: 'PRE' | 'POST'; weight: number; reason: string } }>,
+    Error,
+    {
+      shipmentId: string;
+      type: 'PRE' | 'POST';
+      weight: number;
+      reason: string;
+    }
+  > = {}
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<{ message: string; weighing: { type: 'PRE' | 'POST'; weight: number; reason: string } }>,
+    Error,
+    {
+      shipmentId: string;
+      type: 'PRE' | 'POST';
+      weight: number;
+      reason: string;
+    }
+  >({
+    mutationFn: async ({ shipmentId, type, weight, reason }) => {
+      const response = await fetchApi(
+        `${BASE_URL}/shipments/${shipmentId}/manual-truck-weigh`,
+        {},
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type, weight, reason }),
+        }
+      );
+      const result = await response.json();
+      if (!result.success) throw new Error(result.message);
+      return result;
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.detail(variables.shipmentId) });
+      if (options.onSuccess) {
+        options.onSuccess(data, variables, context);
+      }
+    },
+    onError: options.onError,
+    onSettled: options.onSettled,
+    onMutate: options.onMutate,
+  });
+}

@@ -36,12 +36,13 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 
-import { ChangeCustomerModal } from "@/components/ChangeCustomerModal";
 import { CancelItemModal } from "@/components/CancelItemModal";
+import { ChangeCustomerModal } from "@/components/ChangeCustomerModal";
 import { ErrorState } from "@/components/ErrorState";
 import { IndividualWeighingModal } from "@/components/IndividualWeighingModal";
 import { LoadingState } from "@/components/LoadingState";
 import { ReviseDOModal } from "@/components/ReviseDOModal";
+import { TruckWeighingModal } from "@/components/TruckWeighingModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,6 +71,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { PERMISSION } from "@/constant/PERMISSION";
 import { useAuth } from "@/hooks/auth";
 import { useDeliveryOrder } from "@/hooks/do";
@@ -121,6 +127,7 @@ import {
   LoadingMethod,
   LoadingMethodSelectionModal,
 } from "@/components/LoadingMethodSelectionModal";
+import { ManualTruckWeighModal } from "@/components/ManualTruckWeighModal";
 import { ReduceQuantityModal } from "@/components/ReduceQuantityModal";
 import { TransferItemsModal } from "@/components/TransferItemsModal";
 
@@ -244,6 +251,15 @@ export default function DetailPengiriman() {
   // States for nota timbangan modal
   const [currentNotaIndex, setCurrentNotaIndex] = useState(0);
 
+  // State for truck weighing modal in "Tipe Penimbangan" section
+  const [truckWeighingModalOpen, setTruckWeighingModalOpen] = useState(false);
+  const [truckWeighingProduct, setTruckWeighingProduct] = useState<{
+    productId: string;
+    productName: string;
+    productUnit: string;
+    loadingGroupId: string;
+  } | null>(null);
+
   const { data: permissions } = useRolePermissions(roleId, {
     enabled: isAuthenticated && !!roleId && roleId !== "",
   });
@@ -280,6 +296,13 @@ export default function DetailPengiriman() {
     permissions,
     PERMISSION.RESOURCES.PENGIRIMAN,
     PERMISSION.ACTIONS.CANCEL_ITEMS
+  );
+
+  // Permission check for manual truck weighing override
+  const hasManualWeighingOverrideAccess = hasPermission(
+    permissions,
+    PERMISSION.RESOURCES.PENGIRIMAN,
+    PERMISSION.ACTIONS.MANUAL_WEIGHING_OVERRIDE
   );
 
   // Modal states for customer change and DO revision
@@ -332,6 +355,10 @@ export default function DetailPengiriman() {
     product: ProductItem;
     deliveryOrder: GroupedDeliveryOrder;
   } | null>(null);
+
+  // Manual Truck Weighing Modal states
+  const [manualWeighModalOpen, setManualWeighModalOpen] = useState(false);
+  const [manualWeighType, setManualWeighType] = useState<'PRE' | 'POST'>('PRE');
 
   // Tally form - initialize without defaultValues first
   const tallyForm = useForm<TallyFormValues>({
@@ -520,6 +547,130 @@ export default function DetailPengiriman() {
         });
       }
     });
+  };
+
+  // Handler to open truck weighing modal for a product
+  const handleOpenTruckWeighingModal = (productId: string) => {
+    if (!shipment || !shipmentId) return;
+
+    // Find the chosen product
+    const chosenProduct = chosenProducts.find(
+      (cp) => cp.productId === productId
+    );
+    if (!chosenProduct) return;
+
+    // Find shipment items for this product that are in CHOSEN status (ready to weigh)
+    const chosenItems = shipment.shipmentItems.filter(
+      (item) =>
+        item.productId === productId &&
+        item.chosenProduct &&
+        item.status === "CHOSEN"
+    );
+
+    if (chosenItems.length === 0) {
+      showErrorAlert(
+        "Tidak Ada Item",
+        "Tidak ada item yang siap untuk ditimbang"
+      );
+      return;
+    }
+
+    // Get the first loading group ID (most common case is single group)
+    const loadingGroupId = chosenItems[0].loadingGroupId || "";
+
+    if (!loadingGroupId) {
+      showErrorAlert(
+        "Error",
+        "Loading group ID tidak ditemukan untuk produk ini"
+      );
+      return;
+    }
+
+    setTruckWeighingProduct({
+      productId,
+      productName: chosenProduct.product.name,
+      productUnit: chosenProduct.product.satuan,
+      loadingGroupId,
+    });
+    setTruckWeighingModalOpen(true);
+  };
+
+  // Handler for truck weighing modal submission
+  const handleTruckWeighingSubmit = async (data: {
+    productId: string;
+    grossWeight: number;
+    netWeight: number;
+    tareWeight: number;
+  }) => {
+    if (!shipmentId || !truckWeighingProduct) return;
+
+    const currentMethod = getProductWeighingMethod(data.productId);
+
+    // If method is not MANUAL, change it first
+    if (currentMethod !== "MANUAL") {
+      // First update the weighing method to MANUAL
+      updateWeighingMethod.mutate(
+        {
+          shipmentId,
+          productId: data.productId,
+          weighingMethod: "MANUAL",
+        },
+        {
+          onSuccess: () => {
+            // After method is updated, submit the weighing
+            submitWeighing(data);
+          },
+          onError: (error) => {
+            showErrorAlert(
+              "Gagal Mengubah Tipe Penimbangan",
+              error.message || "Terjadi kesalahan"
+            );
+          },
+        }
+      );
+    } else {
+      // Method is already MANUAL, submit directly
+      submitWeighing(data);
+    }
+  };
+
+  // Helper to submit weighing data
+  const submitWeighing = (data: {
+    productId: string;
+    grossWeight: number;
+    netWeight: number;
+    tareWeight: number;
+  }) => {
+    if (!shipmentId || !truckWeighingProduct) return;
+
+    bulkWeighItems.mutate(
+      {
+        shipmentId,
+        productId: data.productId,
+        loadingGroupId: truckWeighingProduct.loadingGroupId,
+        grossWeight: data.grossWeight,
+        netWeight: data.netWeight,
+        tareWeight: data.tareWeight,
+      },
+      {
+        onSuccess: () => {
+          showSuccessAlert(
+            "Berhasil",
+            "Penimbangan berhasil disimpan"
+          );
+          setTruckWeighingModalOpen(false);
+          setTruckWeighingProduct(null);
+          refetch();
+          refetchChosenProducts();
+        },
+        onError: (error) => {
+          showErrorAlert(
+            "Gagal Menyimpan Penimbangan",
+            error.message || "Terjadi kesalahan saat menyimpan penimbangan"
+          );
+        },
+      }
+    );
   };
 
   // Loading method selection handlers
@@ -3809,16 +3960,30 @@ export default function DetailPengiriman() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-500">Status</span>
-                        {shipment?.preWeighingWeight ? (
-                          <Badge variant="outline" className="text-green-700 bg-green-50 border-green-200">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Selesai
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-yellow-700 bg-yellow-50 border-yellow-200">
-                            Belum Ditimbang
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {shipment?.preWeighingWeight ? (
+                            <Badge variant="outline" className="text-green-700 bg-green-50 border-green-200">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Selesai
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-yellow-700 bg-yellow-50 border-yellow-200">
+                              Belum Ditimbang
+                            </Badge>
+                          )}
+                          {shipment?.isPreWeighingManual && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className="text-orange-700 bg-orange-50 border-orange-200 cursor-help">
+                                  Manual
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                <p>{shipment.preWeighingManualReason || "Timbangan manual"}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-500">Berat</span>
@@ -3836,6 +4001,22 @@ export default function DetailPengiriman() {
                             : "-"}
                         </span>
                       </div>
+                      {hasManualWeighingOverrideAccess && (
+                        <div className="pt-3 border-t border-gray-200">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => {
+                              setManualWeighType('PRE');
+                              setManualWeighModalOpen(true);
+                            }}
+                          >
+                            <Scale className="h-4 w-4 mr-2" />
+                            Input Manual Berat Awal
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -3848,16 +4029,30 @@ export default function DetailPengiriman() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-500">Status</span>
-                        {shipment?.postWeighingWeight ? (
-                          <Badge variant="outline" className="text-green-700 bg-green-50 border-green-200">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Selesai
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-yellow-700 bg-yellow-50 border-yellow-200">
-                            Belum Ditimbang
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {shipment?.postWeighingWeight ? (
+                            <Badge variant="outline" className="text-green-700 bg-green-50 border-green-200">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Selesai
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-yellow-700 bg-yellow-50 border-yellow-200">
+                              Belum Ditimbang
+                            </Badge>
+                          )}
+                          {shipment?.isPostWeighingManual && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className="text-orange-700 bg-orange-50 border-orange-200 cursor-help">
+                                  Manual
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                <p>{shipment.postWeighingManualReason || "Timbangan manual"}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-500">Berat</span>
@@ -3875,6 +4070,22 @@ export default function DetailPengiriman() {
                             : "-"}
                         </span>
                       </div>
+                      {hasManualWeighingOverrideAccess && allItemsCompleted && (
+                        <div className="pt-3 border-t border-gray-200">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => {
+                              setManualWeighType('POST');
+                              setManualWeighModalOpen(true);
+                            }}
+                          >
+                            <Scale className="h-4 w-4 mr-2" />
+                            Input Manual Berat Akhir
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -3895,6 +4106,93 @@ export default function DetailPengiriman() {
                     </div>
                   </div>
                 )}
+
+                {/* Weighing Method Selector - Manual Override */}
+                {hasManualWeighingOverrideAccess &&
+                  chosenProducts.length > 0 &&
+                  shipment?.status !== "SELESAI" &&
+                  shipment?.status !== "COMPLETED" &&
+                  shipment?.status !== "CANCEL" && (() => {
+                    const vendorProducts = chosenProducts.filter((product) => {
+                      const weighingMethod = getProductWeighingMethod(product.productId);
+                      const hasChosenItems = shipment.shipmentItems.some(
+                        (si) =>
+                          si.productId === product.productId &&
+                          si.chosenProduct &&
+                          si.status !== "CANCELLED"
+                      );
+                      return hasChosenItems && weighingMethod !== "MANUAL";
+                    });
+
+                    return (
+                    <div className="p-4 rounded-lg border border-gray-200">
+                      <h4 className="mb-4 text-lg font-medium text-gray-900">
+                        Tipe Penimbangan
+                      </h4>
+                      {vendorProducts.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-6 text-center">
+                          <Scale className="w-8 h-8 text-gray-300 mb-2" />
+                          <p className="text-sm text-gray-500">
+                            Tidak ada produk vendor yang perlu ditimbang
+                          </p>
+                        </div>
+                      ) : (
+                      <div className="space-y-3">
+                        {vendorProducts.map((product) => {
+                          const chosenItems = shipment.shipmentItems.filter(
+                            (si) =>
+                              si.productId === product.productId &&
+                              si.chosenProduct &&
+                              si.status !== "CANCELLED"
+                          );
+                          const hasWeighedItems = chosenItems.some(
+                            (si) => si.status === "COMPLETED"
+                          );
+                          const readyToWeighItems = shipment.shipmentItems.filter(
+                            (si) =>
+                              si.productId === product.productId &&
+                              si.chosenProduct &&
+                              si.status === "CHOSEN"
+                          );
+
+                          return (
+                            <div
+                              key={product.productId}
+                              className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                            >
+                              <span className="text-sm text-gray-700">
+                                {product.product.name}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <Badge
+                                  variant="outline"
+                                  className="whitespace-nowrap text-orange-700 bg-orange-50 border-orange-200"
+                                >
+                                  Vendor
+                                </Badge>
+                                {!hasWeighedItems && readyToWeighItems.length > 0 && (
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    className="h-8 px-2 text-xs bg-purple-600 hover:bg-purple-700 text-white"
+                                    onClick={() =>
+                                      handleOpenTruckWeighingModal(product.productId)
+                                    }
+                                    disabled={updateWeighingMethod.isPending || bulkWeighItems.isPending}
+                                  >
+                                    <Scale className="w-3 h-3 mr-1" />
+                                    Timbang
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      )}
+                    </div>
+                  );
+                  })()}
               </div>
             )}
           </div>
@@ -4706,6 +5004,37 @@ export default function DetailPengiriman() {
           isLoading={selectiveChooseProduct.isPending}
         />
       )}
+
+      {/* Manual Truck Weighing Modal */}
+      {shipment && (
+        <ManualTruckWeighModal
+          isOpen={manualWeighModalOpen}
+          onOpenChange={setManualWeighModalOpen}
+          shipmentId={shipment.id}
+          type={manualWeighType}
+          existingWeight={manualWeighType === 'PRE' ? shipment.preWeighingWeight : shipment.postWeighingWeight}
+          onSuccess={(message) => {
+            showSuccessAlert("Berhasil", message);
+          }}
+          onError={(message) => {
+            showErrorAlert("Gagal", message);
+          }}
+        />
+      )}
+
+      {/* Truck Weighing Modal for Tipe Penimbangan section */}
+      <TruckWeighingModal
+        open={truckWeighingModalOpen}
+        onOpenChange={(open) => {
+          setTruckWeighingModalOpen(open);
+          if (!open) setTruckWeighingProduct(null);
+        }}
+        productId={truckWeighingProduct?.productId || ""}
+        productName={truckWeighingProduct?.productName || ""}
+        productUnit={truckWeighingProduct?.productUnit || ""}
+        onSubmit={handleTruckWeighingSubmit}
+        isLoading={updateWeighingMethod.isPending || bulkWeighItems.isPending}
+      />
     </div>
   );
 }

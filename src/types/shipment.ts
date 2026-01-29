@@ -114,9 +114,13 @@ export interface Shipment {
   preWeighingWeight?: number | null;
   preWeighingAt?: string | null;
   preWeighingById?: string | null;
+  isPreWeighingManual?: boolean;
+  preWeighingManualReason?: string | null;
   postWeighingWeight?: number | null;
   postWeighingAt?: string | null;
   postWeighingById?: string | null;
+  isPostWeighingManual?: boolean;
+  postWeighingManualReason?: string | null;
   shipmentItems: ShipmentItem[];
   spmbs?: SPMB[];
 }
