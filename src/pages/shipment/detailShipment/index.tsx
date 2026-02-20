@@ -891,6 +891,14 @@ export default function DetailPengiriman() {
     }
   );
 
+  const isKenekRequiredForLoading = shipment?.type === "ANTAR";
+  const isLoadBlockedByCrew = Boolean(
+    !shipment?.tally || (isKenekRequiredForLoading && !shipment?.kenek)
+  );
+  const loadBlockedMessage = isKenekRequiredForLoading
+    ? "Tally dan Kenek harus diisi terlebih dahulu"
+    : "Tally harus diisi terlebih dahulu";
+
   // Fetch nota timbangan data when product is selected
   const { data: notaTimbanganData, refetch: refetchNotaTimbangan } =
     useNotaTimbanganForProduct(shipmentId!, selectedProductId!, {
@@ -2597,8 +2605,7 @@ export default function DetailPengiriman() {
                                             variant="outline"
                                             size="sm"
                                             className={
-                                              !shipment?.tally ||
-                                              !shipment?.kenek
+                                              isLoadBlockedByCrew
                                                 ? "text-gray-400 border-gray-200 cursor-not-allowed"
                                                 : "text-blue-600 border-blue-200 hover:bg-blue-50"
                                             }
@@ -2610,13 +2617,11 @@ export default function DetailPengiriman() {
                                             disabled={
                                               chooseProduct.isPending ||
                                               selectiveChooseProduct.isPending ||
-                                              !shipment?.tally ||
-                                              !shipment?.kenek
+                                              isLoadBlockedByCrew
                                             }
                                             title={
-                                              !shipment?.tally ||
-                                              !shipment?.kenek
-                                                ? "Tally dan Kenek harus diisi terlebih dahulu"
+                                              isLoadBlockedByCrew
+                                                ? loadBlockedMessage
                                                 : undefined
                                             }
                                           >
@@ -2701,8 +2706,7 @@ export default function DetailPengiriman() {
                                             variant="outline"
                                             size="sm"
                                             className={
-                                              !shipment?.tally ||
-                                              !shipment?.kenek
+                                              isLoadBlockedByCrew
                                                 ? "text-gray-400 border-gray-200 cursor-not-allowed"
                                                 : "text-blue-600 border-blue-200 hover:bg-blue-50"
                                             }
@@ -2714,13 +2718,11 @@ export default function DetailPengiriman() {
                                             disabled={
                                               chooseProduct.isPending ||
                                               selectiveChooseProduct.isPending ||
-                                              !shipment?.tally ||
-                                              !shipment?.kenek
+                                              isLoadBlockedByCrew
                                             }
                                             title={
-                                              !shipment?.tally ||
-                                              !shipment?.kenek
-                                                ? "Tally dan Kenek harus diisi terlebih dahulu"
+                                              isLoadBlockedByCrew
+                                                ? loadBlockedMessage
                                                 : "Muat sisa barang"
                                             }
                                           >
@@ -3069,7 +3071,7 @@ export default function DetailPengiriman() {
                                       variant="outline"
                                       size="sm"
                                       className={
-                                        !shipment?.tally || !shipment?.kenek
+                                        isLoadBlockedByCrew
                                           ? "w-full text-gray-400 border-gray-200 cursor-not-allowed"
                                           : "w-full text-blue-600 border-blue-200 hover:bg-blue-50"
                                       }
@@ -3079,12 +3081,11 @@ export default function DetailPengiriman() {
                                       disabled={
                                         chooseProduct.isPending ||
                                         selectiveChooseProduct.isPending ||
-                                        !shipment?.tally ||
-                                        !shipment?.kenek
+                                        isLoadBlockedByCrew
                                       }
                                       title={
-                                        !shipment?.tally || !shipment?.kenek
-                                          ? "Tally dan Kenek harus diisi terlebih dahulu"
+                                        isLoadBlockedByCrew
+                                          ? loadBlockedMessage
                                           : undefined
                                       }
                                     >
@@ -3165,7 +3166,7 @@ export default function DetailPengiriman() {
                                       variant="outline"
                                       size="sm"
                                       className={
-                                        !shipment?.tally || !shipment?.kenek
+                                        isLoadBlockedByCrew
                                           ? "w-full text-gray-400 border-gray-200 cursor-not-allowed"
                                           : "w-full text-blue-600 border-blue-200 hover:bg-blue-50"
                                       }
@@ -3175,12 +3176,11 @@ export default function DetailPengiriman() {
                                       disabled={
                                         chooseProduct.isPending ||
                                         selectiveChooseProduct.isPending ||
-                                        !shipment?.tally ||
-                                        !shipment?.kenek
+                                        isLoadBlockedByCrew
                                       }
                                       title={
-                                        !shipment?.tally || !shipment?.kenek
-                                          ? "Tally dan Kenek harus diisi terlebih dahulu"
+                                        isLoadBlockedByCrew
+                                          ? loadBlockedMessage
                                           : undefined
                                       }
                                     >
