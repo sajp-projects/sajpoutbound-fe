@@ -893,11 +893,9 @@ export default function DetailPengiriman() {
 
   const isKenekRequiredForLoading = shipment?.type === "ANTAR";
   const isLoadBlockedByCrew = Boolean(
-    !shipment?.tally || (isKenekRequiredForLoading && !shipment?.kenek)
+    isKenekRequiredForLoading && !shipment?.kenek
   );
-  const loadBlockedMessage = isKenekRequiredForLoading
-    ? "Tally dan Kenek harus diisi terlebih dahulu"
-    : "Tally harus diisi terlebih dahulu";
+  const loadBlockedMessage = "Kenek harus diisi terlebih dahulu";
 
   // Fetch nota timbangan data when product is selected
   const { data: notaTimbanganData, refetch: refetchNotaTimbangan } =
