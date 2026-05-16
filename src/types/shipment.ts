@@ -228,7 +228,7 @@ export interface ChosenProduct {
     notaTimbangan?: {
       id: string;
       ticketNumber: string;
-      documentPath: string;
+      documentPath: string | null;
     };
   }[];
   totalGrossWeight: number;
@@ -340,7 +340,7 @@ export interface ChosenProductExtended {
     notaTimbangan?: {
       id: string;
       ticketNumber: string;
-      documentPath: string;
+      documentPath: string | null;
     };
   }>;
   totalGrossWeight: number;

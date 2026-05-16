@@ -1711,39 +1711,89 @@ export default function DetailPengiriman() {
   }, [shipment, tallyForm]);
 
   // Handler for SPMB preview:
-  const handlePreviewSpmb = (spmb: SPMB) => {
-    setPreviewFile({
-      url: `/public/${spmb.documentPath}`,
-      name: `${spmb.code}.pdf`,
-      type: "application/pdf",
-    });
-    setPreviewModalOpen(true);
+  const handlePreviewSpmb = async (spmb: SPMB) => {
+    if (spmb.documentPath) {
+      setPreviewFile({
+        url: `/public/${spmb.documentPath}`,
+        name: `${spmb.code}.pdf`,
+        type: "application/pdf",
+      });
+      setPreviewModalOpen(true);
+    } else {
+      try {
+        const { fetchSpmbData } = await import("@/hooks/shipment");
+        const { generateSpmbPdf } = await import("@/utils/generateSpmbPdf");
+        const data = await fetchSpmbData(shipmentId!, spmb.id);
+        const url = generateSpmbPdf(data);
+        setPreviewFile({
+          url,
+          name: `${spmb.code}.pdf`,
+          type: "application/pdf",
+        });
+        setPreviewModalOpen(true);
+      } catch (error) {
+        showErrorAlert(
+          "Gagal memuat SPMB",
+          error instanceof Error ? error.message : "Terjadi kesalahan"
+        );
+      }
+    }
   };
 
   // Handler for Nota Timbangan preview:
-  const handlePreviewNotaTimbangan = (notaTimbangan: {
+  const handlePreviewNotaTimbangan = async (notaTimbangan: {
+    id?: string;
     ticketNumber: string;
-    documentPath: string;
+    documentPath: string | null;
+    shipmentChosenProductWeighingId?: string;
   }) => {
-    setPreviewFile({
-      url: `/public/${notaTimbangan.documentPath}`,
-      name: `Nota Timbangan_${notaTimbangan.ticketNumber}.pdf`,
-      type: "application/pdf",
-    });
-    setPreviewModalOpen(true);
+    if (notaTimbangan.documentPath) {
+      setPreviewFile({
+        url: `/public/${notaTimbangan.documentPath}`,
+        name: `Nota Timbangan_${notaTimbangan.ticketNumber}.pdf`,
+        type: "application/pdf",
+      });
+      setPreviewModalOpen(true);
+    } else if (notaTimbangan.shipmentChosenProductWeighingId || notaTimbangan.id) {
+      try {
+        const { fetchNotaTimbanganData } = await import("@/hooks/shipment");
+        const { generateNotaTimbanganPdf } = await import("@/utils/generateNotaTimbanganPdf");
+        const weighingId = notaTimbangan.shipmentChosenProductWeighingId || notaTimbangan.id!;
+        const data = await fetchNotaTimbanganData(shipmentId!, weighingId);
+        const url = generateNotaTimbanganPdf(data);
+        setPreviewFile({
+          url,
+          name: `Nota Timbangan_${notaTimbangan.ticketNumber}.pdf`,
+          type: "application/pdf",
+        });
+        setPreviewModalOpen(true);
+      } catch (error) {
+        showErrorAlert(
+          "Gagal memuat Nota Timbangan",
+          error instanceof Error ? error.message : "Terjadi kesalahan"
+        );
+      }
+    } else {
+      showErrorAlert(
+        "Gagal memuat Nota Timbangan",
+        "Data timbangan tidak valid"
+      );
+    }
   };
 
   // Handler for multiple Nota Timbangan preview:
   const handleOpenNotaTimbanganModal = (item: ChosenProductExtended) => {
     setSelectedProductId(item.productId);
     setCurrentNotaIndex(0);
-    const firstNota = item.weighings.find(
+    const firstWeighing = item.weighings.find(
       (w) => w.notaTimbangan
-    )?.notaTimbangan;
-    if (firstNota) {
+    );
+    if (firstWeighing && firstWeighing.notaTimbangan) {
       handlePreviewNotaTimbangan({
-        ticketNumber: firstNota.ticketNumber,
-        documentPath: firstNota.documentPath,
+        id: firstWeighing.notaTimbangan.id,
+        ticketNumber: firstWeighing.notaTimbangan.ticketNumber,
+        documentPath: firstWeighing.notaTimbangan.documentPath,
+        shipmentChosenProductWeighingId: firstWeighing.id,
       });
     }
   };
@@ -1758,8 +1808,10 @@ export default function DetailPengiriman() {
       setCurrentNotaIndex(newIndex);
       const currentNota = notaTimbanganData.notaTimbanganList[newIndex];
       handlePreviewNotaTimbangan({
+        id: currentNota.id,
         ticketNumber: currentNota.ticketNumber,
         documentPath: currentNota.documentPath,
+        shipmentChosenProductWeighingId: currentNota.weighing.id,
       });
     }
   };
@@ -1770,8 +1822,10 @@ export default function DetailPengiriman() {
       setCurrentNotaIndex(newIndex);
       const currentNota = notaTimbanganData?.notaTimbanganList[newIndex];
       handlePreviewNotaTimbangan({
+        id: currentNota?.id,
         ticketNumber: currentNota?.ticketNumber || "",
         documentPath: currentNota?.documentPath || "",
+        shipmentChosenProductWeighingId: currentNota?.weighing?.id,
       });
     }
   };
@@ -1956,6 +2010,18 @@ export default function DetailPengiriman() {
                           ) : (
                             shipment.plateNumber
                           )}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Supir</p>
+                        <p className="font-medium text-gray-700">
+                          {shipment.driver?.name || "Tidak ada"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Kenek</p>
+                        <p className="font-medium text-gray-700">
+                          {shipment.kenek || "Tidak ada"}
                         </p>
                       </div>
                       <div>
@@ -3481,16 +3547,19 @@ export default function DetailPengiriman() {
                                             type="button"
                                             className="text-blue-600 hover:underline"
                                             onClick={() => {
-                                              const firstNota =
+                                              const firstWeighing =
                                                 item.weighings.find(
                                                   (w) => w.notaTimbangan
-                                                )?.notaTimbangan;
-                                              if (firstNota) {
+                                                );
+                                              if (firstWeighing && firstWeighing.notaTimbangan) {
                                                 handlePreviewNotaTimbangan({
+                                                  id: firstWeighing.notaTimbangan.id,
                                                   ticketNumber:
-                                                    firstNota.ticketNumber,
+                                                    firstWeighing.notaTimbangan.ticketNumber,
                                                   documentPath:
-                                                    firstNota.documentPath,
+                                                    firstWeighing.notaTimbangan.documentPath,
+                                                  shipmentChosenProductWeighingId:
+                                                    firstWeighing.id,
                                                 });
                                               }
                                             }}
@@ -3708,16 +3777,19 @@ export default function DetailPengiriman() {
                                             type="button"
                                             className="text-blue-600 hover:underline"
                                             onClick={() => {
-                                              const firstNota =
+                                              const firstWeighing =
                                                 item.weighings.find(
                                                   (w) => w.notaTimbangan
-                                                )?.notaTimbangan;
-                                              if (firstNota) {
+                                                );
+                                              if (firstWeighing && firstWeighing.notaTimbangan) {
                                                 handlePreviewNotaTimbangan({
+                                                  id: firstWeighing.notaTimbangan.id,
                                                   ticketNumber:
-                                                    firstNota.ticketNumber,
+                                                    firstWeighing.notaTimbangan.ticketNumber,
                                                   documentPath:
-                                                    firstNota.documentPath,
+                                                    firstWeighing.notaTimbangan.documentPath,
+                                                  shipmentChosenProductWeighingId:
+                                                    firstWeighing.id,
                                                 });
                                               }
                                             }}
@@ -3848,19 +3920,13 @@ export default function DetailPengiriman() {
                                   {formatDate(spmb.createdAt)}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-center text-gray-600">
-                                  {spmb.documentPath ? (
-                                    <button
-                                      type="button"
-                                      className="text-blue-600 hover:underline"
-                                      onClick={() => handlePreviewSpmb(spmb)}
-                                    >
-                                      Lihat Dokumen
-                                    </button>
-                                  ) : (
-                                    <span className="text-gray-400">
-                                      Tidak tersedia
-                                    </span>
-                                  )}
+                                  <button
+                                    type="button"
+                                    className="text-blue-600 hover:underline"
+                                    onClick={() => handlePreviewSpmb(spmb)}
+                                  >
+                                    Lihat Dokumen
+                                  </button>
                                 </TableCell>
                               </TableRow>
                             ))
@@ -3921,19 +3987,13 @@ export default function DetailPengiriman() {
                             </p>
                             <p className="pt-2">
                               <span className="font-medium">Dokumen: </span>
-                              {spmb.documentPath ? (
-                                <button
-                                  type="button"
-                                  className="text-blue-600 hover:underline"
-                                  onClick={() => handlePreviewSpmb(spmb)}
-                                >
-                                  Lihat Dokumen
-                                </button>
-                              ) : (
-                                <span className="text-gray-400">
-                                  Tidak tersedia
-                                </span>
-                              )}
+                              <button
+                                type="button"
+                                className="text-blue-600 hover:underline"
+                                onClick={() => handlePreviewSpmb(spmb)}
+                              >
+                                Lihat Dokumen
+                              </button>
                             </p>
                           </div>
                         </div>

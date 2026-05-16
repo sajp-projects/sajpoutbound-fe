@@ -65,6 +65,30 @@ export function useShipments(options: Record<string, unknown> = {}) {
   });
 }
 
+export async function fetchSpmbData(shipmentId: string, spmbId: string) {
+  const response = await fetchApi(`${BASE_URL}/shipments/${shipmentId}/spmb/${spmbId}/data`);
+  if (!response.ok) {
+    throw new Error(`Error fetching SPMB data: ${response.statusText}`);
+  }
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(result.error?.message || 'Gagal mengambil data SPMB');
+  }
+  return result.data;
+}
+
+export async function fetchNotaTimbanganData(shipmentId: string, weighingId: string) {
+  const response = await fetchApi(`${BASE_URL}/shipments/${shipmentId}/nota-timbangan/${weighingId}/data`);
+  if (!response.ok) {
+    throw new Error(`Error fetching Nota Timbangan data: ${response.statusText}`);
+  }
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(result.error?.message || 'Gagal mengambil data Nota Timbangan');
+  }
+  return result.data;
+}
+
 export function useShipmentsWithParams(
   {
     page = 1,
@@ -682,6 +706,9 @@ export function useIndividualWeighShipmentItem(
       queryClient.invalidateQueries({
         queryKey: shipmentKeys.chosenProducts(variables.shipmentId),
       });
+      queryClient.invalidateQueries({
+        queryKey: [...shipmentKeys.all, "notaTimbangan", variables.shipmentId],
+      });
       queryClient.invalidateQueries({ queryKey: shipmentKeys.lists() });
     },
     ...options,
@@ -913,7 +940,7 @@ export function useNotaTimbanganForProduct(
         notaTimbanganList: Array<{
           id: string;
           ticketNumber: string;
-          documentPath: string;
+          documentPath: string | null;
           createdAt: string;
           updatedAt: string;
           weighing: {
