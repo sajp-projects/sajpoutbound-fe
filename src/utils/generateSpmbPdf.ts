@@ -5,11 +5,11 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 export const generateSpmbPdf = (spmbData: any): string => {
-  // Create PDF with A5 landscape
+  // Create PDF with 9.5" x 5.5" custom format (matching physical SPMB paper)
   const doc = new jsPDF({
     orientation: 'landscape',
     unit: 'pt',
-    format: 'a5',
+    format: [684, 396], // 9.5" x 5.5" in points (1pt = 1/72 inch)
   });
 
   const { shipment, deliveryOrder } = spmbData;
@@ -49,8 +49,8 @@ export const generateSpmbPdf = (spmbData: any): string => {
   addLeftInfo('No. DO', deliveryOrder?.doNumber || '');
 
   // Shipment Info (Right side)
-  const rightX = 350;
-  const rightValueX = 425;
+  const rightX = 402;
+  const rightValueX = 489;
   let rightY = infoTop;
 
   const addRightInfo = (label: string, value: string) => {
@@ -146,12 +146,11 @@ export const generateSpmbPdf = (spmbData: any): string => {
   const finalY = tableBottom + 30; // Move down by 30pt
 
   doc.setFontSize(10);
-  // Center over the signature line (which is from 400 to 550) -> Center X is 475
-  doc.text('Dibuat Oleh', 475, finalY, { align: 'center' });
+  doc.text('Dibuat Oleh', 546, finalY, { align: 'center' });
 
-  const signatureY = doc.internal.pageSize.height - 40;
+  const signatureY = doc.internal.pageSize.height - 20;
   doc.setLineWidth(1);
-  doc.line(400, signatureY, 550, signatureY);
+  doc.line(471, signatureY, 621, signatureY);
 
   // Return Blob URL
   const pdfBlob = doc.output('blob');
