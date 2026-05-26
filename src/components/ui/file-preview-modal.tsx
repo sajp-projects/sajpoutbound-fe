@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { FilePreview } from '@/types/media';
-import { Download, RotateCw, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, Printer, RotateCw, X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 interface FilePreviewModalProps {
@@ -21,6 +21,10 @@ interface FilePreviewModalProps {
     onPrevious: () => void;
     itemType?: string; // e.g., "Nota Timbangan"
   };
+  // Optional print handler. When provided, a print button is shown. This must
+  // print via a sized HTML document (not the PDF in the iframe), otherwise the
+  // browser ignores the custom paper size.
+  onPrint?: () => void;
 }
 
 export function FilePreviewModal({
@@ -28,6 +32,7 @@ export function FilePreviewModal({
   onClose,
   file,
   pagination,
+  onPrint,
 }: FilePreviewModalProps) {
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -160,6 +165,18 @@ export function FilePreviewModal({
                   </div>
                   <div className="hidden w-px h-4 mx-1 bg-gray-200 sm:block" />
                 </>
+              )}
+
+              {onPrint && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onPrint}
+                  className="p-0 transition-colors rounded-md h-7 w-7 sm:h-8 sm:w-8 hover:bg-blue-50 hover:text-blue-600"
+                  title="Cetak"
+                >
+                  <Printer className="w-3 h-3 sm:w-4 sm:h-4" />
+                </Button>
               )}
 
               <Button

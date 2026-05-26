@@ -195,6 +195,9 @@ export default function DetailPengiriman() {
   );
   const [previewFile, setPreviewFile] = useState<FilePreview | null>(null);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  // Set when an SPMB is being previewed, so the modal can offer an HTML-based
+  // print (sized to the physical paper). Cleared for non-SPMB previews.
+  const [spmbToPrint, setSpmbToPrint] = useState<SPMB | null>(null);
   const [allItemsCompleted, setAllItemsCompleted] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
@@ -1363,6 +1366,7 @@ export default function DetailPengiriman() {
 
     // Gunakan path relatif yang akan di-proxy oleh Vite
     const fileUrl = `/public${shipment.platePhoto}`;
+    setSpmbToPrint(null);
     setPreviewFile({
       url: fileUrl,
       name: "Foto Plat Nomor",
@@ -1713,6 +1717,7 @@ export default function DetailPengiriman() {
   // Handler for SPMB preview:
   const handlePreviewSpmb = async (spmb: SPMB) => {
     if (spmb.documentPath) {
+      setSpmbToPrint(spmb);
       setPreviewFile({
         url: `/public/${spmb.documentPath}`,
         name: `${spmb.code}.pdf`,
@@ -1725,6 +1730,7 @@ export default function DetailPengiriman() {
         const { generateSpmbPdf } = await import("@/utils/generateSpmbPdf");
         const data = await fetchSpmbData(shipmentId!, spmb.id);
         const url = generateSpmbPdf(data);
+        setSpmbToPrint(spmb);
         setPreviewFile({
           url,
           name: `${spmb.code}.pdf`,
@@ -1740,6 +1746,22 @@ export default function DetailPengiriman() {
     }
   };
 
+  // Handler for SPMB print (HTML print at exact 8.5" x 5.5" paper size, so no
+  // manual printer paper-size/scale changes are needed):
+  const handlePrintSpmb = async (spmb: SPMB) => {
+    try {
+      const { fetchSpmbData } = await import("@/hooks/shipment");
+      const { printSpmb } = await import("@/utils/printSpmb");
+      const data = await fetchSpmbData(shipmentId!, spmb.id);
+      printSpmb(data);
+    } catch (error) {
+      showErrorAlert(
+        "Gagal mencetak SPMB",
+        error instanceof Error ? error.message : "Terjadi kesalahan"
+      );
+    }
+  };
+
   // Handler for Nota Timbangan preview:
   const handlePreviewNotaTimbangan = async (notaTimbangan: {
     id?: string;
@@ -1748,6 +1770,7 @@ export default function DetailPengiriman() {
     shipmentChosenProductWeighingId?: string;
   }) => {
     if (notaTimbangan.documentPath) {
+      setSpmbToPrint(null);
       setPreviewFile({
         url: `/public/${notaTimbangan.documentPath}`,
         name: `Nota Timbangan_${notaTimbangan.ticketNumber}.pdf`,
@@ -1761,6 +1784,7 @@ export default function DetailPengiriman() {
         const weighingId = notaTimbangan.shipmentChosenProductWeighingId || notaTimbangan.id!;
         const data = await fetchNotaTimbanganData(shipmentId!, weighingId);
         const url = generateNotaTimbanganPdf(data);
+        setSpmbToPrint(null);
         setPreviewFile({
           url,
           name: `Nota Timbangan_${notaTimbangan.ticketNumber}.pdf`,
@@ -4262,6 +4286,7 @@ export default function DetailPengiriman() {
         isOpen={previewModalOpen}
         onClose={() => setPreviewModalOpen(false)}
         file={previewFile}
+        onPrint={spmbToPrint ? () => handlePrintSpmb(spmbToPrint) : undefined}
         pagination={
           previewFile?.name?.includes("Nota Timbangan") && notaTimbanganData
             ? {
