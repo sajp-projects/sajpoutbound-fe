@@ -1746,6 +1746,15 @@ export default function DetailPengiriman() {
     }
   };
 
+  // Items covered by an SPMB: same delivery order and warehouse, used for the
+  // product preview in the SPMB tab so users don't have to open the document.
+  const getSpmbItems = (spmb: SPMB) =>
+    shipment?.shipmentItems?.filter(
+      (item) =>
+        item.deliveryOrderId === spmb.deliveryOrderId &&
+        item.warehouseId === spmb.warehouseId
+    ) ?? [];
+
   // Handler for SPMB print (HTML print at exact 8.5" x 5.5" paper size, so no
   // manual printer paper-size/scale changes are needed):
   const handlePrintSpmb = async (spmb: SPMB) => {
@@ -3902,6 +3911,9 @@ export default function DetailPengiriman() {
                               Customer
                             </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
+                              Barang
+                            </TableHead>
+                            <TableHead className="px-4 py-3 text-sm font-semibold text-left text-gray-700">
                               Tanggal Dibuat
                             </TableHead>
                             <TableHead className="px-4 py-3 text-sm font-semibold text-center text-gray-700">
@@ -3913,7 +3925,7 @@ export default function DetailPengiriman() {
                           {!shipment.spmbs || shipment.spmbs.length === 0 ? (
                             <TableRow>
                               <TableCell
-                                colSpan={6}
+                                colSpan={7}
                                 className="px-4 py-6 text-sm text-center text-gray-500"
                               >
                                 Tidak ada SPMB dalam pengiriman ini
@@ -3939,6 +3951,30 @@ export default function DetailPengiriman() {
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   {spmb.deliveryOrder?.customer?.name || "-"}
+                                </TableCell>
+                                <TableCell className="px-4 py-3 text-sm text-gray-600">
+                                  {getSpmbItems(spmb).length === 0 ? (
+                                    "-"
+                                  ) : (
+                                    <ul className="space-y-0.5">
+                                      {getSpmbItems(spmb).map((item) => (
+                                        <li
+                                          key={item.id}
+                                          className={
+                                            item.status === "CANCELLED"
+                                              ? "text-gray-400 line-through"
+                                              : undefined
+                                          }
+                                        >
+                                          {item.product?.name} —{" "}
+                                          {item.requestedQuantity.toLocaleString(
+                                            "id-ID"
+                                          )}{" "}
+                                          {item.product?.satuan || ""}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   {formatDate(spmb.createdAt)}
@@ -4003,6 +4039,31 @@ export default function DetailPengiriman() {
                               <span className="font-medium">Customer: </span>
                               {spmb.deliveryOrder?.customer?.name || "-"}
                             </p>
+                            <div>
+                              <span className="font-medium">Barang: </span>
+                              {getSpmbItems(spmb).length === 0 ? (
+                                "-"
+                              ) : (
+                                <ul className="mt-0.5 space-y-0.5 list-disc list-inside">
+                                  {getSpmbItems(spmb).map((item) => (
+                                    <li
+                                      key={item.id}
+                                      className={
+                                        item.status === "CANCELLED"
+                                          ? "text-gray-400 line-through"
+                                          : undefined
+                                      }
+                                    >
+                                      {item.product?.name} —{" "}
+                                      {item.requestedQuantity.toLocaleString(
+                                        "id-ID"
+                                      )}{" "}
+                                      {item.product?.satuan || ""}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
                             <p>
                               <span className="font-medium">
                                 Tanggal Dibuat:{" "}
