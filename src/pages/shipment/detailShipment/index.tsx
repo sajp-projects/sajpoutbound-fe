@@ -1772,38 +1772,55 @@ export default function DetailPengiriman() {
     const hiddenCount = items.length - SPMB_PREVIEW_LIMIT;
 
     return (
-      <ul className="space-y-0.5">
-        {visibleItems.map((item) => (
-          <li
-            key={item.id}
-            className={
-              item.status === "CANCELLED"
-                ? "text-gray-400 line-through"
-                : undefined
+      <div className="min-w-[220px]">
+        <table className="w-full text-xs border border-gray-200 rounded">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-2 py-1 font-medium text-left text-gray-500">
+                Barang
+              </th>
+              <th className="px-2 py-1 font-medium text-right text-gray-500">
+                Qty
+              </th>
+              <th className="px-2 py-1 font-medium text-left text-gray-500">
+                Satuan
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibleItems.map((item) => (
+              <tr
+                key={item.id}
+                className={`border-b border-gray-100 last:border-b-0 ${
+                  item.status === "CANCELLED"
+                    ? "text-gray-400 line-through"
+                    : ""
+                }`}
+              >
+                <td className="px-2 py-1">{item.product?.name}</td>
+                <td className="px-2 py-1 text-right whitespace-nowrap">
+                  {item.requestedQuantity.toLocaleString("id-ID")}
+                </td>
+                <td className="px-2 py-1">{item.product?.satuan || "-"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {hiddenCount > 0 && (
+          <button
+            type="button"
+            className="mt-1 text-xs text-blue-600 hover:underline"
+            onClick={() =>
+              setExpandedSpmbItems((prev) => ({
+                ...prev,
+                [spmb.id]: !expanded,
+              }))
             }
           >
-            {item.product?.name} —{" "}
-            {item.requestedQuantity.toLocaleString("id-ID")}{" "}
-            {item.product?.satuan || ""}
-          </li>
-        ))}
-        {hiddenCount > 0 && (
-          <li>
-            <button
-              type="button"
-              className="text-blue-600 hover:underline"
-              onClick={() =>
-                setExpandedSpmbItems((prev) => ({
-                  ...prev,
-                  [spmb.id]: !expanded,
-                }))
-              }
-            >
-              {expanded ? "Sembunyikan" : `+${hiddenCount} barang lagi`}
-            </button>
-          </li>
+            {expanded ? "Sembunyikan" : `+${hiddenCount} barang lagi`}
+          </button>
         )}
-      </ul>
+      </div>
     );
   };
 
