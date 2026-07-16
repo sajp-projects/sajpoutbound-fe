@@ -70,6 +70,7 @@ export interface SPMB {
   shipmentId: string;
   deliveryOrderId: string;
   code: string;
+  displayCode?: string | null;
   status: ShipmentStatus;
   documentPath: string | null;
   createdAt: string;

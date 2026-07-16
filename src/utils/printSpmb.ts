@@ -25,7 +25,7 @@ const buildSpmbHtml = (spmbData: any): string => {
   const { shipment, deliveryOrder } = spmbData;
 
   const leftInfo: Array<[string, string]> = [
-    ['No.', spmbData.code || ''],
+    ['No.', spmbData.displayCode || spmbData.code || ''],
     ['Tanggal', spmbData.createdAt ? format(new Date(spmbData.createdAt), 'dd/MM/yyyy') : ''],
     ['Kepada', deliveryOrder?.customer?.name || ''],
     ['No. Pengiriman', shipment?.shipmentNumber || ''],
@@ -67,7 +67,7 @@ const buildSpmbHtml = (spmbData: any): string => {
 <html lang="id">
 <head>
 <meta charset="utf-8" />
-<title>${escapeHtml(spmbData.code || 'SPMB')}</title>
+<title>${escapeHtml(spmbData.displayCode || spmbData.code || 'SPMB')}</title>
 <style>
   @page { size: ${PAGE_WIDTH_IN}in ${PAGE_HEIGHT_IN}in; margin: 0; }
   html, body {

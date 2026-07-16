@@ -41,7 +41,7 @@ export const generateSpmbPdf = (spmbData: any): string => {
     leftY += rowSpacing;
   };
 
-  addLeftInfo('No.', spmbData.code || '');
+  addLeftInfo('No.', spmbData.displayCode || spmbData.code || '');
   addLeftInfo('Tanggal', spmbData.createdAt ? format(new Date(spmbData.createdAt), 'dd/MM/yyyy') : '');
   addLeftInfo('Kepada', deliveryOrder?.customer?.name || '');
   // New requirements

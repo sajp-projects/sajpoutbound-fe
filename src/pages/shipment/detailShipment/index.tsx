@@ -1720,7 +1720,7 @@ export default function DetailPengiriman() {
       setSpmbToPrint(spmb);
       setPreviewFile({
         url: `/public/${spmb.documentPath}`,
-        name: `${spmb.code}.pdf`,
+        name: `${spmb.displayCode ?? spmb.code}.pdf`,
         type: "application/pdf",
       });
       setPreviewModalOpen(true);
@@ -1733,7 +1733,7 @@ export default function DetailPengiriman() {
         setSpmbToPrint(spmb);
         setPreviewFile({
           url,
-          name: `${spmb.code}.pdf`,
+          name: `${spmb.displayCode ?? spmb.code}.pdf`,
           type: "application/pdf",
         });
         setPreviewModalOpen(true);
@@ -3926,7 +3926,7 @@ export default function DetailPengiriman() {
                                   {index + 1}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 font-medium text-blue-600">
-                                  {spmb.code}
+                                  {spmb.displayCode ?? spmb.code}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   <Link
@@ -3982,7 +3982,7 @@ export default function DetailPengiriman() {
                                 {index + 1}
                               </div>
                               <span className="font-medium text-blue-600">
-                                {spmb.code}
+                                {spmb.displayCode ?? spmb.code}
                               </span>
                             </div>
                           </div>
