@@ -1761,7 +1761,7 @@ export default function DetailPengiriman() {
 
   // Preview shows the first few items; the rest collapse behind a toggle so a
   // long SPMB doesn't stretch the table row.
-  const SPMB_PREVIEW_LIMIT = 3;
+  const SPMB_PREVIEW_LIMIT = 2;
 
   const renderSpmbItemsPreview = (spmb: SPMB) => {
     const items = getSpmbItems(spmb);
