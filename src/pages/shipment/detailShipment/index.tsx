@@ -198,6 +198,10 @@ export default function DetailPengiriman() {
   // Set when an SPMB is being previewed, so the modal can offer an HTML-based
   // print (sized to the physical paper). Cleared for non-SPMB previews.
   const [spmbToPrint, setSpmbToPrint] = useState<SPMB | null>(null);
+  // SPMB ids whose product preview is expanded past the first few items.
+  const [expandedSpmbItems, setExpandedSpmbItems] = useState<
+    Record<string, boolean>
+  >({});
   const [allItemsCompleted, setAllItemsCompleted] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string>("");
@@ -1754,6 +1758,54 @@ export default function DetailPengiriman() {
         item.deliveryOrderId === spmb.deliveryOrderId &&
         item.warehouseId === spmb.warehouseId
     ) ?? [];
+
+  // Preview shows the first few items; the rest collapse behind a toggle so a
+  // long SPMB doesn't stretch the table row.
+  const SPMB_PREVIEW_LIMIT = 3;
+
+  const renderSpmbItemsPreview = (spmb: SPMB) => {
+    const items = getSpmbItems(spmb);
+    if (items.length === 0) return "-";
+
+    const expanded = !!expandedSpmbItems[spmb.id];
+    const visibleItems = expanded ? items : items.slice(0, SPMB_PREVIEW_LIMIT);
+    const hiddenCount = items.length - SPMB_PREVIEW_LIMIT;
+
+    return (
+      <ul className="space-y-0.5">
+        {visibleItems.map((item) => (
+          <li
+            key={item.id}
+            className={
+              item.status === "CANCELLED"
+                ? "text-gray-400 line-through"
+                : undefined
+            }
+          >
+            {item.product?.name} —{" "}
+            {item.requestedQuantity.toLocaleString("id-ID")}{" "}
+            {item.product?.satuan || ""}
+          </li>
+        ))}
+        {hiddenCount > 0 && (
+          <li>
+            <button
+              type="button"
+              className="text-blue-600 hover:underline"
+              onClick={() =>
+                setExpandedSpmbItems((prev) => ({
+                  ...prev,
+                  [spmb.id]: !expanded,
+                }))
+              }
+            >
+              {expanded ? "Sembunyikan" : `+${hiddenCount} barang lagi`}
+            </button>
+          </li>
+        )}
+      </ul>
+    );
+  };
 
   // Handler for SPMB print (HTML print at exact 8.5" x 5.5" paper size, so no
   // manual printer paper-size/scale changes are needed):
@@ -3953,28 +4005,7 @@ export default function DetailPengiriman() {
                                   {spmb.deliveryOrder?.customer?.name || "-"}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
-                                  {getSpmbItems(spmb).length === 0 ? (
-                                    "-"
-                                  ) : (
-                                    <ul className="space-y-0.5">
-                                      {getSpmbItems(spmb).map((item) => (
-                                        <li
-                                          key={item.id}
-                                          className={
-                                            item.status === "CANCELLED"
-                                              ? "text-gray-400 line-through"
-                                              : undefined
-                                          }
-                                        >
-                                          {item.product?.name} —{" "}
-                                          {item.requestedQuantity.toLocaleString(
-                                            "id-ID"
-                                          )}{" "}
-                                          {item.product?.satuan || ""}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  )}
+                                  {renderSpmbItemsPreview(spmb)}
                                 </TableCell>
                                 <TableCell className="px-4 py-3 text-sm text-gray-600">
                                   {formatDate(spmb.createdAt)}
@@ -4041,28 +4072,7 @@ export default function DetailPengiriman() {
                             </p>
                             <div>
                               <span className="font-medium">Barang: </span>
-                              {getSpmbItems(spmb).length === 0 ? (
-                                "-"
-                              ) : (
-                                <ul className="mt-0.5 space-y-0.5 list-disc list-inside">
-                                  {getSpmbItems(spmb).map((item) => (
-                                    <li
-                                      key={item.id}
-                                      className={
-                                        item.status === "CANCELLED"
-                                          ? "text-gray-400 line-through"
-                                          : undefined
-                                      }
-                                    >
-                                      {item.product?.name} —{" "}
-                                      {item.requestedQuantity.toLocaleString(
-                                        "id-ID"
-                                      )}{" "}
-                                      {item.product?.satuan || ""}
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
+                              {renderSpmbItemsPreview(spmb)}
                             </div>
                             <p>
                               <span className="font-medium">
